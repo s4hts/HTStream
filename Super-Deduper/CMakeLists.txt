@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required (VERSION 3.2)
 project (Super-Deduper)
 
 file(GLOB SOURCES "*.cpp")
@@ -11,10 +11,10 @@ link_directories(${CMAKE_BINARY_DIR}/common)
 add_executable(super_deduper ${SOURCES})
 target_link_libraries(super_deduper ${PROJECT_LINK_LIBS})
 
-add_custom_target(test
+add_custom_target(testSD
   DEPENDS super_deduper
-  COMMAND python ${CMAKE_SOURCE_DIR}/test_suite/testSD.py # todo add argument for super d
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test_suite
+  COMMAND ${CMAKE_COMMAND} -E env "PATH=$ENV{PATH}:${CMAKE_BINARY_DIR}/Super-Deduper" python ${CMAKE_SOURCE_DIR}/Super-Deduper/test_suite/testSD.py
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/Super-Deduper/test_suite
 )
 
 add_custom_target(valgrind

@@ -46,7 +46,7 @@ class TestCase(unittest.TestCase):
         myR1file = " -1 fastqFiles/testCase_1X_R1.fastq "
         myR2file = " -2 fastqFiles/testCase_1X_R2.fastq "
         additFlags = "-N -F"
-        myShellCmd = "../super_deduper"
+        myShellCmd = "super_deduper"
         self.myCommand = myShellCmd + myR1file + myR2file + additFlags
 
     def test_find_fastq_files_recursively(self):
