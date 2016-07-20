@@ -1,0 +1,16 @@
+@Read_one_R2
+CTTTCTGGAACTTGAGCAGGAGTTCTGCTCTGTCATCTCTGTTCTCCTGTTCCTTCCACACCTGTTTTTTTCTCACCGTGCCATTTTTCCCTTCATTCTCCTGTTTCTTTTTTTTCTCTCTTTTATAGTATTGTAATTTCTACCAGATGCTTTTGTCTTTGTTTCATATTTATCTTTGACTACTCTATCCAGGGTTGTACACTCATACCCCGTACTCTTTACCCCCCAGTAATTATTTGACTTCTTACCTCTATGTGTTCTTCCTTTTCCCCTTGTTTCTTGGACATCAGAGCTGCCTCTGTATGATAT
++
+-8A@@################################################################################################################################################################################################################################################################################################################
+@Exact_copy_of_read_one_R2
+CTTTCTGGAACTTGAGCAGGAGTTCTGCTCTGTCATCTCTGTTCTCCTGTTCCTTCCACACCTGTTTTTTTCTCACCGTGCCATTTTTCCCTTCATTCTCCTGTTTCTTTTTTTTCTCTCTTTTATAGTATTGTAATTTCTACCAGATGCTTTTGTCTTTGTTTCATATTTATCTTTGACTACTCTATCCAGGGTTGTACACTCATACCCCGTACTCTTTACCCCCCAGTAATTATTTGACTTCTTACCTCTATGTGTTCTTCCTTTTCCCCTTGTTTCTTGGACATCAGAGCTGCCTCTGTATGATAT
++
+-8A@@################################################################################################################################################################################################################################################################################################################
+@higher_qscore_copy_of_read_one_R2
+CTTTCTGGAACTTGAGCAGGAGTTCTGCTCTGTCATCTCTGTTCTCCTGTTCCTTCCACACCTGTTTTTTTCTCACCGTGCCATTTTTCCCTTCATTCTCCTGTTTCTTTTTTTTCTCTCTTTTATAGTATTGTAATTTCTACCAGATGCTTTTGTCTTTGTTTCATATTTATCTTTGACTACTCTATCCAGGGTTGTACACTCATACCCCGTACTCTTTACCCCCCAGTAATTATTTGACTTCTTACCTCTATGTGTTCTTCCTTTTCCCCTTGTTTCTTGGACATCAGAGCTGCCTCTGTATGATAT
++
+-8A@@################################################################################################################################################################################################################################################################################################################
+@reverse_complement_of_read_one_R2
+CCACCCTCATTTCATTCTCAGAAGCATGTATGAAGTTGTAATAGCCCTGACGTATGGTTTACCTACTAAGATACCCTCAGGAGTTCTCATCTAGCAAGTGAGATACACCTTATTTATCATACATAGCCAGCTCTGCTGTCCCAGAATCTATTGGAAAATGAATCACACATAGCTCTAAGAATTCAAATAATTACTCTGGGGTAAATAGTTCTGGGTATGAGTGTACAACCCTGGCTAGAGTTTTCAAAGATAAATATTCAACAATCACCAAAGCTTCTGGTAGCATTTACAATACTATAAATGAGATTT
++
+-8A@@################################################################################################################################################################################################################################################################################################################
