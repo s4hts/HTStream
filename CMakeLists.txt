@@ -13,6 +13,7 @@ endif()
 message( status "cmake cxx flags: " ${CMAKE_CXX_FLAGS})
 
 include(gtest.cmake)
+message( status "include dirs: " ${GTEST_INCLUDE_DIRS})
 
 enable_testing()
 

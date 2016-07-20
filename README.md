@@ -14,4 +14,5 @@ make
 
 ```
 make testSD
+make test
 ```
