@@ -12,5 +12,9 @@ endif()
 
 message( status "cmake cxx flags: " ${CMAKE_CXX_FLAGS})
 
+include(gtest.cmake)
+
+enable_testing()
+
 add_subdirectory(common)
 add_subdirectory(Super-Deduper)

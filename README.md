@@ -9,3 +9,9 @@ cd build
 cmake ..
 make
 ```
+
+## test
+
+```
+make testSD
+```
