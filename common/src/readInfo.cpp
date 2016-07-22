@@ -1,6 +1,6 @@
 #include "readInfo.h"
 
-readInfo::readInfo(const char *head_, const char *seq_, const char *qual_) :
+readInfo::readInfo(const std::string &head_, const std::string& seq_, const std::string &qual_) :
     header(head_),
     seq(seq_),
     qual(qual_)

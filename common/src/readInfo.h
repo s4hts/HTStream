@@ -14,7 +14,7 @@ private:
 
 public:
 
-	readInfo(const char *head_, const char *seq_, const char *qual_);
+	readInfo(const std::string& head_, const std::string& seq_, const std::string& qual_);
 
 	const char *getSeq() {return seq.c_str();}
 	const char *getQual() {return qual.c_str();}
