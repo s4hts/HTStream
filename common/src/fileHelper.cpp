@@ -86,11 +86,11 @@ void FileHelper::readData(std::shared_ptr<readInfo> &r1, std::shared_ptr<readInf
         } 
         if (count == 5) {
             data[4][strlen(data[4])-1] = '\0';
-            r1 =  std::make_shared<readInfo>(data[0], data[1], data[2], opt_reads );
-            r2 =  std::make_shared<readInfo>(data[0], data[3], data[4], opt_reads );
+            r1 =  std::make_shared<readInfo>(data[0], data[1], data[2]);
+            r2 =  std::make_shared<readInfo>(data[0], data[3], data[4]);
         } else if (count == 3) {
             data[2][strlen(data[2])-1] = '\0';
-            r1 =  std::make_shared<readInfo>(data[0], data[1], data[2], opt_reads );
+            r1 =  std::make_shared<readInfo>(data[0], data[1], data[2]);
             r2 =  NULL;
         } else {
             fprintf(stderr, "Error in fileHelper.cpp readData(readInfo**, readInfo**)\n");
@@ -118,7 +118,7 @@ void FileHelper::readData(std::shared_ptr<readInfo> &r1, std::shared_ptr<readInf
                         return readData(r1, r2);
                     }
                 } else if (f == 4) {
-                    r1 = std::make_shared<readInfo>(c[0], c[1], c[3], opt_reads);
+                    r1 = std::make_shared<readInfo>(c[0], c[1], c[3]);
                     r2 = NULL;
                 } else {
                     fprintf(stderr, "Within fileHelper.cpp readData(readInfo **, readInfo**) function*/");
@@ -129,8 +129,8 @@ void FileHelper::readData(std::shared_ptr<readInfo> &r1, std::shared_ptr<readInf
             }
         }
 
-        r1 =  std::make_shared<readInfo>(c[0], c[1], c[3], opt_reads );
-        r2 =  std::make_shared<readInfo>(c[4], c[5], c[7], opt_reads );
+        r1 =  std::make_shared<readInfo>(c[0], c[1], c[3]);
+        r2 =  std::make_shared<readInfo>(c[4], c[5], c[7]);
 
     }
 
@@ -181,7 +181,7 @@ void FileHelper::readData(std::shared_ptr<readInfo> &r) {
                 exit(3);
             }
         }
-        r =  std::make_shared<readInfo>(c[0], c[1], c[3], opt_reads );
+        r =  std::make_shared<readInfo>(c[0], c[1], c[3]);
         
     }
 

@@ -10,8 +10,6 @@
 #include "readInfo.h"
 #include "fileWriter.h"
 
-
-
 class BinarySearchTree {
 public:
     typedef std::unique_ptr<uint16_t[]> idptr;
@@ -78,18 +76,19 @@ private:
     std::shared_ptr<Node> root;
 
 
-	uint32_t qualSum(char *q);
+	uint32_t qualSum(const char *q);
 	uint16_t charLength, newsize, start;
 
 
-	bool getID(std::shared_ptr<readInfo> R1, std::shared_ptr<readInfo> R2, idptr &id);
 	bool FlipBitsChars(std::shared_ptr<readInfo> R1, std::shared_ptr<readInfo> R2, idptr &id, bool RC);
 	int GreaterThan(uint16_t *test, uint16_t *value);
 	void PrivateAddNode(std::shared_ptr<Node> &n, std::shared_ptr<readInfo> R1_, std::shared_ptr<readInfo> R2_, idptr id, uint32_t qualScore);
 	void PrintAndDeletePrivate(Node *n, FileWriter *R1, FileWriter *R2, FileWriter *SE);
-	bool FlipBitsCheck(char *seq, bool r2);
+	bool FlipBitsCheck(const char *seq, bool r2);
 
 public:
+    // making public for now to make testing easier
+	bool getID(std::shared_ptr<readInfo> R1, std::shared_ptr<readInfo> R2, idptr &id);
 
 	BinarySearchTree(uint16_t length, uint16_t startLoc):
 		/*00*/

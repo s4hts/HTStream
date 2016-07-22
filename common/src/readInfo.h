@@ -2,36 +2,23 @@
 #define SOURCE_READDATA_H
 
 
-#include<stdint.h>
-#include<stdlib.h>
-#include <string.h>
+#include <string>
 
 class readInfo {
 
 
 private:
-	char *header;
-	char *seq;
-	char *qual;
-
-	uint16_t *useq;
-	uint16_t *uqual;
+    std::string header;
+    std::string seq;
+    std::string qual;
 
 public:
 
-	bool optimized;
+	readInfo(const char *head_, const char *seq_, const char *qual_);
 
-	readInfo(char *head_, char *seq_, char *qual_, bool optimized_);
-	~readInfo () {
-		free(header);
-		free(seq);
-		free(qual);
-		//free(useq);
-		//free(uqual);
-	}
-	char *getSeq() {return seq;}
-	char *getQual() {return qual;}
-	char *getHeader() {return header;}
+	const char *getSeq() {return seq.c_str();}
+	const char *getQual() {return qual.c_str();}
+	const char *getHeader() {return header.c_str();}
 
 
 };

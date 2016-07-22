@@ -1,10 +1,8 @@
 #include "readInfo.h"
 
-readInfo::readInfo(char *head_, char *seq_, char *qual_, bool optimized_) {
-	header = strdup(head_);
-	seq = strdup(seq_);
-	qual = strdup(qual_);
-	useq = NULL;
-	uqual = NULL;
-	optimized = optimized_;
+readInfo::readInfo(const char *head_, const char *seq_, const char *qual_) :
+    header(head_),
+    seq(seq_),
+    qual(qual_)
+{
 }

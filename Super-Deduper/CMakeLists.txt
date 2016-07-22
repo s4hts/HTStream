@@ -1,7 +1,10 @@
 cmake_minimum_required (VERSION 3.2)
 project (Super-Deduper)
 
-file(GLOB SOURCES "src/*.cpp")
+file(GLOB sources "src/*.cpp")
+list(REMOVE_ITEM sources ${CMAKE_CURRENT_SOURCE_DIR}/src/super-deduper.cpp)
+message( status "sources: " ${sources})
+
 
 set(COMMON_INCLUDES ${CMAKE_SOURCE_DIR}/common/src)
 include_directories(${COMMON_INCLUDES})
@@ -9,7 +12,7 @@ include_directories(${COMMON_INCLUDES})
 set(PROJECT_LINK_LIBS libhts_common.so)
 link_directories(${CMAKE_BINARY_DIR}/common)
 
-add_executable(super_deduper ${SOURCES})
+add_executable(super_deduper ${sources} "src/super-deduper.cpp")
 target_link_libraries(super_deduper ${PROJECT_LINK_LIBS})
 
 add_custom_target(testSD
@@ -26,11 +29,11 @@ add_custom_target(valgrind
 ## test
 set(PROJECT_TEST_NAME ${PROJECT_NAME}_test)
 find_package(Threads REQUIRED)
-include_directories(${GTEST_INCLUDE_DIRS} ${COMMON_INCLUDES})
+include_directories(${GTEST_INCLUDE_DIRS} ${COMMON_INCLUDES} ${CMAKE_SOURCE_DIR}/Super-Deduper/src)
 
 file(GLOB TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/test/*.cpp)
 link_directories(${GTEST_LIBS_DIR})
-add_executable(${PROJECT_TEST_NAME} ${TEST_SRC_FILES})
+add_executable(${PROJECT_TEST_NAME} ${TEST_SRC_FILES} ${sources})
 #add_dependencies(${PROJECT_TEST_NAME} googletest)
-target_link_libraries(${PROJECT_TEST_NAME} gtest gtest_main ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(${PROJECT_TEST_NAME} gtest gtest_main ${CMAKE_THREAD_LIBS_INIT} ${PROJECT_LINK_LIBS})
 add_test(test_superd ${PROJECT_TEST_NAME})

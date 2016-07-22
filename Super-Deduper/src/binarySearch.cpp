@@ -1,4 +1,5 @@
 #include "binarySearch.h"
+#include<string.h>
 
 
 void BinarySearchTree::outputStats(FILE *f) {
@@ -56,7 +57,7 @@ void BinarySearchTree::PrintAndDeletePrivate(Node *n, FileWriter *R1, FileWriter
 }
 
 /*Goes throught the char * with a 33 offset of each character*/
-uint32_t BinarySearchTree::qualSum(char *q) {
+uint32_t BinarySearchTree::qualSum(const char *q) {
 	uint32_t score = 0;
 	uint16_t i = 0;
 	/*Should end on a null character, no tab or newlines*/
@@ -77,7 +78,7 @@ uint32_t BinarySearchTree::qualSum(char *q) {
 }
 
 
-bool BinarySearchTree::FlipBitsCheck(char *seq, bool r2) {
+bool BinarySearchTree::FlipBitsCheck(const char *seq, bool r2) {
 	/*Another error check for the humans*/
 	if (strlen(seq) < start+charLength) {
 		fprintf(stderr, "Error within binarySearch.cpp in funciton FlipBitsChars() strlen of %s larger than start + length\n", r2 ? "R2" : "R1");
@@ -125,7 +126,7 @@ void RC_Read(char *&seq) {
 
 /*Flip bits functionality for character string*/
 bool BinarySearchTree::FlipBitsChars(std::shared_ptr<readInfo> R1, std::shared_ptr<readInfo> R2, idptr &id, bool RC) {
-	char *seq_1, *seq_2;
+	const char *seq_1, *seq_2;
 
 	/*Incementor for id array*/
 	uint16_t idLoc = 0, bitShifts = 0;
@@ -210,12 +211,8 @@ bool BinarySearchTree::getID(std::shared_ptr<readInfo> R1, std::shared_ptr<readI
 
     idptr tmp_id = idptr(new uint16_t[newsize]);
     idptr tmp_id_rc = idptr(new uint16_t[newsize]);
-    
-	/*Not funcitonal yet*/
-	if (R1->optimized) {
-		fprintf(stderr, "Optimizmations no funciotnal yet\n");
-		exit(-1);
-	} else {
+
+    {
 		if (FlipBitsChars(R1, R2, tmp_id, false) && FlipBitsChars(R1, R2, tmp_id_rc, true)) {
 			if (GreaterThan(tmp_id.get(), tmp_id_rc.get()) > 0) {
 				id = std::move(tmp_id);

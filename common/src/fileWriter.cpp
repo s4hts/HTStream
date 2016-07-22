@@ -1,6 +1,6 @@
 #include "fileWriter.h"
 #include <stdexcept>
-
+#include<string.h>
 /*Gzip output writer*/
 
 
