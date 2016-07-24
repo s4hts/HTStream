@@ -1,16 +1,18 @@
 #ifndef READ_H
 #define READ_H
 
+#include <boost/dynamic_bitset.hpp>
+
 class Read {
 private:
     std::string seq;
     std::string qual;
 
 public:
-    Read(const std::string& seq_, const std::string& qual_) : 
+    Read(const std::string& seq_, const std::string& qual_) :
         seq(seq_), qual(qual_) { }
-
-
+    Read subread(int start, int length);
+    std::string subseq(int start, int length);
 };
 
 
@@ -41,7 +43,7 @@ private:
 public:
     SingleEndRead(const read& one, const std::string& id) :
         one(one), id(id) { }
-    
+
 };
 
 #endif
