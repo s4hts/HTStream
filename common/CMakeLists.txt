@@ -1,11 +1,11 @@
 cmake_minimum_required (VERSION 3.2)
 project (hts_common)
 
-file(GLOB SOURCES "src/*.cpp")
+file(GLOB sources "src/*.cpp")
 message( status "sources: " ${sources})
 
 set(COMMON_INCLUDES ${CMAKE_SOURCE_DIR}/common/src)
-add_library(hts_common SHARED ${SOURCES})
+add_library(hts_common SHARED ${sources})
 
 
 ## test
