@@ -6,10 +6,9 @@
 //ReadBase::~ReadBase(){}
 
 boost::dynamic_bitset<> ReadBase::strToBit(const std::string& StrKey){
+  // converts a string to a 2bit representation: A:00, C:01, T:10, G:11
   boost::dynamic_bitset<> bit(2 * StrKey.length());
-  //std::string seq("ACTG");
-
-  for(char c : StrKey){
+  for(const char &c : StrKey){
     bit <<= 2;
     switch(c) {
       case 'A': break;
@@ -22,7 +21,6 @@ boost::dynamic_bitset<> ReadBase::strToBit(const std::string& StrKey){
     }
   }
   return bit;
-
 }
 
 
