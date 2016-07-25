@@ -19,12 +19,12 @@ public:
 class ReadBase {
 private:
     std::string id;
-    
+
 public:
     ReadBase(const std::string& id) : id(id) {}
     virtual ~ReadBase() {};
     virtual std::string getStrKey(size_t start, size_t length) = 0;
-    boost::dynamic_bitset<> strToBit(std::string& StrKey);
+    boost::dynamic_bitset<> strToBit(const std::string& StrKey);
     std::string getId() { return id; }
 
 };
