@@ -17,10 +17,16 @@ public:
 
 
 class ReadBase {
+private:
+    std::string id;
+    
 public:
+    ReadBase(const std::string& id) : id(id) {}
     virtual ~ReadBase() {};
     virtual std::string getStrKey(int start, int length) = 0;
     boost::dynamic_bitset<> strToBit(std::string& StrKey);
+    std::string getId() { return id; }
+
 };
 
 
@@ -29,10 +35,9 @@ private:
 
     Read one;
     Read two;
-    std::string id;
 public:
     PairedEndRead(const Read& one, const Read& two, const std::string& id) :
-        one(one), two(two), id(id) { }
+        ReadBase(id), one(one), two(two) { }
     std::string getStrKey(int start, int length);
 
 };
@@ -40,11 +45,9 @@ public:
 class SingleEndRead: public ReadBase {
 private:
     Read one;
-    std::string id;
-
 public:
     SingleEndRead(const Read& one, const std::string& id) :
-        one(one), id(id) { }
+        ReadBase(id), one(one) { }
     std::string getStrKey(int start, int length);
 
 };
