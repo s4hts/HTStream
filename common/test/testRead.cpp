@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <boost/dynamic_bitset.hpp>
 #include "read.h"
 
 TEST(EmptyTest, firstTest) {
@@ -19,4 +20,12 @@ TEST(CreatePERead, createPEReadWorks){
 
     ASSERT_EQ(pe1->getStrKey(2, 5), "ACCCTTTCTG");
     ASSERT_EQ(se1->getStrKey(2, 5), "ACCCTCATTT");
+
+    boost::dynamic_bitset<> x(8);
+    boost::dynamic_bitset<> r;
+    //ACTG = 00011011
+    x[7] = 0; x[6] = 0; x[5] = 0; x[4] = 1; x[3] = 1; x[2] = 0; x[1] = 1; x[0] = 1;
+    std::string s("ACTG");
+    r = pe1->strToBit(s);
+    ASSERT_EQ(x, r);
 }
