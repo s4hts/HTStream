@@ -27,7 +27,7 @@ boost::dynamic_bitset<> ReadBase::strToBit(std::string& StrKey){
 
 
 // Read
-Read Read::subread(int start, int length){
+Read Read::subread(size_t start, size_t length){
     //if(seq.length >= start + length){
     // Test for a throw an exception or just let string through an out_of_range exception?
     return Read(seq.substr(start, length), qual.substr(start,length));
@@ -35,18 +35,17 @@ Read Read::subread(int start, int length){
     //}
 }
 
-std::string Read::subseq(int start, int length){
+std::string Read::subseq(size_t start, size_t length){
   return seq.substr(start, length);
 }
 
 //PairedEndRead
-std::string PairedEndRead::getStrKey(int start, int length){
+std::string PairedEndRead::getStrKey(size_t start, size_t length){
   return one.subseq(start, length) + two.subseq(start, length);
 }
 
-//PairedEndRead::~PairedEndRead(){}
 
 //SingleEndRead
-std::string SingleEndRead::getStrKey(int start, int length){
+std::string SingleEndRead::getStrKey(size_t start, size_t length){
   return one.subseq(start, 2*length);
 }

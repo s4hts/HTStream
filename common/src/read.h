@@ -11,8 +11,8 @@ private:
 public:
     Read(const std::string& seq_, const std::string& qual_) :
         seq(seq_), qual(qual_) { }
-    Read subread(int start, int length);
-    std::string subseq(int start, int length);
+    Read subread(size_t start, size_t length);
+    std::string subseq(size_t start, size_t length);
 };
 
 
@@ -23,7 +23,7 @@ private:
 public:
     ReadBase(const std::string& id) : id(id) {}
     virtual ~ReadBase() {};
-    virtual std::string getStrKey(int start, int length) = 0;
+    virtual std::string getStrKey(size_t start, size_t length) = 0;
     boost::dynamic_bitset<> strToBit(std::string& StrKey);
     std::string getId() { return id; }
 
@@ -38,7 +38,7 @@ private:
 public:
     PairedEndRead(const Read& one, const Read& two, const std::string& id) :
         ReadBase(id), one(one), two(two) { }
-    std::string getStrKey(int start, int length);
+    std::string getStrKey(size_t start, size_t length);
 
 };
 
@@ -48,7 +48,7 @@ private:
 public:
     SingleEndRead(const Read& one, const std::string& id) :
         ReadBase(id), one(one) { }
-    std::string getStrKey(int start, int length);
+    std::string getStrKey(size_t start, size_t length);
 
 };
 

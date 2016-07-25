@@ -11,6 +11,12 @@ TEST(CreatePERead, createPEReadWorks){
     Read r2("CTTTCTGGAACTTGAGCAGGAGTTCTGCTCTGTCATCTCTGTTCTCCTGTTCCTTCCACACCTGTTTTTTTCTCACCGTGCCATTTTTCCCTTCATTCTC",
           "-8A@@###############################################################################################");
 
-    PairedEndRead pe1(r1, r2, "PERead");
-    ASSERT_EQ(0, 0.0);
+    std::shared_ptr<ReadBase> pe1 = std::make_shared<PairedEndRead>(r1, r2, "PERead");
+    std::shared_ptr<ReadBase> se1 = std::make_shared<SingleEndRead>(r1, "SERead1");
+
+    ASSERT_EQ(se1->getId(), "SERead1");
+    ASSERT_EQ(pe1->getId(), "PERead");
+
+    ASSERT_EQ(pe1->getStrKey(2, 5), "ACCCTTTCTG");
+    ASSERT_EQ(se1->getStrKey(2, 5), "ACCCTCATTT");
 }
