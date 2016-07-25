@@ -25,7 +25,6 @@ TEST(CreatePERead, createPEReadWorks){
     boost::dynamic_bitset<> r;
     //ACTG = 00011011
     x[7] = 0; x[6] = 0; x[5] = 0; x[4] = 1; x[3] = 1; x[2] = 0; x[1] = 1; x[0] = 1;
-    std::string s("ACTG");
-    r = pe1->strToBit(s);
+    r = pe1->strToBit("ACTG");
     ASSERT_EQ(x, r);
 }

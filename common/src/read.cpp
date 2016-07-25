@@ -5,11 +5,11 @@
 // ReadBase
 //ReadBase::~ReadBase(){}
 
-boost::dynamic_bitset<> ReadBase::strToBit(std::string& StrKey){
+boost::dynamic_bitset<> ReadBase::strToBit(const std::string& StrKey){
   boost::dynamic_bitset<> bit(2 * StrKey.length());
   //std::string seq("ACTG");
 
-  for(char &c : StrKey){
+  for(const char &c : StrKey){
     bit <<= 2;
     switch(c) {
       case 'A': break;
