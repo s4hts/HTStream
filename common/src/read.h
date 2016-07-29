@@ -13,6 +13,8 @@ public:
         seq(seq_), qual(qual_) { }
     Read subread(size_t start, size_t length);
     std::string subseq(size_t start, size_t length);
+    const std::string& get_seq() const { return seq; }
+    const std::string& get_qual() const { return qual; }
 };
 
 
@@ -37,6 +39,8 @@ public:
     PairedEndRead(const Read& one, const Read& two, const std::string& id) :
         ReadBase(id), one(one), two(two) { }
     boost::dynamic_bitset<> getKey(size_t start, size_t length);
+    const Read& get_read_one() const { return one; }
+    const Read& get_read_two() const { return two; }
 
 };
 
@@ -47,6 +51,7 @@ public:
     SingleEndRead(const Read& one, const std::string& id) :
         ReadBase(id), one(one) { }
     boost::dynamic_bitset<> getKey(size_t start, size_t length);
+    const Read& get_read() const { return one; };
 };
 
 #endif
