@@ -16,3 +16,16 @@ TEST(testIoHandle, parseSingleReadFastq) {
     ASSERT_EQ(read_count, 5);
 }    
 
+TEST(testIoHandle, parsePairedReadFastq) {
+    std::istringstream in1(readData);
+    std::istringstream in2(readData);
+    size_t read_count = 0;
+    
+    inputFastqPaired ifp(in1, in2);
+    for(auto i = ifp.begin(); i != ifp.end(); ++i) {
+        std::cout << i->get_read_one().get_qual() << std::endl;
+        read_count++;
+    }
+    ASSERT_EQ(read_count, 5);
+}
+    

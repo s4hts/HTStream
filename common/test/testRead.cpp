@@ -8,15 +8,12 @@ TEST(EmptyTest, firstTest) {
 
 TEST(CreatePERead, createPEReadWorks){
     Read r1("CCACCCTCATTTCATTCTCAGAAGCATGTATGAAGTTGTAATAGCCCTGACGTATGGTTTACCTACTAAGATACCCTCAGGAGTTCTCATCTAGCAAGTG",
-          "88@BCFDE<CEFFCEFEEEA<99,C,C,C9E9,,@CE9E9<CC,C6@E,,C,B8E8,CEE8CEE9CE9,,,C<CCCED<,,,,CCEEF9EFE9,C<,,C,");
+            "88@BCFDE<CEFFCEFEEEA<99,C,C,C9E9,,@CE9E9<CC,C6@E,,C,B8E8,CEE8CEE9CE9,,,C<CCCED<,,,,CCEEF9EFE9,C<,,C,", "Read1");
     Read r2("CTTTCTGGAACTTGAGCAGGAGTTCTGCTCTGTCATCTCTGTTCTCCTGTTCCTTCCACACCTGTTTTTTTCTCACCGTGCCATTTTTCCCTTCATTCTC",
-          "-8A@@###############################################################################################");
+            "-8A@@###############################################################################################", "Read2");
 
-    std::shared_ptr<ReadBase> pe1 = std::make_shared<PairedEndRead>(r1, r2, "PERead");
-    std::shared_ptr<ReadBase> se1 = std::make_shared<SingleEndRead>(r1, "SERead1");
-
-    ASSERT_EQ(se1->getId(), "SERead1");
-    ASSERT_EQ(pe1->getId(), "PERead");
+    std::shared_ptr<ReadBase> pe1 = std::make_shared<PairedEndRead>(r1, r2);
+    std::shared_ptr<ReadBase> se1 = std::make_shared<SingleEndRead>(r1);
 
     ASSERT_EQ(pe1->getKey(2, 5), pe1->strToBit("ACCCTTTCTG"));
     ASSERT_EQ(se1->getKey(2, 5), se1->strToBit("ACCCTCATTT"));
