@@ -28,8 +28,8 @@ public:
     class iterator {
     public:
         typedef SingleEndRead value_type;
-        typedef SingleEndRead& reference;
-        typedef SingleEndRead* pointer;
+        typedef value_type& reference;
+        typedef value_type* pointer;
         typedef std::input_iterator_tag iterator_category; //or another tag
 
         iterator(std::istream *in);

@@ -28,3 +28,11 @@ TEST(ConvertToTwobit, ConvertToTwobitWorks){
   bs1 = ReadBase::strToBit("ACTG");
   ASSERT_EQ(x, bs1);
 }
+
+TEST(qual, avgQualScore) {
+    SingleEndRead r1(Read("aaa",
+                       "aaa",
+                       "foo"));
+    ASSERT_EQ(r1.avg_q_score(), 97.0);
+
+}

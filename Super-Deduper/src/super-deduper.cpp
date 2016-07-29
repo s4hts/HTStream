@@ -31,9 +31,13 @@ int main(int argc, char** argv)
         desc.add_options()
             ("help,h", "Prints help.")
             ("read1-input,1", po::value< std::vector<std::string> >(),
-             "Read 1 input <comma sep for multiple files>")
-            ("read2-input,2", po::value< std::vector<std::string> >(),
+             "Read 1 input <comma sep for multiple files>") 
+            ("read2-input,2", po::value< std::vector<std::string> >(), 
              "Read 2 input <comma sep for multiple files>")
+            ("singleend-input,U","Single end read input <comma sep for multiple files>")
+            ("tab-input,T", "Tab input <comma sep for multiple files>")
+            ("interleaved-input,I",  "Interleaved input I <comma sep for multiple files>")
+            ("stdin-input,S", "STDIN input <MUST BE TAB DELIMITED INPUT>")
             ("start,s", po::value<int>(),  "Start location for unique ID <int>")
             ("length,l", po::value<int>(), "Length of unique ID <int>");
 
