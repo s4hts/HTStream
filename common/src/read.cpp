@@ -24,7 +24,7 @@ boost::dynamic_bitset<> ReadBase::strToBit(const std::string& StrKey){
 
 // Read
 Read Read::subread(size_t start, size_t length){
-    return Read(seq.substr(start, length), qual.substr(start,length));
+    return Read(seq.substr(start, length), qual.substr(start,length), id);
 }
 
 std::string Read::subseq(size_t start, size_t length){
@@ -39,4 +39,22 @@ boost::dynamic_bitset<> PairedEndRead::getKey(size_t start, size_t length){
 //SingleEndRead
 boost::dynamic_bitset<> SingleEndRead::getKey(size_t start, size_t length){
   return strToBit(one.subseq(start, 2*length));
+}
+
+size_t qual_sum(const char c, size_t s) {
+    return size_t(c) + s;
+}
+
+double SingleEndRead::avg_q_score()
+{
+    size_t sum = std::accumulate(one.get_qual().begin(), one.get_qual().end(), 0, qual_sum);
+    return sum/double(one.get_qual().length());
+    
+}
+
+double PairedEndRead::avg_q_score()
+{
+    size_t sum = std::accumulate(one.get_qual().begin(), one.get_qual().end(), 0, qual_sum);
+    sum += std::accumulate(two.get_qual().begin(), two.get_qual().end(), 0, qual_sum);
+    return sum/double(one.get_qual().length() + two.get_qual().length());
 }

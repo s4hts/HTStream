@@ -7,27 +7,25 @@ class Read {
 private:
     std::string seq;
     std::string qual;
+    std::string id;
 
 public:
-    Read(const std::string& seq_, const std::string& qual_) :
-        seq(seq_), qual(qual_) { }
+    Read(const std::string& seq_, const std::string& qual_, const std::string& id_) :
+        seq(seq_), qual(qual_), id(id_) { }
     Read subread(size_t start, size_t length);
     std::string subseq(size_t start, size_t length);
     const std::string& get_seq() const { return seq; }
     const std::string& get_qual() const { return qual; }
+    const std::string& get_id() const { return id; }
 };
 
 
 class ReadBase {
-private:
-    std::string id;
-
 public:
-    ReadBase(const std::string& id) : id(id) {}
     virtual ~ReadBase() {};
     virtual boost::dynamic_bitset<> getKey(size_t start, size_t length) = 0;
     static boost::dynamic_bitset<> strToBit(const std::string& StrKey);
-    std::string getId() { return id; }
+    virtual double avg_q_score() = 0;
 };
 
 
@@ -36,22 +34,23 @@ private:
     Read one;
     Read two;
 public:
-    PairedEndRead(const Read& one, const Read& two, const std::string& id) :
-        ReadBase(id), one(one), two(two) { }
+    PairedEndRead(const Read& one, const Read& two) :
+        one(one), two(two) { }
     boost::dynamic_bitset<> getKey(size_t start, size_t length);
     const Read& get_read_one() const { return one; }
     const Read& get_read_two() const { return two; }
-
+    double avg_q_score();
 };
 
 class SingleEndRead: public ReadBase {
 private:
     Read one;
 public:
-    SingleEndRead(const Read& one, const std::string& id) :
-        ReadBase(id), one(one) { }
+    SingleEndRead(const Read& one) :
+        one(one) { }
     boost::dynamic_bitset<> getKey(size_t start, size_t length);
     const Read& get_read() const { return one; };
+    double avg_q_score();
 };
 
 #endif
