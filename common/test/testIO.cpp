@@ -10,7 +10,7 @@ TEST(testIoHandle, parseSingleReadFastq) {
     inputFastqSingle ifs(in);
     size_t read_count = 0;
     for(auto i = ifs.begin(); i != ifs.end(); ++i) {
-        std::cout << i->get_read().get_qual() << std::endl;
+        std::cout << i->get_read().get_id() << std::endl;
         read_count++;
     }
     ASSERT_EQ(read_count, 5);

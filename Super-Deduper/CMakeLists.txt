@@ -7,13 +7,16 @@ message( status "sources: " ${sources})
 
 
 set(COMMON_INCLUDES ${CMAKE_SOURCE_DIR}/common/src)
-include_directories(${COMMON_INCLUDES})
 
 set(PROJECT_LINK_LIBS libhts_common.so)
 link_directories(${CMAKE_BINARY_DIR}/common)
 
+FIND_PACKAGE( Boost 1.54 COMPONENTS program_options REQUIRED )
+include_directories(${COMMON_INCLUDES} ${Boost_INCLUDE_DIR} )
+
+
 add_executable(super_deduper ${sources})
-target_link_libraries(super_deduper ${PROJECT_LINK_LIBS})
+target_link_libraries(super_deduper ${PROJECT_LINK_LIBS} ${Boost_LIBRARIES})
 
 add_custom_target(testSD
   DEPENDS super_deduper

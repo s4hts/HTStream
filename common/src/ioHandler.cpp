@@ -22,6 +22,8 @@ inputFastqSingle::iterator inputFastqSingle::end() {
 inputFastqSingle::iterator::iterator(std::istream *in) : input(in) {
     if (input and input->good()) {
         get_read();
+    } else {
+        input = nullptr;
     }
 };
 
@@ -111,6 +113,9 @@ void inputFastqPaired::iterator::get_read() {
 inputFastqPaired::iterator::iterator(std::istream *in1, std::istream *in2) : in1(in1), in2(in2) {
     if (in1 and in1->good() and in2 and in2->good()) {
         get_read();
+    } else {
+        in1 = nullptr;
+        in2 = nullptr;
     }
 };
 
