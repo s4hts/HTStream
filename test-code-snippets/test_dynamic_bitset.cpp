@@ -2,7 +2,7 @@
 #include <iostream>
 
 int main(int, char*[]){
-  boost::dynamic_bitset<> x(5);
+  boost::dynamic_bitset<> x(6);
   x[0] = 1;
   x[1] = 1;
   x[4] = 1;
@@ -13,12 +13,13 @@ int main(int, char*[]){
   y[2] = 1;
 
   for (boost::dynamic_bitset<>::size_type i = 0; i < x.size(); ++i)
-  std::cout << x[i];
+  {  std::cout << x[i]; }
   std::cout << "\n";
 
   std::cout << "x=" << x << "\n";
   std::cout << "y=" << y << "\n";
-  if(y.to_ulong() < x.to_ulong()){std::cout << "y < x\n";}else{std::cout << "!(y < x)\n";}
+  //if(y.to_ulong() < x.to_ulong()){std::cout << "y < x\n";}else{std::cout << "!(y < x)\n";}
+  if(y < x){std::cout << "y < x\n";}
 
   std::string seq("ACTG");
   boost::dynamic_bitset<> z(2*seq.length());
