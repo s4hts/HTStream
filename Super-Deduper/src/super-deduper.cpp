@@ -66,14 +66,10 @@ int main(int argc, char** argv)
                     auto key=i->getKey(10, 10);
                     if(!read_map.count(key)) {
                       read_map[key] = std::unique_ptr<ReadBase>(new SingleEndRead(*i));
-                    } else {
-                      std::cout << "i:" << i->avg_q_score() << " existing:" << read_map[key]->avg_q_score() << "\n";
-                    }
-
-                    // if(i->avg_q_score() > read_map[key]->avg_q_score()){
-                    //     read_map[key] = std::unique_ptr<ReadBase>(new SingleEndRead(*i));
-                    //     counters["Replaced"]++;
-                    //   }
+                    } else if(i->avg_q_score() > read_map[key]->avg_q_score()){
+                        read_map[key] = std::unique_ptr<ReadBase>(new SingleEndRead(*i));
+                        counters["Replaced"]++;
+                      }
                 }
             }
         }

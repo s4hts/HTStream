@@ -41,7 +41,7 @@ boost::dynamic_bitset<> SingleEndRead::getKey(size_t start, size_t length){
   return strToBit(one.subseq(start, 2*length));
 }
 
-size_t qual_sum(const char c, size_t s) {
+size_t qual_sum(size_t s, const char c) {
     return size_t(c) + s;
 }
 
@@ -49,7 +49,7 @@ double SingleEndRead::avg_q_score()
 {
     size_t sum = std::accumulate(one.get_qual().begin(), one.get_qual().end(), 0, qual_sum);
     return sum/double(one.get_qual().length());
-    
+
 }
 
 double PairedEndRead::avg_q_score()
