@@ -21,82 +21,33 @@ public:
     
 };
 
-class inputFastqSingle {
+
+template <class T, class Impl>
+class InputReader : Impl {
 public:
-    inputFastqSingle(std::istream& in) : input(&in) {}
+    typedef std::unique_ptr<T> value_type;
+    using Impl::Impl;
+    
+    bool has_next();
+    value_type next();
+        
+};
 
-    class iterator {
-    public:
-        typedef SingleEndRead value_type;
-        typedef value_type& reference;
-        typedef value_type* pointer;
-        typedef std::input_iterator_tag iterator_category; //or another tag
 
-        iterator(std::istream *in);
-        bool operator==(const iterator&) const;
-        bool operator!=(const iterator&) const;
-   /*
-        iterator (const iterator&);
-        ~iterator();
-        iterator& operator=(const iterator&);
-        */
-
-        iterator& operator++();
-        reference operator*() const;
-        pointer operator->() const;
-
-    private:
-        void get_read();
-
-        std::istream* input;
-        std::unique_ptr<SingleEndRead> read = 0;
-
-    };
-
-    iterator begin();
-    iterator end();
-
-private:
+class SingleEndReadImpl {
+public:
+    SingleEndReadImpl(std::istream& in) : input(&in) {}
+    
+protected:
     std::istream* input = 0;
 };
 
 
-class inputFastqPaired {
+class PairedEndReadImpl {
 public:
-    inputFastqPaired(std::istream& in1, std::istream& in2) : in1(&in1), in2(&in2) {}
-
-    class iterator {
-    public:
-        typedef PairedEndRead value_type;
-        typedef PairedEndRead& reference;
-        typedef PairedEndRead* pointer;
-        typedef std::input_iterator_tag iterator_category; //or another tag
-
-        iterator(std::istream *in1, std::istream *in2);
-        bool operator==(const iterator&) const;
-        bool operator!=(const iterator&) const;
-   /*
-        iterator (const iterator&);
-        ~iterator();
-        iterator& operator=(const iterator&);
-        */
-
-        iterator& operator++();
-        reference operator*() const;
-        pointer operator->() const;
-
-    private:
-        void get_read();
-
-        std::istream* in1, *in2 = 0;
-        std::unique_ptr<PairedEndRead> read = 0;
-
-    };
-
-    iterator begin();
-    iterator end();
-
-private:
+    PairedEndReadImpl(std::istream& in1, std::istream& in2) : in1(&in1), in2(&in2) {}
+  
+protected:
     std::istream* in1, * in2 = 0;
 };
 

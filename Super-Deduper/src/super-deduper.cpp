@@ -61,17 +61,18 @@ int main(int argc, char** argv)
             if(vm.count("read1-input")) {
                 auto read1_files = vm["read1-input"].as<std::vector<std::string> >();
                 std::ifstream read1(read1_files[0], std::ifstream::in);
-                inputFastqSingle ifs(read1);
+                InputReader<SingleEndRead, SingleEndReadImpl> ifs(read1);
 
-                for (auto i = ifs.begin(); i != ifs.end(); ++i) {
+                while(ifs.has_next()) {
+                    auto i = ifs.next();
                     counters["TotalRecords"]++;
                     //std::cout << "read id: " << i->get_read().get_id() << std::endl;
                     //check for existance, store or compare quality and replace:
                     auto key=i->getKey(10, 10);
                     if(!read_map.count(key)) {
-                      read_map[key] = std::unique_ptr<ReadBase>(new SingleEndRead(*i));
+                        read_map[key] = std::move(i);
                     } else if(i->avg_q_score() > read_map[key]->avg_q_score()){
-                        read_map[key] = std::unique_ptr<ReadBase>(new SingleEndRead(*i));
+                        read_map[key] = std::move(i);
                         counters["Replaced"]++;
                       }
                 }
