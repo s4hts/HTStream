@@ -1,6 +1,6 @@
 #include "read.h"
 #include <boost/dynamic_bitset.hpp>
-
+#include <numeric>
 
 boost::dynamic_bitset<> ReadBase::strToBit(const std::string& StrKey){
   // converts a string to a 2bit representation: A:00, C:01, T:10, G:11
@@ -41,20 +41,20 @@ boost::dynamic_bitset<> SingleEndRead::getKey(size_t start, size_t length){
   return strToBit(one.subseq(start, 2*length));
 }
 
-size_t qual_sum(size_t s, const char c) {
+inline size_t qual_sum(size_t s, const char c) {
     return size_t(c) + s;
 }
 
 double SingleEndRead::avg_q_score()
 {
-    size_t sum = std::accumulate(one.get_qual().begin(), one.get_qual().end(), 0, qual_sum);
+    size_t sum = std::accumulate(one.get_qual().begin(), one.get_qual().end(), size_t(0), qual_sum);
     return sum/double(one.get_qual().length());
 
 }
 
 double PairedEndRead::avg_q_score()
 {
-    size_t sum = std::accumulate(one.get_qual().begin(), one.get_qual().end(), 0, qual_sum);
-    sum += std::accumulate(two.get_qual().begin(), two.get_qual().end(), 0, qual_sum);
+    size_t sum = std::accumulate(one.get_qual().begin(), one.get_qual().end(), size_t(0), qual_sum);
+    sum += std::accumulate(two.get_qual().begin(), two.get_qual().end(), size_t(0), qual_sum);
     return sum/double(one.get_qual().length() + two.get_qual().length());
 }

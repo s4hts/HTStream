@@ -4,24 +4,9 @@
 #include <istream>
 #include <memory>
 #include "read.h"
-/*
-class inputBase {
-public:
-    inputBase(std::istream& in) : input(in) {};
-
-    
-private:
-    std::istream& input;
-};
-*/
-
-class inputTab {
-public:
-    inputTab(std::istream& in);
-    
-};
 
 
+// ### input ###
 template <class T, class Impl>
 class InputReader : Impl {
 public:
@@ -30,11 +15,16 @@ public:
     
     bool has_next();
     value_type next();
-        
 };
 
+class InputFastq {
+protected:
+    Read load_read(std::istream *input);
+    
+    std::string id, seq, id2, qual;
+};
 
-class SingleEndReadImpl {
+class SingleEndReadImpl : public InputFastq{
 public:
     SingleEndReadImpl(std::istream& in) : input(&in) {}
     
@@ -43,21 +33,42 @@ protected:
 };
 
 
-class PairedEndReadImpl {
+class PairedEndReadImpl : public InputFastq {
 public:
-    PairedEndReadImpl(std::istream& in1, std::istream& in2) : in1(&in1), in2(&in2) {}
+    PairedEndReadImpl(std::istream& in1_, std::istream& in2_) : in1(&in1_), in2(&in2_) {}
   
 protected:
     std::istream* in1, * in2 = 0;
 };
 
-/*
-class outputTab {
+// ### output ###
+
+template <class T, class Impl>
+class OutputWriter : Impl {
+public:
+    using Impl::Impl;
+    void write(const T& data);
 };
 
-class outputFastq
-{
-}
-*/
+class OutputFastq {
+protected:
+    void write_read(const Read& read, std::ostream &output);
+};
+
+class SingleEndReadOut : public OutputFastq {
+public:
+    SingleEndReadOut(std::ostream& out) : output(out) {}
+    ~SingleEndReadOut() { output.flush(); }
+protected:
+    std::ostream& output;
+};
+
+class PairedEndReadOut : public OutputFastq {
+public:
+    PairedEndReadOut(std::ostream& out1_, std::ostream& out2_) : out1(out1_), out2(out2_) {}
+    ~PairedEndReadOut() { out1.flush(); out2.flush(); }
+protected:
+    std::ostream &out1, &out2;
+};
 
 #endif

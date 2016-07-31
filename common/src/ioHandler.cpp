@@ -7,8 +7,7 @@ void skip_lr(std::istream *input) {
     }
 }
 
-Read load_read(std::istream *input) {
-    std::string id, seq, id2, qual;
+Read InputFastq::load_read(std::istream *input) {
     while(std::getline(*input, id) && id.size() < 1) {
     }
     if (id.size() < 1) {
@@ -70,3 +69,22 @@ bool InputReader<PairedEndRead, PairedEndReadImpl>::has_next() {
 };
 
 
+// ### output ###
+
+void OutputFastq::write_read(const Read& read, std::ostream &output) {
+    output << '@' << read.get_id() << "\n";
+    output << read.get_seq() << "\n";
+    output << '+' << "\n";
+    output << read.get_qual() << "\n";
+}
+
+template <>
+void OutputWriter<SingleEndRead, SingleEndReadOut>::write(const SingleEndRead& data) {
+    write_read(data.get_read(), output);
+}
+
+template <>
+void OutputWriter<PairedEndRead, PairedEndReadOut>::write(const PairedEndRead& data) {
+    write_read(data.get_read_one(), out1);
+    write_read(data.get_read_two(), out2);
+}
