@@ -15,17 +15,19 @@ TEST(CreatePERead, createPEReadWorks){
     std::shared_ptr<ReadBase> pe1 = std::make_shared<PairedEndRead>(r1, r2);
     std::shared_ptr<ReadBase> se1 = std::make_shared<SingleEndRead>(r1);
 
-    ASSERT_EQ(pe1->getKey(2, 5), pe1->strToBit("ACCCTTTCTG"));
-    ASSERT_EQ(se1->getKey(2, 5), se1->strToBit("ACCCTCATTT"));
+    ASSERT_EQ(pe1->get_key(2, 5), pe1->str_to_bit("ACCCTTTCTG"));
+
+    // reverse compliment
+    ASSERT_EQ(se1->get_key(2, 5), se1->str_to_bit("CTTGC"));
 
 }
 
 TEST(ConvertToTwobit, ConvertToTwobitWorks){
   boost::dynamic_bitset<> x(8);
   boost::dynamic_bitset<> bs1;
-  //ACTG = 00 01 10 11
-  x[7] = 0; x[6] = 0; x[5] = 0; x[4] = 1; x[3] = 1; x[2] = 0; x[1] = 1; x[0] = 1;
-  bs1 = ReadBase::strToBit("ACTG");
+  //ACTG = 00 01 11 10
+  x[7] = 0; x[6] = 0; x[5] = 0; x[4] = 1; x[3] = 1; x[2] = 1; x[1] = 1; x[0] = 0;
+  bs1 = ReadBase::str_to_bit("ACTG");
   ASSERT_EQ(x, bs1);
 }
 
@@ -35,4 +37,16 @@ TEST(qual, avgQualScore) {
                        "foo"));
     ASSERT_EQ(r1.avg_q_score(), 97.0);
 
+}
+
+TEST(read, BitToStrWorks) {
+    auto bs1 = ReadBase::str_to_bit("ACTG");
+    auto s = ReadBase::bit_to_str(bs1);
+    ASSERT_EQ(s, "ACTG");
+}
+
+TEST(read, ReverseComplementWorks) {
+    ASSERT_EQ(ReadBase::bit_to_str(ReadBase::reverse_complement("ACTG", 0, 4)), "CAGT");
+    ASSERT_EQ(ReadBase::bit_to_str(ReadBase::reverse_complement("TAACTGTA", 2, 4)), "CAGT");
+    
 }

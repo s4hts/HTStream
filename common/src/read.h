@@ -3,6 +3,18 @@
 
 #include <boost/dynamic_bitset.hpp>
 
+typedef boost::dynamic_bitset<> BitSet;
+
+class ReadBase {
+public:
+    virtual ~ReadBase() {}
+    virtual boost::dynamic_bitset<> get_key(size_t start, size_t length) = 0;
+    static boost::dynamic_bitset<> str_to_bit(const std::string& StrKey);
+    static std::string bit_to_str(const boost::dynamic_bitset<> &bits);
+    static BitSet reverse_complement(const std::string& str, int start, int length);
+    virtual double avg_q_score() = 0;
+};
+
 class Read {
 private:
     std::string seq;
@@ -19,16 +31,6 @@ public:
     const std::string& get_id() const { return id; }
 };
 
-
-class ReadBase {
-public:
-    virtual ~ReadBase() {}
-    virtual boost::dynamic_bitset<> getKey(size_t start, size_t length) = 0;
-    static boost::dynamic_bitset<> strToBit(const std::string& StrKey);
-    virtual double avg_q_score() = 0;
-};
-
-
 class PairedEndRead: public ReadBase {
 private:
     Read one;
@@ -36,7 +38,7 @@ private:
 public:
     PairedEndRead(const Read& one_, const Read& two_) :
         one(one_), two(two_) { }
-    boost::dynamic_bitset<> getKey(size_t start, size_t length);
+    boost::dynamic_bitset<> get_key(size_t start, size_t length);
     const Read& get_read_one() const { return one; }
     const Read& get_read_two() const { return two; }
     double avg_q_score();
@@ -48,7 +50,7 @@ private:
 public:
     SingleEndRead(const Read& one_) :
         one(one_) { }
-    boost::dynamic_bitset<> getKey(size_t start, size_t length);
+    boost::dynamic_bitset<> get_key(size_t start, size_t length);
     const Read& get_read() const { return one; }
     double avg_q_score();
 };

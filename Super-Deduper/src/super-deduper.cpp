@@ -25,7 +25,7 @@ void load_map(InputReader<T, Impl> &reader, Counter& counters, BitMap& read_map)
         counters["TotalRecords"]++;
         //std::cout << "read id: " << i->get_read().get_id() << std::endl;
         //check for existance, store or compare quality and replace:
-        auto key=i->getKey(10, 10);
+        auto key=i->get_key(10, 10);
         if(!read_map.count(key)) {
             read_map[key] = std::move(i);
         } else if(i->avg_q_score() > read_map[key]->avg_q_score()){
@@ -137,7 +137,7 @@ int main(int argc, char** argv)
 
     }
 
-    std::cout << "TotalRecords:" << counters["TotalRecords"] << "\tReplaced:" << counters["Replaced"]
+    std::cerr << "TotalRecords:" << counters["TotalRecords"] << "\tReplaced:" << counters["Replaced"]
               << "\tKept:" << read_map.size() << std::endl;
     return SUCCESS;
 
