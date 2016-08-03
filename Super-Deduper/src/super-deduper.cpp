@@ -101,7 +101,7 @@ int main(int argc, char** argv)
                     throw std::runtime_error("must have same number of input files for read1 and read2");
                 }
                 auto read1_files = vm["read1-input"].as<std::vector<std::string> >();
-                auto read2_files = vm["read1-input"].as<std::vector<std::string> >();
+                auto read2_files = vm["read2-input"].as<std::vector<std::string> >();
                 for(size_t i = 0; i < read1_files.size(); ++i) {
                     // todo: check file exists etc
                     std::ifstream read1(read1_files[i], std::ifstream::in);
