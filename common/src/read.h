@@ -7,7 +7,7 @@ typedef boost::dynamic_bitset<> BitSet;
 
 class Noop {
 public:
-    int operator()(int x) const { return x; };
+    int operator()(int x) const { return x; }
 };
 
 class ReadBase {
