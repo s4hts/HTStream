@@ -39,7 +39,6 @@ TEST_F(ReadsTest, parsePairedReadFastq) {
 TEST_F(ReadsTest, testWriteFastqSingle) {
     std::istringstream in1(readData);
     InputReader<SingleEndRead, SingleEndReadImpl> ifs(in1);
-    size_t read_count = 0;
 
     std::ostringstream out1;
     {

@@ -5,11 +5,32 @@
 
 typedef boost::dynamic_bitset<> BitSet;
 
+class Noop {
+public:
+    int operator()(int x) const { return x; };
+};
+
 class ReadBase {
 public:
     virtual ~ReadBase() {}
     virtual boost::dynamic_bitset<> get_key(size_t start, size_t length) = 0;
-    static boost::dynamic_bitset<> str_to_bit(const std::string& StrKey);
+
+    template <typename functor = Noop>
+    static boost::dynamic_bitset<> str_to_bit(const std::string& StrKey, functor const & transform = Noop()) {
+          // converts a string to a 2bit representation: A:00, T:11, C:01, G:10
+        // ~ will then convert to the complimentary bp
+        boost::dynamic_bitset<> bit(2 * StrKey.length());
+        size_t i = (2 * StrKey.length()) - 1;
+        
+        for(const char &c : StrKey){
+            //  non branching conversion
+            bit[i-1] = transform(!!((c + 10) & ( 1 << 2)));
+            bit[i] = transform(!!((c + 10) & ( 1 << 4)));
+            i -= 2;
+        }
+        return bit;
+    }
+    
     static std::string bit_to_str(const boost::dynamic_bitset<> &bits);
     static BitSet reverse_complement(const std::string& str, int start, int length);
     virtual double avg_q_score() = 0;

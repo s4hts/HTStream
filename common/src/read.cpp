@@ -2,21 +2,6 @@
 #include <boost/dynamic_bitset.hpp>
 #include <numeric>
 
-boost::dynamic_bitset<> ReadBase::str_to_bit(const std::string& StrKey){
-  // converts a string to a 2bit representation: A:00, T:11, C:01, G:10
-  // ~ will then convert to the complimentary bp
-  boost::dynamic_bitset<> bit(2 * StrKey.length());
-  size_t i = (2 * StrKey.length()) - 1;
-
-  for(const char &c : StrKey){
-      //  non branching conversion
-      bit[i-1] = !!((c + 10) & ( 1 << 2));
-      bit[i] = !!((c + 10) & ( 1 << 4));
-      i -= 2;
-  }
-  return bit;
-}
-
 std::string ReadBase::bit_to_str(const boost::dynamic_bitset<> &bits) {
     size_t str_len = bits.size()/2;
     std::string out;
@@ -54,7 +39,7 @@ boost::dynamic_bitset<> PairedEndRead::get_key(size_t start, size_t length){
 BitSet ReadBase::reverse_complement(const std::string& str, int start, int length) {
     auto rstart = str.rbegin() + start;
     auto rend = str.rbegin() + start + length;
-    return ~str_to_bit(std::string(rstart, rend));
+    return str_to_bit(std::string(rstart, rend), [](int x) { return !x; });
 }
 
 //SingleEndRead
