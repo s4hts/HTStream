@@ -2,7 +2,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <numeric>
 
-std::string ReadBase::bit_to_str(const boost::dynamic_bitset<> &bits) {
+std::string ReadBase::bit_to_str(const BitSet &bits) {
     size_t str_len = bits.size()/2;
     std::string out;
     out.resize(str_len);
@@ -32,19 +32,19 @@ std::string Read::subseq(size_t start, size_t length){
 }
 
 //PairedEndRead
-boost::dynamic_bitset<> PairedEndRead::get_key(size_t start, size_t length){
+boost::optional<BitSet> PairedEndRead::get_key(size_t start, size_t length){
     return std::max(str_to_bit(one.subseq(start, length) + two.subseq(start, length)),
                     str_to_bit(two.subseq(start, length) + one.subseq(start, length)));
 }
 
-BitSet ReadBase::reverse_complement(const std::string& str, int start, int length) {
+boost::optional<BitSet> ReadBase::reverse_complement(const std::string& str, int start, int length) {
     auto rstart = str.rbegin() + start;
     auto rend = str.rbegin() + start + length;
     return str_to_bit(std::string(rstart, rend), [](int x) { return !x; });
 }
 
 //SingleEndRead
-boost::dynamic_bitset<> SingleEndRead::get_key(size_t start, size_t length){
+boost::optional<BitSet> SingleEndRead::get_key(size_t start, size_t length){
     
     return str_to_bit(one.subseq(start, length));
 }

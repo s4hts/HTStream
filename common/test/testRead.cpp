@@ -27,7 +27,7 @@ TEST(ConvertToTwobit, ConvertToTwobitWorks){
   boost::dynamic_bitset<> bs1;
   //ACTG = 00 01 11 10
   x[7] = 0; x[6] = 0; x[5] = 0; x[4] = 1; x[3] = 1; x[2] = 1; x[1] = 1; x[0] = 0;
-  bs1 = ReadBase::str_to_bit("ACTG");
+  bs1 = *ReadBase::str_to_bit("ACTG");
   ASSERT_EQ(x, bs1);
 }
 
@@ -40,14 +40,14 @@ TEST(qual, avgQualScore) {
 }
 
 TEST(read, BitToStrWorks) {
-    auto bs1 = ReadBase::str_to_bit("ACTG");
+    auto bs1 = *ReadBase::str_to_bit("ACTG");
     auto s = ReadBase::bit_to_str(bs1);
     ASSERT_EQ(s, "ACTG");
 }
 
 TEST(read, ReverseComplementWorks) {
-    ASSERT_EQ(ReadBase::bit_to_str(ReadBase::reverse_complement("ACTG", 0, 4)), "CAGT");
+    ASSERT_EQ(ReadBase::bit_to_str(*ReadBase::reverse_complement("ACTG", 0, 4)), "CAGT");
 
-    ASSERT_EQ(ReadBase::bit_to_str(ReadBase::reverse_complement("ACTAACTGTA", 2, 4)), "CAGT");
+    ASSERT_EQ(ReadBase::bit_to_str(*ReadBase::reverse_complement("ACTAACTGTA", 2, 4)), "CAGT");
     
 }

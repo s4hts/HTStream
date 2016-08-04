@@ -2,6 +2,7 @@
 #define READ_H
 
 #include <boost/dynamic_bitset.hpp>
+#include <boost/optional.hpp>
 
 typedef boost::dynamic_bitset<> BitSet;
 
@@ -13,13 +14,13 @@ public:
 class ReadBase {
 public:
     virtual ~ReadBase() {}
-    virtual boost::dynamic_bitset<> get_key(size_t start, size_t length) = 0;
+    virtual boost::optional<boost::dynamic_bitset<>> get_key(size_t start, size_t length) = 0;
 
     template <typename functor = Noop>
-    static boost::dynamic_bitset<> str_to_bit(const std::string& StrKey, functor const & transform = Noop()) {
+    static boost::optional<BitSet> str_to_bit(const std::string& StrKey, functor const & transform = Noop()) {
           // converts a string to a 2bit representation: A:00, T:11, C:01, G:10
         // ~ will then convert to the complimentary bp
-        boost::dynamic_bitset<> bit(2 * StrKey.length());
+        BitSet bit(2 * StrKey.length());
         size_t i = (2 * StrKey.length()) -1;
         for (const char &c : StrKey) {
             switch(c) {
@@ -40,7 +41,7 @@ public:
                 bit[i-1] = transform(1);
                 break;
             case 'N':
-                throw std::runtime_error("N read found");
+                return boost::none;
                 break;
             }
             i -= 2;
@@ -48,8 +49,8 @@ public:
         return bit;
     }
     
-    static std::string bit_to_str(const boost::dynamic_bitset<> &bits);
-    static BitSet reverse_complement(const std::string& str, int start, int length);
+    static std::string bit_to_str(const BitSet &bits);
+    static boost::optional<BitSet> reverse_complement(const std::string& str, int start, int length);
     virtual double avg_q_score() = 0;
 };
 
@@ -76,7 +77,7 @@ private:
 public:
     PairedEndRead(const Read& one_, const Read& two_) :
         one(one_), two(two_) { }
-    boost::dynamic_bitset<> get_key(size_t start, size_t length);
+    boost::optional<BitSet> get_key(size_t start, size_t length);
     const Read& get_read_one() const { return one; }
     const Read& get_read_two() const { return two; }
     double avg_q_score();
@@ -88,7 +89,7 @@ private:
 public:
     SingleEndRead(const Read& one_) :
         one(one_) { }
-    boost::dynamic_bitset<> get_key(size_t start, size_t length);
+    boost::optional<BitSet> get_key(size_t start, size_t length);
     const Read& get_read() const { return one; }
     double avg_q_score();
 };

@@ -16,25 +16,24 @@ namespace
 
 } // namespace
 
-typedef std::unordered_map<std::string, int> Counter;
+typedef std::unordered_map<std::string, size_t> Counter;
 typedef std::map <boost::dynamic_bitset<>, std::unique_ptr<ReadBase>> BitMap;
 
 template <class T, class Impl>
 void load_map(InputReader<T, Impl> &reader, Counter& counters, BitMap& read_map, size_t start, size_t length) {
     while(reader.has_next()) {
         auto i = reader.next();
-        counters["TotalRecords"]++;
+        ++counters["TotalRecords"];
         //std::cout << "read id: " << i->get_read().get_id() << std::endl;
         //check for existance, store or compare quality and replace:
-        try {
-            auto key=i->get_key(start, length);
-            if(!read_map.count(key)) {
-                read_map[key] = std::move(i);
-            } else if(i->avg_q_score() > read_map[key]->avg_q_score()){
-                read_map[key] = std::move(i);
+        if (auto key=i->get_key(start, length)) {
+            if(!read_map.count(*key)) {
+                read_map[*key] = std::move(i);
+            } else if(i->avg_q_score() > read_map[*key]->avg_q_score()){
+                read_map[*key] = std::move(i);
                 ++counters["Replaced"];
             }
-        } catch (std::runtime_error &e) {
+        } else {  // key had N 
             ++counters["HasN"];
         }
     }
@@ -49,7 +48,12 @@ int main(int argc, char** argv)
     counters["Replaced"] = 0;
     counters["HasN"] = 0;
     size_t start, length = 0;
-
+    std::string prefix;
+    std::vector<std::string> default_pe = {"PE1", "PE2"};
+    bool fastq_out;
+    bool tab_out;
+    bool std_out;
+    
     try
     {
         /** Define and parse the program options
@@ -74,11 +78,12 @@ int main(int argc, char** argv)
             ("quality-check-off,q",        "Quality Checking Off First Duplicate seen will be kept")
             ("gzip-output,g",              "Output gzipped")
             ("interleaved-output, i",      "Output to interleaved")
-            ("fastq-output,f",             "Fastq format outputted <R1, R2>")
-            ("force,F",                    "Forces overwrite of files")
-            ("tab-output,t",               "Tab-delimited output")
-            ("to-stdout,O",                "Prints to STDOUT in Tab Delimited")
-            ("prefix,p",                   "Prefix for outputted files")
+            ("fastq-output,f", po::bool_switch(&fastq_out)->default_value(false), "Fastq format output")
+            ("force,F", po::bool_switch()->default_value(true),         "Forces overwrite of files")
+            ("tab-output,t", po::bool_switch(&tab_out)->default_value(false),   "Tab-delimited output")
+            ("to-stdout,O", po::bool_switch(&std_out)->default_value(false),    "Prints to STDOUT in Tab Delimited")
+            ("prefix,p", po::value<std::string>(&prefix)->default_value("output_nodup_"),
+                                           "Prefix for outputted files")
             ("log-file,L",                 "Output-Logfile")
             ("no-log,N",                   "No logfile <outputs to stderr>")
             ("help,h",                     "Prints help.");
@@ -108,11 +113,12 @@ int main(int argc, char** argv)
                 }
                 auto read1_files = vm["read1-input"].as<std::vector<std::string> >();
                 auto read2_files = vm["read2-input"].as<std::vector<std::string> >();
+
                 for(size_t i = 0; i < read1_files.size(); ++i) {
                     // todo: check file exists etc
                     std::ifstream read1(read1_files[i], std::ifstream::in);
                     std::ifstream read2(read2_files[i], std::ifstream::in);
-                    InputReader<PairedEndRead, PairedEndReadImpl> ifp(read1, read2);
+                    InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(read1, read2);
                     load_map(ifp, counters, read_map, start, length);
                 }
             }
@@ -120,10 +126,24 @@ int main(int argc, char** argv)
                 auto read_files = vm["singleend-input"].as<std::vector<std::string> >();
                 for (auto file : read_files) {
                     std::ifstream read1(file, std::ifstream::in);
-                    InputReader<SingleEndRead, SingleEndReadImpl> ifs(read1);
+                    InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(read1);
                     load_map(ifs, counters, read_map, start, length);
                 }
             }
+
+                if (fastq_out || (! std_out && ! tab_out) ) {
+                    default_pe[0] += ".fastq";
+                    default_pe[1] += ".fastq";
+                    default_pe[0] = prefix + default_pe[0];
+                    default_pe[1] = prefix + default_pe[1];
+                      
+                    std::ofstream out1(default_pe[0], std::ofstream::out);
+                    std::ofstream out2(default_pe[1], std::ofstream::out);
+                    OutputWriter<PairedEndRead, PairedEndReadOutFastq> ofs(out1, out2);
+                    for(auto const &i : read_map) {
+                        ofs.write(*dynamic_cast<PairedEndRead*>(i.second.get()));
+                    }
+                }
             
         }
         catch(po::error& e)
@@ -145,7 +165,7 @@ int main(int argc, char** argv)
     }
 
     std::cerr << "TotalRecords:" << counters["TotalRecords"] << "\tReplaced:" << counters["Replaced"]
-              << "\tKept:" << read_map.size() << "\tRemoved:" << counters["TotalRecords"] - read_map.size() 
+              << "\tKept:" << read_map.size() << "\tRemoved:" << counters["TotalRecords"] - read_map.size()
               << "\tHasN:" << counters["HasN"] << std::endl;
     return SUCCESS;
 

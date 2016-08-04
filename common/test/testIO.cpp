@@ -12,7 +12,7 @@ public:
 
 TEST_F(ReadsTest, parseSingleReadFastq) {
     std::istringstream in1(readData);
-    InputReader<SingleEndRead, SingleEndReadImpl> ifs(in1);
+    InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(in1);
     size_t read_count = 0;
     while(ifs.has_next()) {
         auto r = ifs.next();
@@ -27,7 +27,7 @@ TEST_F(ReadsTest, parsePairedReadFastq) {
     std::istringstream in2(readData);
     size_t read_count = 0;
     
-    InputReader<PairedEndRead, PairedEndReadImpl> ifp(in1, in2);
+    InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(in1, in2);
     while(ifp.has_next()) {
         auto i = ifp.next();
         std::cout << i->get_read_one().get_qual() << std::endl;
@@ -38,11 +38,11 @@ TEST_F(ReadsTest, parsePairedReadFastq) {
     
 TEST_F(ReadsTest, testWriteFastqSingle) {
     std::istringstream in1(readData);
-    InputReader<SingleEndRead, SingleEndReadImpl> ifs(in1);
+    InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(in1);
 
     std::ostringstream out1;
     {
-        OutputWriter<SingleEndRead, SingleEndReadOut> ofs(out1);
+        OutputWriter<SingleEndRead, SingleEndReadOutFastq> ofs(out1);
 
         while(ifs.has_next()) {
             auto r = ifs.next();
