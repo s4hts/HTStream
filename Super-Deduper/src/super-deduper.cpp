@@ -5,6 +5,7 @@
 #include <fstream>
 #include "ioHandler.h"
 #include <map>
+#include <unordered_map>
 #include <boost/dynamic_bitset.hpp>
 
 namespace
@@ -15,7 +16,7 @@ namespace
 
 } // namespace
 
-typedef std::map<std::string, int> Counter;
+typedef std::unordered_map<std::string, int> Counter;
 typedef std::map <boost::dynamic_bitset<>, std::unique_ptr<ReadBase>> BitMap;
 
 template <class T, class Impl>
@@ -25,12 +26,16 @@ void load_map(InputReader<T, Impl> &reader, Counter& counters, BitMap& read_map,
         counters["TotalRecords"]++;
         //std::cout << "read id: " << i->get_read().get_id() << std::endl;
         //check for existance, store or compare quality and replace:
-        auto key=i->get_key(start, length);
-        if(!read_map.count(key)) {
-            read_map[key] = std::move(i);
-        } else if(i->avg_q_score() > read_map[key]->avg_q_score()){
-            read_map[key] = std::move(i);
-            counters["Replaced"]++;
+        try {
+            auto key=i->get_key(start, length);
+            if(!read_map.count(key)) {
+                read_map[key] = std::move(i);
+            } else if(i->avg_q_score() > read_map[key]->avg_q_score()){
+                read_map[key] = std::move(i);
+                ++counters["Replaced"];
+            }
+        } catch (std::runtime_error &e) {
+            ++counters["HasN"];
         }
     }
 }
@@ -42,6 +47,7 @@ int main(int argc, char** argv)
     Counter counters;
     counters["TotalRecords"] = 0;
     counters["Replaced"] = 0;
+    counters["HasN"] = 0;
     size_t start, length = 0;
 
     try
@@ -139,7 +145,8 @@ int main(int argc, char** argv)
     }
 
     std::cerr << "TotalRecords:" << counters["TotalRecords"] << "\tReplaced:" << counters["Replaced"]
-              << "\tKept:" << read_map.size() << std::endl;
+              << "\tKept:" << read_map.size() << "\tRemoved:" << counters["TotalRecords"] - read_map.size() 
+              << "\tHasN:" << counters["HasN"] << std::endl;
     return SUCCESS;
 
 }

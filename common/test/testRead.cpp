@@ -8,6 +8,7 @@ TEST(EmptyTest, firstTest) {
 
 TEST(CreatePERead, createPEReadWorks){
     Read r1("CCACCCTCATTTCATTCTCAGAAGCATGTATGAAGTTGTAATAGCCCTGACGTATGGTTTACCTACTAAGATACCCTCAGGAGTTCTCATCTAGCAAGTG",
+
             "88@BCFDE<CEFFCEFEEEA<99,C,C,C9E9,,@CE9E9<CC,C6@E,,C,B8E8,CEE8CEE9CE9,,,C<CCCED<,,,,CCEEF9EFE9,C<,,C,", "Read1");
     Read r2("CTTTCTGGAACTTGAGCAGGAGTTCTGCTCTGTCATCTCTGTTCTCCTGTTCCTTCCACACCTGTTTTTTTCTCACCGTGCCATTTTTCCCTTCATTCTC",
             "-8A@@###############################################################################################", "Read2");
@@ -15,10 +16,9 @@ TEST(CreatePERead, createPEReadWorks){
     std::shared_ptr<ReadBase> pe1 = std::make_shared<PairedEndRead>(r1, r2);
     std::shared_ptr<ReadBase> se1 = std::make_shared<SingleEndRead>(r1);
 
-    ASSERT_EQ(pe1->get_key(2, 5), pe1->str_to_bit("ACCCTTTCTG"));
+    ASSERT_EQ(pe1->get_key(2, 5), pe1->str_to_bit("TTCTGACCCT"));
 
-    // reverse compliment
-    ASSERT_EQ(se1->get_key(2, 5), se1->str_to_bit("CTTGC"));
+    ASSERT_EQ(se1->get_key(2, 5), se1->str_to_bit("ACCCT"));
 
 }
 
@@ -47,6 +47,7 @@ TEST(read, BitToStrWorks) {
 
 TEST(read, ReverseComplementWorks) {
     ASSERT_EQ(ReadBase::bit_to_str(ReadBase::reverse_complement("ACTG", 0, 4)), "CAGT");
-    ASSERT_EQ(ReadBase::bit_to_str(ReadBase::reverse_complement("TAACTGTA", 2, 4)), "CAGT");
+
+    ASSERT_EQ(ReadBase::bit_to_str(ReadBase::reverse_complement("ACTAACTGTA", 2, 4)), "CAGT");
     
 }

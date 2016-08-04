@@ -33,7 +33,8 @@ std::string Read::subseq(size_t start, size_t length){
 
 //PairedEndRead
 boost::dynamic_bitset<> PairedEndRead::get_key(size_t start, size_t length){
-    return str_to_bit(one.subseq(start, length) + two.subseq(start, length));
+    return std::max(str_to_bit(one.subseq(start, length) + two.subseq(start, length)),
+                    str_to_bit(two.subseq(start, length) + one.subseq(start, length)));
 }
 
 BitSet ReadBase::reverse_complement(const std::string& str, int start, int length) {
@@ -45,7 +46,7 @@ BitSet ReadBase::reverse_complement(const std::string& str, int start, int lengt
 //SingleEndRead
 boost::dynamic_bitset<> SingleEndRead::get_key(size_t start, size_t length){
     
-    return std::max (str_to_bit(one.subseq(start, length)), reverse_complement(one.get_seq(), int(start), int(length)));
+    return str_to_bit(one.subseq(start, length));
 }
 
 inline size_t qual_sum(size_t s, const char c) {

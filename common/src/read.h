@@ -20,12 +20,29 @@ public:
           // converts a string to a 2bit representation: A:00, T:11, C:01, G:10
         // ~ will then convert to the complimentary bp
         boost::dynamic_bitset<> bit(2 * StrKey.length());
-        size_t i = (2 * StrKey.length()) - 1;
-        
-        for(const char &c : StrKey){
-            //  non branching conversion
-            bit[i-1] = transform(!!((c + 10) & ( 1 << 2)));
-            bit[i] = transform(!!((c + 10) & ( 1 << 4)));
+        size_t i = (2 * StrKey.length()) -1;
+        for (const char &c : StrKey) {
+            switch(c) {
+            case 'A': 
+                bit[i] = transform(0);
+                bit[i-1] = transform(0);
+                break;
+            case 'C': 
+                bit[i] = transform(0);
+                bit[i-1] = transform(1);
+                break;
+            case 'G': 
+                bit[i] = transform(1);
+                bit[i-1] = transform(0);
+                break;
+            case 'T': 
+                bit[i] = transform(1); 
+                bit[i-1] = transform(1);
+                break;
+            case 'N':
+                throw std::runtime_error("N read found");
+                break;
+            }
             i -= 2;
         }
         return bit;
