@@ -4,7 +4,7 @@
 #include <istream>
 #include <memory>
 #include "read.h"
-
+#include <boost/iostreams/concepts.hpp>
 
 // ### input ###
 template <class T, class Impl>

@@ -7,6 +7,12 @@
 #include <map>
 #include <unordered_map>
 #include <boost/dynamic_bitset.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
+#include <boost/iostreams/device/file_descriptor.hpp>
+#include <boost/iostreams/stream.hpp>
+#include <boost/filesystem/path.hpp>
+#include <boost/filesystem.hpp>
 
 namespace
 {
@@ -38,7 +44,21 @@ void load_map(InputReader<T, Impl> &reader, Counter& counters, BitMap& read_map,
         }
     }
 }
+namespace bi = boost::iostreams;
+namespace bf = boost::filesystem;
 
+int check_open_r(const std::string& filename) {
+    bf::path p(filename);
+    if (!bf::exists(p)) {
+        throw std::runtime_error("File " + filename + " was not found.");
+    }
+    
+    if (p.extension() == ".gz") {
+        return fileno(popen(("gunzip -c " + filename).c_str(), "r"));
+    } else {
+        return fileno(fopen(filename.c_str(), "r"));
+    }
+}
 
 int main(int argc, char** argv)
 {
@@ -116,9 +136,12 @@ int main(int argc, char** argv)
 
                 for(size_t i = 0; i < read1_files.size(); ++i) {
                     // todo: check file exists etc
-                    std::ifstream read1(read1_files[i], std::ifstream::in);
-                    std::ifstream read2(read2_files[i], std::ifstream::in);
-                    InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(read1, read2);
+                    //std::ifstream read1(read1_files[i], std::ifstream::in);
+                    //std::ifstream read2(read2_files[i], std::ifstream::in);
+                    bi::stream<bi::file_descriptor_source> is1{check_open_r(read1_files[i]), bi::close_handle};
+                    bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
+                    
+                    InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
                     load_map(ifp, counters, read_map, start, length);
                 }
             }
