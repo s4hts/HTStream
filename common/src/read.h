@@ -6,18 +6,12 @@
 
 typedef boost::dynamic_bitset<> BitSet;
 
-class Noop {
-public:
-    int operator()(int x) const { return x; }
-};
-
 class ReadBase {
 public:
     virtual ~ReadBase() {}
     virtual boost::optional<boost::dynamic_bitset<>> get_key(size_t start, size_t length) = 0;
 
-    template <typename functor = Noop>
-    static boost::optional<BitSet> str_to_bit(const std::string& StrKey, functor const & transform = Noop()) {
+    static boost::optional<BitSet> str_to_bit(const std::string& StrKey) {
           // converts a string to a 2bit representation: A:00, T:11, C:01, G:10
         // ~ will then convert to the complimentary bp
         BitSet bit(2 * StrKey.length());
@@ -25,20 +19,16 @@ public:
         for (const char &c : StrKey) {
             switch(c) {
             case 'A': 
-                bit[i] = transform(0);
-                bit[i-1] = transform(0);
                 break;
             case 'C': 
-                bit[i] = transform(0);
-                bit[i-1] = transform(1);
+                bit[i-1] = 1;
                 break;
             case 'G': 
-                bit[i] = transform(1);
-                bit[i-1] = transform(0);
+                bit[i] = 1;
                 break;
             case 'T': 
-                bit[i] = transform(1); 
-                bit[i-1] = transform(1);
+                bit[i] = 1; 
+                bit[i-1] = 1;
                 break;
             case 'N':
                 return boost::none;

@@ -40,7 +40,12 @@ boost::optional<BitSet> PairedEndRead::get_key(size_t start, size_t length){
 boost::optional<BitSet> ReadBase::reverse_complement(const std::string& str, int start, int length) {
     auto rstart = str.rbegin() + start;
     auto rend = str.rbegin() + start + length;
-    return str_to_bit(std::string(rstart, rend), [](int x) { return !x; });
+    auto rv = str_to_bit(std::string(rstart, rend));
+    if (rv) {
+        return ~(*rv);
+    } else {
+        return rv;
+    }
 }
 
 //SingleEndRead
