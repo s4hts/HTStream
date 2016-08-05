@@ -176,13 +176,11 @@ int main(int argc, char** argv)
             return ERROR_IN_COMMAND_LINE;
         }
 
-        // application code here //
-
     }
     catch(std::exception& e)
     {
-        std::cerr << "Unhandled Exception reached the top of main: "
-                  << e.what() << ", application will now exit" << std::endl;
+        std::cerr << "\n\tUnhandled Exception: "
+                  << e.what() << std::endl;
         return ERROR_UNHANDLED_EXCEPTION;
 
     }
