@@ -6,7 +6,7 @@ A toolset for high throughput sequence analysis using a streaming approach facil
 ```
 mkdir -p build
 cd build
-cmake ..
+cmake -DCMAKE_BUILD_TYPE=Release ..
 make all 
 ```
 
