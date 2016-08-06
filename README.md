@@ -25,10 +25,17 @@ note if you change the exports on an existing build dir, you must delete the CMa
 ```
 mkdir clang-debug
 cd clang-debug
-export CXX=clang++
-export CC=clang
-cmake -DCMAKE_BUILD_TYPE=Debug ..
+cmake -DCXX=clang++ -DCC=clang -DCMAKE_BUILD_TYPE=Debug ..
 make all
+```
+
+## gprof
+```
+mkdir gprof
+cd gprof
+cmake -DCMAKE_BUILD_TYPE=Relese -DCMAKE_CXX_FLAGS=-pg -DCMAKE_EXE_LINKER_FLAGS=-pg -DCMAKE_SHARED_LINKER_FLAGS=-pg ..
+make all
+
 ```
 
 ## verbose 
