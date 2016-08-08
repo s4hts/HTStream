@@ -48,3 +48,14 @@ make VERBOSE=1
 make testSD
 make test
 ```
+
+
+## Trouble shooting the build
+If you use a module system, or have alternative versions of gcc or boost installed cmake may fail to correctly detect the required g++ or boost versions. Try a varaition on the the following commands, where paths are modified to match the approriate paths for your environment.:
+```
+export CC=`which gcc` 
+export CXX=`which g++`
+mkdir -p build
+cd build
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INCLUDE_PATH=/opt/modules/devel/boost/1.56.0/include -DCMAKE_LIBRARY_PATH=/opt/modules/devel/boost/1.56.0/lib .. 
+```
