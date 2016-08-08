@@ -1,3 +1,6 @@
+//  this is so we can implment hash function for dynamic_bitset
+#define BOOST_DYNAMIC_BITSET_DONT_USE_FRIENDS
+
 #include <iostream>
 #include <string>
 #include <boost/program_options.hpp>
@@ -11,8 +14,11 @@
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/device/file_descriptor.hpp>
 #include <boost/iostreams/stream.hpp>
+#include <boost/iostreams/device/file.hpp>
+#include <boost/iostreams/device/mapped_file.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/functional/hash.hpp>
 
 namespace
 {
@@ -22,18 +28,25 @@ namespace
 
 } // namespace
 
+class dbhash {
+public:
+    std::size_t operator() (const boost::dynamic_bitset<>& bs) const {
+        return boost::hash_value(bs.m_bits);
+    }
+};
+
 typedef std::unordered_map<std::string, size_t> Counter;
-typedef std::map <boost::dynamic_bitset<>, std::unique_ptr<ReadBase>> BitMap;
+typedef std::unordered_map <boost::dynamic_bitset<>, std::unique_ptr<ReadBase>, dbhash> BitMap;
 
 template <class T, class Impl>
 void load_map(InputReader<T, Impl> &reader, Counter& counters, BitMap& read_map, size_t start, size_t length) {
     while(reader.has_next()) {
         auto i = reader.next();
         ++counters["TotalRecords"];
-        //std::cout << "read id: " << i->get_read().get_id() << std::endl;
         //check for existance, store or compare quality and replace:
         if (auto key=i->get_key(start, length)) {
-            if(!read_map.count(*key)) {
+            // find faster than count on some compilers
+            if(read_map.find(*key) == read_map.end()) {
                 read_map[*key] = std::move(i);
             } else if(i->avg_q_score() > read_map[*key]->avg_q_score()){
                 read_map[*key] = std::move(i);
@@ -44,6 +57,28 @@ void load_map(InputReader<T, Impl> &reader, Counter& counters, BitMap& read_map,
         }
     }
 }
+
+template <class T>
+void output_read_map_fastq(const BitMap& read_map, T& out1, T& out2, T& single) {
+
+    OutputWriter<PairedEndRead, PairedEndReadOutFastq> pofs(out1, out2);
+    OutputWriter<SingleEndRead, SingleEndReadOutFastq> sofs(single);
+    for(auto const &i : read_map) {
+        PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.second.get());
+        if (per) {
+            pofs.write(*per);
+        } else {
+            SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.second.get());
+            if(ser) {
+                sofs.write(*ser);
+            }
+            else {
+                throw std::runtime_error("Unkown read found");
+            }
+        }
+    }
+}
+
 namespace bi = boost::iostreams;
 namespace bf = boost::filesystem;
 
@@ -69,10 +104,11 @@ int main(int argc, char** argv)
     counters["HasN"] = 0;
     size_t start, length = 0;
     std::string prefix;
-    std::vector<std::string> default_pe = {"PE1", "PE2"};
+    std::vector<std::string> default_outfiles = {"PE1", "PE2", "SE"};
     bool fastq_out;
     bool tab_out;
     bool std_out;
+    bool gzip_out;
     
     try
     {
@@ -96,7 +132,7 @@ int main(int argc, char** argv)
             ("start,s", po::value<size_t>(&start)->default_value(10),  "Start location for unique ID <int>")
             ("length,l", po::value<size_t>(&length)->default_value(10), "Length of unique ID <int>")
             ("quality-check-off,q",        "Quality Checking Off First Duplicate seen will be kept")
-            ("gzip-output,g",              "Output gzipped")
+            ("gzip-output,g", po::bool_switch(&gzip_out)->default_value(false),  "Output gzipped")
             ("interleaved-output, i",      "Output to interleaved")
             ("fastq-output,f", po::bool_switch(&fastq_out)->default_value(false), "Fastq format output")
             ("force,F", po::bool_switch()->default_value(true),         "Forces overwrite of files")
@@ -135,9 +171,6 @@ int main(int argc, char** argv)
                 auto read2_files = vm["read2-input"].as<std::vector<std::string> >();
 
                 for(size_t i = 0; i < read1_files.size(); ++i) {
-                    // todo: check file exists etc
-                    //std::ifstream read1(read1_files[i], std::ifstream::in);
-                    //std::ifstream read2(read2_files[i], std::ifstream::in);
                     bi::stream<bi::file_descriptor_source> is1{check_open_r(read1_files[i]), bi::close_handle};
                     bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
                     
@@ -145,7 +178,7 @@ int main(int argc, char** argv)
                     load_map(ifp, counters, read_map, start, length);
                 }
             }
-            else if(vm.count("singleend-input")) {
+            if(vm.count("singleend-input")) {
                 auto read_files = vm["singleend-input"].as<std::vector<std::string> >();
                 for (auto file : read_files) {
                     std::ifstream read1(file, std::ifstream::in);
@@ -154,19 +187,29 @@ int main(int argc, char** argv)
                 }
             }
 
-                if (fastq_out || (! std_out && ! tab_out) ) {
-                    default_pe[0] += ".fastq";
-                    default_pe[1] += ".fastq";
-                    default_pe[0] = prefix + default_pe[0];
-                    default_pe[1] = prefix + default_pe[1];
-                      
-                    std::ofstream out1(default_pe[0], std::ofstream::out);
-                    std::ofstream out2(default_pe[1], std::ofstream::out);
-                    OutputWriter<PairedEndRead, PairedEndReadOutFastq> ofs(out1, out2);
-                    for(auto const &i : read_map) {
-                        ofs.write(*dynamic_cast<PairedEndRead*>(i.second.get()));
-                    }
+            if (fastq_out || (! std_out && ! tab_out) ) {
+                for (auto& outfile: default_outfiles) {
+                    outfile = prefix + outfile + ".fastq";
                 }
+                
+                if (gzip_out) {
+                    bi::stream<bi::file_descriptor_sink> out1{fileno(popen(("gzip > " + default_outfiles[0] + ".gz").c_str(), "w")), bi::close_handle};
+                    bi::stream<bi::file_descriptor_sink> out2{fileno(popen(("gzip > " + default_outfiles[1] + ".gz").c_str(), "w")), bi::close_handle};
+                    bi::stream<bi::file_descriptor_sink> out3{fileno(popen(("gzip > " + default_outfiles[2] + ".gz").c_str(), "w")), bi::close_handle};
+
+                    output_read_map_fastq(read_map, out1, out2, out3);
+                    
+                } else {
+                    // note: mapped file is faster but uses more memory
+                    std::ofstream out1(default_outfiles[0], std::ofstream::out);
+                    std::ofstream out2(default_outfiles[1], std::ofstream::out);
+                    std::ofstream out3(default_outfiles[2], std::ofstream::out);
+                    //bi::stream<bi::mapped_file_sink> out1{default_outfiles[0].c_str()};
+                    //bi::stream<bi::mapped_file_sink> out2{default_outfiles[1].c_str()};
+                    //bi::stream<bi::mapped_file_sink> out3{default_outfiles[2].c_str()};
+                    output_read_map_fastq(read_map, out1, out2, out3);
+                }
+            }
             
         }
         catch(po::error& e)
