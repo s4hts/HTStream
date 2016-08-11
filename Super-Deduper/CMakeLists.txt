@@ -32,7 +32,7 @@ add_custom_target(valgrind
 ## test
 set(PROJECT_TEST_NAME ${PROJECT_NAME}_test)
 find_package(Threads REQUIRED)
-include_directories(${GTEST_INCLUDE_DIRS} ${COMMON_INCLUDES} ${CMAKE_SOURCE_DIR}/Super-Deduper/src)
+include_directories(${GTEST_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} ${COMMON_INCLUDES} ${CMAKE_SOURCE_DIR}/Super-Deduper/src)
 
 file(GLOB TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/test/*.cpp)
 link_directories(${GTEST_LIBS_DIR})
