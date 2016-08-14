@@ -187,12 +187,12 @@ int main(int argc, char** argv)
                 }
             }
             
-            if(vm.count("tab-input")) {
+            /*if(vm.count("tab-input")) {
                 auto read_files = vm["tab-input"].as<std::vector<std::string> > ();
                 for (auto file : read_files) {
                     std::ifstream read1(file, std::ifstream::in);
                 }
-            }
+            }*/
 
             if (fastq_out || (! std_out && ! tab_out) ) {
                 for (auto& outfile: default_outfiles) {
