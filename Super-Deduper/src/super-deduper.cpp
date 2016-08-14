@@ -102,13 +102,13 @@ int main(int argc, char** argv)
     counters["TotalRecords"] = 0;
     counters["Replaced"] = 0;
     counters["HasN"] = 0;
-    size_t start, length = 0;
+    size_t start = 0, length = 0;
     std::string prefix;
     std::vector<std::string> default_outfiles = {"PE1", "PE2", "SE"};
-    bool fastq_out;
-    bool tab_out;
-    bool std_out;
-    bool gzip_out;
+    bool fastq_out = false;
+    bool tab_out = false;
+    bool std_out = false;
+    bool gzip_out = false;
     
     try
     {
