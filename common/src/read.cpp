@@ -54,6 +54,17 @@ boost::optional<BitSet> SingleEndRead::get_key(size_t start, size_t length){
     return str_to_bit(one.subseq(start, length));
 }
 
+
+//Tab
+boost::optional<BitSet> TabRead::get_key(size_t start, size_t length){
+    if (two.is_empty() > 0) {
+        return std::max(str_to_bit(one.subseq(start, length) + two.subseq(start, length)),
+                    str_to_bit(two.subseq(start, length) + one.subseq(start, length)));
+    } else {
+        return str_to_bit(one.subseq(start, length));
+    }
+}
+
 inline size_t qual_sum(size_t s, const char c) {
     return size_t(c) + s;
 }
@@ -71,3 +82,16 @@ double PairedEndRead::avg_q_score()
     sum += std::accumulate(two.get_qual().begin(), two.get_qual().end(), size_t(0), qual_sum);
     return sum/double(one.get_qual().length() + two.get_qual().length());
 }
+
+double TabRead::avg_q_score()
+{
+    size_t sum = std::accumulate(one.get_qual().begin(), one.get_qual().end(), size_t(0), qual_sum);
+    //Read two is not null count both
+    if (two.is_empty()) {
+        sum += std::accumulate(two.get_qual().begin(), two.get_qual().end(), size_t(0), qual_sum);
+        return sum/double(one.get_qual().length() + two.get_qual().length());
+    }
+    //Only SE was specified
+    return sum/double(one.get_qual().length());
+}
+

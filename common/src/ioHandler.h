@@ -5,6 +5,7 @@
 #include <memory>
 #include "read.h"
 #include <boost/iostreams/concepts.hpp>
+#include <boost/algorithm/string.hpp>
 
 // ### input ###
 template <class T, class Impl>
@@ -24,6 +25,14 @@ protected:
     std::string id, seq, id2, qual;
 };
 
+class InputTab {
+protected:
+    Read load_read(std::istream *input);
+
+    std::string id, seq1, seq2, qual1, qual2;
+
+};
+
 class SingleEndReadFastqImpl : public InputFastq{
 public:
     SingleEndReadFastqImpl(std::istream& in) : input(&in) {}
@@ -32,14 +41,21 @@ protected:
     std::istream* input = 0;
 };
 
-
 class PairedEndReadFastqImpl : public InputFastq {
 public:
-    PairedEndReadFastqImpl(std::istream& in1_, std::istream& in2_) : in1(&in1_), in2(&in2_) {
-    }
+    PairedEndReadFastqImpl(std::istream& in1_, std::istream& in2_) : in1(&in1_), in2(&in2_) {}
   
 protected:
     std::istream* in1, * in2 = 0;
+};
+
+class TabReadImpl : public InputFastq {
+public:
+    TabReadImpl(std::istream& in1_) : in1(&in1_) {}
+    std::vector<Read> load_read(std::istream *input);
+
+protected:
+    std::istream* in1;
 };
 
 // ### output ###

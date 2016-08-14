@@ -53,11 +53,13 @@ private:
 public:
     Read(const std::string& seq_, const std::string& qual_, const std::string& id_) :
         seq(seq_), qual(qual_), id(id_) { }
+    Read() : seq(""), qual(""), id("") { } 
     Read subread(size_t start, size_t length);
     std::string subseq(size_t start, size_t length);
     const std::string& get_seq() const { return seq; }
     const std::string& get_qual() const { return qual; }
     const std::string& get_id() const { return id; }
+    bool is_empty() { return seq.empty(); }
 };
 
 class PairedEndRead: public ReadBase {
@@ -70,6 +72,20 @@ public:
     boost::optional<BitSet> get_key(size_t start, size_t length);
     const Read& get_read_one() const { return one; }
     const Read& get_read_two() const { return two; }
+    double avg_q_score();
+};
+
+/*Read one will NEVER be NULL whereas read two MIGHT be NULL
+ *This means it is similiar to PairedEndReads, however, a null check*/
+class TabRead: public ReadBase {
+private:
+    Read one;
+    Read two;
+public:
+    TabRead(const Read& one_, const Read& two_) : one(one_), two(two_) {}
+    boost::optional<BitSet> get_key(size_t start, size_t length);
+    const Read &get_read_one() const { return one; }
+    const Read &get_read_two() const { return two; }
     double avg_q_score();
 };
 
