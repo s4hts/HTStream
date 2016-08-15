@@ -24,7 +24,7 @@ protected:
     
     std::string id, seq, id2, qual;
 };
-
+/*
 class InputTab {
 protected:
     Read load_read(std::istream *input);
@@ -32,7 +32,7 @@ protected:
     std::string id, seq1, seq2, qual1, qual2;
 
 };
-
+*/
 class SingleEndReadFastqImpl : public InputFastq{
 public:
     SingleEndReadFastqImpl(std::istream& in) : input(&in) {}

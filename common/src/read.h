@@ -75,20 +75,6 @@ public:
     double avg_q_score();
 };
 
-/*Read one will NEVER be NULL whereas read two MIGHT be NULL
- *This means it is similiar to PairedEndReads, however, a null check*/
-class TabRead: public ReadBase {
-private:
-    Read one;
-    Read two;
-public:
-    TabRead(const Read& one_, const Read& two_) : one(one_), two(two_) {}
-    boost::optional<BitSet> get_key(size_t start, size_t length);
-    const Read &get_read_one() const { return one; }
-    const Read &get_read_two() const { return two; }
-    double avg_q_score();
-};
-
 class SingleEndRead: public ReadBase {
 private:
     Read one;

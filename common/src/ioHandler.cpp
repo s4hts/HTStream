@@ -44,29 +44,29 @@ std::vector<Read> TabReadImpl::load_read(std::istream *input) {
     //to read the line
     std::string tabLine;
 
-    std::vector <Read> reads(2);
+    std::vector <Read> reads(1);
     while(std::getline(*input, tabLine) && tabLine.size() < 1) {
     }
 
     std::vector <std::string> parsedRead;
     boost::split(parsedRead, tabLine, boost::is_any_of("\t"));
 
-    if (parsedRead.size() != 3 || parsedRead.size() != 5) {
+    if (parsedRead.size() != 3 && parsedRead.size() != 5) {
         throw std::runtime_error("There are not either 3 or 5 elements within a tab delimited file line");
     }
+
     if (parsedRead[1].size() != parsedRead[2].size()) {
         throw std::runtime_error("sequence and qualities are not the same length");
     }
     
     reads[0] = Read(parsedRead[0], parsedRead[1], parsedRead[2]);
     
-    if (parsedRead.size() == 5) {
-        reads[1] = Read(parsedRead[0], parsedRead[3], parsedRead[4]);
-    }
-    
     if (parsedRead[3].size() != parsedRead[4].size()) {
         throw std::runtime_error("sequence and qualities are not the same length");
     }
+   
+    reads.push_back(Read(parsedRead[0], parsedRead[3], parsedRead[4]));
+
     // ignore extra lines at end of file
     while(input->good() and input->peek() == '\n') {
         input->get();
@@ -105,19 +105,22 @@ bool InputReader<PairedEndRead, PairedEndReadFastqImpl>::has_next() {
 };
 
 template <>
-InputReader<TabRead, TabReadImpl>::value_type InputReader<TabRead, TabReadImpl>::next() {
-    /*Read 2 could be null*/
+InputReader<ReadBase, TabReadImpl>::value_type InputReader<ReadBase, TabReadImpl>::next() {
     std::vector<Read> rs = load_read(in1);
+    if (rs.size() == 1) {
+        return InputReader<SingleEndRead, TabReadImpl>::value_type(new SingleEndRead(rs[0]));
+    }
 
-    return InputReader<TabRead, TabReadImpl>::value_type(new TabRead(rs[0], rs[1]));
+    return InputReader<PairedEndRead, TabReadImpl>::value_type(new PairedEndRead(rs[0], rs[1]));
 }
 
 template <>
-bool InputReader<TabRead, TabReadImpl>::has_next() {
+bool InputReader<ReadBase, TabReadImpl>::has_next() {
     // ignore extra lines at end of file
     skip_lr(in1);
     return (in1 and in1->good());
 }
+
 // ### output ###
 void OutputFastq::write_read(const Read& read, std::ostream &output) {
     output << '@' << read.get_id() << "\n";

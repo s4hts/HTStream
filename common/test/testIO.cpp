@@ -11,12 +11,10 @@ public:
     
 TEST_F(ReadsTest, parseTabRead) {
     std::istringstream in1(readTabData);
-    InputReader<TabRead, TabReadImpl> ifs(in1);
+    InputReader<ReadBase, TabReadImpl> ifs(in1);
     size_t read_count = 0;
     while(ifs.has_next()) {
         auto r = ifs.next();
-        std::cout << r->get_read_one().get_id() << std::endl;
-        std::cout << r->get_read_two().get_id() << std::endl;
         read_count++;
     }
     ASSERT_EQ(read_count, 1);
