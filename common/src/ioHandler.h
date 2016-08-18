@@ -72,6 +72,12 @@ protected:
     void write_read(const Read& read, std::ostream &output);
 };
 
+class OutputTab {
+protected:
+    void write_read(const Read& read1, const Read& read2, std::ostream &output);
+    void write_read(const Read& read, std::ostream &output);
+};
+
 class SingleEndReadOutFastq : public OutputFastq {
 public:
     SingleEndReadOutFastq(std::ostream& out) : output(out) {}
@@ -87,5 +93,14 @@ public:
 protected:
     std::ostream &out1, &out2;
 };
+
+class ReadBaseOutTab : public OutputTab {
+public:
+    ReadBaseOutTab(std::ostream& _output) : output(_output) {}
+    ~ReadBaseOutTab() { output.flush(); }
+protected:
+    std::ostream &output;
+};
+
 
 #endif

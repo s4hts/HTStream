@@ -129,6 +129,14 @@ void OutputFastq::write_read(const Read& read, std::ostream &output) {
     output << read.get_qual() << "\n";
 }
 
+void OutputTab::write_read(const Read& read, std::ostream &output) {
+    output << read.get_id() << '\t' << read.get_seq() << '\t' << read.get_qual() << '\n';
+}
+
+void OutputTab::write_read(const Read& read1, const Read & read2, std::ostream & output) {
+    output << read1.get_id() << '\t' << read1.get_seq() << '\t' << read1.get_qual() << '\t' << read2.get_seq() << '\t' << read2.get_qual() << '\n';
+}
+
 template <>
 void OutputWriter<SingleEndRead, SingleEndReadOutFastq>::write(const SingleEndRead& data) {
     write_read(data.get_read(), output);
@@ -139,3 +147,14 @@ void OutputWriter<PairedEndRead, PairedEndReadOutFastq>::write(const PairedEndRe
     write_read(data.get_read_one(), out1);
     write_read(data.get_read_two(), out2);
 }
+
+template<>
+void OutputWriter<SingleEndRead, ReadBaseOutTab>::write(const SingleEndRead& data) {
+    write_read(data.get_read(), output);
+}
+
+template<>
+void OutputWriter<PairedEndRead, ReadBaseOutTab>::write(const PairedEndRead & data) {
+    write_read(data.get_read_one(), data.get_read_two(), output);
+}
+
