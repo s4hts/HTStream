@@ -1,6 +1,7 @@
 #include "ioHandler.h"
 #include <exception>
-    
+
+#include <iostream>
 void skip_lr(std::istream *input) {
     while(input and input->good() and (input->peek() == '\n' || input->peek() == '\r')) {
         input->get();
@@ -56,16 +57,19 @@ std::vector<Read> TabReadImpl::load_read(std::istream *input) {
     }
 
     if (parsedRead[1].size() != parsedRead[2].size()) {
-        throw std::runtime_error("sequence and qualities are not the same length");
+        throw std::runtime_error("sequence and qualities are not the same length 1");
     }
     
     reads[0] = Read(parsedRead[0], parsedRead[1], parsedRead[2]);
-    
-    if (parsedRead[3].size() != parsedRead[4].size()) {
-        throw std::runtime_error("sequence and qualities are not the same length");
-    }
    
-    reads.push_back(Read(parsedRead[0], parsedRead[3], parsedRead[4]));
+    if (parsedRead.size() != 3) {
+        
+        if (parsedRead[3].size() != parsedRead[4].size()) {
+            throw std::runtime_error("sequence and qualities are not the same length 2");
+        }
+   
+        reads.push_back(Read(parsedRead[0], parsedRead[3], parsedRead[4]));
+    }
 
     // ignore extra lines at end of file
     while(input->good() and input->peek() == '\n') {

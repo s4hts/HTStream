@@ -26,7 +26,6 @@ TEST_F(ReadsTest, parseSingleReadFastq) {
     size_t read_count = 0;
     while(ifs.has_next()) {
         auto r = ifs.next();
-        std::cout << r->get_read().get_id() << std::endl;
         read_count++;
     }
     ASSERT_EQ(read_count, 5);
