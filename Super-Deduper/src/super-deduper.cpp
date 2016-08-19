@@ -59,6 +59,35 @@ void load_map(InputReader<T, Impl> &reader, Counter& counters, BitMap& read_map,
 }
 
 template <class T>
+void output_read_map_tab(const BitMap& read_map, T& out1) {
+    OutputWriter<ReadBase, ReadBaseOutTab> tabs(out1);
+    for(auto const &i : read_map) {
+        ReadBase* rb = dynamic_cast<ReadBase*>(i.second.get());
+        tabs.write(*rb);
+    }
+}
+
+template <class T>
+void output_read_map_inter(const BitMap& read_map, T& out1, T& single) {
+    OutputWriter<PairedEndRead, PairedEndReadOutInter> pofs(out1);
+    OutputWriter<SingleEndRead, SingleEndReadOutFastq> sofs(single);
+    for(auto const &i : read_map) {
+        PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.second.get());
+        if (per) {
+            pofs.write(*per);
+        } else {
+            SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.second.get());
+            if(ser) {
+                sofs.write(*ser);
+            }
+            else {
+                throw std::runtime_error("Unkown read found");
+            }
+        }
+    }
+}
+
+template <class T>
 void output_read_map_fastq(const BitMap& read_map, T& out1, T& out2, T& single) {
 
     OutputWriter<PairedEndRead, PairedEndReadOutFastq> pofs(out1, out2);
@@ -109,7 +138,8 @@ int main(int argc, char** argv)
     bool tab_out;
     bool std_out;
     bool gzip_out;
-    
+    bool interleaved_out;
+
     try
     {
         /** Define and parse the program options
@@ -133,7 +163,7 @@ int main(int argc, char** argv)
             ("length,l", po::value<size_t>(&length)->default_value(10), "Length of unique ID <int>")
             ("quality-check-off,q",        "Quality Checking Off First Duplicate seen will be kept")
             ("gzip-output,g", po::bool_switch(&gzip_out)->default_value(false),  "Output gzipped")
-            ("interleaved-output, i",      "Output to interleaved")
+            ("interleaved-output, i", po::bool_switch(&interleaved_out)->default_value(false),     "Output to interleaved")
             ("fastq-output,f", po::bool_switch(&fastq_out)->default_value(false), "Fastq format output")
             ("force,F", po::bool_switch()->default_value(true),         "Forces overwrite of files")
             ("tab-output,t", po::bool_switch(&tab_out)->default_value(false),   "Tab-delimited output")
@@ -190,7 +220,18 @@ int main(int argc, char** argv)
             if(vm.count("tab-input")) {
                 auto read_files = vm["tab-input"].as<std::vector<std::string> > ();
                 for (auto file : read_files) {
-                    std::ifstream read1(file, std::ifstream::in);
+                    std::ifstream tabReads(file, std::ifstream::in);
+                    InputReader<ReadBase, TabReadImpl> ift(tabReads);
+                    load_map(ift, counters, read_map, start, length);
+                }
+            }
+            
+            if (vm.count("interleaved-input")) {
+                auto read_files = vm["interleaved-input"].as<std::vector<std::string > >();
+                for (auto file : read_files) {
+                    std::ifstream interReads(file, std::ifstream::in);
+                    InputReader<PairedEndRead, InterReadImpl> ifp(interReads);
+                    load_map(ifp, counters, read_map, start, length);
                 }
             }
 
@@ -203,9 +244,7 @@ int main(int argc, char** argv)
                     bi::stream<bi::file_descriptor_sink> out1{fileno(popen(("gzip > " + default_outfiles[0] + ".gz").c_str(), "w")), bi::close_handle};
                     bi::stream<bi::file_descriptor_sink> out2{fileno(popen(("gzip > " + default_outfiles[1] + ".gz").c_str(), "w")), bi::close_handle};
                     bi::stream<bi::file_descriptor_sink> out3{fileno(popen(("gzip > " + default_outfiles[2] + ".gz").c_str(), "w")), bi::close_handle};
-
                     output_read_map_fastq(read_map, out1, out2, out3);
-                    
                 } else {
                     // note: mapped file is faster but uses more memory
                     std::ofstream out1(default_outfiles[0], std::ofstream::out);
@@ -215,6 +254,32 @@ int main(int argc, char** argv)
                     //bi::stream<bi::mapped_file_sink> out2{default_outfiles[1].c_str()};
                     //bi::stream<bi::mapped_file_sink> out3{default_outfiles[2].c_str()};
                     output_read_map_fastq(read_map, out1, out2, out3);
+                }
+            } else if (interleaved_out)  {
+                for (auto& outfile: default_outfiles) {
+                    outfile = prefix + "INTER" + ".fastq";
+                }
+
+                if (gzip_out) {
+                    bi::stream<bi::file_descriptor_sink> out1{fileno(popen(("gzip > " + default_outfiles[0] + ".gz").c_str(), "w")), bi::close_handle};
+                    bi::stream<bi::file_descriptor_sink> out3{fileno(popen(("gzip > " + default_outfiles[2] + ".gz").c_str(), "w")), bi::close_handle};
+                    output_read_map_inter(read_map, out1, out3);
+                } else {
+                    std::ofstream out1(default_outfiles[0], std::ofstream::out);
+                    std::ofstream out3(default_outfiles[2], std::ofstream::out);
+                    output_read_map_inter(read_map, out1, out3);
+                }
+            } else if (tab_out) {
+                for (auto& outfile: default_outfiles) {
+                    outfile = prefix + "tab" + ".tastq";
+                }
+                
+                if (gzip_out) {
+                    bi::stream<bi::file_descriptor_sink> out1{fileno(popen(("gzip > " + default_outfiles[0] + ".gz").c_str(), "w")), bi::close_handle};
+                    output_read_map_tab(read_map, out1);
+                } else {
+                    std::ofstream out1(default_outfiles[0], std::ofstream::out);
+                    output_read_map_tab(read_map, out1);
                 }
             }
             
