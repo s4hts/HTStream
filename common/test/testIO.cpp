@@ -16,10 +16,23 @@ TEST_F(ReadsTest, parseTabRead) {
     size_t read_count = 0;
     while(ifs.has_next()) {
         auto r = ifs.next();
-        read_count++;
+        ++read_count;
     }
     ASSERT_EQ(read_count, 2);
 }
+
+TEST_F(ReadsTest, testInterRead) {
+    std::istringstream in1(readDataInter);
+    InputReader<PairedEndRead, InterReadImpl> ifs(in1);
+    size_t read_count = 0;    
+    while(ifs.has_next()) {
+        auto r = ifs.next();
+        ++read_count;
+    }
+
+    ASSERT_EQ(read_count, 1);
+}
+        
 
 TEST_F(ReadsTest, parseSingleReadFastq) {
     std::istringstream in1(readData);
@@ -93,3 +106,4 @@ TEST_F(ReadsTest, testInterWrite) {
     ASSERT_EQ(readDataInter, out1.str());
 }
         
+
