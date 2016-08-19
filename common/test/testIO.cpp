@@ -74,5 +74,5 @@ TEST_F(ReadsTest, testTabWrite) {
             ofs.write(*r);
         }
     }
-    ASSERT_EQ(readData, out1.str());
+    ASSERT_EQ(readTabData, out1.str());
 }

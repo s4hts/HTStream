@@ -52,6 +52,7 @@ std::vector<Read> TabReadImpl::load_read(std::istream *input) {
     std::vector <std::string> parsedRead;
     boost::split(parsedRead, tabLine, boost::is_any_of("\t"));
 
+    
     if (parsedRead.size() != 3 && parsedRead.size() != 5) {
         throw std::runtime_error("There are not either 3 or 5 elements within a tab delimited file line");
     }
@@ -60,7 +61,7 @@ std::vector<Read> TabReadImpl::load_read(std::istream *input) {
         throw std::runtime_error("sequence and qualities are not the same length 1");
     }
     
-    reads[0] = Read(parsedRead[0], parsedRead[1], parsedRead[2]);
+    reads[0] = Read(parsedRead[1], parsedRead[2], parsedRead[0]);
    
     if (parsedRead.size() != 3) {
         
@@ -68,7 +69,7 @@ std::vector<Read> TabReadImpl::load_read(std::istream *input) {
             throw std::runtime_error("sequence and qualities are not the same length 2");
         }
    
-        reads.push_back(Read(parsedRead[0], parsedRead[3], parsedRead[4]));
+        reads.push_back(Read(parsedRead[3], parsedRead[4], parsedRead[0]));
     }
 
     // ignore extra lines at end of file
@@ -153,12 +154,15 @@ void OutputWriter<PairedEndRead, PairedEndReadOutFastq>::write(const PairedEndRe
 }
 
 template<>
-void OutputWriter<SingleEndRead, ReadBaseOutTab>::write(const SingleEndRead& data) {
-    write_read(data.get_read(), output);
+void OutputWriter<ReadBase, ReadBaseOutTab>::write(const ReadBase &data) {
+    const PairedEndRead *per = dynamic_cast<const PairedEndRead*>(&data);
+    if (per) {
+        write_read(per->get_read_one(), per->get_read_two(), output);        
+    } else {
+        const SingleEndRead *ser = dynamic_cast<const SingleEndRead*>(&data);
+        if (ser == NULL) {
+            throw std::runtime_error("output tab could not cast to SE or PE read");
+        }
+        write_read(ser->get_read(), output);
+    }
 }
-
-template<>
-void OutputWriter<PairedEndRead, ReadBaseOutTab>::write(const PairedEndRead & data) {
-    write_read(data.get_read_one(), data.get_read_two(), output);
-}
-
