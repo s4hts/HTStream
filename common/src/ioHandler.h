@@ -45,9 +45,15 @@ class TabReadImpl : public InputFastq {
 public:
     TabReadImpl(std::istream& in1_) : in1(&in1_) {}
     std::vector<Read> load_read(std::istream *input);
-
 protected:
     std::istream* in1;
+};
+
+class InterReadImpl : public InputFastq {
+public:
+    InterReadImpl(std::istream& in1_) : in1(&in1_) {}
+protected:
+    std::istream *in1;
 };
 
 // ### output ###
@@ -79,6 +85,14 @@ public:
     ~PairedEndReadOutFastq() { out1.flush(); out2.flush(); }
 protected:
     std::ostream &out1, &out2;
+};
+
+class PairedEndReadOutInter : public OutputFastq {
+public:
+    PairedEndReadOutInter(std::ostream& out1_) : out1(out1_) {}
+    ~PairedEndReadOutInter() { out1.flush(); }
+protected:
+    std::ostream &out1;
 };
 
 class OutputTab {

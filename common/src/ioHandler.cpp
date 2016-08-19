@@ -108,6 +108,25 @@ bool InputReader<PairedEndRead, PairedEndReadFastqImpl>::has_next() {
     return (in1 and in1->good() and in2 and in2->good());
 };
 
+template<>
+InputReader<PairedEndRead, InterReadImpl>::value_type InputReader<PairedEndRead, InterReadImpl>::next() {
+    Read r1 = load_read(in1);
+    Read r2;
+    try {
+        r2 = load_read(in1);
+    } catch (const std::exception&) {
+        throw std::runtime_error("odd number of sequences in interleaved file");
+    }
+
+    return InputReader<PairedEndRead, InterReadImpl>::value_type(new PairedEndRead(r1, r2));
+}
+
+template<>
+bool InputReader<PairedEndRead, InterReadImpl>::has_next() {
+    skip_lr(in1);
+    return(in1 && in1->good());
+}
+
 template <>
 InputReader<ReadBase, TabReadImpl>::value_type InputReader<ReadBase, TabReadImpl>::next() {
     std::vector<Read> rs = load_read(in1);
@@ -144,6 +163,12 @@ void OutputTab::write_read(const Read& read1, const Read & read2, std::ostream &
 template <>
 void OutputWriter<SingleEndRead, SingleEndReadOutFastq>::write(const SingleEndRead& data) {
     write_read(data.get_read(), output);
+}
+
+template <>
+void OutputWriter<PairedEndRead, PairedEndReadOutInter>::write(const PairedEndRead &data) {
+    write_read(data.get_read_one(), out1);
+    write_read(data.get_read_two(), out1);
 }
 
 template <>
