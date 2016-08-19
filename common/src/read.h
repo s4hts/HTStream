@@ -59,7 +59,6 @@ public:
     const std::string& get_seq() const { return seq; }
     const std::string& get_qual() const { return qual; }
     const std::string& get_id() const { return id; }
-    bool is_empty() { return seq.empty(); }
 };
 
 class PairedEndRead: public ReadBase {

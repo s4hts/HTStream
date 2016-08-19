@@ -1,7 +1,6 @@
 #include "ioHandler.h"
 #include <exception>
 
-#include <iostream>
 void skip_lr(std::istream *input) {
     while(input and input->good() and (input->peek() == '\n' || input->peek() == '\r')) {
         input->get();
