@@ -41,8 +41,6 @@ Read InputFastq::load_read(std::istream *input) {
 
 //Overrides load_read for tab delimited reads
 std::vector<Read> TabReadImpl::load_read(std::istream *input) {
-    //to read the line
-    std::string tabLine;
 
     std::vector <Read> reads(1);
     while(std::getline(*input, tabLine) && tabLine.size() < 1) {

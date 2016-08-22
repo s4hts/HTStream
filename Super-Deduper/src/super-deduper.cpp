@@ -62,8 +62,8 @@ template <class T>
 void output_read_map_tab(const BitMap& read_map, T& out1) {
     OutputWriter<ReadBase, ReadBaseOutTab> tabs(out1);
     for(auto const &i : read_map) {
-        ReadBase* rb = dynamic_cast<ReadBase*>(i.second.get());
-        tabs.write(*rb);
+        //ReadBase* rb = dynamic_cast<ReadBase*>(i.second.get());
+        tabs.write(*(i.second));
     }
 }
 
@@ -209,11 +209,12 @@ int main(int argc, char** argv)
                     load_map(ifp, counters, read_map, start, length);
                 }
             }
+
             if(vm.count("singleend-input")) {
                 auto read_files = vm["singleend-input"].as<std::vector<std::string> >();
                 for (auto file : read_files) {
-                    std::ifstream read1(file, std::ifstream::in);
-                    InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(read1);
+                    bi::stream<bi::file_descriptor_source> se{ check_open_r(file), bi::close_handle};
+                    InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(se);
                     load_map(ifs, counters, read_map, start, length);
                 }
             }
@@ -221,8 +222,8 @@ int main(int argc, char** argv)
             if(vm.count("tab-input")) {
                 auto read_files = vm["tab-input"].as<std::vector<std::string> > ();
                 for (auto file : read_files) {
-                    std::ifstream tabReads(file, std::ifstream::in);
-                    InputReader<ReadBase, TabReadImpl> ift(tabReads);
+                    bi::stream<bi::file_descriptor_source> tabin{ check_open_r(file), bi::close_handle};
+                    InputReader<ReadBase, TabReadImpl> ift(tabin);
                     load_map(ift, counters, read_map, start, length);
                 }
             }
@@ -230,8 +231,8 @@ int main(int argc, char** argv)
             if (vm.count("interleaved-input")) {
                 auto read_files = vm["interleaved-input"].as<std::vector<std::string > >();
                 for (auto file : read_files) {
-                    std::ifstream interReads(file, std::ifstream::in);
-                    InputReader<PairedEndRead, InterReadImpl> ifp(interReads);
+                    bi::stream<bi::file_descriptor_source> inter{ check_open_r(file), bi::close_handle};
+                    InputReader<PairedEndRead, InterReadImpl> ifp(inter);
                     load_map(ifp, counters, read_map, start, length);
                 }
             }

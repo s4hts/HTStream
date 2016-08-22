@@ -47,6 +47,8 @@ public:
     std::vector<Read> load_read(std::istream *input);
 protected:
     std::istream* in1;
+    //to read the line
+    std::string tabLine;
 };
 
 class InterReadImpl : public InputFastq {
