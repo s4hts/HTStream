@@ -62,7 +62,6 @@ template <class T>
 void output_read_map_tab(const BitMap& read_map, T& out1) {
     OutputWriter<ReadBase, ReadBaseOutTab> tabs(out1);
     for(auto const &i : read_map) {
-        //ReadBase* rb = dynamic_cast<ReadBase*>(i.second.get());
         tabs.write(*(i.second));
     }
 }

@@ -33,7 +33,7 @@ Read InputFastq::load_read(std::istream *input) {
     }
 
     // ignore extra lines at end of file
-    while(input->good() and input->peek() == '\n') {
+    while(input->good() and (input->peek() == '\n' || input->peek() == '\r')) {
         input->get();
     }
     return Read(seq, qual, id.substr(1));
@@ -70,7 +70,7 @@ std::vector<Read> TabReadImpl::load_read(std::istream *input) {
     }
 
     // ignore extra lines at end of file
-    while(input->good() and input->peek() == '\n') {
+    while(input->good() and (input->peek() == '\n' || input->peek() == '\r')) {
         input->get();
     }
 
