@@ -5,6 +5,7 @@
 #include <memory>
 #include "read.h"
 #include <boost/iostreams/concepts.hpp>
+#include <boost/algorithm/string.hpp>
 
 // ### input ###
 template <class T, class Impl>
@@ -32,14 +33,29 @@ protected:
     std::istream* input = 0;
 };
 
-
 class PairedEndReadFastqImpl : public InputFastq {
 public:
-    PairedEndReadFastqImpl(std::istream& in1_, std::istream& in2_) : in1(&in1_), in2(&in2_) {
-    }
+    PairedEndReadFastqImpl(std::istream& in1_, std::istream& in2_) : in1(&in1_), in2(&in2_) {}
   
 protected:
     std::istream* in1, * in2 = 0;
+};
+
+class TabReadImpl : public InputFastq {
+public:
+    TabReadImpl(std::istream& in1_) : in1(&in1_) {}
+    std::vector<Read> load_read(std::istream *input);
+protected:
+    std::istream* in1;
+    //to read the line
+    std::string tabLine;
+};
+
+class InterReadImpl : public InputFastq {
+public:
+    InterReadImpl(std::istream& in1_) : in1(&in1_) {}
+protected:
+    std::istream *in1;
 };
 
 // ### output ###
@@ -56,6 +72,7 @@ protected:
     void write_read(const Read& read, std::ostream &output);
 };
 
+
 class SingleEndReadOutFastq : public OutputFastq {
 public:
     SingleEndReadOutFastq(std::ostream& out) : output(out) {}
@@ -71,5 +88,28 @@ public:
 protected:
     std::ostream &out1, &out2;
 };
+
+class PairedEndReadOutInter : public OutputFastq {
+public:
+    PairedEndReadOutInter(std::ostream& out1_) : out1(out1_) {}
+    ~PairedEndReadOutInter() { out1.flush(); }
+protected:
+    std::ostream &out1;
+};
+
+class OutputTab {
+protected:
+    void write_read(const Read& read1, const Read& read2, std::ostream &output);
+    void write_read(const Read& read, std::ostream &output);
+};
+
+class ReadBaseOutTab : public OutputTab {
+public:
+    ReadBaseOutTab(std::ostream& _output) : output(_output) {}
+    ~ReadBaseOutTab() { output.flush(); }
+protected:
+    std::ostream &output;
+};
+
 
 #endif

@@ -53,6 +53,7 @@ private:
 public:
     Read(const std::string& seq_, const std::string& qual_, const std::string& id_) :
         seq(seq_), qual(qual_), id(id_) { }
+    Read() : seq(""), qual(""), id("") { } 
     Read subread(size_t start, size_t length);
     std::string subseq(size_t start, size_t length);
     const std::string& get_seq() const { return seq; }
