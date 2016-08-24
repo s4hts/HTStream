@@ -55,9 +55,9 @@ If you use a module system, or have alternative versions of gcc or boost install
 ```
 
 ```
-export CC='which gcc' 
-export CXX='which g++'
+export CC=`which gcc` 
+export CXX=`which g++`
 mkdir -p build
 cd build
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INCLUDE_PATH=/opt/modules/devel/boost/1.56.0/include -DCMAKE_LIBRARY_PATH=/opt/modules/devel/boost/1.56.0/lib .. 
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INCLUDE_PATH=/opt/modules/devel/boost/1.61.0/include -DCMAKE_LIBRARY_PATH=/opt/modules/devel/boost/1.61.0/lib .. 
 ```
