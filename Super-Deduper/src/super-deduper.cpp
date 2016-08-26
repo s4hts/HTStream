@@ -190,6 +190,9 @@ int main(int argc, char** argv)
             }
 
             po::notify(vm); // throws on error, so do after help in case
+            //Index 1 start location (making it more human friendly)
+            start--;
+
             // there are any problems
             if(vm.count("read1-input")) {
                 if (!vm.count("read2-input")) {

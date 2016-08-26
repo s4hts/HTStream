@@ -50,8 +50,8 @@ boost::optional<BitSet> ReadBase::reverse_complement(const std::string& str, int
 
 //SingleEndRead
 boost::optional<BitSet> SingleEndRead::get_key(size_t start, size_t length){
-    
-    return str_to_bit(one.subseq(start, length));
+    //The C ensures no PE and SE are mapped to the same locaitn
+    return str_to_bit("C" + one.subseq(start, length*2));
 }
 
 inline size_t qual_sum(size_t s, const char c) {
