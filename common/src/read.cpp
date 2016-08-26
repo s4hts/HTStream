@@ -1,6 +1,7 @@
 #include "read.h"
 #include <boost/dynamic_bitset.hpp>
 #include <numeric>
+#include <iostream>
 
 std::string ReadBase::bit_to_str(const BitSet &bits) {
     size_t str_len = bits.size()/2;
@@ -50,8 +51,7 @@ boost::optional<BitSet> ReadBase::reverse_complement(const std::string& str, int
 
 //SingleEndRead
 boost::optional<BitSet> SingleEndRead::get_key(size_t start, size_t length){
-    
-    return str_to_bit(one.subseq(start, length));
+    return str_to_bit(one.subseq(start, length*2));
 }
 
 inline size_t qual_sum(size_t s, const char c) {
