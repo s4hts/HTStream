@@ -1,7 +1,6 @@
 #include "read.h"
 #include <boost/dynamic_bitset.hpp>
 #include <numeric>
-#include <iostream>
 
 std::string ReadBase::bit_to_str(const BitSet &bits) {
     size_t str_len = bits.size()/2;
