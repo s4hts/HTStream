@@ -7,13 +7,16 @@ message( status "sources: " ${sources})
 
 
 set(COMMON_INCLUDES ${CMAKE_SOURCE_DIR}/common/src)
-include_directories(${COMMON_INCLUDES})
 
-set(PROJECT_LINK_LIBS libhts_common.so)
+set(PROJECT_LINK_LIBS hts_common)
 link_directories(${CMAKE_BINARY_DIR}/common)
 
+FIND_PACKAGE( Boost 1.56 COMPONENTS system program_options iostreams filesystem REQUIRED )
+include_directories(${COMMON_INCLUDES} ${Boost_INCLUDE_DIR} )
+
+
 add_executable(super_deduper ${sources})
-target_link_libraries(super_deduper ${PROJECT_LINK_LIBS})
+target_link_libraries(super_deduper ${PROJECT_LINK_LIBS} ${Boost_LIBRARIES})
 
 add_custom_target(testSD
   DEPENDS super_deduper
@@ -29,13 +32,13 @@ add_custom_target(valgrind
 ## test
 set(PROJECT_TEST_NAME ${PROJECT_NAME}_test)
 find_package(Threads REQUIRED)
-include_directories(${GTEST_INCLUDE_DIRS} ${COMMON_INCLUDES} ${CMAKE_SOURCE_DIR}/Super-Deduper/src)
+include_directories(${GTEST_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} ${COMMON_INCLUDES} ${CMAKE_SOURCE_DIR}/Super-Deduper/src)
 
 file(GLOB TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/test/*.cpp)
 link_directories(${GTEST_LIBS_DIR})
 list(REMOVE_ITEM sources ${CMAKE_CURRENT_SOURCE_DIR}/src/super-deduper.cpp)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Dprivate=public")
-add_executable(${PROJECT_TEST_NAME} ${TEST_SRC_FILES} ${sources})
+#add_executable(${PROJECT_TEST_NAME} ${TEST_SRC_FILES} ${sources})
 #add_dependencies(${PROJECT_TEST_NAME} googletest)
-target_link_libraries(${PROJECT_TEST_NAME} gtest gtest_main ${CMAKE_THREAD_LIBS_INIT} ${PROJECT_LINK_LIBS})
-add_test(test_superd ${PROJECT_TEST_NAME})
+#target_link_libraries(${PROJECT_TEST_NAME} gtest gtest_main ${CMAKE_THREAD_LIBS_INIT} ${PROJECT_LINK_LIBS})
+#add_test(test_superd ${PROJECT_TEST_NAME})

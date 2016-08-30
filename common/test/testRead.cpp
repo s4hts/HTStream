@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <boost/dynamic_bitset.hpp>
 #include "read.h"
 
 TEST(EmptyTest, firstTest) {
@@ -6,46 +7,47 @@ TEST(EmptyTest, firstTest) {
 }
 
 TEST(CreatePERead, createPEReadWorks){
-  Read r1("CCACCCTCATTTCATTCTCAGAAGCATGTATGAAGTTGTAATAGCCCTGACGTATGGTTTACCTACTAAGATACCCTCAGGAGTTCTCATCTAGCAAGTG",
-          "88@BCFDE<CEFFCEFEEEA<99,C,C,C9E9,,@CE9E9<CC,C6@E,,C,B8E8,CEE8CEE9CE9,,,C<CCCED<,,,,CCEEF9EFE9,C<,,C,");
-  Read r2("CTTTCTGGAACTTGAGCAGGAGTTCTGCTCTGTCATCTCTGTTCTCCTGTTCCTTCCACACCTGTTTTTTTCTCACCGTGCCATTTTTCCCTTCATTCTC",
-          "-8A@@###############################################################################################");
+    Read r1("CCACCCTCATTTCATTCTCAGAAGCATGTATGAAGTTGTAATAGCCCTGACGTATGGTTTACCTACTAAGATACCCTCAGGAGTTCTCATCTAGCAAGTG",
 
-  PairedEndRead pe1(r1, r2, "PE1")
+            "88@BCFDE<CEFFCEFEEEA<99,C,C,C9E9,,@CE9E9<CC,C6@E,,C,B8E8,CEE8CEE9CE9,,,C<CCCED<,,,,CCEEF9EFE9,C<,,C,", "Read1");
+    Read r2("CTTTCTGGAACTTGAGCAGGAGTTCTGCTCTGTCATCTCTGTTCTCCTGTTCCTTCCACACCTGTTTTTTTCTCACCGTGCCATTTTTCCCTTCATTCTC",
+            "-8A@@###############################################################################################", "Read2");
+
+    std::shared_ptr<ReadBase> pe1 = std::make_shared<PairedEndRead>(r1, r2);
+    std::shared_ptr<ReadBase> se1 = std::make_shared<SingleEndRead>(r1);
+
+    ASSERT_EQ(pe1->get_key(2, 5), pe1->str_to_bit("TTCTGACCCT"));
+
+    ASSERT_EQ(se1->get_key(2, 5), se1->str_to_bit("ACCCT"));
 
 }
 
-class BinarySearchTest: public ::testing::Test {
-public:
-    BinarySearchTest() : bst(4, 2) {}
+TEST(ConvertToTwobit, ConvertToTwobitWorks){
+  boost::dynamic_bitset<> x(8);
+  boost::dynamic_bitset<> bs1;
+  //ACTG = 00 01 11 10
+  x[7] = 0; x[6] = 0; x[5] = 0; x[4] = 1; x[3] = 1; x[2] = 1; x[1] = 1; x[0] = 0;
+  bs1 = *ReadBase::str_to_bit("ACTG");
+  ASSERT_EQ(x, bs1);
+}
 
-protected:
+TEST(qual, avgQualScore) {
+    SingleEndRead r1(Read("aaa",
+                       "aaa",
+                       "foo"));
+    ASSERT_EQ(r1.avg_q_score(), 97.0);
 
-    virtual void SetUp() {
+}
 
-        // todo:  make sensible strings here
-        auto r1 = std::make_shared<readInfo>("aattttaaa", "aattttaaa", "aattttaaa");
-        auto r2 = std::make_shared<readInfo>("aaggggaaa", "aaggggaaa", "aaggggaaa");
+TEST(read, BitToStrWorks) {
+    auto bs1 = *ReadBase::str_to_bit("ACTG");
+    auto s = ReadBase::bit_to_str(bs1);
+    ASSERT_EQ(s, "ACTG");
+}
 
-        bst.AddNode(r1, r2);
+TEST(read, ReverseComplementWorks) {
+    ASSERT_EQ(ReadBase::bit_to_str(*ReadBase::reverse_complement("ACTG", 0, 4)), "CAGT");
 
-    }
-
-    virtual void TearDown() {
-    }
-
-    BinarySearchTree bst;
-
-};
-
-
-
-
-TEST_F(BinarySearchTest, getIDWorks) {
-    auto r1 = std::make_shared<readInfo>("aattttaaa", "aattttaaa", "aattttaaa");
-    auto r2 = std::make_shared<readInfo>("aaggggaaa", "aaggggaaa", "aaggggaaa");
-
-    BinarySearchTree::idptr id = 0;
-    ASSERT_TRUE(bst.getID(r1, r2, id)) << "reads expected to be found, already added";
-
+    ASSERT_EQ(ReadBase::bit_to_str(*ReadBase::reverse_complement("ACTAACTGTA", 2, 4)), "CAGT");
+    
 }

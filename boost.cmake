@@ -26,7 +26,6 @@ set(boost_with_args
   --with-iostreams
   --with-program_options
   --with-system
-  --with-thread
   --with-chrono
 )
 
@@ -52,8 +51,9 @@ else()
   set(boost_cmds
     CONFIGURE_COMMAND ./bootstrap.sh --prefix=<INSTALL_DIR>
     BUILD_COMMAND ./b2 address-model=${am} ${boost_with_args}
-    INSTALL_COMMAND ./b2 address-model=${am} ${boost_with_args}
-      install
+#    INSTALL_COMMAND ./b2 address-model=${am} ${boost_with_args}
+#      install
+
   )
 endif()
 
@@ -62,7 +62,6 @@ ExternalProject_Add(boost
   URL ${boost_url}
   URL_MD5 ${boost_md5}
   SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/boost"
-  INSTALL_DIR "${OpenChemistry_INSTALL_PREFIX}"
   ${boost_cmds}
   BUILD_IN_SOURCE 1
 )
