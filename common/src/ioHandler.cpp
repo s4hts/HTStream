@@ -141,7 +141,7 @@ bool InputReader<ReadBase, TabReadImpl>::has_next() {
     skip_lr(in1);
     return (in1 and in1->good());
 }
-
+/*
 // ### output ###
 void OutputFastq::write_read(const Read& read, std::ostream &output) {
     output << '@' << read.get_id() << "\n";
@@ -187,4 +187,4 @@ void OutputWriter<ReadBase, ReadBaseOutTab>::write(const ReadBase &data) {
         }
         write_read(ser->get_read(), output);
     }
-}
+}*/
