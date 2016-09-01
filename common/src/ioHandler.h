@@ -81,7 +81,11 @@ public:
     ~SingleEndReadOutFastq() { output.flush(); }
     void write(const SingleEndRead &read) { format_writer(read.get_read()); }
 protected:
-    void format_writer(const Read &read) { output << "@" << read.get_id() << '\n' << read.get_seq() << "\n+\n" << read.get_qual() << '\n'; }
+    
+    void format_writer(const Read &read) { 
+        output << "@" << read.get_id() << '\n' << read.get_seq() << "\n+\n" << read.get_qual() << '\n'; 
+    }
+    
     std::ostream& output;
 };
 
@@ -92,7 +96,11 @@ public:
     void write(const PairedEndRead &read) { format_writer(read.get_read_one(), read.get_read_two()); }
 protected:
     std::ostream &out1, &out2;
-    void format_writer(const Read &read1, const Read &read2) { out1 << "@" << read1.get_id() << '\n' << read1.get_seq() << "\n+\n" << read1.get_qual() << '\n' ; out2 << "@" << read2.get_id() << '\n' << read2.get_seq() << "\n+\n" << read2.get_qual() << '\n'; }
+    
+    void format_writer(const Read &read1, const Read &read2) { 
+        out1 << "@" << read1.get_id() << '\n' << read1.get_seq() << "\n+\n" << read1.get_qual() << '\n'; 
+        out2 << "@" << read2.get_id() << '\n' << read2.get_seq() << "\n+\n" << read2.get_qual() << '\n'; 
+    }
 };
 
 class PairedEndReadOutInter : public OutputWriter {
@@ -102,7 +110,10 @@ public:
     void write(const PairedEndRead &read) { format_writer(read.get_read_one(), read.get_read_two()); }
 protected:
     std::ostream &out1;
-    void format_writer(const Read &read1, const Read &read2) { out1 << "@" << read1.get_id() << '\n' << read1.get_seq() << "\n+\n" << read1.get_qual() << '\n' ; out1 << "@" << read2.get_id() << '\n' << read2.get_seq() << "\n+\n" << read2.get_qual() << '\n'; }
+    void format_writer(const Read &read1, const Read &read2) { 
+        out1 << "@" << read1.get_id() << '\n' << read1.get_seq() << "\n+\n" << read1.get_qual() << '\n';
+        out1 << "@" << read2.get_id() << '\n' << read2.get_seq() << "\n+\n" << read2.get_qual() << '\n'; 
+    }
 };
 
 class ReadBaseOutTab : public OutputWriter {
@@ -111,6 +122,7 @@ public:
     ~ReadBaseOutTab() { output.flush(); }
     void write(const PairedEndRead &read) { format_writer(read.get_read_one(), read.get_read_two()); }
     void write(const SingleEndRead &read) { format_writer(read.get_read()); }
+    
     void write(const ReadBase &read) {  
         const PairedEndRead *per = dynamic_cast<const PairedEndRead*>(&read);
         if (per) {
@@ -124,8 +136,15 @@ public:
         }    
     }
 protected:
-    void format_writer(const Read &read) { output << read.get_id() << '\t' << read.get_seq() << '\t' << read.get_qual() << '\n' ; }
-    void format_writer(const Read &read1, const Read &read2) { output << read1.get_id() << '\t' << read1.get_seq() << '\t' << read1.get_qual() << '\t' << read2.get_seq() << '\t' << read2.get_qual() << '\n'; }
+    
+    void format_writer(const Read &read) { 
+        output << read.get_id() << '\t' << read.get_seq() << '\t' << read.get_qual() << '\n'; 
+    }
+
+    void format_writer(const Read &read1, const Read &read2) {
+        output << read1.get_id() << '\t' << read1.get_seq() << '\t' << read1.get_qual() << '\t' << read2.get_seq() << '\t' << read2.get_qual() << '\n';
+    }
+    
     std::ostream &output;
 };
 
