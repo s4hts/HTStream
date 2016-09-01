@@ -73,8 +73,6 @@ public:
     virtual void write(const PairedEndRead& read) { throw std::runtime_error("No PE implementation of write (Probably a SE read)"); }
     virtual void write(const SingleEndRead& read) { throw std::runtime_error("No SE implementaiton of write (Probably a PE read)"); }
     virtual void write(const ReadBase &read) { throw std::runtime_error("No ReadBase class, only accessable with tab"); } //maybe typecase eventually 
-    virtual void format_writer(const Read& read) { }
-    virtual void format_writer(const Read& read1, const Read& read2) { }
 };
 
 class SingleEndReadOutFastq : public OutputWriter {
@@ -91,10 +89,10 @@ class PairedEndReadOutFastq : public OutputWriter {
 public:
     PairedEndReadOutFastq(std::ostream &out1_, std::ostream &out2_) : out1(out1_), out2(out2_) {}
     ~PairedEndReadOutFastq() { out1.flush(); out2.flush(); }
-    void write(const PairedEndRead &read) { std::cout << "HERE\n"; format_writer(read.get_read_one(), read.get_read_two()); }
+    void write(const PairedEndRead &read) { format_writer(read.get_read_one(), read.get_read_two()); }
 protected:
     std::ostream &out1, &out2;
-    void format_writer(const Read &read1, const Read &read2) {std::cout << "NEXT\n";  out1 << "@" << read1.get_id() << '\n' << read1.get_seq() << "\n+\n" << read1.get_qual() << '\n' ; out2 << "@" << read2.get_id() << '\n' << read2.get_seq() << "\n+\n" << read2.get_qual() << '\n'; }
+    void format_writer(const Read &read1, const Read &read2) { out1 << "@" << read1.get_id() << '\n' << read1.get_seq() << "\n+\n" << read1.get_qual() << '\n' ; out2 << "@" << read2.get_id() << '\n' << read2.get_seq() << "\n+\n" << read2.get_qual() << '\n'; }
 };
 
 class PairedEndReadOutInter : public OutputWriter {
