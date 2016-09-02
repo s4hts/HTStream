@@ -190,11 +190,11 @@ int main(int argc, char** argv)
                 }
             }
             
-            OutputWriter *pe;
-            OutputWriter *se;
-            std::ostream *out_1;
-            std::ostream *out_2;
-            std::ostream *out_3;
+            std::unique_ptr<OutputWriter> pe;
+            std::unique_ptr<OutputWriter> se;
+            std::unique_ptr<std::ostream> out_1;
+            std::unique_ptr<std::ostream> out_2;
+            std::unique_ptr<std::ostream> out_3;
 
             if (fastq_out || (! std_out && ! tab_out) ) {
                 for (auto& outfile: default_outfiles) {
@@ -202,18 +202,18 @@ int main(int argc, char** argv)
                 }
                 
                 if (gzip_out) {
-                    out_1 = new bi::stream<bi::file_descriptor_sink> {fileno(popen(("gzip > " + default_outfiles[0] + ".gz").c_str(), "w")), bi::close_handle};
-                    out_2 = new bi::stream<bi::file_descriptor_sink> {fileno(popen(("gzip > " + default_outfiles[1] + ".gz").c_str(), "w")), bi::close_handle};
-                    out_3 = new bi::stream<bi::file_descriptor_sink> {fileno(popen(("gzip > " + default_outfiles[2] + ".gz").c_str(), "w")), bi::close_handle};
-                    pe = new PairedEndReadOutFastq(*out_1, *out_2);
-                    se = new SingleEndReadOutFastq(*out_3);
+                    out_1.reset(new bi::stream<bi::file_descriptor_sink> {fileno(popen(("gzip > " + default_outfiles[0] + ".gz").c_str(), "w")), bi::close_handle});
+                    out_2.reset(new bi::stream<bi::file_descriptor_sink> {fileno(popen(("gzip > " + default_outfiles[1] + ".gz").c_str(), "w")), bi::close_handle});
+                    out_3.reset(new bi::stream<bi::file_descriptor_sink> {fileno(popen(("gzip > " + default_outfiles[2] + ".gz").c_str(), "w")), bi::close_handle});
+                    pe.reset(new PairedEndReadOutFastq(*out_1, *out_2));
+                    se.reset(new SingleEndReadOutFastq(*out_3));
                 } else {
                     // note: mapped file is faster but uses more memory
-                    out_1 = new std::ofstream (default_outfiles[0], std::ofstream::out);
-                    out_2 = new std::ofstream (default_outfiles[1], std::ofstream::out);
-                    out_3 = new std::ofstream (default_outfiles[2], std::ofstream::out);
-                    pe = new PairedEndReadOutFastq(*out_1, *out_2);
-                    se = new SingleEndReadOutFastq(*out_3);
+                    out_1.reset(new std::ofstream (default_outfiles[0], std::ofstream::out));
+                    out_2.reset(new std::ofstream (default_outfiles[1], std::ofstream::out));
+                    out_3.reset(new std::ofstream (default_outfiles[2], std::ofstream::out));
+                    pe.reset(new PairedEndReadOutFastq(*out_1, *out_2));
+                    se.reset(new SingleEndReadOutFastq(*out_3));
                 }
             } else if (interleaved_out)  {
                 for (auto& outfile: default_outfiles) {
@@ -221,15 +221,15 @@ int main(int argc, char** argv)
                 }
 
                 if (gzip_out) {
-                    out_1 = new bi::stream<bi::file_descriptor_sink> {fileno(popen(("gzip > " + default_outfiles[0] + ".gz").c_str(), "w")), bi::close_handle};
-                    out_3 = new bi::stream<bi::file_descriptor_sink> {fileno(popen(("gzip > " + default_outfiles[2] + ".gz").c_str(), "w")), bi::close_handle};
-                    pe = new PairedEndReadOutInter(*out_1);
-                    se = new SingleEndReadOutFastq(*out_3);
+                    out_1.reset(new bi::stream<bi::file_descriptor_sink> {fileno(popen(("gzip > " + default_outfiles[0] + ".gz").c_str(), "w")), bi::close_handle});
+                    out_3.reset(new bi::stream<bi::file_descriptor_sink> {fileno(popen(("gzip > " + default_outfiles[2] + ".gz").c_str(), "w")), bi::close_handle});
+                    pe.reset(new PairedEndReadOutInter(*out_1));
+                    se.reset(new SingleEndReadOutFastq(*out_3));
                 } else {
-                    out_1 = new std::ofstream (default_outfiles[0], std::ofstream::out);
-                    out_3 = new std::ofstream (default_outfiles[2], std::ofstream::out);
-                    pe = new PairedEndReadOutInter(*out_1);
-                    se = new SingleEndReadOutFastq(*out_3);
+                    out_1.reset(new std::ofstream (default_outfiles[0], std::ofstream::out));
+                    out_3.reset(new std::ofstream (default_outfiles[2], std::ofstream::out));
+                    pe.reset(new PairedEndReadOutInter(*out_1));
+                    se.reset(new SingleEndReadOutFastq(*out_3));
                 }
             } else if (tab_out) {
                 for (auto& outfile: default_outfiles) {
@@ -237,13 +237,13 @@ int main(int argc, char** argv)
                 }
                 
                 if (gzip_out) {
-                    out_1 = new bi::stream<bi::file_descriptor_sink> {fileno(popen(("gzip > " + default_outfiles[0] + ".gz").c_str(), "w")), bi::close_handle};
-                    pe = new PairedEndReadOutInter(*out_1);
-                    se = new SingleEndReadOutFastq(*out_1);
+                    out_1.reset(new bi::stream<bi::file_descriptor_sink> {fileno(popen(("gzip > " + default_outfiles[0] + ".gz").c_str(), "w")), bi::close_handle});
+                    pe.reset(new PairedEndReadOutInter(*out_1));
+                    se.reset(new SingleEndReadOutFastq(*out_1));
                 } else {
-                    out_1 = new std::ofstream (default_outfiles[0], std::ofstream::out);
-                    pe = new PairedEndReadOutInter(*out_1);
-                    se = new SingleEndReadOutFastq(*out_1);
+                    out_1.reset(new std::ofstream (default_outfiles[0], std::ofstream::out));
+                    pe.reset(new PairedEndReadOutInter(*out_1));
+                    se.reset(new SingleEndReadOutFastq(*out_1));
                 }
             }
             for(auto const &i : read_map) {
@@ -260,14 +260,8 @@ int main(int argc, char** argv)
                     }
                 }
             } 
-
-            delete pe;
-            delete se; 
-            delete out_1;
-            delete out_2;
-            delete out_3;
-
         }
+
         catch(po::error& e)
         {
             std::cerr << "ERROR: " << e.what() << std::endl << std::endl;

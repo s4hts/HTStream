@@ -58,15 +58,6 @@ protected:
     std::istream *in1;
 };
 
-// ### output ###
-
-/*template <class T, class Impl>
-class OutputWriter : Impl {
-public:
-    using Impl::Impl;
-    void write(const T& data);
-};*/
-
 class OutputWriter {
 public:
     virtual ~OutputWriter() { }
