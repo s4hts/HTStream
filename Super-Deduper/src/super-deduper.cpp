@@ -190,11 +190,12 @@ int main(int argc, char** argv)
                 }
             }
             
-            std::unique_ptr<OutputWriter> pe;
-            std::unique_ptr<OutputWriter> se;
-            std::unique_ptr<std::ostream> out_1;
-            std::unique_ptr<std::ostream> out_2;
-            std::unique_ptr<std::ostream> out_3;
+            std::unique_ptr<std::ostream> out_1 = nullptr;
+            std::unique_ptr<std::ostream> out_2 = nullptr;
+            std::unique_ptr<std::ostream> out_3 = nullptr;
+            
+            std::unique_ptr<OutputWriter> pe = nullptr;
+            std::unique_ptr<OutputWriter> se = nullptr;
 
             if (fastq_out || (! std_out && ! tab_out) ) {
                 for (auto& outfile: default_outfiles) {
