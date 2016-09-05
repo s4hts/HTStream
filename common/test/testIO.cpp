@@ -63,16 +63,16 @@ TEST_F(ReadsTest, testWriteFastqSingle) {
     
     std::istringstream in1(readData);
     InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(in1);
-
     std::ostringstream out1;
-    std::unique_ptr<OutputWriter> se(new SingleEndReadOutFastq(out1));
 
     {
+        std::unique_ptr<OutputWriter> se(new SingleEndReadOutFastq(out1));
         while(ifs.has_next()) {
             auto r = ifs.next();
             se->write(*r);
         }
     }
+
     ASSERT_EQ(readData, out1.str());
 }
 
@@ -81,10 +81,8 @@ TEST_F(ReadsTest, testTabWrite) {
     InputReader<ReadBase, TabReadImpl> ifs(in1);
     std::ostringstream out1;
 
-    std::unique_ptr<OutputWriter> ofs(new ReadBaseOutTab(out1));
-
     {
-
+        std::unique_ptr<OutputWriter> ofs(new ReadBaseOutTab(out1));
         while(ifs.has_next()) {
             auto r = ifs.next();
             ofs->write(*r);
@@ -99,9 +97,8 @@ TEST_F(ReadsTest, testInterWrite) {
     InputReader<PairedEndRead, InterReadImpl> ifs(in1);
     std::ostringstream out1;
 
-    std::unique_ptr<OutputWriter> ofs(new PairedEndReadOutInter(out1));
-
     {
+        std::unique_ptr<OutputWriter> ofs(new PairedEndReadOutInter(out1));
         while(ifs.has_next()) {
             auto r = ifs.next();
             ofs->write(*r);
