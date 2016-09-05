@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <boost/dynamic_bitset.hpp>
+#include <boost/optional/optional_io.hpp>
 #include "read.h"
 
 TEST(EmptyTest, firstTest) {
@@ -15,10 +16,11 @@ TEST(CreatePERead, createPEReadWorks){
 
     std::shared_ptr<ReadBase> pe1 = std::make_shared<PairedEndRead>(r1, r2);
     std::shared_ptr<ReadBase> se1 = std::make_shared<SingleEndRead>(r1);
-
     ASSERT_EQ(pe1->get_key(2, 5), pe1->str_to_bit("TTCTGACCCT"));
-
-    ASSERT_EQ(se1->get_key(2, 5), se1->str_to_bit("ACCCT"));
+    //Because we multiple key by two
+    //Also needs a 'C' so SE don't map to the same deal
+    ASSERT_EQ(se1->get_key(2, 5), se1->str_to_bit("CACCCTCATTT"));
+    std::cout << se1->get_key(2,5) << '\n'; 
 
 }
 
