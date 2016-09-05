@@ -37,8 +37,9 @@ include_directories(${GTEST_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} ${COMMON_INCLUDES
 file(GLOB TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/test/*.cpp)
 link_directories(${GTEST_LIBS_DIR})
 list(REMOVE_ITEM sources ${CMAKE_CURRENT_SOURCE_DIR}/src/super-deduper.cpp)
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Dprivate=public")
-#add_executable(${PROJECT_TEST_NAME} ${TEST_SRC_FILES} ${sources})
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Dprivate=public -lboost_serialization -lboost_unit_test_framework-mt -lboost_program_options")
+
+add_executable(${PROJECT_TEST_NAME} ${TEST_SRC_FILES} ${sources})
 #add_dependencies(${PROJECT_TEST_NAME} googletest)
-#target_link_libraries(${PROJECT_TEST_NAME} gtest gtest_main ${CMAKE_THREAD_LIBS_INIT} ${PROJECT_LINK_LIBS})
-#add_test(test_superd ${PROJECT_TEST_NAME})
+target_link_libraries(${PROJECT_TEST_NAME} gtest gtest_main ${CMAKE_THREAD_LIBS_INIT} ${PROJECT_LINK_LIBS})
+add_test(test_superd ${PROJECT_TEST_NAME})
