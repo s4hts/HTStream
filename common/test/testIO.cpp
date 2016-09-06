@@ -60,34 +60,35 @@ TEST_F(ReadsTest, parsePairedReadFastq) {
 }
     
 TEST_F(ReadsTest, testWriteFastqSingle) {
+    
     std::istringstream in1(readData);
     InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(in1);
-
     std::ostringstream out1;
-    {
-        OutputWriter<SingleEndRead, SingleEndReadOutFastq> ofs(out1);
 
+    {
+        std::unique_ptr<OutputWriter> se(new SingleEndReadOutFastq(out1));
         while(ifs.has_next()) {
             auto r = ifs.next();
-            ofs.write(*r);
+            se->write(*r);
         }
     }
+
     ASSERT_EQ(readData, out1.str());
 }
 
 TEST_F(ReadsTest, testTabWrite) {
     std::istringstream in1(readTabData);
     InputReader<ReadBase, TabReadImpl> ifs(in1);
-    
     std::ostringstream out1;
-    {
-        OutputWriter<ReadBase, ReadBaseOutTab> ofs(out1);
 
+    {
+        std::unique_ptr<OutputWriter> ofs(new ReadBaseOutTab(out1));
         while(ifs.has_next()) {
             auto r = ifs.next();
-            ofs.write(*r);
+            ofs->write(*r);
         }
     }
+
     ASSERT_EQ(readTabData, out1.str());
 }
 
@@ -95,14 +96,15 @@ TEST_F(ReadsTest, testInterWrite) {
     std::istringstream in1(readDataInter);
     InputReader<PairedEndRead, InterReadImpl> ifs(in1);
     std::ostringstream out1;
+
     {
-        OutputWriter<PairedEndRead, PairedEndReadOutInter> ofs(out1);
-        
+        std::unique_ptr<OutputWriter> ofs(new PairedEndReadOutInter(out1));
         while(ifs.has_next()) {
             auto r = ifs.next();
-            ofs.write(*r);
+            ofs->write(*r);
         }
     }
+
     ASSERT_EQ(readDataInter, out1.str());
 }
         
