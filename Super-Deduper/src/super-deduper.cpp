@@ -38,6 +38,22 @@ int check_open_r(const std::string& filename) {
     }
 }
 
+int check_exists(const std::string& filename, bool force, bool gzip) {
+    
+    bf::path p(filename);
+   
+    if (force || !bf::exists(p)) {
+        if (gzip) {
+            return fileno(popen(("gzip > " + filename + ".gz").c_str(), "w"));
+        } else {
+            return fileno(fopen(filename.c_str(), "w"));
+        }
+    } else {
+        throw std::runtime_error("File " + filename + " all ready exists. Please use -F or delete it\n");
+    }
+
+}
+
 int main(int argc, char** argv)
 {
     BitMap read_map;
@@ -54,7 +70,8 @@ int main(int argc, char** argv)
     bool std_out;
     bool gzip_out;
     bool interleaved_out;
-    
+    bool force;
+
     try
     {
         /** Define and parse the program options
@@ -78,9 +95,9 @@ int main(int argc, char** argv)
             ("length,l", po::value<size_t>(&length)->default_value(10), "Length of unique ID <int>")
             ("quality-check-off,q",        "Quality Checking Off First Duplicate seen will be kept")
             ("gzip-output,g", po::bool_switch(&gzip_out)->default_value(false),  "Output gzipped")
-            ("interleaved-output, i", po::bool_switch(&interleaved_out)->default_value(false),     "Output to interleaved")
+            ("interleaved-output,i", po::bool_switch(&interleaved_out)->default_value(false),     "Output to interleaved")
             ("fastq-output,f", po::bool_switch(&fastq_out)->default_value(false), "Fastq format output")
-            ("force,F", po::bool_switch()->default_value(true),         "Forces overwrite of files")
+            ("force,F", po::bool_switch(&force)->default_value(false),         "Forces overwrite of files")
             ("tab-output,t", po::bool_switch(&tab_out)->default_value(false),   "Tab-delimited output")
             ("to-stdout,O", po::bool_switch(&std_out)->default_value(false),    "Prints to STDOUT in Tab Delimited")
             ("prefix,p", po::value<std::string>(&prefix)->default_value("output_nodup_"),
@@ -166,51 +183,31 @@ int main(int argc, char** argv)
                     outfile = prefix + outfile + ".fastq";
                 }
                 
-                if (gzip_out) {
-                    out_1.reset(new bi::stream<bi::file_descriptor_sink> {fileno(popen(("gzip > " + default_outfiles[0] + ".gz").c_str(), "w")), bi::close_handle});
-                    out_2.reset(new bi::stream<bi::file_descriptor_sink> {fileno(popen(("gzip > " + default_outfiles[1] + ".gz").c_str(), "w")), bi::close_handle});
-                    out_3.reset(new bi::stream<bi::file_descriptor_sink> {fileno(popen(("gzip > " + default_outfiles[2] + ".gz").c_str(), "w")), bi::close_handle});
-                    pe.reset(new PairedEndReadOutFastq(*out_1, *out_2));
-                    se.reset(new SingleEndReadOutFastq(*out_3));
-                } else {
-                    // note: mapped file is faster but uses more memory
-                    out_1.reset(new std::ofstream (default_outfiles[0], std::ofstream::out));
-                    out_2.reset(new std::ofstream (default_outfiles[1], std::ofstream::out));
-                    out_3.reset(new std::ofstream (default_outfiles[2], std::ofstream::out));
-                    pe.reset(new PairedEndReadOutFastq(*out_1, *out_2));
-                    se.reset(new SingleEndReadOutFastq(*out_3));
-                }
+                out_1.reset(new bi::stream<bi::file_descriptor_sink> {check_exists(default_outfiles[0], force, gzip_out), bi::close_handle});
+                out_2.reset(new bi::stream<bi::file_descriptor_sink> {check_exists(default_outfiles[1], force, gzip_out), bi::close_handle});
+                out_3.reset(new bi::stream<bi::file_descriptor_sink> {check_exists(default_outfiles[2], force, gzip_out), bi::close_handle});
+                pe.reset(new PairedEndReadOutFastq(*out_1, *out_2));
+                se.reset(new SingleEndReadOutFastq(*out_3));
+
             } else if (interleaved_out)  {
                 for (auto& outfile: default_outfiles) {
                     outfile = prefix + "INTER" + ".fastq";
                 }
 
-                if (gzip_out) {
-                    out_1.reset(new bi::stream<bi::file_descriptor_sink> {fileno(popen(("gzip > " + default_outfiles[0] + ".gz").c_str(), "w")), bi::close_handle});
-                    out_3.reset(new bi::stream<bi::file_descriptor_sink> {fileno(popen(("gzip > " + default_outfiles[2] + ".gz").c_str(), "w")), bi::close_handle});
-                    pe.reset(new PairedEndReadOutInter(*out_1));
-                    se.reset(new SingleEndReadOutFastq(*out_3));
-                } else {
-                    out_1.reset(new std::ofstream (default_outfiles[0], std::ofstream::out));
-                    out_3.reset(new std::ofstream (default_outfiles[2], std::ofstream::out));
-                    pe.reset(new PairedEndReadOutInter(*out_1));
-                    se.reset(new SingleEndReadOutFastq(*out_3));
-                }
+                out_1.reset(new bi::stream<bi::file_descriptor_sink> {check_exists(default_outfiles[0], force, gzip_out), bi::close_handle});
+                out_3.reset(new bi::stream<bi::file_descriptor_sink> {check_exists(default_outfiles[2], force, gzip_out), bi::close_handle});
+                pe.reset(new PairedEndReadOutInter(*out_1));
+                se.reset(new SingleEndReadOutFastq(*out_3));
             } else if (tab_out) {
                 for (auto& outfile: default_outfiles) {
                     outfile = prefix + "tab" + ".tastq";
                 }
                 
-                if (gzip_out) {
-                    out_1.reset(new bi::stream<bi::file_descriptor_sink> {fileno(popen(("gzip > " + default_outfiles[0] + ".gz").c_str(), "w")), bi::close_handle});
-                    pe.reset(new PairedEndReadOutInter(*out_1));
-                    se.reset(new SingleEndReadOutFastq(*out_1));
-                } else {
-                    out_1.reset(new std::ofstream (default_outfiles[0], std::ofstream::out));
-                    pe.reset(new PairedEndReadOutInter(*out_1));
-                    se.reset(new SingleEndReadOutFastq(*out_1));
-                }
+                out_1.reset(new bi::stream<bi::file_descriptor_sink> {check_exists(default_outfiles[0], force, gzip_out), bi::close_handle});
+                pe.reset(new PairedEndReadOutInter(*out_1));
+                se.reset(new SingleEndReadOutFastq(*out_1));
             }
+
             for(auto const &i : read_map) {
                 PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.second.get());
                 if (per) {
