@@ -27,35 +27,12 @@ namespace
 typedef std::unordered_map <std::string, size_t> Counter;
 
 namespace bi = boost::iostreams;
-namespace bf = boost::filesystem;
 
-int check_open_r(const std::string& filename) {
-    bf::path p(filename);
-    if (!bf::exists(p)) {
-        throw std::runtime_error("File " + filename + " was not found.");
+template<class T, class Impl>
+writer_helper(InputWriter<T, Impl> reader, OutputWriter *writer) {
+    while (reader.has_next()) {
+        writer->write(*reader.next());
     }
-    
-    if (p.extension() == ".gz") {
-        return fileno(popen(("gunzip -c " + filename).c_str(), "r"));
-    } else {
-        return fileno(fopen(filename.c_str(), "r"));
-    }
-}
-
-int check_exists(const std::string& filename, bool force, bool gzip) {
-
-    bf::path p(filename);
-
-    if (force || !bf::exists(p)) {
-        if (gzip) {
-            return fileno(popen(("gzip > " + filename + ".gz").c_str(), "w"));
-        } else {
-            return fileno(fopen(filename.c_str(), "w"));
-        }
-    } else {
-        throw std::runtime_error("File " + filename + " all ready exists. Please use -F or delete it\n");
-    }
-
 }
 
 int main(int argc, char** argv)
@@ -172,9 +149,7 @@ int main(int argc, char** argv)
                     bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
                     
                     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
-                    while (ifp.has_next()) {
-                        pe->write(*ifp.next());
-                    }
+                    writer_helper(ifp, pe);
                 }
             }
 
@@ -183,9 +158,7 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> sef{ check_open_r(file), bi::close_handle};
                     InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(sef);
-                    while (ifs.has_next()) {
-                        se->write(*ifs.next());
-                    }
+                    writer_helper(ifs, se);
                 }
             }
             
@@ -194,9 +167,7 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> tabin{ check_open_r(file), bi::close_handle};
                     InputReader<ReadBase, TabReadImpl> ift(tabin);
-                    while (ift.has_next()) {
-                        pe->write(*ift.next());
-                    }
+                    writer_helper(ift, pe);
                 }
             }
             
@@ -205,9 +176,7 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> inter{ check_open_r(file), bi::close_handle};
                     InputReader<PairedEndRead, InterReadImpl> ifp(inter);
-                    while (ifp.has_next()) {
-                        pe->write(*ifp.next());
-                    }
+                    writer_helper(ifp, pe);
                 }
             }
             

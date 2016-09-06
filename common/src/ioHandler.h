@@ -6,7 +6,25 @@
 #include "read.h"
 #include <boost/iostreams/concepts.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
+#include <boost/iostreams/device/file_descriptor.hpp>
+#include <boost/iostreams/stream.hpp>
+#include <boost/iostreams/device/file.hpp>
+#include <boost/iostreams/device/mapped_file.hpp>
+
+#include <boost/filesystem/path.hpp>
+#include <boost/filesystem.hpp>
 #include <iostream>
+#include <string>
+
+
+namespace bf = boost::filesystem;
+
+int check_open_r(const std::string& filename) ;
+int check_exists(const std::string& filename, bool force, bool gzip) ;
+
+
 // ### input ###
 template <class T, class Impl>
 class InputReader : Impl {

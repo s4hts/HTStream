@@ -23,36 +23,6 @@ namespace
 } // namespace
 
 namespace bi = boost::iostreams;
-namespace bf = boost::filesystem;
-
-int check_open_r(const std::string& filename) {
-    bf::path p(filename);
-    if (!bf::exists(p)) {
-        throw std::runtime_error("File " + filename + " was not found.");
-    }
-    
-    if (p.extension() == ".gz") {
-        return fileno(popen(("gunzip -c " + filename).c_str(), "r"));
-    } else {
-        return fileno(fopen(filename.c_str(), "r"));
-    }
-}
-
-int check_exists(const std::string& filename, bool force, bool gzip) {
-    
-    bf::path p(filename);
-   
-    if (force || !bf::exists(p)) {
-        if (gzip) {
-            return fileno(popen(("gzip > " + filename + ".gz").c_str(), "w"));
-        } else {
-            return fileno(fopen(filename.c_str(), "w"));
-        }
-    } else {
-        throw std::runtime_error("File " + filename + " all ready exists. Please use -F or delete it\n");
-    }
-
-}
 
 int main(int argc, char** argv)
 {
