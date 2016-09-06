@@ -1,8 +1,8 @@
 //  this is so we can implment hash function for dynamic_bitset
+#ifndef SUPERD_H
+#define SUPERD_H
 #define BOOST_DYNAMIC_BITSET_DONT_USE_FRIENDS
 
-#include <string>
-#include <fstream>
 #include "ioHandler.h"
 #include <map>
 #include <unordered_map>
@@ -39,3 +39,4 @@ void load_map(InputReader<T, Impl> &reader, Counter& counters, BitMap& read_map,
     }
 }
 
+#endif
