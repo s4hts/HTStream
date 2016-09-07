@@ -168,14 +168,17 @@ int main(int argc, char** argv)
                 out_3.reset(new bi::stream<bi::file_descriptor_sink> {check_exists(default_outfiles[2], force, gzip_out), bi::close_handle});
                 pe.reset(new PairedEndReadOutInter(*out_1));
                 se.reset(new SingleEndReadOutFastq(*out_3));
-            } else if (tab_out) {
+            } else if (tab_out || std_out) {
                 for (auto& outfile: default_outfiles) {
                     outfile = prefix + "tab" + ".tastq";
                 }
-                
-                out_1.reset(new bi::stream<bi::file_descriptor_sink> {check_exists(default_outfiles[0], force, gzip_out), bi::close_handle});
-                pe.reset(new PairedEndReadOutInter(*out_1));
-                se.reset(new SingleEndReadOutFastq(*out_1));
+                if (!std_out) {
+                    out_1.reset(new bi::stream<bi::file_descriptor_sink> {check_exists(default_outfiles[0], force, gzip_out), bi::close_handle});
+                } else {
+                    out_1.reset(new bi::stream<bi::file_descriptor_sink> {fileno(stdout), bi::close_handle});
+                } 
+                pe.reset(new ReadBaseOutTab(*out_1));
+                se.reset(new ReadBaseOutTab(*out_1));
             }
 
             for(auto const &i : read_map) {

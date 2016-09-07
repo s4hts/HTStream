@@ -128,7 +128,6 @@ int main(int argc, char** argv)
                 for (auto& outfile: default_outfiles) {
                     outfile = prefix + "tab" + ".tastq";
                 }
-               
                 if (!std_out) { 
                     out_1.reset(new bi::stream<bi::file_descriptor_sink> {check_exists(default_outfiles[0], force, gzip_out), bi::close_handle});
                 } else {
