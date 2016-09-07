@@ -4,12 +4,13 @@ project (hts_common)
 file(GLOB sources "src/*.cpp")
 message( status "sources: " ${sources})
 
-FIND_PACKAGE( Boost 1.56 COMPONENTS system REQUIRED )
+FIND_PACKAGE( Boost 1.56 COMPONENTS system filesystem REQUIRED )
 
 set(COMMON_INCLUDES ${CMAKE_SOURCE_DIR}/common/src)
 include_directories(${GTEST_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} ${COMMON_INCLUDES} )
 
 add_library(hts_common SHARED ${sources})
+target_link_libraries(hts_common  ${Boost_LIBRARIES})
 
 
 ## test
