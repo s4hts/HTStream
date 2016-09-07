@@ -28,8 +28,8 @@ typedef std::unordered_map <std::string, size_t> Counter;
 
 namespace bi = boost::iostreams;
 
-template<class T, class Impl>
-writer_helper(InputWriter<T, Impl> reader, OutputWriter *writer) {
+template <class T, class Impl>
+void writer_helper(InputReader<T, Impl> &reader, std::unique_ptr<OutputWriter> &writer) {
     while (reader.has_next()) {
         writer->write(*reader.next());
     }
@@ -75,7 +75,7 @@ int main(int argc, char** argv)
             ("force,F", po::bool_switch(&force)->default_value(false),         "Forces overwrite of files")
             ("tab-output,t", po::bool_switch(&tab_out)->default_value(false),   "Tab-delimited output")
             ("to-stdout,O", po::bool_switch(&std_out)->default_value(false),    "Prints to STDOUT in Tab Delimited")
-            ("prefix,p", po::value<std::string>(&prefix)->default_value("output_nodup_"),
+            ("prefix,p", po::value<std::string>(&prefix)->default_value("converted_"),
                                            "Prefix for outputted files")
             ("log-file,L",                 "Output-Logfile")
             ("no-log,N",                   "No logfile <outputs to stderr>")
@@ -128,10 +128,14 @@ int main(int argc, char** argv)
                 for (auto& outfile: default_outfiles) {
                     outfile = prefix + "tab" + ".tastq";
                 }
-                
-                out_1.reset(new bi::stream<bi::file_descriptor_sink> {check_exists(default_outfiles[0], force, gzip_out), bi::close_handle});
-                pe.reset(new PairedEndReadOutInter(*out_1));
-                se.reset(new SingleEndReadOutFastq(*out_1));
+               
+                if (!std_out) { 
+                    out_1.reset(new bi::stream<bi::file_descriptor_sink> {check_exists(default_outfiles[0], force, gzip_out), bi::close_handle});
+                } else {
+                    out_1.reset(new bi::stream<bi::file_descriptor_sink> {fileno(stdout), bi::close_handle});
+                }
+                pe.reset(new ReadBaseOutTab(*out_1));
+                se.reset(new ReadBaseOutTab(*out_1));
             }
 
             // there are any problems
@@ -198,8 +202,8 @@ int main(int argc, char** argv)
 
     }
 
-    std::cerr << "TotalRecords:" << counters["TotalRecords"] << "\tReplaced:" << counters["Replaced"]
-              << "\tHasN:" << counters["HasN"] << std::endl;
+    /*std::cerr << "TotalRecords:" << counters["TotalRecords"] << "\tReplaced:" << counters["Replaced"]
+              << "\tHasN:" << counters["HasN"] << std::endl;*/
     return SUCCESS;
 
 }
