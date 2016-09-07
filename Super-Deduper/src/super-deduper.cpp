@@ -38,6 +38,7 @@ int main(int argc, char** argv)
     bool fastq_out;
     bool tab_out;
     bool std_out;
+    bool std_in;
     bool gzip_out;
     bool interleaved_out;
     bool force;
@@ -60,7 +61,7 @@ int main(int argc, char** argv)
                                            "Tab input <comma sep for multiple files>")
             ("interleaved-input,I", po::value< std::vector<std::string> >(),
                                            "Interleaved input I <comma sep for multiple files>")
-            ("stdin-input,S",              "STDIN input <MUST BE TAB DELIMITED INPUT>")
+            ("stdin-input,S", po::bool_switch(&std_in)->default_value(false), "STDIN input <MUST BE TAB DELIMITED INPUT>")
             ("start,s", po::value<size_t>(&start)->default_value(10),  "Start location for unique ID <int>")
             ("length,l", po::value<size_t>(&length)->default_value(10), "Length of unique ID <int>")
             ("quality-check-off,q",        "Quality Checking Off First Duplicate seen will be kept")
@@ -141,6 +142,12 @@ int main(int argc, char** argv)
                 }
             }
             
+            if (std_in) {
+                bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
+                InputReader<ReadBase, TabReadImpl> ift(tabin);
+                load_map(ift, counters, read_map, start, length);
+            }
+
             std::unique_ptr<std::ostream> out_1 = nullptr;
             std::unique_ptr<std::ostream> out_2 = nullptr;
             std::unique_ptr<std::ostream> out_3 = nullptr;
@@ -195,10 +202,7 @@ int main(int argc, char** argv)
                     }
                 }
             } 
-        }
-
-        catch(po::error& e)
-        {
+        } catch(po::error& e) {
             std::cerr << "ERROR: " << e.what() << std::endl << std::endl;
             std::cerr << desc << std::endl;
             return ERROR_IN_COMMAND_LINE;

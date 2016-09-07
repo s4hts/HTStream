@@ -35,6 +35,25 @@ void writer_helper(InputReader<T, Impl> &reader, std::unique_ptr<OutputWriter> &
     }
 }
 
+template <class T, class Impl>
+void writer_helper(InputReader<T, Impl> &reader, std::unique_ptr<OutputWriter> &pe, std::unique_ptr<OutputWriter> &se) {
+    while (reader.has_next()) {
+        ReadBase *r = reader.next().get();
+        PairedEndRead *per = dynamic_cast<PairedEndRead*>(r);
+        if (per) {
+            pe->write(*per);
+        } else {
+            SingleEndRead *ser = dynamic_cast<SingleEndRead*>(r);
+            if (ser) {
+                se->write(*ser);
+            } else {
+                throw std::runtime_error("Unknow read found");
+            }
+        }
+    }
+}
+
+
 int main(int argc, char** argv)
 {
     Counter counters;
@@ -47,6 +66,7 @@ int main(int argc, char** argv)
     bool fastq_out;
     bool tab_out;
     bool std_out;
+    bool std_in;
     bool gzip_out;
     bool interleaved_out;
     bool force; 
@@ -68,7 +88,7 @@ int main(int argc, char** argv)
                                            "Tab input <comma sep for multiple files>")
             ("interleaved-input,I", po::value< std::vector<std::string> >(),
                                            "Interleaved input I <comma sep for multiple files>")
-            ("stdin-input,S",              "STDIN input <MUST BE TAB DELIMITED INPUT>")
+            ("stdin-input,S", po::bool_switch(&std_in)->default_value(false), "STDIN input <MUST BE TAB DELIMITED INPUT>")
             ("gzip-output,g", po::bool_switch(&gzip_out)->default_value(false),  "Output gzipped")
             ("interleaved-output,i", po::bool_switch(&interleaved_out)->default_value(false),     "Output to interleaved")
             ("fastq-output,f", po::bool_switch(&fastq_out)->default_value(false), "Fastq format output")
@@ -182,7 +202,12 @@ int main(int argc, char** argv)
                     writer_helper(ifp, pe);
                 }
             }
-            
+           
+            if (std_in) {
+                bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
+                InputReader<ReadBase, TabReadImpl> ift(tabin);
+                writer_helper(ift, pe, se);
+            }  
 
         }
         catch(po::error& e)
