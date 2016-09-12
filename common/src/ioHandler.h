@@ -2,7 +2,10 @@
 #define IOHANDLER_H
 
 #include <istream>
+#include <fstream>
 #include <memory>
+#include <utility>
+
 #include "read.h"
 #include <boost/iostreams/concepts.hpp>
 #include <boost/algorithm/string.hpp>
@@ -15,14 +18,53 @@
 
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem.hpp>
+
+
 #include <iostream>
 #include <string>
 
 
 namespace bf = boost::filesystem;
+namespace bi = boost::iostreams;
 
 int check_open_r(const std::string& filename) ;
 int check_exists(const std::string& filename, bool force, bool gzip) ;
+
+
+class hts_ofstream : public std::ostream {
+public:
+    bool gzip;
+    bool force;
+    bool std_out;
+    std::string filename;
+    std::shared_ptr<std::ostream> out;
+
+    ~hts_ofstream() {
+    }
+    
+    hts_ofstream(std::string filename_, bool force_, bool gzip_, bool stdout_) {
+        filename = filename_;
+        force = force_;
+        gzip = gzip_;     
+        std_out = stdout_;
+        out = nullptr;
+    }
+
+    template<class T>
+    hts_ofstream& operator<< (T s) {
+        if (!out) {
+            out.reset(new bi::stream<bi::file_descriptor_sink> {check_exists(filename, force, gzip), bi::close_handle});
+        }
+        *out << s;
+        return *this;
+    } 
+
+    void flush() {
+        if (out) {
+            std::flush(*out);
+        }
+    }
+};
 
 
 // ### input ###
@@ -100,15 +142,16 @@ protected:
 
 class PairedEndReadOutFastq : public OutputWriter {
 public:
-    PairedEndReadOutFastq(std::ostream &out1_, std::ostream &out2_) : out1(out1_), out2(out2_) {}
-    ~PairedEndReadOutFastq() { out1.flush(); out2.flush(); }
-    void write(const PairedEndRead &read) { format_writer(read.get_read_one(), read.get_read_two()); }
+    PairedEndReadOutFastq(std::shared_ptr<hts_ofstream> &out1_, std::shared_ptr<hts_ofstream> &out2_) : out1(std::move(out1_)), out2(std::move(out2_)) { }
+    ~PairedEndReadOutFastq() { out1->flush(); out2->flush(); }
+    void write(const PairedEndRead &read) { format_writer(read.get_read_one(), read.get_read_two());  }
 protected:
-    std::ostream &out1, &out2;
+    std::shared_ptr<hts_ofstream> out1 = nullptr;
+    std::shared_ptr<hts_ofstream> out2 = nullptr;
     
     void format_writer(const Read &read1, const Read &read2) { 
-        out1 << "@" << read1.get_id() << '\n' << read1.get_seq() << "\n+\n" << read1.get_qual() << '\n'; 
-        out2 << "@" << read2.get_id() << '\n' << read2.get_seq() << "\n+\n" << read2.get_qual() << '\n'; 
+        *out1 << "@" << read1.get_id() << '\n' << read1.get_seq() << "\n+\n" << read1.get_qual() << '\n'; 
+        *out2 << "@" << read2.get_id() << '\n' << read2.get_seq() << "\n+\n" << read2.get_qual() << '\n'; 
     }
 };
 

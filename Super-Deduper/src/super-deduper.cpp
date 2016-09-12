@@ -148,46 +148,52 @@ int main(int argc, char** argv)
                 load_map(ift, counters, read_map, start, length);
             }
 
-            std::unique_ptr<std::ostream> out_1 = nullptr;
+            /*std::unique_ptr<std::ostream> out_1 = nullptr;
             std::unique_ptr<std::ostream> out_2 = nullptr;
-            std::unique_ptr<std::ostream> out_3 = nullptr;
+            std::unique_ptr<std::ostream> out_3 = nullptr;*/
+            
+            std::shared_ptr<hts_ofstream> tmp_1 = nullptr;
+            std::shared_ptr<hts_ofstream> tmp_2 = nullptr;
             
             std::unique_ptr<OutputWriter> pe = nullptr;
             std::unique_ptr<OutputWriter> se = nullptr;
-
+            
             if (fastq_out || (! std_out && ! tab_out) ) {
                 for (auto& outfile: default_outfiles) {
                     outfile = prefix + outfile + ".fastq";
                 }
-                
-                out_1.reset(new bi::stream<bi::file_descriptor_sink> {check_exists(default_outfiles[0], force, gzip_out), bi::close_handle});
-                out_2.reset(new bi::stream<bi::file_descriptor_sink> {check_exists(default_outfiles[1], force, gzip_out), bi::close_handle});
-                out_3.reset(new bi::stream<bi::file_descriptor_sink> {check_exists(default_outfiles[2], force, gzip_out), bi::close_handle});
-                pe.reset(new PairedEndReadOutFastq(*out_1, *out_2));
-                se.reset(new SingleEndReadOutFastq(*out_3));
+               
+                tmp_1.reset(new hts_ofstream(default_outfiles[0], force, gzip_out, false));
+                tmp_2.reset(new hts_ofstream(default_outfiles[1], force, gzip_out, false));
+                pe.reset(new PairedEndReadOutFastq(tmp_1, tmp_2));
+                /*out_1.reset(new bi::stream<bi::file_descriptor_sink> {check_exists(default_outfiles[0], force, gzip_out), bi::close_handle});
+                out_2.reset(new bi::stream<bi::file_descriptor_sink> {check_exists(default_outfiles[1], force, gzip_out), bi::close_handle});*/
+
+                //out_3.reset(new bi::stream<bi::file_descriptor_sink> {check_exists(default_outfiles[2], force, gzip_out), bi::close_handle});
+                //pe.reset(new PairedEndReadOutFastq(*out_1, *out_2));
+                //se.reset(new SingleEndReadOutFastq(*out_3));
 
             } else if (interleaved_out)  {
                 for (auto& outfile: default_outfiles) {
                     outfile = prefix + "INTER" + ".fastq";
                 }
 
-                out_1.reset(new bi::stream<bi::file_descriptor_sink> {check_exists(default_outfiles[0], force, gzip_out), bi::close_handle});
+                /*out_1.reset(new bi::stream<bi::file_descriptor_sink> {check_exists(default_outfiles[0], force, gzip_out), bi::close_handle});
                 out_3.reset(new bi::stream<bi::file_descriptor_sink> {check_exists(default_outfiles[2], force, gzip_out), bi::close_handle});
                 pe.reset(new PairedEndReadOutInter(*out_1));
-                se.reset(new SingleEndReadOutFastq(*out_3));
+                se.reset(new SingleEndReadOutFastq(*out_3));*/
             } else if (tab_out || std_out) {
                 for (auto& outfile: default_outfiles) {
                     outfile = prefix + "tab" + ".tastq";
                 }
-                if (!std_out) {
+                /*if (!std_out) {
                     out_1.reset(new bi::stream<bi::file_descriptor_sink> {check_exists(default_outfiles[0], force, gzip_out), bi::close_handle});
                 } else {
                     out_1.reset(new bi::stream<bi::file_descriptor_sink> {fileno(stdout), bi::close_handle});
                 } 
                 pe.reset(new ReadBaseOutTab(*out_1));
-                se.reset(new ReadBaseOutTab(*out_1));
+                se.reset(new ReadBaseOutTab(*out_1));*/
             }
-
             for(auto const &i : read_map) {
                 PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.second.get());
                 if (per) {
@@ -195,13 +201,14 @@ int main(int argc, char** argv)
                 } else {
                     SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.second.get());
                     if(ser) {
-                        se->write(*ser);
+                    //    se->write(*ser);
                     }
                     else {
                         throw std::runtime_error("Unkown read found");
                     }
                 }
             } 
+            //Crashes here after going to the deconstructor of hts_ofstream of tmp_1
         } catch(po::error& e) {
             std::cerr << "ERROR: " << e.what() << std::endl << std::endl;
             std::cerr << desc << std::endl;
