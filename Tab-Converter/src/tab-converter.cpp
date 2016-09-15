@@ -119,9 +119,9 @@ int main(int argc, char** argv)
             po::notify(vm); // throws on error, so do after help in case
             //Index 1 start location (making it more human friendly)
             
-            std::unique_ptr<std::ostream> out_1 = nullptr;
-            std::unique_ptr<std::ostream> out_2 = nullptr;
-            std::unique_ptr<std::ostream> out_3 = nullptr;
+            std::shared_ptr<hts_ofstream> out_1 = nullptr;
+            std::shared_ptr<hts_ofstream> out_2 = nullptr;
+            std::shared_ptr<hts_ofstream> out_3 = nullptr;
             
             std::unique_ptr<OutputWriter> pe = nullptr;
             std::unique_ptr<OutputWriter> se = nullptr;
@@ -130,31 +130,31 @@ int main(int argc, char** argv)
                 for (auto& outfile: default_outfiles) {
                     outfile = prefix + outfile + ".fastq";
                 }
-                out_1.reset(new bi::stream<bi::file_descriptor_sink> {check_exists(default_outfiles[0], force, gzip_out), bi::close_handle});
-                out_2.reset(new bi::stream<bi::file_descriptor_sink> {check_exists(default_outfiles[1], force, gzip_out), bi::close_handle});
-                out_3.reset(new bi::stream<bi::file_descriptor_sink> {check_exists(default_outfiles[2], force, gzip_out), bi::close_handle});    
-                pe.reset(new PairedEndReadOutFastq(*out_1, *out_2));
-                se.reset(new SingleEndReadOutFastq(*out_3));
+                
+                out_1.reset(new hts_ofstream(default_outfiles[0], force, gzip_out, false));
+                out_2.reset(new hts_ofstream(default_outfiles[1], force, gzip_out, false));
+                out_3.reset(new hts_ofstream(default_outfiles[2], force, gzip_out, false));
+
+                pe.reset(new PairedEndReadOutFastq(out_1, out_2));
+                se.reset(new SingleEndReadOutFastq(out_3));
             } else if (interleaved_out)  {
                 for (auto& outfile: default_outfiles) {
                     outfile = prefix + "INTER" + ".fastq";
                 }
 
-                out_1.reset(new bi::stream<bi::file_descriptor_sink> {check_exists(default_outfiles[0], force, gzip_out), bi::close_handle});
-                out_3.reset(new bi::stream<bi::file_descriptor_sink> {check_exists(default_outfiles[2], force, gzip_out), bi::close_handle});    
-                pe.reset(new PairedEndReadOutInter(*out_1));
-                se.reset(new SingleEndReadOutFastq(*out_3));
+                out_1.reset(new hts_ofstream(default_outfiles[0], force, gzip_out, false));
+                out_3.reset(new hts_ofstream(default_outfiles[1], force, gzip_out, false));
+
+                pe.reset(new PairedEndReadOutInter(out_1));
+                se.reset(new SingleEndReadOutFastq(out_3));
             } else if (tab_out || std_out) {
                 for (auto& outfile: default_outfiles) {
                     outfile = prefix + "tab" + ".tastq";
                 }
-                if (!std_out) { 
-                    out_1.reset(new bi::stream<bi::file_descriptor_sink> {check_exists(default_outfiles[0], force, gzip_out), bi::close_handle});
-                } else {
-                    out_1.reset(new bi::stream<bi::file_descriptor_sink> {fileno(stdout), bi::close_handle});
-                }
-                pe.reset(new ReadBaseOutTab(*out_1));
-                se.reset(new ReadBaseOutTab(*out_1));
+                out_1.reset(new hts_ofstream(default_outfiles[0], force, gzip_out, std_out));
+
+                pe.reset(new ReadBaseOutTab(out_1));
+                se.reset(new ReadBaseOutTab(out_1));
             }
 
             // there are any problems

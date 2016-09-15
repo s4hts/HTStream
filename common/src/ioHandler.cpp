@@ -21,8 +21,11 @@ int check_open_r(const std::string& filename) {
     }
 }
 
-int check_exists(const std::string& filename, bool force, bool gzip) {
+int check_exists(const std::string& filename, bool force, bool gzip, bool std_out) {
 
+    if (std_out) {
+        return fileno(stdout);
+    }
     bf::path p(filename);
 
     if (force || !bf::exists(p)) {

@@ -28,10 +28,9 @@ namespace bf = boost::filesystem;
 namespace bi = boost::iostreams;
 
 int check_open_r(const std::string& filename) ;
-int check_exists(const std::string& filename, bool force, bool gzip) ;
+int check_exists(const std::string& filename, bool force, bool gzip, bool std_out) ;
 
-
-class hts_ofstream : public std::ostream {
+class hts_ofstream {
 public:
     bool gzip;
     bool force;
@@ -40,6 +39,9 @@ public:
     std::shared_ptr<std::ostream> out;
 
     ~hts_ofstream() {
+        if (out) {
+            std::flush(*out);
+        }
     }
     
     hts_ofstream(std::string filename_, bool force_, bool gzip_, bool stdout_) {
@@ -49,11 +51,13 @@ public:
         std_out = stdout_;
         out = nullptr;
     }
+    
+    hts_ofstream(std::shared_ptr<std::ostream> out_) : out(out_) { }
 
     template<class T>
     hts_ofstream& operator<< (T s) {
         if (!out) {
-            out.reset(new bi::stream<bi::file_descriptor_sink> {check_exists(filename, force, gzip), bi::close_handle});
+            out.reset(new bi::stream<bi::file_descriptor_sink> {check_exists(filename, force, gzip, std_out), bi::close_handle});
         }
         *out << s;
         return *this;
@@ -120,7 +124,7 @@ protected:
 
 class OutputWriter {
 public:
-    virtual ~OutputWriter() { }
+    virtual ~OutputWriter() {  }
     virtual void write(const PairedEndRead& read) { throw std::runtime_error("No PE implementation of write (Probably a SE read)"); }
     virtual void write(const SingleEndRead& read) { throw std::runtime_error("No SE implementaiton of write (Probably a PE read)"); }
     virtual void write(const ReadBase &read) { throw std::runtime_error("No ReadBase class, only accessable with tab"); } //maybe typecase eventually 
@@ -128,16 +132,16 @@ public:
 
 class SingleEndReadOutFastq : public OutputWriter {
 public:
-    SingleEndReadOutFastq(std::ostream& out) : output(out) {}
-    ~SingleEndReadOutFastq() { output.flush(); }
+    SingleEndReadOutFastq(std::shared_ptr<hts_ofstream> &out_) : output(std::move(out_)) { }
+    ~SingleEndReadOutFastq() { output->flush(); }
     void write(const SingleEndRead &read) { format_writer(read.get_read()); }
 protected:
+    std::shared_ptr<hts_ofstream> output = nullptr;
     
     void format_writer(const Read &read) { 
-        output << "@" << read.get_id() << '\n' << read.get_seq() << "\n+\n" << read.get_qual() << '\n'; 
+       *output << "@" << read.get_id() << '\n' << read.get_seq() << "\n+\n" << read.get_qual() << '\n'; 
     }
     
-    std::ostream& output;
 };
 
 class PairedEndReadOutFastq : public OutputWriter {
@@ -157,21 +161,21 @@ protected:
 
 class PairedEndReadOutInter : public OutputWriter {
 public:
-    PairedEndReadOutInter(std::ostream& out1_) : out1(out1_) {}
-    ~PairedEndReadOutInter() { out1.flush(); }
+    PairedEndReadOutInter(std::shared_ptr<hts_ofstream> &out_) : out1(std::move(out_)) { }
+    ~PairedEndReadOutInter() { out1->flush(); }
     void write(const PairedEndRead &read) { format_writer(read.get_read_one(), read.get_read_two()); }
 protected:
-    std::ostream &out1;
+    std::shared_ptr<hts_ofstream> out1 = nullptr;
     void format_writer(const Read &read1, const Read &read2) { 
-        out1 << "@" << read1.get_id() << '\n' << read1.get_seq() << "\n+\n" << read1.get_qual() << '\n';
-        out1 << "@" << read2.get_id() << '\n' << read2.get_seq() << "\n+\n" << read2.get_qual() << '\n'; 
+        *out1 << "@" << read1.get_id() << '\n' << read1.get_seq() << "\n+\n" << read1.get_qual() << '\n';
+        *out1 << "@" << read2.get_id() << '\n' << read2.get_seq() << "\n+\n" << read2.get_qual() << '\n'; 
     }
 };
 
 class ReadBaseOutTab : public OutputWriter {
 public:
-    ReadBaseOutTab(std::ostream& _output) : output(_output) {}
-    ~ReadBaseOutTab() { output.flush(); }
+    ReadBaseOutTab(std::shared_ptr<hts_ofstream> &out_) : output(std::move(out_)) { }
+    ~ReadBaseOutTab() { output->flush(); }
     void write(const PairedEndRead &read) { format_writer(read.get_read_one(), read.get_read_two()); }
     void write(const SingleEndRead &read) { format_writer(read.get_read()); }
     
@@ -188,16 +192,16 @@ public:
         }    
     }
 protected:
+    std::shared_ptr<hts_ofstream> output = nullptr;
     
     void format_writer(const Read &read) { 
-        output << read.get_id() << '\t' << read.get_seq() << '\t' << read.get_qual() << '\n'; 
+        *output << read.get_id() << '\t' << read.get_seq() << '\t' << read.get_qual() << '\n'; 
     }
 
     void format_writer(const Read &read1, const Read &read2) {
-        output << read1.get_id() << '\t' << read1.get_seq() << '\t' << read1.get_qual() << '\t' << read2.get_seq() << '\t' << read2.get_qual() << '\n';
+        *output << read1.get_id() << '\t' << read1.get_seq() << '\t' << read1.get_qual() << '\t' << read2.get_seq() << '\t' << read2.get_qual() << '\n';
     }
     
-    std::ostream &output;
 };
 
 
