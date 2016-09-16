@@ -66,7 +66,7 @@ TEST_F(ReadsTest, testWriteFastqSingle) {
     std::shared_ptr<std::ostringstream> out1(new std::ostringstream());
 
     {
-        std::shared_ptr<hts_ofstream> hts_of(new hts_ofstream(out1));
+        std::shared_ptr<HtsOfstream> hts_of(new HtsOfstream(out1));
         std::unique_ptr<OutputWriter> se(new SingleEndReadOutFastq(hts_of));
 
         while(ifs.has_next()) {
@@ -84,7 +84,7 @@ TEST_F(ReadsTest, testTabWrite) {
     std::shared_ptr<std::ostringstream> out1(new std::ostringstream());
 
     {
-        std::shared_ptr<hts_ofstream> hts_of(new hts_ofstream(out1));
+        std::shared_ptr<HtsOfstream> hts_of(new HtsOfstream(out1));
         std::unique_ptr<OutputWriter> ofs(new ReadBaseOutTab(hts_of));
         while(ifs.has_next()) {
             auto r = ifs.next();
@@ -101,7 +101,7 @@ TEST_F(ReadsTest, testInterWrite) {
     std::shared_ptr<std::ostringstream> out1(new std::ostringstream());
 
     {
-        std::shared_ptr<hts_ofstream> hts_of(new hts_ofstream(out1));
+        std::shared_ptr<HtsOfstream> hts_of(new HtsOfstream(out1));
         std::unique_ptr<OutputWriter> ofs(new PairedEndReadOutInter(hts_of));
         while(ifs.has_next()) {
             auto r = ifs.next();

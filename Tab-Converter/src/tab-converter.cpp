@@ -119,9 +119,9 @@ int main(int argc, char** argv)
             po::notify(vm); // throws on error, so do after help in case
             //Index 1 start location (making it more human friendly)
             
-            std::shared_ptr<hts_ofstream> out_1 = nullptr;
-            std::shared_ptr<hts_ofstream> out_2 = nullptr;
-            std::shared_ptr<hts_ofstream> out_3 = nullptr;
+            std::shared_ptr<HtsOfstream> out_1 = nullptr;
+            std::shared_ptr<HtsOfstream> out_2 = nullptr;
+            std::shared_ptr<HtsOfstream> out_3 = nullptr;
             
             std::unique_ptr<OutputWriter> pe = nullptr;
             std::unique_ptr<OutputWriter> se = nullptr;
@@ -131,9 +131,9 @@ int main(int argc, char** argv)
                     outfile = prefix + outfile + ".fastq";
                 }
                 
-                out_1.reset(new hts_ofstream(default_outfiles[0], force, gzip_out, false));
-                out_2.reset(new hts_ofstream(default_outfiles[1], force, gzip_out, false));
-                out_3.reset(new hts_ofstream(default_outfiles[2], force, gzip_out, false));
+                out_1.reset(new HtsOfstream(default_outfiles[0], force, gzip_out, false));
+                out_2.reset(new HtsOfstream(default_outfiles[1], force, gzip_out, false));
+                out_3.reset(new HtsOfstream(default_outfiles[2], force, gzip_out, false));
 
                 pe.reset(new PairedEndReadOutFastq(out_1, out_2));
                 se.reset(new SingleEndReadOutFastq(out_3));
@@ -142,8 +142,8 @@ int main(int argc, char** argv)
                     outfile = prefix + "INTER" + ".fastq";
                 }
 
-                out_1.reset(new hts_ofstream(default_outfiles[0], force, gzip_out, false));
-                out_3.reset(new hts_ofstream(default_outfiles[1], force, gzip_out, false));
+                out_1.reset(new HtsOfstream(default_outfiles[0], force, gzip_out, false));
+                out_3.reset(new HtsOfstream(default_outfiles[1], force, gzip_out, false));
 
                 pe.reset(new PairedEndReadOutInter(out_1));
                 se.reset(new SingleEndReadOutFastq(out_3));
@@ -151,7 +151,7 @@ int main(int argc, char** argv)
                 for (auto& outfile: default_outfiles) {
                     outfile = prefix + "tab" + ".tastq";
                 }
-                out_1.reset(new hts_ofstream(default_outfiles[0], force, gzip_out, std_out));
+                out_1.reset(new HtsOfstream(default_outfiles[0], force, gzip_out, std_out));
 
                 pe.reset(new ReadBaseOutTab(out_1));
                 se.reset(new ReadBaseOutTab(out_1));

@@ -148,9 +148,9 @@ int main(int argc, char** argv)
                 load_map(ift, counters, read_map, start, length);
             }
 
-            std::shared_ptr<hts_ofstream> out_1 = nullptr;
-            std::shared_ptr<hts_ofstream> out_2 = nullptr;
-            std::shared_ptr<hts_ofstream> out_3 = nullptr;
+            std::shared_ptr<HtsOfstream> out_1 = nullptr;
+            std::shared_ptr<HtsOfstream> out_2 = nullptr;
+            std::shared_ptr<HtsOfstream> out_3 = nullptr;
 
             std::unique_ptr<OutputWriter> pe = nullptr;
             std::unique_ptr<OutputWriter> se = nullptr;
@@ -160,9 +160,9 @@ int main(int argc, char** argv)
                     outfile = prefix + outfile + ".fastq";
                 }
                
-                out_1.reset(new hts_ofstream(default_outfiles[0], force, gzip_out, false));
-                out_2.reset(new hts_ofstream(default_outfiles[1], force, gzip_out, false));
-                out_3.reset(new hts_ofstream(default_outfiles[2], force, gzip_out, false));
+                out_1.reset(new HtsOfstream(default_outfiles[0], force, gzip_out, false));
+                out_2.reset(new HtsOfstream(default_outfiles[1], force, gzip_out, false));
+                out_3.reset(new HtsOfstream(default_outfiles[2], force, gzip_out, false));
                 pe.reset(new PairedEndReadOutFastq(out_1, out_2));
                 se.reset(new SingleEndReadOutFastq(out_3));
 
@@ -171,8 +171,8 @@ int main(int argc, char** argv)
                     outfile = prefix + "INTER" + ".fastq";
                 }
                 
-                out_1.reset(new hts_ofstream(default_outfiles[0], force, gzip_out, false));
-                out_3.reset(new hts_ofstream(default_outfiles[1], force, gzip_out, false));
+                out_1.reset(new HtsOfstream(default_outfiles[0], force, gzip_out, false));
+                out_3.reset(new HtsOfstream(default_outfiles[1], force, gzip_out, false));
 
                 pe.reset(new PairedEndReadOutInter(out_1));
                 se.reset(new SingleEndReadOutFastq(out_3));
@@ -180,7 +180,7 @@ int main(int argc, char** argv)
                 for (auto& outfile: default_outfiles) {
                     outfile = prefix + "tab" + ".tastq";
                 }
-                out_1.reset(new hts_ofstream(default_outfiles[0], force, gzip_out, std_out));
+                out_1.reset(new HtsOfstream(default_outfiles[0], force, gzip_out, std_out));
 
                 pe.reset(new ReadBaseOutTab(out_1));
                 se.reset(new ReadBaseOutTab(out_1));
@@ -200,7 +200,7 @@ int main(int argc, char** argv)
                     }
                 }
             } 
-            //Crashes here after going to the deconstructor of hts_ofstream of tmp_1
+            //Crashes here after going to the deconstructor of HtsOfstream of tmp_1
         } catch(po::error& e) {
             std::cerr << "ERROR: " << e.what() << std::endl << std::endl;
             std::cerr << desc << std::endl;
