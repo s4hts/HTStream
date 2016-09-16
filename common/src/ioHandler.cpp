@@ -7,6 +7,40 @@ void skip_lr(std::istream *input) {
     }
 }
 
+
+int check_open_r(const std::string& filename) {
+    bf::path p(filename);
+    if (!bf::exists(p)) {
+        throw std::runtime_error("File " + filename + " was not found.");
+    }
+
+    if (p.extension() == ".gz") {
+        return fileno(popen(("gunzip -c " + filename).c_str(), "r"));
+    } else {
+        return fileno(fopen(filename.c_str(), "r"));
+    }
+}
+
+int check_exists(const std::string& filename, bool force, bool gzip, bool std_out) {
+
+    if (std_out) {
+        return fileno(stdout);
+    }
+    bf::path p(filename);
+
+    if (force || !bf::exists(p)) {
+        if (gzip) {
+            return fileno(popen(("gzip > " + filename + ".gz").c_str(), "w"));
+        } else {
+            return fileno(fopen(filename.c_str(), "w"));
+        }
+    } else {
+        throw std::runtime_error("File " + filename + " all ready exists. Please use -F or delete it\n");
+    }
+
+}
+
+
 Read InputFastq::load_read(std::istream *input) {
     while(std::getline(*input, id) && id.size() < 1) {
     }

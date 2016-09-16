@@ -58,54 +58,56 @@ TEST_F(ReadsTest, parsePairedReadFastq) {
     }
     ASSERT_EQ(read_count, 5);
 }
-    
+
 TEST_F(ReadsTest, testWriteFastqSingle) {
     
     std::istringstream in1(readData);
     InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(in1);
-    std::ostringstream out1;
+    std::shared_ptr<std::ostringstream> out1(new std::ostringstream());
 
     {
-        std::unique_ptr<OutputWriter> se(new SingleEndReadOutFastq(out1));
+        std::shared_ptr<HtsOfstream> hts_of(new HtsOfstream(out1));
+        std::unique_ptr<OutputWriter> se(new SingleEndReadOutFastq(hts_of));
+
         while(ifs.has_next()) {
             auto r = ifs.next();
             se->write(*r);
         }
     }
 
-    ASSERT_EQ(readData, out1.str());
+    ASSERT_EQ(readData, out1->str());
 }
 
 TEST_F(ReadsTest, testTabWrite) {
     std::istringstream in1(readTabData);
     InputReader<ReadBase, TabReadImpl> ifs(in1);
-    std::ostringstream out1;
+    std::shared_ptr<std::ostringstream> out1(new std::ostringstream());
 
     {
-        std::unique_ptr<OutputWriter> ofs(new ReadBaseOutTab(out1));
+        std::shared_ptr<HtsOfstream> hts_of(new HtsOfstream(out1));
+        std::unique_ptr<OutputWriter> ofs(new ReadBaseOutTab(hts_of));
         while(ifs.has_next()) {
             auto r = ifs.next();
             ofs->write(*r);
         }
     }
 
-    ASSERT_EQ(readTabData, out1.str());
+    ASSERT_EQ(readTabData, out1->str());
 }
 
 TEST_F(ReadsTest, testInterWrite) {
     std::istringstream in1(readDataInter);
     InputReader<PairedEndRead, InterReadImpl> ifs(in1);
-    std::ostringstream out1;
+    std::shared_ptr<std::ostringstream> out1(new std::ostringstream());
 
     {
-        std::unique_ptr<OutputWriter> ofs(new PairedEndReadOutInter(out1));
+        std::shared_ptr<HtsOfstream> hts_of(new HtsOfstream(out1));
+        std::unique_ptr<OutputWriter> ofs(new PairedEndReadOutInter(hts_of));
         while(ifs.has_next()) {
             auto r = ifs.next();
             ofs->write(*r);
         }
     }
 
-    ASSERT_EQ(readDataInter, out1.str());
+    ASSERT_EQ(readDataInter, out1->str());
 }
-        
-
