@@ -38,6 +38,10 @@ private:
     std::string filename;
     std::shared_ptr<std::ostream> out = nullptr;
 
+    void create_out() {
+        out.reset(new bi::stream<bi::file_descriptor_sink> {check_exists(filename, force, gzip, std_out), bi::close_handle});
+    }
+
 public:
     ~HtsOfstream() {
         if (out) {
@@ -53,7 +57,7 @@ public:
     template<class T>
     HtsOfstream& operator<< (T s) {
         if (!out) {
-            out.reset(new bi::stream<bi::file_descriptor_sink> {check_exists(filename, force, gzip, std_out), bi::close_handle});
+            create_out();
         }
         *out << s;
         return *this;
