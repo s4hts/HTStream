@@ -30,6 +30,27 @@ namespace bi = boost::iostreams;
 int check_open_r(const std::string& filename) ;
 int check_exists(const std::string& filename, bool force, bool gzip, bool std_out) ;
 
+/*
+    PairedEndRead *per = dynamic_cast<PairedEndRead*>(r);
+    if (per) {
+        if (!(per->non_const_read_one()).getDiscard() && !(per->non_const_read_two()).getDiscard()) {
+            pe->write(*per);
+        } else if ((per->non_const_read_one()).getDiscard()) {
+            se->write_read((per->get_read_one()), stranded);
+        } else {
+            se->write_read((per->get_read_two()), false);
+        }
+    } else {
+        SingleEndRead *ser = dynamic_cast<SingleEndRead*>(r);
+        if (ser) {
+            se->write(*ser);
+        } else {
+            throw std::runtime_error("Unknow read found");
+        }
+    }
+}*/
+
+
 class HtsOfstream {
 private:
     bool gzip;
@@ -49,7 +70,7 @@ public:
         }
     }
     
-    HtsOfstream(std::string filename_, bool force_, bool gzip_, bool stdout_) : filename(filename_), force(force_), gzip(gzip_),
+    HtsOfstream(std::string filename_, bool force_, bool gzip_, bool stdout_) : force(force_), filename(filename_), gzip(gzip_),
                                                                                 std_out(stdout_)  { }
     
     HtsOfstream(std::shared_ptr<std::ostream> out_) : out(out_) { }
@@ -127,6 +148,7 @@ public:
     virtual ~OutputWriter() {  }
     virtual void write(const PairedEndRead& read) { throw std::runtime_error("No PE implementation of write (Probably a SE read)"); }
     virtual void write(const SingleEndRead& read) { throw std::runtime_error("No SE implementaiton of write (Probably a PE read)"); }
+    virtual void write_read(const Read &read, bool rc) { throw std::runtime_error("No write_read class, only accessable with SE"); } //only SE
     virtual void write(const ReadBase &read) { throw std::runtime_error("No ReadBase class, only accessable with tab"); } //maybe typecase eventually 
 };
 
@@ -135,11 +157,22 @@ public:
     SingleEndReadOutFastq(std::shared_ptr<HtsOfstream> &out_) : output(out_) { }
     ~SingleEndReadOutFastq() { output->flush(); }
     void write(const SingleEndRead &read) { format_writer(read.get_read()); }
+    void write(const ReadBase &read) {
+        const SingleEndRead *ser = dynamic_cast<const SingleEndRead*>(&read);
+        if (ser) {
+            write(*ser);
+        } else {
+            throw std::runtime_error("PE read in SE call");
+        }
+    }        
 protected:
     std::shared_ptr<HtsOfstream> output = nullptr;
     
+    void format_writer_rc(const Read &read) { 
+       *output << "@" << read.get_id() << '\n' << read.get_seq_rc() << "\n+\n" << read.get_qual_rc() << '\n'; 
+    }
     void format_writer(const Read &read) { 
-       *output << "@" << read.get_id() << '\n' << read.get_seq() << "\n+\n" << read.get_qual() << '\n'; 
+       *output << "@" << read.get_id() << '\n' << read.get_sub_seq() << "\n+\n" << read.get_sub_qual() << '\n'; 
     }
     
 };
@@ -149,13 +182,23 @@ public:
     PairedEndReadOutFastq(std::shared_ptr<HtsOfstream> &out1_, std::shared_ptr<HtsOfstream> &out2_) : out1(out1_), out2(out2_) { }
     ~PairedEndReadOutFastq() { out1->flush(); out2->flush(); }
     void write(const PairedEndRead &read) { format_writer(read.get_read_one(), read.get_read_two());  }
+    void write(const ReadBase &read) {
+        const PairedEndRead *per = dynamic_cast<const PairedEndRead*>(&read);
+        if (per) {
+            write(*per);
+        } else {
+            throw std::runtime_error("SE read in PE call");
+        }
+    }        
+    
+        
 protected:
     std::shared_ptr<HtsOfstream> out1 = nullptr;
     std::shared_ptr<HtsOfstream> out2 = nullptr;
     
     void format_writer(const Read &read1, const Read &read2) { 
-        *out1 << "@" << read1.get_id() << '\n' << read1.get_seq() << "\n+\n" << read1.get_qual() << '\n'; 
-        *out2 << "@" << read2.get_id() << '\n' << read2.get_seq() << "\n+\n" << read2.get_qual() << '\n'; 
+        *out1 << "@" << read1.get_id() << '\n' << read1.get_sub_seq() << "\n+\n" << read1.get_sub_qual() << '\n'; 
+        *out2 << "@" << read2.get_id() << '\n' << read2.get_sub_seq() << "\n+\n" << read2.get_sub_qual() << '\n'; 
     }
 };
 
@@ -164,11 +207,19 @@ public:
     PairedEndReadOutInter(std::shared_ptr<HtsOfstream> &out_) : out1(out_) { }
     ~PairedEndReadOutInter() { out1->flush(); }
     void write(const PairedEndRead &read) { format_writer(read.get_read_one(), read.get_read_two()); }
+    void write(const ReadBase &read) {
+        const PairedEndRead *per = dynamic_cast<const PairedEndRead*>(&read);
+        if (per) {
+            write(*per);
+        } else {
+            throw std::runtime_error("SE read in PE call");
+        }
+    }        
 protected:
     std::shared_ptr<HtsOfstream> out1 = nullptr;
     void format_writer(const Read &read1, const Read &read2) { 
-        *out1 << "@" << read1.get_id() << '\n' << read1.get_seq() << "\n+\n" << read1.get_qual() << '\n';
-        *out1 << "@" << read2.get_id() << '\n' << read2.get_seq() << "\n+\n" << read2.get_qual() << '\n'; 
+        *out1 << "@" << read1.get_id() << '\n' << read1.get_sub_seq() << "\n+\n" << read1.get_sub_qual() << '\n';
+        *out1 << "@" << read2.get_id() << '\n' << read2.get_sub_seq() << "\n+\n" << read2.get_sub_qual() << '\n'; 
     }
 };
 
@@ -178,6 +229,7 @@ public:
     ~ReadBaseOutTab() { output->flush(); }
     void write(const PairedEndRead &read) { format_writer(read.get_read_one(), read.get_read_two()); }
     void write(const SingleEndRead &read) { format_writer(read.get_read()); }
+    void write_read(const Read &read, bool rc) { if (rc) { format_writer_rc(read); } else { format_writer(read); } }
     
     void write(const ReadBase &read) {  
         const PairedEndRead *per = dynamic_cast<const PairedEndRead*>(&read);
@@ -195,14 +247,18 @@ protected:
     std::shared_ptr<HtsOfstream> output = nullptr;
     
     void format_writer(const Read &read) { 
-        *output << read.get_id() << '\t' << read.get_seq() << '\t' << read.get_qual() << '\n'; 
+        *output << read.get_id() << '\t' << read.get_sub_seq() << '\t' << read.get_sub_qual() << '\n'; 
     }
 
     void format_writer(const Read &read1, const Read &read2) {
-        *output << read1.get_id() << '\t' << read1.get_seq() << '\t' << read1.get_qual() << '\t' << read2.get_seq() << '\t' << read2.get_qual() << '\n';
+        *output << read1.get_id() << '\t' << read1.get_sub_seq() << '\t' << read1.get_sub_qual() << '\t' << read2.get_sub_seq() << '\t' << read2.get_sub_qual() << '\n';
     }
-    
+   
+    void format_writer_rc(const Read &read) { 
+       *output <<  read.get_id() << '\t' << read.get_seq_rc() << "\t" << read.get_qual_rc() << '\n'; 
+    } 
 };
 
+void writer_helper(ReadBase *r, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, bool stranded);
 
 #endif

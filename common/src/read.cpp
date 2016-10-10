@@ -72,3 +72,17 @@ double PairedEndRead::avg_q_score()
     return sum/double(one.get_qual().length() + two.get_qual().length());
 }
 
+char Read::complement(char bp) {
+    
+    switch(bp) {
+        case 'A':
+            return 'T';
+        case 'T':
+            return 'A';
+        case 'G':
+            return 'C';
+        case 'C':
+            return 'G';
+    }
+    return 'N';
+}

@@ -1,12 +1,36 @@
 #include "ioHandler.h"
 #include <exception>
 
+
+void writer_helper(ReadBase *r, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, bool stranded) {
+    PairedEndRead *per = dynamic_cast<PairedEndRead*>(r);
+    if (per) {
+        if (!(per->non_const_read_one()).getDiscard() && !(per->non_const_read_two()).getDiscard()) {
+            pe->write(*per);
+        } else if (!(per->non_const_read_one()).getDiscard()) { //if stranded RC
+            se->write_read((per->get_read_one()), false);
+        } else if (!(per->non_const_read_two()).getDiscard()) { // Will never be RC
+            se->write_read((per->get_read_two()), stranded);
+        }
+    } else {
+        SingleEndRead *ser = dynamic_cast<SingleEndRead*>(r);
+        
+        if (!ser) {
+            throw std::runtime_error("Unknow read found");
+        }
+
+        if (! (ser->non_const_read_one()).getDiscard() ) {
+            se->write(*ser);
+        }
+            
+    }
+}
+
 void skip_lr(std::istream *input) {
     while(input and input->good() and (input->peek() == '\n' || input->peek() == '\r')) {
         input->get();
     }
 }
-
 
 int check_open_r(const std::string& filename) {
     bf::path p(filename);
