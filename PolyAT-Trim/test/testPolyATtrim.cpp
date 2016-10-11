@@ -7,9 +7,9 @@ class SDTest : public ::testing::Test {
     public:
         const std::string readData_1 = "@Read1\nTTTTTGGAAAAAAAAAGTCTTTGTTG\n+\n##########################\n";
         const std::string readData_2 = "@Read1\nAAAAAAAAAAAAAAAAAAAAAAAA\n+\n########################\n";
-        const int min_trim = 5;
-        const int min_length = 5;
-        const int max_mismatch = 3;
+        size_t min_trim = 5;
+        size_t min_length = 5;
+        size_t max_mismatch = 3;
 };
 
 TEST_F(SDTest, BasicTrim) {
@@ -60,6 +60,7 @@ TEST_F(SDTest, Stranded) {
             trim_left(per->non_const_read_two(), min_trim, max_mismatch);
             trim_right(per->non_const_read_two(), min_trim, max_mismatch);
             per->checkDiscarded(min_length);
+            //per->checkDiscarded(min_length);
             //stranded (R2 will be RCed)
             writer_helper(per, tab, tab, true);
         }

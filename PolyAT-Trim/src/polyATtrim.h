@@ -18,8 +18,7 @@ void trim_left(Read &rb, size_t min_trim, size_t max_mismatch) {
 
     std::string seq = rb.get_seq();
     int temp_loc = 0;
-    int i;
-    for (i = 0; i < seq.length(); ++i) {
+    for (int i = 0; i < seq.length(); ++i) {
         if (seq[i] != 'A') {
             ++a_mismatch;
         } else if (a_mismatch <= max_mismatch) {
@@ -50,8 +49,8 @@ void trim_right(Read &rb, size_t min_trim, size_t max_mismatch) {
     std::string seq = rb.get_seq();
     int len = seq.length() - 1;
     int temp_loc = len ;
-    int i;
-    for (i = len  ; i >=0; --i) {
+
+    for (int i = len  ; i >=0; --i) {
         if (seq[i] != 'A') {
             ++a_mismatch;
         } else if (a_mismatch <= max_mismatch) {
@@ -73,7 +72,6 @@ void trim_right(Read &rb, size_t min_trim, size_t max_mismatch) {
 
 }
 
-//std::shared_ptr<ReadBase> helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> writer, Counter& counters, size_t min_length, size_t min_trim, size_t max_mismatch, bool stranded, bool no_left, bool no_right) {
 template <class T, class Impl>
 void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, Counter& counters, size_t min_length, size_t min_trim, size_t max_mismatch, bool stranded, bool no_left, bool no_right) {
     

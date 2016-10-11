@@ -53,10 +53,11 @@ private:
     size_t cut_R;
     size_t cut_L;
     bool discard;
+    size_t minLength;
 public:
     Read(const std::string& seq_, const std::string& qual_, const std::string& id_) :
-        seq(seq_), qual(qual_), id(id_), length(seq.length()), cut_R(seq.length()), cut_L(0), discard(false) {  }
-    Read() : seq(""), qual(""), id(""), length(0), cut_R(seq.length()), cut_L(0), discard(false) { } 
+        seq(seq_), qual(qual_), id(id_), length(seq.length()), cut_R(seq.length()), cut_L(0), discard(false), minLength(0) {  }
+    Read() : seq(""), qual(""), id(""), length(0), cut_R(seq.length()), cut_L(0), discard(false), minLength(0) { } 
     Read subread(size_t start, size_t length);
     std::string subseq(size_t start, size_t length);
     const std::string& get_seq() const  { return seq; }
@@ -68,13 +69,19 @@ public:
     const std::string get_sub_seq() const { return seq.substr(cut_L, cut_R - cut_L); }
     const std::string get_sub_qual() const { return qual.substr(cut_L, cut_R - cut_L); }
 
-    const std::string get_seq_rc() const { std::string s = seq.substr(cut_L, cut_R - cut_L) ;  std::transform(begin(s), end(s), begin(s), complement); std::reverse(begin(s), end(s)); return s; }
-    const std::string get_qual_rc() const { std::string q = qual.substr(cut_L, cut_R - cut_L); std::reverse(begin(q), end(q)); return q;  }
+    const std::string get_seq_rc() const { std::string s = seq.substr(cut_L, cut_R - cut_L) ;  
+                                           std::transform(begin(s), end(s), begin(s), complement); 
+                                           std::reverse(begin(s), end(s)); 
+                                           return s; }
+
+    const std::string get_qual_rc() const { std::string q = qual.substr(cut_L, cut_R - cut_L); 
+                                            std::reverse(begin(q), end(q)); 
+                                            return q;  }
     
     void setRCut( size_t cut_R_ ) { cut_R = cut_R_; }
     void setLCut( size_t cut_L_ ) { cut_L = cut_L_; }
-    bool getDiscard() { return discard; }
-    void setDiscard(int minLength) { discard = minLength > int(cut_R) - int(cut_L) ? true : false; }
+    bool getDiscard() { return int(minLength) > int(cut_R) - int(cut_L); }
+    void setDiscard(size_t minLength_) { minLength = minLength_; }
 };
 
 class PairedEndRead: public ReadBase {
@@ -87,7 +94,7 @@ public:
     boost::optional<BitSet> get_key(size_t start, size_t length);
     Read& non_const_read_one() { return one; }
     Read& non_const_read_two() { return two; }
-    void checkDiscarded(int minLength) {one.setDiscard(minLength); two.setDiscard(minLength);}
+    void checkDiscarded(size_t minLength) {one.setDiscard(minLength); two.setDiscard(minLength);}
     const Read& get_read_one() const { return one; }
     const Read& get_read_two() const { return two; }
     double avg_q_score();
@@ -103,7 +110,7 @@ public:
     boost::optional<BitSet> get_key(size_t start, size_t length);
     Read& non_const_read_one() { return one; }
     const Read& get_read() const { return one; }
-    void checkDiscarded(int minLength) {one.setDiscard(minLength);}
+    void checkDiscarded(size_t minLength) {one.setDiscard(minLength);}
     double avg_q_score();
     std::shared_ptr<ReadBase> convert(bool stranded);
 };

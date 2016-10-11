@@ -30,27 +30,6 @@ namespace bi = boost::iostreams;
 int check_open_r(const std::string& filename) ;
 int check_exists(const std::string& filename, bool force, bool gzip, bool std_out) ;
 
-/*
-    PairedEndRead *per = dynamic_cast<PairedEndRead*>(r);
-    if (per) {
-        if (!(per->non_const_read_one()).getDiscard() && !(per->non_const_read_two()).getDiscard()) {
-            pe->write(*per);
-        } else if ((per->non_const_read_one()).getDiscard()) {
-            se->write_read((per->get_read_one()), stranded);
-        } else {
-            se->write_read((per->get_read_two()), false);
-        }
-    } else {
-        SingleEndRead *ser = dynamic_cast<SingleEndRead*>(r);
-        if (ser) {
-            se->write(*ser);
-        } else {
-            throw std::runtime_error("Unknow read found");
-        }
-    }
-}*/
-
-
 class HtsOfstream {
 private:
     bool gzip;
@@ -162,7 +141,7 @@ public:
         if (ser) {
             write(*ser);
         } else {
-            throw std::runtime_error("PE read in SE call");
+            throw std::runtime_error("PairedEndRead passed in SingleEndReadOutFastq::write");
         }
     }        
 protected:
@@ -187,7 +166,7 @@ public:
         if (per) {
             write(*per);
         } else {
-            throw std::runtime_error("SE read in PE call");
+            throw std::runtime_error("SingleEndRead passed in PairedEndReadOutFastq::write");
         }
     }        
     
@@ -212,7 +191,7 @@ public:
         if (per) {
             write(*per);
         } else {
-            throw std::runtime_error("SE read in PE call");
+            throw std::runtime_error("SingleEndRead called in PairedEndReadOutInter::write");
         }
     }        
 protected:
@@ -238,7 +217,7 @@ public:
         } else {
             const SingleEndRead *ser = dynamic_cast<const SingleEndRead*>(&read);
             if (ser == NULL) {
-                throw std::runtime_error("output tab could not cast to SE or PE read");
+                throw std::runtime_error("ReadBaseOutTab::write could not cast read as SE or PE read");
             }
             format_writer(ser->get_read());
         }    
