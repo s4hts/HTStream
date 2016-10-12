@@ -16,24 +16,26 @@ void trim_left(Read &rb, size_t sum_qual, size_t window_size) {
 
     std::string qual = rb.get_qual();
     int current_sum = 0;
-    int cut = -1;
+    int cut = 0;
 
     for (int i = 0; i < qual.length(); ++i) {
          
         current_sum += qual[i];
 
-        if (i > window_size - 1) { //once we hit window size, subtract the first value off
+        if (i >= window_size) { //once we hit window size, subtract the first value off
+            cut = (i - window_size + 1);
             current_sum -= qual[i - window_size];
         }
         if (current_sum >= sum_qual) {
-            cut = (i - window_size + 1);
             break;
         }
     }
-    if (cut == -1) {
-        cut = qual.length() ;
+
+    if (current_sum < sum_qual) {
+        rb.setLCut(qual.length() - 1);
+    } else {
+        rb.setLCut(cut);
     }
-    rb.setLCut(std::max(0, cut));
 
 }
 
@@ -42,26 +44,25 @@ void trim_right(Read &rb, size_t sum_qual, size_t window_size) {
     std::string qual = rb.get_qual();
     int len = qual.length() - 1;
     int current_sum = 0;
-    int cut = -1;
+    int cut = len;
 
-    for (int i = len  ; i >=0; --i) {
+    for (int i = len ; i >=0; --i) {
         current_sum += qual[i];
 
         if (i < len - window_size) { //once we hit window size, subtract the first value off
+            cut = i + window_size - 1;
             current_sum -= qual[i + window_size];
         }
         
         if (current_sum >= sum_qual) {
-            cut = i + window_size - 1;
             break;
         }
     }
-
-    if (cut == -1) {
-        cut = 0;
+    if (current_sum < sum_qual) {
+        rb.setRCut(0);
+    } else {
+        rb.setRCut(cut);
     }
-
-    rb.setRCut(std::min(len, cut));
 
 }
 
