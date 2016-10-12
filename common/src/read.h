@@ -86,6 +86,7 @@ public:
     void setLCut( size_t cut_L_ ) { cut_L = cut_L_; }
     bool getDiscard() { return int(minLength) > int(cut_R) - int(cut_L); }
     void setDiscard(size_t minLength_) { minLength = minLength_; }
+    size_t getLength() { return length; }
 };
 
 class PairedEndRead: public ReadBase {
