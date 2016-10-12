@@ -46,7 +46,7 @@ void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe,
                 ser->checkDiscarded(min_length);
                 writer_helper(ser, pe, se, stranded);
             } else {
-                throw std::runtime_error("Unknow read type");
+                throw std::runtime_error("Unknown read type");
             }
         }
     }
