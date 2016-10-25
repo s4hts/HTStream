@@ -40,6 +40,7 @@ int main(int argc, char** argv)
     counters["HasN"] = 0;
     std::string prefix;
     std::vector<std::string> default_outfiles = {"PE1", "PE2", "SE"};
+    const size_t kmer = 8;
 
     bool fastq_out;
     bool tab_out;
@@ -49,6 +50,9 @@ int main(int argc, char** argv)
     bool interleaved_out;
     bool force; 
 
+    bool checkR2;
+
+    size_t hits;
     std::string phix;
 
     try
@@ -79,6 +83,8 @@ int main(int argc, char** argv)
             ("prefix,p", po::value<std::string>(&prefix)->default_value(phixSeq_True),
                                            "Prefix for outputted files")
             ("phix-seq,x", po::value<std::string>(&phix)->default_value(phixSeq_True), "Phix Sequence - default https://www.ncbi.nlm.nih.gov/nuccore/9626372")
+            ("phix-seq,x", po::value<size_t>(&hits)->default_value(100), "How many 8-mer hits to phix needs to happen to discard")
+            ("check-read-2,C", po::bool_switch(&checkR2)->default_value(false),    "Check R2 as well as R1 (pe)")
             ("log-file,L",                 "Output-Logfile")
             ("no-log,N",                   "No logfile <outputs to stderr>")
             ("help,h",                     "Prints help.");
@@ -139,6 +145,13 @@ int main(int argc, char** argv)
                 se.reset(new ReadBaseOutTab(out_1));
             }
 
+            Read readPhix = Read(phix, "", "");
+            Read readPhixRC = Read(readPhix.get_seq_rc(), "", "");
+           
+            std::array<size_t, 1<<kmer*2>  lookup;
+            std::array<size_t, 1<<kmer*2> lookup_rc; 
+            
+            setLookup(lookup, lookup_rc, readPhix, kmer);
             // there are any problems
             if(vm.count("read1-input")) {
                 if (!vm.count("read2-input")) {
@@ -152,8 +165,8 @@ int main(int argc, char** argv)
                 for(size_t i = 0; i < read1_files.size(); ++i) {
                     bi::stream<bi::file_descriptor_source> is1{check_open_r(read1_files[i]), bi::close_handle};
                     bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
-                   
                     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
+                    helper_discard(ifp, pe, se, counters, lookup, lookup_rc, 8, hits, checkR2);
                 }
             }
 
