@@ -26,15 +26,15 @@ uint8_t getBin(char c) {
 
 size_t check_read(const Read &r, std::array<size_t, 1<<(2*8) > lookup, std::array< size_t, 1 << (2*8) > lookup_rc, size_t kmerSize) {
     size_t index = 0;
-    size_t kmer = kmerSize;
+    size_t kmer = kmerSize - 1;
     size_t bin = 0;
     size_t hits = 0, hits_rc = 0;
     std::string seq = r.get_seq();
     
     for (std::string::iterator bp = seq.begin(); bp < seq.end(); ++bp) {
-
+        
         if ((bin = getBin(*bp)) == 5) { //bp = N
-            kmer = kmerSize;
+            kmer = kmerSize - 1;
             index = 0;
         }
 
@@ -94,7 +94,7 @@ void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> 
 void setLookup(std::array<size_t, 1<<2*8> &lookup, std::array<size_t, 1<<2*8> &lookup_rc, Read &rb, size_t kmerSize) {
     size_t index = 0;
     size_t index_rc = 0;
-    size_t kmer = kmerSize;
+    size_t kmer = kmerSize - 1;
     size_t bin = 0;
     size_t bin_rc = 0;
 
@@ -106,9 +106,8 @@ void setLookup(std::array<size_t, 1<<2*8> &lookup, std::array<size_t, 1<<2*8> &l
     }
     
     for (std::string::iterator bp = seq.begin(); bp < seq.end(); ++bp) {
-
         if ((bin = getBin(*bp)) == 5) { //bp = N
-            kmer = kmerSize;
+            kmer = kmerSize - 1;
             index = 0;
             index_rc = 0;
         }
@@ -117,12 +116,12 @@ void setLookup(std::array<size_t, 1<<2*8> &lookup, std::array<size_t, 1<<2*8> &l
         index <<= 2;
         index ^= bin;
         
-        index_rc >> 2;
+        index_rc >>=  2;
         index_rc ^= (bin_rc << 14);
-        
         if (!kmer) {
             ++lookup[index];
             ++lookup_rc[index_rc];
+            std::cout << index_rc << '\n';
         } else {
             --kmer;    
         }
