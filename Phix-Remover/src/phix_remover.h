@@ -121,7 +121,6 @@ void setLookup(std::array<size_t, 1<<2*8> &lookup, std::array<size_t, 1<<2*8> &l
         if (!kmer) {
             ++lookup[index];
             ++lookup_rc[index_rc];
-            std::cout << index_rc << '\n';
         } else {
             --kmer;    
         }
