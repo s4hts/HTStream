@@ -80,7 +80,7 @@ int main(int argc, char** argv)
             ("force,F", po::bool_switch(&force)->default_value(false),         "Forces overwrite of files")
             ("tab-output,t", po::bool_switch(&tab_out)->default_value(false),   "Tab-delimited output")
             ("to-stdout,O", po::bool_switch(&std_out)->default_value(false),    "Prints to STDOUT in Tab Delimited")
-            ("prefix,p", po::value<std::string>(&prefix)->default_value(phixSeq_True),
+            ("prefix,p", po::value<std::string>(&prefix)->default_value("noPhix_"),
                                            "Prefix for outputted files")
             ("phix-seq,x", po::value<std::string>(&phix)->default_value(phixSeq_True), "Phix Sequence - default https://www.ncbi.nlm.nih.gov/nuccore/9626372")
             ("phix-seq,x", po::value<size_t>(&hits)->default_value(100), "How many 8-mer hits to phix needs to happen to discard")
