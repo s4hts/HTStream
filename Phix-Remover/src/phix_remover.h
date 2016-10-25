@@ -38,7 +38,7 @@ size_t check_read(const Read &r, std::array<size_t, 1<<(2*8) > lookup, std::arra
             index = 0;
         }
 
-        index &= ~(3 << 14);
+        index &= ~(3 << 14); //only check forward strand against both RC and non-rc
         index <<= 2;
         index ^= bin;
         
@@ -57,21 +57,20 @@ size_t check_read(const Read &r, std::array<size_t, 1<<(2*8) > lookup, std::arra
 
 
 template <class T, class Impl>
-void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, Counter& counters, std::array<size_t, 1<<(2*8) > lookup, std::array<size_t, 1<<(2 * 8)> lookup_rc, size_t kmerSize, size_t hits, bool checkR2) {
+void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, Counter& counters, std::array<size_t, 1<<(2*8) > &lookup, std::array<size_t, 1<<(2 * 8)> &lookup_rc, size_t kmerSize, size_t hits, bool checkR2) {
     
     while(reader.has_next()) {
         auto i = reader.next();
         ++counters["TotalRecords"];
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());        
-
         if (per) {
             size_t val = check_read(per->get_read_one(), lookup, lookup_rc, kmerSize);
             if (checkR2) {
                 size_t val2 = check_read(per->get_read_two(), lookup, lookup_rc, kmerSize);
-                val = std::min(val, val2);
+                val = std::max(val, val2);
             }
 
-            if (val > hits) {
+            if (val < hits) {
                 pe->write(*per);
             }
 
@@ -111,13 +110,15 @@ void setLookup(std::array<size_t, 1<<2*8> &lookup, std::array<size_t, 1<<2*8> &l
             index = 0;
             index_rc = 0;
         }
-        bin_rc = (bin ^ ((1 << 2) - 1));
-        index &= ~(3 << 14);
+        bin_rc = (bin ^ ((1 << 2) - 1)); //RC bit
+
+        index &= ~(3 << 14); //Non-RC bit flips
         index <<= 2;
         index ^= bin;
         
-        index_rc >>=  2;
+        index_rc >>=  2; //RC bit flips
         index_rc ^= (bin_rc << 14);
+
         if (!kmer) {
             ++lookup[index];
             ++lookup_rc[index_rc];

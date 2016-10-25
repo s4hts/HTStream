@@ -83,7 +83,7 @@ int main(int argc, char** argv)
             ("prefix,p", po::value<std::string>(&prefix)->default_value("noPhix_"),
                                            "Prefix for outputted files")
             ("phix-seq,x", po::value<std::string>(&phix)->default_value(phixSeq_True), "Phix Sequence - default https://www.ncbi.nlm.nih.gov/nuccore/9626372")
-            ("phix-seq,x", po::value<size_t>(&hits)->default_value(100), "How many 8-mer hits to phix needs to happen to discard")
+            ("phix-hits,h", po::value<size_t>(&hits)->default_value(50), "How many 8-mer hits to phix needs to happen to discard")
             ("check-read-2,C", po::bool_switch(&checkR2)->default_value(false),    "Check R2 as well as R1 (pe)")
             ("log-file,L",                 "Output-Logfile")
             ("no-log,N",                   "No logfile <outputs to stderr>")
@@ -146,10 +146,9 @@ int main(int argc, char** argv)
             }
 
             Read readPhix = Read(phix, "", "");
-            Read readPhixRC = Read(readPhix.get_seq_rc(), "", "");
            
-            std::array<size_t, 1<<kmer*2>  lookup;
-            std::array<size_t, 1<<kmer*2> lookup_rc; 
+            std::array<size_t, 1<< (2*kmer)>  lookup;
+            std::array<size_t, 1<< (2*kmer)> lookup_rc; 
             
             setLookup(lookup, lookup_rc, readPhix, kmer);
             // there are any problems
@@ -166,7 +165,7 @@ int main(int argc, char** argv)
                     bi::stream<bi::file_descriptor_source> is1{check_open_r(read1_files[i]), bi::close_handle};
                     bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
                     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
-                    helper_discard(ifp, pe, se, counters, lookup, lookup_rc, 8, hits, checkR2);
+                    helper_discard(ifp, pe, se, counters, lookup, lookup_rc, kmer, hits, checkR2);
                 }
             }
 
@@ -175,6 +174,7 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> sef{ check_open_r(file), bi::close_handle};
                     InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(sef);
+                    helper_discard(ifs, pe, se, counters, lookup, lookup_rc, kmer, hits, checkR2);
                 }
             }
             
@@ -183,6 +183,7 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> tabin{ check_open_r(file), bi::close_handle};
                     InputReader<ReadBase, TabReadImpl> ift(tabin);
+                    helper_discard(ift, pe, se, counters, lookup, lookup_rc, kmer, hits, checkR2);
                 }
             }
             
@@ -191,12 +192,14 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> inter{ check_open_r(file), bi::close_handle};
                     InputReader<PairedEndRead, InterReadImpl> ifp(inter);
+                    helper_discard(ifp, pe, se, counters, lookup, lookup_rc, kmer, hits, checkR2);
                 }
             }
            
             if (std_in) {
                 bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
+                helper_discard(ift, pe, se, counters, lookup, lookup_rc, kmer, hits, checkR2);
             }  
 
         }
