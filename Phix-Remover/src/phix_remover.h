@@ -9,8 +9,11 @@
 #include <boost/dynamic_bitset.hpp>
 #include <boost/functional/hash.hpp>
 #include <algorithm>
+#include <bitset>
 
 typedef std::unordered_map<std::string, size_t> Counter;
+const size_t kmer = 8;
+typedef std::array< size_t, 1<<(2*kmer) > kmerArray;
 
 uint8_t getBin(char c) {
     if (c == 'A') 
@@ -24,7 +27,7 @@ uint8_t getBin(char c) {
     return 5;
 }
 
-size_t check_read(const Read &r, std::array<size_t, 1<<(2*8) > lookup, std::array< size_t, 1 << (2*8) > lookup_rc, size_t kmerSize) {
+size_t check_read(const Read &r, kmerArray lookup, kmerArray lookup_rc, size_t kmerSize) {
     size_t index = 0;
     size_t kmer = kmerSize - 1;
     size_t bin = 0;
@@ -57,7 +60,7 @@ size_t check_read(const Read &r, std::array<size_t, 1<<(2*8) > lookup, std::arra
 
 
 template <class T, class Impl>
-void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, Counter& counters, std::array<size_t, 1<<(2*8) > &lookup, std::array<size_t, 1<<(2 * 8)> &lookup_rc, size_t kmerSize, size_t hits, bool checkR2) {
+void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, Counter& counters, kmerArray &lookup, kmerArray &lookup_rc, size_t kmerSize, size_t hits, bool checkR2) {
     
     while(reader.has_next()) {
         auto i = reader.next();
@@ -87,10 +90,10 @@ void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> 
             }
         }
     }
-
 }
 
-void setLookup(std::array<size_t, 1<<2*8> &lookup, std::array<size_t, 1<<2*8> &lookup_rc, Read &rb, size_t kmerSize) {
+/*Hand phix read to set lookup tables*/
+void setLookup(kmerArray &lookup, kmerArray &lookup_rc, Read &rb, size_t kmerSize) {
     size_t index = 0;
     size_t index_rc = 0;
     size_t kmer = kmerSize - 1;

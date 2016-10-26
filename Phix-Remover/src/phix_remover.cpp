@@ -147,8 +147,8 @@ int main(int argc, char** argv)
 
             Read readPhix = Read(phix, "", "");
            
-            std::array<size_t, 1<< (2*kmer)>  lookup;
-            std::array<size_t, 1<< (2*kmer)> lookup_rc; 
+            kmerArray  lookup;
+            kmerArray lookup_rc; 
             
             setLookup(lookup, lookup_rc, readPhix, kmer);
             // there are any problems
