@@ -40,7 +40,6 @@ int main(int argc, char** argv)
     counters["HasN"] = 0;
     std::string prefix;
     std::vector<std::string> default_outfiles = {"PE1", "PE2", "SE"};
-    const size_t kmer = 8;
 
     bool fastq_out;
     bool tab_out;
@@ -147,10 +146,10 @@ int main(int argc, char** argv)
 
             Read readPhix = Read(phix, "", "");
            
-            kmerArray  lookup;
+            kmerArray lookup;
             kmerArray lookup_rc; 
             
-            setLookup(lookup, lookup_rc, readPhix, kmer);
+            setLookup(lookup, lookup_rc, readPhix);
             // there are any problems
             if(vm.count("read1-input")) {
                 if (!vm.count("read2-input")) {
@@ -165,7 +164,7 @@ int main(int argc, char** argv)
                     bi::stream<bi::file_descriptor_source> is1{check_open_r(read1_files[i]), bi::close_handle};
                     bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
                     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
-                    helper_discard(ifp, pe, se, counters, lookup, lookup_rc, kmer, hits, checkR2);
+                    helper_discard(ifp, pe, se, counters, lookup, lookup_rc, hits, checkR2);
                 }
             }
 
@@ -174,7 +173,7 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> sef{ check_open_r(file), bi::close_handle};
                     InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(sef);
-                    helper_discard(ifs, pe, se, counters, lookup, lookup_rc, kmer, hits, checkR2);
+                    helper_discard(ifs, pe, se, counters, lookup, lookup_rc,  hits, checkR2);
                 }
             }
             
@@ -183,7 +182,7 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> tabin{ check_open_r(file), bi::close_handle};
                     InputReader<ReadBase, TabReadImpl> ift(tabin);
-                    helper_discard(ift, pe, se, counters, lookup, lookup_rc, kmer, hits, checkR2);
+                    helper_discard(ift, pe, se, counters, lookup, lookup_rc,  hits, checkR2);
                 }
             }
             
@@ -192,14 +191,14 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> inter{ check_open_r(file), bi::close_handle};
                     InputReader<PairedEndRead, InterReadImpl> ifp(inter);
-                    helper_discard(ifp, pe, se, counters, lookup, lookup_rc, kmer, hits, checkR2);
+                    helper_discard(ifp, pe, se, counters, lookup, lookup_rc,  hits, checkR2);
                 }
             }
            
             if (std_in) {
                 bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
-                helper_discard(ift, pe, se, counters, lookup, lookup_rc, kmer, hits, checkR2);
+                helper_discard(ift, pe, se, counters, lookup, lookup_rc,  hits, checkR2);
             }  
 
         }
