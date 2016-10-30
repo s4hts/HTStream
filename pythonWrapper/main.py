@@ -92,9 +92,9 @@ def createSamplePaths(rawReads, preprocessed, sampleDict):
             else:
                 print "ERROR"
                 print samplePath + " : Is not a directory. Make sure you have created your '*rawReads:' directory"
-        if not os.path.join(preprocessed, v):
-            os.makedirs(os.path.join(preprocessed, v))
         print os.path.join(preprocessed, v)
+        if not os.path.exists(os.path.join(preprocessed, v)):
+            os.makedirs(os.path.join(preprocessed, v))
         fastq[3] = os.path.join(preprocessed, v)
         fastqFiles.append(fastq)
     return fastqFiles
