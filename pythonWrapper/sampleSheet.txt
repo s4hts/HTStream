@@ -1,0 +1,11 @@
+#comment
+#comment
+*app0:phix_remover
+*app1:super_deduper
+*app2:q-window-trim
+*app3:q-window-trim -w 1
+*appPath:~/GRC/HTStream/build
+*rawReads:~/Alida/Test/00-RawReads
+*preprocessed:~/Alida/Test/01-Cleaned
+Sample1	Sample1
+Sample2	Sample2
