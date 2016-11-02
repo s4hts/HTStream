@@ -1,3 +1,10 @@
+/*The idea of this program is to create a quick kmer lookup table for phix.
+ * It accomplishes this by making 2 arrays of 1<<16 size, because we represent
+ * each possible kmer in the 2 bit format (A -> 00, T -> 11, C -> 01, G->10) and
+ * need foward and Reverse strands. Each read is then parsed into 8mers (again
+ * represented by their 2 bit format, and checked against these lookup tables
+ * (simply the arrays)*/ 
+
 #ifndef AT_TRIM_H
 #define AT_TRIM_H
 //  this is so we can implment hash function for dynamic_bitset
@@ -14,7 +21,11 @@
 typedef std::unordered_map<std::string, size_t> Counter;
 const size_t kmer = 8;
 const size_t kmerBits = kmer*2;
-typedef std::array< size_t, 1<<(2*kmer) > kmerArray;
+/*This will be the size_t will be the number of hits to that kmer
+ * and the number of entries will be the number of possible kmers
+ * ~64k. This will create a quick lookup table to use for both the
+ * forward and reverse complement of phix.*/
+typedef std::array< size_t, 1<<(kmerBits) > kmerArray;
 
 uint8_t getBin(char c) {
     if (c == 'A') 
@@ -28,6 +39,12 @@ uint8_t getBin(char c) {
     return 5;
 }
 
+
+/*Check read will only return back the number of hits to the lookup tables,
+ * the look up tables at this point should all ready be set for phix at this point. It 
+ * will return the maximum number of hits from either the forward or rc 
+ * lookup table. If there are enough hits, then the read will be assumed to be phix,
+ * and will be discarded.*/
 size_t check_read(const Read &r, kmerArray lookup, kmerArray lookup_rc) {
     
     std::bitset <kmerBits> forwardBits;
@@ -95,7 +112,17 @@ void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> 
     }
 }
 
-/*Hand phix read to set lookup tables*/
+/*Hand phix read to set lookup tables
+ *The lookup tables might make more sense in a map format
+ * the key would be the two bit format of the 8mer (so a uint_16_t)
+ * and the value would be number of hits
+ * The reason we are using arrays though is because we can use the
+ * pigeon hole theorm and have a constant lookup time because
+ * the arrays are small enough.
+ * These lookup tables give us a quick way to count the "hits" of 8mers
+ * from the sequencing read. If there are enough "hits", we can assume it
+ * is a phix read.
+ * */
 void setLookup(kmerArray &lookup, kmerArray &lookup_rc, Read &rb) {
     size_t kmerCheck = kmer - 1;
     size_t bin = 0;
