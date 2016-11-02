@@ -1,0 +1,30 @@
+--version, -v Version print
+--read1-input, -1 Read 1 input (comma sep for multiple files)
+--read2-input, -2 Read 2 input (comma sep for multiple files)
+--singleend-input, -U Single end read input (comma sep for multiple files)
+--tab-input, -T Tab input (comma sep for multiple files)
+--interleaved-input, -I Interleaved input I (comma sep for multiple files)
+--stdin-input, -S STDIN input (MUST BE TAB DELIMITED INPUT)
+--start, -s start location for unique ID (int)
+--length, -l length of unique ID (int)
+--quality-check-off, -q Quality Checking Off First Duplicate seen will be kept
+--gzip-output, -g Output gzipped
+--interleaved-output, -i Output to interleaved
+--fastq-output, -f Fastq format outputted (R1 and R2)
+--force, -F Forces overwrite of files
+--tab-output, -t Tab-delimited output
+--to-stdout, -O Prints to STDOUT in Tab Delimited
+--prefix, -P Prefix for outputted files
+--help, -h Prints help.
+
+Test Suite
+------
+The test cases currently check;
+1.  Do the test files exist in `fastqFiles `
+2.  Is there tab-delimited output
+3.  Does Super-Deduper keep the duplicate with the higher q-score
+4.  Does Super-Deduper recognize reverse complements
+
+
+
+
