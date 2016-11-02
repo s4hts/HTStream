@@ -45,7 +45,7 @@ uint8_t getBin(char c) {
  * will return the maximum number of hits from either the forward or rc 
  * lookup table. If there are enough hits, then the read will be assumed to be phix,
  * and will be discarded.*/
-size_t check_read(const Read &r, kmerArray lookup, kmerArray lookup_rc) {
+size_t check_read(const Read &r, const kmerArray &lookup, const kmerArray &lookup_rc) {
     
     std::bitset <kmerBits> forwardBits;
     size_t kmerCheck = kmer - 1;
