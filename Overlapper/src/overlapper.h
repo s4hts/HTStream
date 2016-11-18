@@ -123,7 +123,10 @@ spReadBase check(Read &r1, Read &r2, const size_t &loc1, const size_t &loc2, con
     std::cout << "Final\n";
     std::cout << finalSeq << '\n';
     std::cout << finalQual << '\n';
-    return spReadBase(new SingleEndRead(Read(finalSeq, finalQual, "ID")));
+    spReadBase overlap(new SingleEndRead(Read(finalSeq, finalQual, "ID")));
+    const Read &r = overlap->get_read();
+    std::cout << r.get_seq() << '\n';
+    return overlap;
 }
 
 spReadBase getOverlappedReads(Read &r1, Read &r2, const seqLookup &seq1Map) {
@@ -134,28 +137,16 @@ spReadBase getOverlappedReads(Read &r1, Read &r2, const seqLookup &seq1Map) {
     std::cout << "Start\n";
     std::cout << r2.get_seq_rc() << '\n';
     for (size_t bp = 0; bp < r2.getLength() - kmer; ++bp) {
-        /*bin = getBin(seq2[bp]);
-        if (bin != 5) {
-            forwardBits &= ~(3 << 14); //only check forward strand against both RC and non-rc
-            forwardBits <<= 2;
-            forwardBits ^= bin;
-        } else {
-           kmerCheck = kmer - 1;
-        }
-        if (!kmerCheck) {
-            auto test = seq1Map.equal_range(seq2.substr(bp, kmer));
-            for (auto it = test.first; it != test.second; ++it) {
-                check(seq)
-                loc.push_back(std::make_pair((*it).second, bp));
-            }
-        } else {
-            --kmerCheck;
-        }*/
         auto test = seq1Map.equal_range(r2.get_seq_rc().substr(bp, kmer));
         std::cout << r2.get_seq_rc().substr(bp, kmer) << '\n';
         for (auto it = test.first; it != test.second; ++it) {
-            std::cout << "HERE\n";
-            check(r1, r2, (*it).second, bp, 0, 0);
+            spReadBase overlapped = check(r1, r2, (*it).second, bp, 0, 0);
+            if (overlapped != nullptr) {
+                std::cout << "Returning Overlapped\n";
+                const Read &r = overlapped->get_read();
+                std::cout << r.get_seq() << '\n';
+                return overlapped;
+            }
         }
     } 
 
@@ -172,8 +163,12 @@ spReadBase check_read(PairedEndRead &pe , const size_t maxMis, const size_t minO
         std::swap(r1, r2);
     }
     seqLookup mOne = readOneMap(r1.get_seq(), step);
-    spReadBase overlappedRead = getOverlappedReads(r1, r2, mOne) ;
-    
+    spReadBase overlapped = getOverlappedReads(r1, r2, mOne) ;
+    const Read &r = overlapped->get_read();
+    std::cout << r.get_seq() << '\n';
+    if (overlapped != nullptr) {
+       return overlapped;
+    } 
 }
 
 

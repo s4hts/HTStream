@@ -27,12 +27,19 @@ TEST_F(Overlapper, perfectOverlap) {
     std::istringstream in2(readData_perfect_overlap_R2);
 
     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(in1, in2);
+    spReadBase rb;
 
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        spReadBase r = check_read(*per, 100, 100);
+        rb = check_read(*per, 100, 100);
     }
-    std::cout << (*r).getSeq() << '\n';
+    if (rb != nullptr) {
+        std::cout << "HERE\n";
+        const Read &r = rb->get_read();
+        std::cout << "HERE\n";
+        std::cout << r.get_id() << '\n';
+        std::cout << "HERE\n";
+    }
 };
 
