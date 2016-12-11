@@ -33,10 +33,10 @@ namespace bi = boost::iostreams;
 
 int main(int argc, char** argv)
 {
+    const std::string program_name = "Cut_Trim";
     Counter counters;
-    counters["TotalRecords"] = 0;
-    counters["Replaced"] = 0;
-    counters["HasN"] = 0;
+    setupCounter(counters);
+
     std::string prefix;
     std::vector<std::string> default_outfiles = {"PE1", "PE2", "SE"};
 
@@ -53,6 +53,9 @@ int main(int argc, char** argv)
     bool stranded ;
     bool no_left ;
     bool no_right ;
+
+    std::string statsFile;
+    bool appendStats;
 
     try
     {
@@ -86,8 +89,8 @@ int main(int argc, char** argv)
             ("stranded,s", po::bool_switch(&stranded)->default_value(false),    "If R1 is orphaned, R2 is RC (for stranded RNA)")
             ("cut-size,c", po::value<size_t>(&cut_size)->default_value(5),    "Cut length of sequence")
             ("min-length,m", po::value<size_t>(&min_length)->default_value(50),    "Min length for acceptable outputted read")
-            ("log-file,L",                 "Output-Logfile")
-            ("no-log,N",                   "No logfile <outputs to stderr>")
+            ("stats-file,L", po::value<std::string>(&statsFile)->default_value("stats.log") , "String for output stats file name")
+            ("append-stats-file,A", po::bool_switch(&appendStats)->default_value(false),  "Append Stats file.")
             ("help,h",                     "Prints help.");
 
         po::variables_map vm;
@@ -100,7 +103,7 @@ int main(int argc, char** argv)
              */
             if ( vm.count("help")  || vm.size() == 0)
             {
-                std::cout << "Tab-Converter" << std::endl
+                std::cout << program_name << std::endl
                           << desc << std::endl;
                 return SUCCESS;
             }
@@ -197,7 +200,7 @@ int main(int argc, char** argv)
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
                 helper_trim(ift, pe, se, counters, min_length, cut_size, stranded, no_left, no_right);
             }  
-
+            write_stats(statsFile, appendStats, counters, program_name);
         }
         catch(po::error& e)
         {

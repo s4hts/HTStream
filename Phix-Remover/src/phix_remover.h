@@ -80,11 +80,10 @@ size_t check_read(const Read &r, const kmerArray &lookup, const kmerArray &looku
 
 
 template <class T, class Impl>
-void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, Counter& counters, kmerArray &lookup, kmerArray &lookup_rc, size_t hits, bool checkR2) {
+void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, Counter& c, kmerArray &lookup, kmerArray &lookup_rc, size_t hits, bool checkR2) {
     
     while(reader.has_next()) {
         auto i = reader.next();
-        ++counters["TotalRecords"];
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());        
         if (per) {
             size_t val = check_read(per->get_read_one(), lookup, lookup_rc);
@@ -94,7 +93,10 @@ void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> 
             }
 
             if (val < hits) {
-                pe->write(*per);
+                writer_helper(per, pe, se, false, c);
+            } else {
+                ++c["R1_Discarded"];
+                ++c["R2_Discarded"];
             }
 
         } else {
@@ -102,8 +104,10 @@ void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> 
             
             if (ser) {
                 size_t val = check_read(ser->get_read(), lookup, lookup_rc);
-                if (val > hits) {
-                    se->write(*ser);
+                if (val < hits) {
+                    writer_helper(ser, pe, se, false, c);
+                } else {
+                    ++c["SE_Discarded"];
                 }
             } else {
                 throw std::runtime_error("Unknown read type");

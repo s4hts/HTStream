@@ -31,7 +31,7 @@ void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe,
                 rb2.setRCut(rb2.getLength() - cut_size);
             }
             per->checkDiscarded(min_length);
-            writer_helper(per, pe, se, stranded);
+            writer_helper(per, pe, se, stranded, counters);
         } else {
             SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
             
@@ -44,7 +44,7 @@ void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe,
                     rb.setRCut((per->non_const_read_two()).getLength() - cut_size);
                 }
                 ser->checkDiscarded(min_length);
-                writer_helper(ser, pe, se, stranded);
+                writer_helper(ser, pe, se, stranded, counters);
             } else {
                 throw std::runtime_error("Unknown read type");
             }

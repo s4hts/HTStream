@@ -86,3 +86,22 @@ char Read::complement(char bp) {
     }
     return 'N';
 }
+
+void PairedEndRead::setStats(Counter &c) { //Could take stats on one that is discard PE_OUt is not incremented here
+    c["R1_Length"] += one.getLength();
+    c["R2_Length"] += two.getLength();
+
+    c["R1_Left_Trim"] += one.getLTrim();
+    c["R2_Left_Trim"] += two.getLTrim();
+
+    c["R1_Right_Trim"] += one.getRTrim();
+    c["R2_Right_Trim"] += two.getRTrim(); 
+}
+
+void SingleEndRead::setStats(Counter &c) {
+    c["SE_Length"] += one.getLength();
+    c["SE_Left_Trim"] += one.getLTrim();
+    c["SE_Right_Trim"] += one.getRTrim();
+
+}
+

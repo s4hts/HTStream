@@ -29,13 +29,16 @@ typedef std::unordered_map <std::string, size_t> Counter;
 namespace bi = boost::iostreams;
 
 template <class T, class Impl>
-void writer_helper(InputReader<T, Impl> &reader, std::unique_ptr<OutputWriter> &writer) {
+void writer_helper(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, Counter &c) {
+
     while (reader.has_next()) {
-        writer->write(*reader.next());
+        ++c["TotalRecords"];
+        writer_helper(reader.next().get(), pe, se, false, c);
     }
+
 }
 
-template <class T, class Impl>
+/*template <class T, class Impl>
 void writer_helper(InputReader<T, Impl> &reader, std::unique_ptr<OutputWriter> &pe, std::unique_ptr<OutputWriter> &se) {
     while (reader.has_next()) {
         ReadBase *r = reader.next().get();
@@ -51,15 +54,14 @@ void writer_helper(InputReader<T, Impl> &reader, std::unique_ptr<OutputWriter> &
             }
         }
     }
-}
+}*/
 
 
 int main(int argc, char** argv)
 {
+    const std::string program_name = "Tab-Convert";
     Counter counters;
-    counters["TotalRecords"] = 0;
-    counters["Replaced"] = 0;
-    counters["HasN"] = 0;
+    setupCounter(counters);
     std::string prefix;
     std::vector<std::string> default_outfiles = {"PE1", "PE2", "SE"};
 
@@ -70,6 +72,10 @@ int main(int argc, char** argv)
     bool gzip_out;
     bool interleaved_out;
     bool force; 
+    
+    std::string statsFile;
+    bool appendStats;
+
     try
     {
         /** Define and parse the program options
@@ -97,8 +103,8 @@ int main(int argc, char** argv)
             ("to-stdout,O", po::bool_switch(&std_out)->default_value(false),    "Prints to STDOUT in Tab Delimited")
             ("prefix,p", po::value<std::string>(&prefix)->default_value("converted_"),
                                            "Prefix for outputted files")
-            ("log-file,L",                 "Output-Logfile")
-            ("no-log,N",                   "No logfile <outputs to stderr>")
+            ("stats-file,L", po::value<std::string>(&statsFile)->default_value("stats.log") , "String for output stats file name")
+            ("append-stats-file,A", po::bool_switch(&appendStats)->default_value(false),  "Append Stats file.") 
             ("help,h",                     "Prints help.");
 
         po::variables_map vm;
@@ -111,7 +117,7 @@ int main(int argc, char** argv)
              */
             if ( vm.count("help")  || vm.size() == 0)
             {
-                std::cout << "Tab-Converter" << std::endl
+                std::cout << program_name << std::endl
                           << desc << std::endl;
                 return SUCCESS;
             }
@@ -123,8 +129,8 @@ int main(int argc, char** argv)
             std::shared_ptr<HtsOfstream> out_2 = nullptr;
             std::shared_ptr<HtsOfstream> out_3 = nullptr;
             
-            std::unique_ptr<OutputWriter> pe = nullptr;
-            std::unique_ptr<OutputWriter> se = nullptr;
+            std::shared_ptr<OutputWriter> pe = nullptr;
+            std::shared_ptr<OutputWriter> se = nullptr;
             
             if (fastq_out || (! std_out && ! tab_out) ) {
                 for (auto& outfile: default_outfiles) {
@@ -172,7 +178,7 @@ int main(int argc, char** argv)
                     bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
                     
                     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
-                    writer_helper(ifp, pe);
+                    writer_helper(ifp, pe, se, counters);
                 }
             }
 
@@ -181,7 +187,7 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> sef{ check_open_r(file), bi::close_handle};
                     InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(sef);
-                    writer_helper(ifs, se);
+                    writer_helper(ifs, pe, se, counters);
                 }
             }
             
@@ -190,7 +196,7 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> tabin{ check_open_r(file), bi::close_handle};
                     InputReader<ReadBase, TabReadImpl> ift(tabin);
-                    writer_helper(ift, pe);
+                    writer_helper(ift, pe, se, counters);
                 }
             }
             
@@ -199,16 +205,16 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> inter{ check_open_r(file), bi::close_handle};
                     InputReader<PairedEndRead, InterReadImpl> ifp(inter);
-                    writer_helper(ifp, pe);
+                    writer_helper(ifp, pe, se, counters);
                 }
             }
            
             if (std_in) {
                 bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
-                writer_helper(ift, pe, se);
+                writer_helper(ift, pe, se, counters);
             }  
-
+            
         }
         catch(po::error& e)
         {
@@ -216,7 +222,7 @@ int main(int argc, char** argv)
             std::cerr << desc << std::endl;
             return ERROR_IN_COMMAND_LINE;
         }
-
+        write_stats(statsFile, appendStats, counters, program_name);
     }
     catch(std::exception& e)
     {
@@ -226,8 +232,6 @@ int main(int argc, char** argv)
 
     }
 
-    /*std::cerr << "TotalRecords:" << counters["TotalRecords"] << "\tReplaced:" << counters["Replaced"]
-              << "\tHasN:" << counters["HasN"] << std::endl;*/
     return SUCCESS;
 
 }
