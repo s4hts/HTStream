@@ -6,7 +6,6 @@ def main():
     
     args = parser.parse_args()
     parseSampleSheet(args.sampleSheet)
-    print args.sampleSheet
 
 def parseSampleSheet(sampleSheet):
     
@@ -29,6 +28,7 @@ def parseSampleSheet(sampleSheet):
                     print ssData
                     print "Not valid * parameter in sample sheet"
                     print "Must be '*appPath', '*rawReads', '*preprocessed', or '*app##' (without quotes and # being literal digits)"
+                    exit(1)
             else:
                 tmpData = ssData.split("\t")
                 if len(tmpData) == 2:
@@ -38,7 +38,7 @@ def parseSampleSheet(sampleSheet):
                     print ssData
                     print "Not valid tab delimited samples"
                     print "Please, insure that everything that doesn't have a *, or # in front are tab delimited samples"
-
+                    exit(1)
                 #SampleSetup
         findFullAppPath(dataDict["appPath"], apps)
         fastqFiles = createSamplePaths(dataDict["rawReads"], dataDict["preprocessed"], sampleDict)
@@ -53,6 +53,12 @@ def setupCommands(apps, fastqFiles):
         #SE
         if sample[2]:
             sampleCMD += " -U " + ",".join(sample[0]) + " "
+
+        if not sample[0] and not sample[2]:
+            print "ERROR"
+            print "No FASTQ files found for " + sample[3]
+            exit(1)
+
         sampleCMD += " -O "
         #set up apps 1 through before the last one
         for a in apps[1:-1]:
@@ -64,7 +70,7 @@ def setupCommands(apps, fastqFiles):
 def getFastqFiles(dirPath, fastqFiles):
     #fastqFiles = [[], [], []]
     for root, dnames, fnames in os.walk(dirPath):
-        for fname in fnmatch.filter(fnames, "*.fastq"):
+        for fname in fnmatch.filter(fnames, "*.fastq*"):
             if "_R1" in fname:
                 tryR2 = fname.replace("_R1", "_R2").strip()
                 if os.path.exists(os.path.join(root, tryR2)):
@@ -86,13 +92,12 @@ def createSamplePaths(rawReads, preprocessed, sampleDict):
         fastq = [ [], [], [], [] ]
         for sample in samples:
             samplePath = os.path.join(rawReads, sample)
-            print samplePath
             if os.path.isdir(samplePath):
                 getFastqFiles(samplePath, fastq)
             else:
                 print "ERROR"
                 print samplePath + " : Is not a directory. Make sure you have created your '*rawReads:' directory"
-        print os.path.join(preprocessed, v)
+
         if not os.path.exists(os.path.join(preprocessed, v)):
             os.makedirs(os.path.join(preprocessed, v))
         fastq[3] = os.path.join(preprocessed, v)

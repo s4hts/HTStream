@@ -4,8 +4,17 @@
 *app1:super_deduper
 *app2:q-window-trim
 *app3:q-window-trim -w 1
-*appPath:~/GRC/HTStream/build
-*rawReads:~/Alida/Test/00-RawReads
+*app4:polyATtrim
+*appPath:~/HTStream/build
+*rawReads:~/Alida/Test/00-RawData/
 *preprocessed:~/Alida/Test/01-Cleaned
-Sample1	Sample1
-Sample2	Sample2
+13D-1_S27	13D-1_S27
+13D-2_S30	13D-2_S30
+13D-3_S33	13D-3_S33
+13E-1_S26	13E-1_S26
+13E-2_S29	13E-2_S29
+13E-3_S32	13E-3_S32
+13P-1_S28	13P-1_S28
+13P-2_S31	13P-2_S31
+13P-3_S34	13P-3_S34
+Undetermi	Undetermi
