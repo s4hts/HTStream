@@ -30,18 +30,18 @@ void setupCounter(Counter &c) {
 }
 
 void write_stats(const std::string &statsFile, const bool &appendStats, const Counter &c, const std::string &program_name) {
+
     std::ifstream testEnd(statsFile);
     int end = testEnd.peek();
     testEnd.close();
 
-    std::fstream outStats;
+    std::ofstream outStats;
     
     if (appendStats) {
-        outStats = std::fstream(statsFile, std::fstream::out | std::fstream::app); //overwritte
+        outStats.open(statsFile, std::ofstream::out | std::ofstream::app); //overwritte
     } else {
-        outStats = std::fstream(statsFile, std::fstream::out); //overwritte
+        outStats.open(statsFile, std::ofstream::out); //overwritte
     }
-
     outStats << "Program" << '\t';
     if (end == -1 || !appendStats) {
         std::string header;
@@ -50,7 +50,6 @@ void write_stats(const std::string &statsFile, const bool &appendStats, const Co
         }
         header.replace(header.length()-1, 1, "\n");
         outStats << header;
-        std::cout << header;
     } 
 
     std::string info;

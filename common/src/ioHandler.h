@@ -34,11 +34,11 @@ void setupCounter(Counter &c);
 
 class HtsOfstream {
 private:
-    bool gzip;
-    bool force;
-    bool std_out;
     std::string filename;
-    std::shared_ptr<std::ostream> out = nullptr;
+    bool force;
+    bool gzip;
+    bool std_out;
+    std::shared_ptr<std::ostream> out;
 
     void create_out() {
         out.reset(new bi::stream<bi::file_descriptor_sink> {check_exists(filename, force, gzip, std_out), bi::close_handle});
@@ -52,9 +52,9 @@ public:
     }
     
     HtsOfstream(std::string filename_, bool force_, bool gzip_, bool stdout_) : force(force_), filename(filename_), gzip(gzip_),
-                                                                                std_out(stdout_)  { }
+                                                                                std_out(stdout_)  {out = nullptr; }
     
-    HtsOfstream(std::shared_ptr<std::ostream> out_) : out(out_) { }
+    HtsOfstream(std::shared_ptr<std::ostream> out_) : out(out_) {out = nullptr; }
 
     template<class T>
     HtsOfstream& operator<< (T s) {
