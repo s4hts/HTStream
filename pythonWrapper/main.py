@@ -64,7 +64,7 @@ def setupCommands(apps, fastqFiles):
         for a in apps[1:-1]:
             sampleCMD += " | " + a + " -O -S "
         
-        sampleCMD += " | " + a + " -p " + os.path.join(sample[3], "cleaned_") + " -S "
+        sampleCMD += " | " + apps[-1] + " -p " + os.path.join(sample[3], "cleaned_") + " -S "
         print sampleCMD
 
 def getFastqFiles(dirPath, fastqFiles):

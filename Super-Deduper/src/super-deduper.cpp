@@ -193,22 +193,9 @@ int main(int argc, char** argv)
             
              
             for(auto const &i : read_map) {
-                //PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.second.get());
                 if (i.second.get() != nullptr) {
                     writer_helper(i.second.get(), pe, se, false, counters);
                 }
-                /*PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.second.get());
-                if (per) {
-                    //write_helper(*per);
-                } else {
-                    SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.second.get());
-                    if(ser) {
-                        se->write(*ser);
-                    }
-                    else {
-                        throw std::runtime_error("Unkown read found");
-                    }
-                }*/
             }
             write_stats(statsFile, appendStats, counters, program_name);
         } catch(po::error& e) {
