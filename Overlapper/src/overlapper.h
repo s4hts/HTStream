@@ -47,6 +47,7 @@ seqLookup readOneMap(const std::string &seq1, size_t step) {
     size_t seqLen = seq1.length();
 
     for (size_t bp = 0; bp < seqLen - kmer; bp+=kmer) {
+        std::cout << "Map " << seq1.substr(bp, kmer);
         baseReadMap.insert(std::make_pair(seq1.substr(bp, kmer), bp));
     }
     baseReadMap.insert(std::make_pair(seq1.substr(seqLen - kmer, kmer), seqLen - kmer));
@@ -95,6 +96,9 @@ spReadBase check(Read &r1, Read &r2, const size_t &loc1, const size_t &loc2, con
         } else {
             bp = qual1[read1_bp] > qual2[read2_bp] ? seq1[read1_bp] : seq2[read2_bp];
             qual = std::max(qual1[read1_bp] - qual2[read2_bp] + 33, 1 + 33);
+            if (++misMatches > maxMis) {
+                return nullptr;
+            }
         }
         if (!adapterTrimming) {
             finalSeq += bp;
@@ -118,10 +122,11 @@ spReadBase check(Read &r1, Read &r2, const size_t &loc1, const size_t &loc2, con
     return overlap;
 }
 
-spReadBase getOverlappedReads(Read &r1, Read &r2, const seqLookup &seq1Map, const size_t &maxMis, const size_t &minOver, const bool &adapterTrimming) {
+spReadBase getOverlappedReads(Read &r1, Read &r2, const seqLookup &seq1Map, const size_t &maxMis, const size_t &minOver, const size_t &checkLengths, const bool &adapterTrimming) {
+    std::string seq2 = r2.get_seq_rc();
 
-    for (size_t bp = 0; bp < r2.getLength() - kmer; ++bp) {
-        auto test = seq1Map.equal_range(r2.get_seq_rc().substr(bp, kmer));
+    for (size_t bp = 0; bp < checkLengths; ++bp) {
+        auto test = seq1Map.equal_range(seq2.substr(bp, kmer));
         for (auto it = test.first; it != test.second; ++it) {
             spReadBase overlapped = check(r1, r2, (*it).second, bp, maxMis, minOver, adapterTrimming);
             if (overlapped != nullptr) {
@@ -130,11 +135,20 @@ spReadBase getOverlappedReads(Read &r1, Read &r2, const seqLookup &seq1Map, cons
         }
     } 
 
+    for (size_t bp = seq2.length() - (checkLengths + kmer); bp < seq2.length() - kmer ; ++bp) {
+        auto test = seq1Map.equal_range(seq2.substr(bp, kmer));
+        for (auto it = test.first; it != test.second; ++it) {
+            spReadBase overlapped = check(r1, r2, (*it).second, bp, maxMis, minOver, adapterTrimming);
+            if (overlapped != nullptr) {
+                return overlapped;
+            }
+        }
+    }
     return nullptr;
 
 }
 
-spReadBase check_read(PairedEndRead &pe , const size_t &maxMis, const size_t &minOver, histVec &insertLength, const bool &stranded, const bool &adapterTrimming) {
+spReadBase check_read(PairedEndRead &pe , const size_t &maxMis, const size_t &minOver, histVec &insertLength, const bool &stranded, const size_t &checkLengths, const bool &adapterTrimming) {
     
     Read &r1 = pe.non_const_read_one();
     Read &r2 = pe.non_const_read_two();
@@ -147,7 +161,7 @@ spReadBase check_read(PairedEndRead &pe , const size_t &maxMis, const size_t &mi
     }
 
     seqLookup mOne = readOneMap(r1.get_seq(), step);
-    spReadBase overlapped = getOverlappedReads(r1, r2, mOne, maxMis, minOver, adapterTrimming) ;
+    spReadBase overlapped = getOverlappedReads(r1, r2, mOne, maxMis, minOver, checkLengths, adapterTrimming) ;
 
     if (insertLength && overlapped) { //overlap plus writing out
         std::string s = overlapped->get_read().get_seq();
@@ -168,7 +182,7 @@ spReadBase check_read(PairedEndRead &pe , const size_t &maxMis, const size_t &mi
 
 
 template <class T, class Impl>
-void helper_overlapper(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, Counter& counters, const size_t &maxMis, const size_t &minOver, histVec &insertLength, const bool &stranded, const size_t &min_length, const bool &adapterTrimming) {
+void helper_overlapper(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, Counter& counters, const size_t &maxMis, const size_t &minOver, histVec &insertLength, const bool &stranded, const size_t &min_length, const size_t &checkLengths, const bool &adapterTrimming) {
     
     while(reader.has_next()) {
         auto i = reader.next();
@@ -176,7 +190,7 @@ void helper_overlapper(InputReader<T, Impl> &reader, std::shared_ptr<OutputWrite
         ++counters["TotalRecords"];
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());        
         if (per) {
-            spReadBase overlapped = check_read(*per, maxMis, minOver, insertLength, stranded, adapterTrimming);
+            spReadBase overlapped = check_read(*per, maxMis, minOver, insertLength, stranded, checkLengths, adapterTrimming);
             if (!overlapped || adapterTrimming) {
                 per->checkDiscarded(min_length);    
                 writer_helper(per, pe, se, stranded, counters); 

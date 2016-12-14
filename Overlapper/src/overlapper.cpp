@@ -57,7 +57,7 @@ int main(int argc, char** argv)
     bool adapterTrimming;
     bool stranded;
     std::string histFile;
-
+    size_t checkLengths;
     std::string statsFile;
     bool appendStats;
 
@@ -90,6 +90,7 @@ int main(int argc, char** argv)
                                            "Prefix for outputted files")
             ("minLength,l", po::value<size_t>(&minLength)->default_value(50), "Mismatches allowed in overlapped section")
             ("max-mismatches,x", po::value<size_t>(&maxMismatch)->default_value(5), "Mismatches allowed in overlapped section")
+            ("check-lengths,c", po::value<size_t>(&checkLengths)->default_value(20), "Check lengths on the ends")
             ("min-overlap,o", po::value<size_t>(&minOverlap)->default_value(8), "Min overlap required to merge two reads")
             ("adapter-trimming,a", po::bool_switch(&adapterTrimming)->default_value(false), "Trims adapters based on overlap, only returns PE reads, will correct quality scores and BP in the PE reads")
             ("stranded,s", po::bool_switch(&stranded)->default_value(false), "Makes sure the correct complement is returned upon overlap")
@@ -176,7 +177,7 @@ int main(int argc, char** argv)
                     bi::stream<bi::file_descriptor_source> is1{check_open_r(read1_files[i]), bi::close_handle};
                     bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
                     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
-                    helper_overlapper(ifp, pe, se, counters, maxMismatch,  minOverlap, insertLengths, stranded, minLength,  adapterTrimming);
+                    helper_overlapper(ifp, pe, se, counters, maxMismatch,  minOverlap, insertLengths, stranded, minLength, checkLengths,  adapterTrimming);
                 }
             }
 
@@ -186,7 +187,7 @@ int main(int argc, char** argv)
                     bi::stream<bi::file_descriptor_source> sef{ check_open_r(file), bi::close_handle};
                     InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(sef);
                     //JUST WRITE se read out - no way to overlap
-                    helper_overlapper(ifs, pe, se, counters, maxMismatch,  minOverlap, insertLengths, stranded, minLength,  adapterTrimming);
+                    helper_overlapper(ifs, pe, se, counters, maxMismatch,  minOverlap, insertLengths, stranded, minLength, checkLengths,  adapterTrimming);
                 }
             }
             
@@ -195,7 +196,7 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> tabin{ check_open_r(file), bi::close_handle};
                     InputReader<ReadBase, TabReadImpl> ift(tabin);
-                    helper_overlapper(ift, pe, se, counters, maxMismatch,  minOverlap, insertLengths, stranded, minLength,  adapterTrimming);
+                    helper_overlapper(ift, pe, se, counters, maxMismatch,  minOverlap, insertLengths, stranded, minLength, checkLengths,  adapterTrimming);
                 }
             }
             
@@ -204,14 +205,14 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> inter{ check_open_r(file), bi::close_handle};
                     InputReader<PairedEndRead, InterReadImpl> ifp(inter);
-                    helper_overlapper(ifp, pe, se, counters, maxMismatch,  minOverlap, insertLengths, stranded, minLength,  adapterTrimming);
+                    helper_overlapper(ifp, pe, se, counters, maxMismatch,  minOverlap, insertLengths, stranded, minLength, checkLengths,  adapterTrimming);
                 }
             }
            
             if (std_in) {
                 bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
-                helper_overlapper(ift, pe, se, counters, maxMismatch,  minOverlap, insertLengths, stranded, minLength,  adapterTrimming);
+                helper_overlapper(ift, pe, se, counters, maxMismatch,  minOverlap, insertLengths, stranded, minLength, checkLengths,  adapterTrimming);
             }  
 
 
