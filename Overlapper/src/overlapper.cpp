@@ -249,7 +249,6 @@ int main(int argc, char** argv)
 
     }
 
-    std::cerr << "TotalRecords:" << counters["TotalRecords"] << '\n';
     return SUCCESS;
 
 }

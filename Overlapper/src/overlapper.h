@@ -47,7 +47,6 @@ seqLookup readOneMap(const std::string &seq1, size_t step) {
     size_t seqLen = seq1.length();
 
     for (size_t bp = 0; bp < seqLen - kmer; bp+=kmer) {
-        std::cout << "Map " << seq1.substr(bp, kmer);
         baseReadMap.insert(std::make_pair(seq1.substr(bp, kmer), bp));
     }
     baseReadMap.insert(std::make_pair(seq1.substr(seqLen - kmer, kmer), seqLen - kmer));
