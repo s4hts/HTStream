@@ -28,3 +28,5 @@ add_subdirectory(Q-Window-Trim)
 add_subdirectory(Cut-Trim)
 add_subdirectory(Phix-Remover)
 add_subdirectory(Overlapper)
+add_subdirectory(N-Remover)
+
