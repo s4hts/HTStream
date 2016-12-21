@@ -11,7 +11,9 @@
 #include <algorithm>
 
 typedef std::unordered_map<std::string, size_t> Counter;
-
+/*This is a O(N) time algorithm
+ * it will search for the longest base pair segment that has
+ * no N's within it*/
 void trim_n(Read &rb, size_t min_length) {
 
     std::string seq = rb.get_seq();
@@ -34,7 +36,7 @@ void trim_n(Read &rb, size_t min_length) {
     rb.setRCut(bestRight);
 
 }
-
+/*Removes all Ns (ambiguity base) from a read*/
 template <class T, class Impl>
 void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, Counter& counters, bool stranded, size_t min_length) {
     
@@ -47,7 +49,6 @@ void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe,
             trim_n(per->non_const_read_two(), min_length); 
             per->checkDiscarded(min_length);
             writer_helper(per, pe, se, stranded, counters);
-
         } else {
             SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
             
