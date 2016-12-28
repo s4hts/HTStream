@@ -108,7 +108,7 @@ spReadBase check(Read &r1, Read &r2, const size_t &loc1, const size_t &loc2, con
     
     if (r1.getLength() - loc1_t < r2.getLength()) {
         finalSeq += seq2.substr(maxLoop, r2.getLength() - maxLoop);
-        finalQual += seq2.substr(maxLoop, r2.getLength() - maxLoop);
+        finalQual += qual2.substr(maxLoop, r2.getLength() - maxLoop);
     } else if (adapterTrimming) {
         r2.setRCut(maxLoop);
     }
