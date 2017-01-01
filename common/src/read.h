@@ -6,9 +6,9 @@
 #include <memory>
 #include <iostream> 
 #include <unordered_map>
+#include "utils.h"
 
 typedef boost::dynamic_bitset<> BitSet;
-typedef std::unordered_map<std::string, size_t> Counter;
 
 class ReadBase {
 public:

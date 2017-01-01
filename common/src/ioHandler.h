@@ -21,8 +21,7 @@
 
 #include <iostream>
 #include <string>
-
-typedef std::unordered_map <std::string, size_t> Counter;
+#include "utils.h"
 
 namespace bf = boost::filesystem;
 namespace bi = boost::iostreams;

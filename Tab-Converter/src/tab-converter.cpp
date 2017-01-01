@@ -24,8 +24,6 @@ namespace
 
 } // namespace
 
-typedef std::unordered_map <std::string, size_t> Counter;
-
 namespace bi = boost::iostreams;
 
 template <class T, class Impl>

@@ -28,8 +28,6 @@ namespace
 
 } // namespace
 
-typedef std::unordered_map <std::string, size_t> Counter;
-
 namespace bi = boost::iostreams;
 
 int main(int argc, char** argv)
