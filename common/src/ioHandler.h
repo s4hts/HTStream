@@ -52,9 +52,9 @@ public:
     }
     
     HtsOfstream(std::string filename_, bool force_, bool gzip_, bool stdout_) : force(force_), filename(filename_), gzip(gzip_),
-                                                                                std_out(stdout_)  {out = nullptr; }
+                                                                                std_out(stdout_)  { }
     
-    HtsOfstream(std::shared_ptr<std::ostream> out_) : out(out_) {out = nullptr; }
+    HtsOfstream(std::shared_ptr<std::ostream> out_) : out(out_) { }
 
     template<class T>
     HtsOfstream& operator<< (T s) {

@@ -88,8 +88,8 @@ char Read::complement(char bp) {
 }
 
 void PairedEndRead::setStats(Counter &c) { //Could take stats on one that is discard PE_OUt is not incremented here
-    c["R1_Length"] += one.getLength();
-    c["R2_Length"] += two.getLength();
+    c["R1_Length"] += one.getLengthTrue();
+    c["R2_Length"] += two.getLengthTrue();
 
     c["R1_Left_Trim"] += one.getLTrim();
     c["R2_Left_Trim"] += two.getLTrim();
@@ -99,7 +99,7 @@ void PairedEndRead::setStats(Counter &c) { //Could take stats on one that is dis
 }
 
 void SingleEndRead::setStats(Counter &c) {
-    c["SE_Length"] += one.getLength();
+    c["SE_Length"] += one.getLengthTrue();
     c["SE_Left_Trim"] += one.getLTrim();
     c["SE_Right_Trim"] += one.getRTrim();
 

@@ -86,7 +86,6 @@ void writer_helper(ReadBase *r, std::shared_ptr<OutputWriter> pe, std::shared_pt
         }
     } else {
         SingleEndRead *ser = dynamic_cast<SingleEndRead*>(r);
-        
         if (!ser) {
             throw std::runtime_error("Unknow read found");
         }
