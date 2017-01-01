@@ -31,10 +31,10 @@ const size_t step = 2;
 
 /*Create the quick lookup table
  * Multi map because a single kemr could appear multiple places*/
-seqLookup readOneMap(const std::string &seq1, size_t step) {
+seqLookup readOneMap(const std::string &seq1) {
 
     seqLookup baseReadMap;
-    size_t seqLen = seq1.length();
+    size_t seqLen = seq1.length() - 1;
 
     for (size_t bp = 0; bp < seqLen - kmer; bp+=kmer) {
         baseReadMap.insert(std::make_pair(seq1.substr(bp, kmer), bp));
@@ -49,7 +49,7 @@ seqLookup readOneMap(const std::string &seq1, size_t step) {
  * 
  * Within the overlap if they are the same bp, then add q scores
  * If they are different bp, subtract q scores and take the larger quality bp*/ 
-spReadBase check(Read &r1, Read &r2, const size_t &loc1, const size_t &loc2, const size_t &maxMis, const size_t &minOverlap, const bool &adapterTrimming) {
+spReadBase checkIfOverlap(Read &r1, Read &r2, size_t loc1, size_t loc2, size_t maxMis, size_t minOverlap, bool adapterTrimming) {
     size_t minLoc = std::min(loc1, loc2);
     size_t loc1_t = loc1 - minLoc;
     size_t loc2_t = loc2 - minLoc;
@@ -125,7 +125,7 @@ spReadBase getOverlappedReads(Read &r1, Read &r2, const seqLookup &seq1Map, cons
          * If it does, then try the brute force approach*/
         auto test = seq1Map.equal_range(seq2.substr(bp, kmer));
         for (auto it = test.first; it != test.second; ++it) {
-            spReadBase overlapped = check(r1, r2, (*it).second, bp, maxMis, minOver, adapterTrimming);
+            spReadBase overlapped = checkIfOverlap(r1, r2, it->second, bp, maxMis, minOver, adapterTrimming);
             if (overlapped != nullptr) {
                 return overlapped;
             }
@@ -137,7 +137,7 @@ spReadBase getOverlappedReads(Read &r1, Read &r2, const seqLookup &seq1Map, cons
          * If it does, then try the brute force approach*/
         auto test = seq1Map.equal_range(seq2.substr(bp, kmer));
         for (auto it = test.first; it != test.second; ++it) {
-            spReadBase overlapped = check(r1, r2, (*it).second, bp, maxMis, minOver, adapterTrimming);
+            spReadBase overlapped = checkIfOverlap(r1, r2, it->second, bp, maxMis, minOver, adapterTrimming);
             if (overlapped != nullptr) {
                 return overlapped;
             }
@@ -159,7 +159,7 @@ spReadBase check_read(PairedEndRead &pe , const size_t &maxMis, const size_t &mi
         swapped = true;
     }
     /*Create a map with non-overlapping kmers*/
-    seqLookup mOne = readOneMap(r1.get_seq(), step);
+    seqLookup mOne = readOneMap(r1.get_seq());
     /*returns null if no much
      * r1 and r2 and passed by ref in case only adapter trimming is on*/
     spReadBase overlapped = getOverlappedReads(r1, r2, mOne, maxMis, minOver, checkLengths, adapterTrimming) ;
