@@ -35,7 +35,7 @@ private:
     bool force;
     bool gzip;
     bool std_out;
-    std::shared_ptr<std::ostream> out;
+    std::shared_ptr<std::ostream> out = nullptr;
 
     void create_out() {
         out.reset(new bi::stream<bi::file_descriptor_sink> {check_exists(filename, force, gzip, std_out), bi::close_handle});
