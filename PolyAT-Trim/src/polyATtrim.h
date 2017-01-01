@@ -9,8 +9,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <boost/functional/hash.hpp>
 #include <algorithm>
-
-typedef std::unordered_map<std::string, size_t> Counter;
+#include "utils.h"
 
 void trim_left(Read &rb, size_t min_trim, size_t max_mismatch) {
     size_t a_mismatch = 0;

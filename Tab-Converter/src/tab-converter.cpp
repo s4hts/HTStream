@@ -15,7 +15,7 @@
 #include <map>
 #include <unordered_map>
 #include <boost/functional/hash.hpp>
-
+#include "utils.h"
 namespace
 {
     const size_t SUCCESS = 0;
@@ -23,8 +23,6 @@ namespace
     const size_t ERROR_UNHANDLED_EXCEPTION = 2;
 
 } // namespace
-
-typedef std::unordered_map <std::string, size_t> Counter;
 
 namespace bi = boost::iostreams;
 
@@ -37,25 +35,6 @@ void writer_helper(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> p
     }
 
 }
-
-/*template <class T, class Impl>
-void writer_helper(InputReader<T, Impl> &reader, std::unique_ptr<OutputWriter> &pe, std::unique_ptr<OutputWriter> &se) {
-    while (reader.has_next()) {
-        ReadBase *r = reader.next().get();
-        PairedEndRead *per = dynamic_cast<PairedEndRead*>(r);
-        if (per) {
-            pe->write(*per);
-        } else {
-            SingleEndRead *ser = dynamic_cast<SingleEndRead*>(r);
-            if (ser) {
-                se->write(*ser);
-            } else {
-                throw std::runtime_error("Unknow read found");
-            }
-        }
-    }
-}*/
-
 
 int main(int argc, char** argv)
 {

@@ -21,16 +21,13 @@
 
 #include <iostream>
 #include <string>
-#include <unordered_map>
-
-typedef std::unordered_map <std::string, size_t> Counter;
+#include "utils.h"
 
 namespace bf = boost::filesystem;
 namespace bi = boost::iostreams;
 
 int check_open_r(const std::string& filename) ;
 int check_exists(const std::string& filename, bool force, bool gzip, bool std_out) ;
-void setupCounter(Counter &c);
 
 class HtsOfstream {
 private:
@@ -38,7 +35,7 @@ private:
     bool force;
     bool gzip;
     bool std_out;
-    std::shared_ptr<std::ostream> out;
+    std::shared_ptr<std::ostream> out = nullptr;
 
     void create_out() {
         out.reset(new bi::stream<bi::file_descriptor_sink> {check_exists(filename, force, gzip, std_out), bi::close_handle});
@@ -52,9 +49,9 @@ public:
     }
     
     HtsOfstream(std::string filename_, bool force_, bool gzip_, bool stdout_) : force(force_), filename(filename_), gzip(gzip_),
-                                                                                std_out(stdout_)  {out = nullptr; }
+                                                                                std_out(stdout_)  { }
     
-    HtsOfstream(std::shared_ptr<std::ostream> out_) : out(out_) {out = nullptr; }
+    HtsOfstream(std::shared_ptr<std::ostream> out_) : out(out_) { }
 
     template<class T>
     HtsOfstream& operator<< (T s) {
@@ -242,5 +239,4 @@ protected:
 
 void writer_helper(ReadBase *r, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, bool stranded, Counter &c);
 
-void write_stats(const std::string &statsFile, const bool &appendStats, const Counter &c, const std::string &program_name);
 #endif

@@ -27,8 +27,6 @@ namespace
 
 } // namespace
 
-typedef std::unordered_map <std::string, size_t> Counter;
-
 namespace bi = boost::iostreams;
 
 int main(int argc, char** argv)
@@ -249,7 +247,6 @@ int main(int argc, char** argv)
 
     }
 
-    std::cerr << "TotalRecords:" << counters["TotalRecords"] << '\n';
     return SUCCESS;
 
 }

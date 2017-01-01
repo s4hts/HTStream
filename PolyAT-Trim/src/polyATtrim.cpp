@@ -18,7 +18,6 @@
 
 #include "polyATtrim.h"
 
-
 namespace
 {
     const size_t SUCCESS = 0;
@@ -26,8 +25,6 @@ namespace
     const size_t ERROR_UNHANDLED_EXCEPTION = 2;
 
 } // namespace
-
-typedef std::unordered_map <std::string, size_t> Counter;
 
 namespace bi = boost::iostreams;
 

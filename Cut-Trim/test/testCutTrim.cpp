@@ -23,8 +23,8 @@ TEST_F(SDTest, BasicTrim) {
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
         Read &rb1 = per->non_const_read_one();
         Read &rb2 = per->non_const_read_two();
-        rb1.setLCut(cut_size);
         rb1.setRCut(rb1.getLength() - cut_size);
+        rb1.setLCut(cut_size);
         ASSERT_EQ("CAAAAAAAAC", (per->non_const_read_one()).get_sub_seq());
     }
 };
@@ -45,10 +45,10 @@ TEST_F(SDTest, Stranded) {
             Read &rb1 = per->non_const_read_one();
             Read &rb2 = per->non_const_read_two();
 
-            rb1.setLCut(cut_size);
             rb1.setRCut(rb1.getLength() - cut_size);
-            rb2.setLCut(cut_size);
+            rb1.setLCut(cut_size);
             rb2.setRCut(rb2.getLength() - cut_size);
+            rb2.setLCut(cut_size);
             per->checkDiscarded(min_length);
             writer_helper(per, tab, tab, true, c);
         }

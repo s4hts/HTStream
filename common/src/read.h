@@ -6,9 +6,9 @@
 #include <memory>
 #include <iostream> 
 #include <unordered_map>
+#include "utils.h"
 
 typedef boost::dynamic_bitset<> BitSet;
-typedef std::unordered_map<std::string, size_t> Counter;
 
 class ReadBase {
 public:
@@ -86,11 +86,12 @@ public:
     void changeSeq( size_t loc, char bp ) { seq[loc] = bp; }
     void changeQual( size_t loc, char score ) {qual[loc] = score; }
 
-    void setRCut( size_t cut_R_ ) { cut_R = cut_R_; }
+    void setRCut( size_t cut_R_ ) { cut_R = cut_R_;;}
     void setLCut( size_t cut_L_ ) { cut_L = cut_L_; }
     bool getDiscard() { return int(minLength) > int(cut_R) - int(cut_L); }
     void setDiscard(size_t minLength_) { minLength = minLength_; }
-    size_t getLength() { return cut_R - cut_L; }
+    size_t getLength() { return length; }
+    size_t getLengthTrue() { return cut_R - cut_L; }
     size_t getLTrim() { return cut_L; }
     size_t getRTrim() { return length - cut_R; }
 };

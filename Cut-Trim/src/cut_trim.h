@@ -9,8 +9,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <boost/functional/hash.hpp>
 #include <algorithm>
-
-typedef std::unordered_map<std::string, size_t> Counter;
+#include "utils.h"
 
 template <class T, class Impl>
 void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, Counter& counters, size_t min_length, size_t cut_size, bool stranded, bool no_left, bool no_right) {

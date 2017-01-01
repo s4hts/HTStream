@@ -1,4 +1,5 @@
 import sys, argparse, os, fnmatch
+import glob
 
 def main():
     parser = argparse.ArgumentParser(description="This is HTStream python wrapper")
@@ -27,7 +28,7 @@ def parseSampleSheet(sampleSheet):
                     print "ERROR"
                     print ssData
                     print "Not valid * parameter in sample sheet"
-                    print "Must be '*appPath', '*rawReads', '*preprocessed', or '*app##' (without quotes and # being literal digits)"
+                    print "Must be '*appPath', '*searchString','*rawReads', '*preprocessed', or '*app##' (without quotes and # being literal digits)"
                     exit(1)
             else:
                 tmpData = ssData.split("\t")
@@ -70,18 +71,33 @@ def setupCommands(apps, fastqFiles):
 def getFastqFiles(dirPath, fastqFiles):
     #fastqFiles = [[], [], []]
     for root, dnames, fnames in os.walk(dirPath):
-        for fname in fnmatch.filter(fnames, "*.fastq*"):
+        for fname in fnmatch.filter(fnames, "*" + searchString +  "*.fastq*"):
             if "_R1" in fname:
                 tryR2 = fname.replace("_R1", "_R2").strip()
                 if os.path.exists(os.path.join(root, tryR2)):
                     fastqFiles[0].append(os.path.join(root, fname))
                     fastqFiles[1].append(os.path.join(root, tryR2))
-                else:
+                else: #This means it is a SE read
                     fastqFiles[2].append(os.path.join(root, fname))
-            elif "_R2" in fname:
+            elif "_R2" in fname: #This will be taken care of in R1 
                 nothing = 0
             else:
                 fastqFiles[2].append(os.path.join(root, fname))
+
+def getFastqFilesFromList(fastqLst, fastqFiles):
+    #fastqFiles = [[], [], []]
+    for fname  in fastqLst:
+        if "_R1" in fname:
+            tryR2 = fname.replace("_R1", "_R2").strip()
+            if os.path.exists(tryR2):
+                fastqFiles[0].append(fname)
+                fastqFiles[1].append(tryR2)
+            else:
+                fastqFiles[2].append(fname)
+        elif "_R2" in fname: #This will be taken care of in _R1
+            nothing = 0
+        else:
+            fastqFiles[2].append(fname)
 
 def createSamplePaths(rawReads, preprocessed, sampleDict):
     #This will have another list appened onto it
@@ -94,6 +110,8 @@ def createSamplePaths(rawReads, preprocessed, sampleDict):
             samplePath = os.path.join(rawReads, sample)
             if os.path.isdir(samplePath):
                 getFastqFiles(samplePath, fastq)
+            elif samplePath[-1] == "*" and  os.path.exists(glob.glob(samplePath)[0]):
+                getFastqFilesFromList(glob.glob(samplePath), fastq)
             else:
                 print "ERROR"
                 print samplePath + " : Is not a directory. Make sure you have created your '*rawReads:' directory"
@@ -120,6 +138,7 @@ def setDataDict():
     dataDict["appPath"] = ""
     dataDict["rawReads"] = ""
     dataDict["preprocessed"] = ""
+    dataDict["searchString"] = ""
     return dataDict
 
 

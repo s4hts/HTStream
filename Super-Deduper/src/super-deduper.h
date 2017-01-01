@@ -3,11 +3,13 @@
 //  this is so we can implment hash function for dynamic_bitset
 #define BOOST_DYNAMIC_BITSET_DONT_USE_FRIENDS
 
+#include "utils.h"
 #include "ioHandler.h"
 #include <map>
 #include <unordered_map>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/functional/hash.hpp>
+
 
 #define AVG_AUTOMATIC_WRITE 20
 class dbhash {
@@ -18,7 +20,6 @@ public:
 };
 
 typedef std::unordered_map <boost::dynamic_bitset<>, std::unique_ptr<ReadBase>, dbhash> BitMap;
-typedef std::unordered_map <std::string, size_t> Counter;
 
 template <class T, class Impl>
 void load_map(InputReader<T, Impl> &reader, Counter& counters, BitMap& read_map, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, size_t start, size_t length) {
