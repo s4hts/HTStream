@@ -15,7 +15,7 @@
 #include <map>
 #include <unordered_map>
 #include <boost/functional/hash.hpp>
-
+#include "utils.h"
 namespace
 {
     const size_t SUCCESS = 0;

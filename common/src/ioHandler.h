@@ -21,7 +21,6 @@
 
 #include <iostream>
 #include <string>
-#include <unordered_map>
 
 typedef std::unordered_map <std::string, size_t> Counter;
 
@@ -30,7 +29,6 @@ namespace bi = boost::iostreams;
 
 int check_open_r(const std::string& filename) ;
 int check_exists(const std::string& filename, bool force, bool gzip, bool std_out) ;
-void setupCounter(Counter &c);
 
 class HtsOfstream {
 private:
@@ -242,5 +240,4 @@ protected:
 
 void writer_helper(ReadBase *r, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, bool stranded, Counter &c);
 
-void write_stats(const std::string &statsFile, const bool &appendStats, const Counter &c, const std::string &program_name);
 #endif

@@ -17,8 +17,8 @@
 #include <boost/functional/hash.hpp>
 #include <algorithm>
 #include <bitset>
+#include "utils.h"
 
-typedef std::unordered_map<std::string, size_t> Counter;
 const size_t kmer = 8;
 const size_t kmerBits = kmer*2;
 /*This will be the size_t will be the number of hits to that kmer
