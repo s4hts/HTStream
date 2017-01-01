@@ -38,25 +38,6 @@ void writer_helper(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> p
 
 }
 
-/*template <class T, class Impl>
-void writer_helper(InputReader<T, Impl> &reader, std::unique_ptr<OutputWriter> &pe, std::unique_ptr<OutputWriter> &se) {
-    while (reader.has_next()) {
-        ReadBase *r = reader.next().get();
-        PairedEndRead *per = dynamic_cast<PairedEndRead*>(r);
-        if (per) {
-            pe->write(*per);
-        } else {
-            SingleEndRead *ser = dynamic_cast<SingleEndRead*>(r);
-            if (ser) {
-                se->write(*ser);
-            } else {
-                throw std::runtime_error("Unknow read found");
-            }
-        }
-    }
-}*/
-
-
 int main(int argc, char** argv)
 {
     const std::string program_name = "Tab-Convert";
