@@ -16,9 +16,9 @@
 #include <unordered_map>
 #include <boost/functional/hash.hpp>
 
-#include "cut_trim.h"
+#include "overlapper.h"
 
-
+#define AST_COUNT 4096
 namespace
 {
     const size_t SUCCESS = 0;
@@ -31,9 +31,10 @@ namespace bi = boost::iostreams;
 
 int main(int argc, char** argv)
 {
-    const std::string program_name = "Cut_Trim";
+    const std::string program_name = "Overlapper";
+
     Counter counters;
-    setupCounter(counters);
+    setupCounter(counters); 
 
     std::string prefix;
     std::vector<std::string> default_outfiles = {"PE1", "PE2", "SE"};
@@ -46,12 +47,15 @@ int main(int argc, char** argv)
     bool interleaved_out;
     bool force; 
 
-    size_t min_length ;
-    size_t cut_size ;
-    bool stranded ;
-    bool no_left ;
-    bool no_right ;
+    bool checkR2;
 
+    size_t maxMismatch;
+    size_t minLength;
+    size_t minOverlap;
+    bool adapterTrimming;
+    bool stranded;
+    std::string histFile;
+    size_t checkLengths;
     std::string statsFile;
     bool appendStats;
 
@@ -80,13 +84,15 @@ int main(int argc, char** argv)
             ("force,F", po::bool_switch(&force)->default_value(false),         "Forces overwrite of files")
             ("tab-output,t", po::bool_switch(&tab_out)->default_value(false),   "Tab-delimited output")
             ("to-stdout,O", po::bool_switch(&std_out)->default_value(false),    "Prints to STDOUT in Tab Delimited")
-            ("prefix,p", po::value<std::string>(&prefix)->default_value("poly_at_trim_"),
+            ("prefix,p", po::value<std::string>(&prefix)->default_value("overlapped_"),
                                            "Prefix for outputted files")
-            ("no-left,l", po::bool_switch(&no_left)->default_value(false),    "Turns of trimming of the left side of the read")
-            ("no-right,r", po::bool_switch(&no_right)->default_value(false),    "Turns of trimming of the right side of the read")
-            ("stranded,s", po::bool_switch(&stranded)->default_value(false),    "If R1 is orphaned, R2 is RC (for stranded RNA)")
-            ("cut-size,c", po::value<size_t>(&cut_size)->default_value(5),    "Cut length of sequence")
-            ("min-length,m", po::value<size_t>(&min_length)->default_value(50),    "Min length for acceptable outputted read")
+            ("minLength,l", po::value<size_t>(&minLength)->default_value(50), "Mismatches allowed in overlapped section")
+            ("max-mismatches,x", po::value<size_t>(&maxMismatch)->default_value(5), "Mismatches allowed in overlapped section")
+            ("check-lengths,c", po::value<size_t>(&checkLengths)->default_value(20), "Check lengths on the ends")
+            ("min-overlap,o", po::value<size_t>(&minOverlap)->default_value(8), "Min overlap required to merge two reads")
+            ("adapter-trimming,a", po::bool_switch(&adapterTrimming)->default_value(false), "Trims adapters based on overlap, only returns PE reads, will correct quality scores and BP in the PE reads")
+            ("stranded,s", po::bool_switch(&stranded)->default_value(false), "Makes sure the correct complement is returned upon overlap")
+            ("hist-file,l", po::value<std::string>(&histFile)->default_value(""), "A tab delimited hist file with insert lengths.")
             ("stats-file,L", po::value<std::string>(&statsFile)->default_value("stats.log") , "String for output stats file name")
             ("append-stats-file,A", po::bool_switch(&appendStats)->default_value(false),  "Append Stats file.")
             ("help,h",                     "Prints help.");
@@ -101,7 +107,7 @@ int main(int argc, char** argv)
              */
             if ( vm.count("help")  || vm.size() == 0)
             {
-                std::cout << program_name << std::endl
+                std::cout << "Tab-Converter" << std::endl
                           << desc << std::endl;
                 return SUCCESS;
             }
@@ -146,7 +152,15 @@ int main(int argc, char** argv)
                 pe.reset(new ReadBaseOutTab(out_1));
                 se.reset(new ReadBaseOutTab(out_1));
             }
+            histVec insertLengths;
 
+            if (histFile == "") {
+                insertLengths = nullptr;
+            } else {
+                insertLengths = histVec(new std::vector<unsigned long long int>);
+            }
+            
+            //setLookup(lookup, lookup_rc, readPhix);
             // there are any problems
             if(vm.count("read1-input")) {
                 if (!vm.count("read2-input")) {
@@ -160,9 +174,8 @@ int main(int argc, char** argv)
                 for(size_t i = 0; i < read1_files.size(); ++i) {
                     bi::stream<bi::file_descriptor_source> is1{check_open_r(read1_files[i]), bi::close_handle};
                     bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
-                   
                     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
-                    helper_trim(ifp, pe, se, counters, min_length, cut_size, stranded, no_left, no_right);
+                    helper_overlapper(ifp, pe, se, counters, maxMismatch,  minOverlap, insertLengths, stranded, minLength, checkLengths,  adapterTrimming);
                 }
             }
 
@@ -171,7 +184,8 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> sef{ check_open_r(file), bi::close_handle};
                     InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(sef);
-                    helper_trim(ifs, pe, se, counters, min_length, cut_size, stranded, no_left, no_right);
+                    //JUST WRITE se read out - no way to overlap
+                    helper_overlapper(ifs, pe, se, counters, maxMismatch,  minOverlap, insertLengths, stranded, minLength, checkLengths,  adapterTrimming);
                 }
             }
             
@@ -180,7 +194,7 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> tabin{ check_open_r(file), bi::close_handle};
                     InputReader<ReadBase, TabReadImpl> ift(tabin);
-                    helper_trim(ift, pe, se, counters, min_length, cut_size, stranded, no_left, no_right);
+                    helper_overlapper(ift, pe, se, counters, maxMismatch,  minOverlap, insertLengths, stranded, minLength, checkLengths,  adapterTrimming);
                 }
             }
             
@@ -189,15 +203,32 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> inter{ check_open_r(file), bi::close_handle};
                     InputReader<PairedEndRead, InterReadImpl> ifp(inter);
-                    helper_trim(ifp, pe, se, counters, min_length, cut_size, stranded, no_left, no_right);
+                    helper_overlapper(ifp, pe, se, counters, maxMismatch,  minOverlap, insertLengths, stranded, minLength, checkLengths,  adapterTrimming);
                 }
             }
            
             if (std_in) {
                 bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
-                helper_trim(ift, pe, se, counters, min_length, cut_size, stranded, no_left, no_right);
+                helper_overlapper(ift, pe, se, counters, maxMismatch,  minOverlap, insertLengths, stranded, minLength, checkLengths,  adapterTrimming);
             }  
+
+
+            if (insertLengths) {
+                std::ofstream histOutputFile(histFile);
+                //0 is reserved for no overlap
+                std::string stars;
+                for (int i = 1; i < insertLengths->size(); ++i) {
+                    stars = "";
+                    if ((*insertLengths)[i]) {
+                        stars = stars.insert(0, (*insertLengths)[i]/AST_COUNT, '*');
+                        histOutputFile << i << '\t' << (*insertLengths)[i] << '\t' << stars << '\n';
+                    }
+                }
+                stars = stars.insert(0, (*insertLengths)[0]/AST_COUNT, '*');
+                histOutputFile << "None" << '\t' << (*insertLengths)[0] << '\t' << stars << '\n';
+                histOutputFile.close();
+            }
             write_stats(statsFile, appendStats, counters, program_name);
         }
         catch(po::error& e)
@@ -216,7 +247,7 @@ int main(int argc, char** argv)
 
     }
 
-    std::cerr << "TotalRecords:" << counters["TotalRecords"] << '\n';
     return SUCCESS;
 
 }
+

@@ -48,7 +48,7 @@ TEST_F(SDTest, Stranded) {
 
     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(in1, in2);
     std::shared_ptr<std::ostringstream> out1(new std::ostringstream);
-
+    Counter c;
     {
         std::shared_ptr<HtsOfstream> hts_of(new HtsOfstream(out1));
         std::shared_ptr<OutputWriter> tab(new ReadBaseOutTab(hts_of));
@@ -62,7 +62,7 @@ TEST_F(SDTest, Stranded) {
             per->checkDiscarded(min_length);
             //per->checkDiscarded(min_length);
             //stranded (R2 will be RCed)
-            writer_helper(per, tab, tab, true);
+            writer_helper(per, tab, tab, true, c);
         }
     }
     ASSERT_EQ("Read1\tCAAAGACTTTTTTTTTCCAA\t##AAAAAAAAAAAAAAAA##\n", out1->str());

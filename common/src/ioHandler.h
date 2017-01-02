@@ -19,10 +19,9 @@
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem.hpp>
 
-
 #include <iostream>
 #include <string>
-
+#include "utils.h"
 
 namespace bf = boost::filesystem;
 namespace bi = boost::iostreams;
@@ -32,10 +31,10 @@ int check_exists(const std::string& filename, bool force, bool gzip, bool std_ou
 
 class HtsOfstream {
 private:
-    bool gzip;
-    bool force;
-    bool std_out;
     std::string filename;
+    bool force;
+    bool gzip;
+    bool std_out;
     std::shared_ptr<std::ostream> out = nullptr;
 
     void create_out() {
@@ -238,6 +237,6 @@ protected:
     } 
 };
 
-void writer_helper(ReadBase *r, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, bool stranded);
+void writer_helper(ReadBase *r, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, bool stranded, Counter &c);
 
 #endif

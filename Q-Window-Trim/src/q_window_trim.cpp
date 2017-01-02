@@ -27,16 +27,15 @@ namespace
 
 } // namespace
 
-typedef std::unordered_map <std::string, size_t> Counter;
-
 namespace bi = boost::iostreams;
 
 int main(int argc, char** argv)
 {
+    const std::string program_name = "Q-Trim";
+
     Counter counters;
-    counters["TotalRecords"] = 0;
-    counters["Replaced"] = 0;
-    counters["HasN"] = 0;
+    setupCounter(counters);
+
     std::string prefix;
     std::vector<std::string> default_outfiles = {"PE1", "PE2", "SE"};
 
@@ -54,6 +53,9 @@ int main(int argc, char** argv)
     bool stranded ;
     bool no_left ;
     bool no_right ;
+
+    std::string statsFile;
+    bool appendStats;
 
     try
     {
@@ -88,8 +90,8 @@ int main(int argc, char** argv)
             ("window_size,w", po::value<size_t>(&window_size)->default_value(10),    "Min base pairs trim for AT tail")
             ("avg_qual,q", po::value<size_t>(&avg_qual)->default_value(20),    "Max amount of mismatches allowed in trimmed area")
             ("min-length,m", po::value<size_t>(&min_length)->default_value(50),    "Min length for acceptable outputted read")
-            ("log-file,L",                 "Output-Logfile")
-            ("no-log,N",                   "No logfile <outputs to stderr>")
+            ("stats-file,L", po::value<std::string>(&statsFile)->default_value("stats.log") , "String for output stats file name")
+            ("append-stats-file,A", po::bool_switch(&appendStats)->default_value(false),  "Append Stats file.")
             ("help,h",                     "Prints help.");
 
         po::variables_map vm;
@@ -102,7 +104,7 @@ int main(int argc, char** argv)
              */
             if ( vm.count("help")  || vm.size() == 0)
             {
-                std::cout << "Tab-Converter" << std::endl
+                std::cout << program_name << std::endl
                           << desc << std::endl;
                 return SUCCESS;
             }
@@ -201,6 +203,7 @@ int main(int argc, char** argv)
                 helper_trim(ift, pe, se, counters, min_length, sum_qual, window_size, stranded, no_left, no_right);
             }  
 
+            write_stats(statsFile, appendStats, counters, program_name);
         }
         catch(po::error& e)
         {
@@ -218,7 +221,6 @@ int main(int argc, char** argv)
 
     }
 
-    std::cerr << "TotalRecords:" << counters["TotalRecords"] << '\n';
     return SUCCESS;
 
 }

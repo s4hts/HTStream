@@ -28,16 +28,13 @@ namespace
 
 } // namespace
 
-typedef std::unordered_map <std::string, size_t> Counter;
-
 namespace bi = boost::iostreams;
 
 int main(int argc, char** argv)
 {
+    const std::string program_name = "PhixRemove";
     Counter counters;
-    counters["TotalRecords"] = 0;
-    counters["Replaced"] = 0;
-    counters["HasN"] = 0;
+    setupCounter(counters);
     std::string prefix;
     std::vector<std::string> default_outfiles = {"PE1", "PE2", "SE"};
 
@@ -53,6 +50,9 @@ int main(int argc, char** argv)
 
     size_t hits;
     std::string phix;
+
+    std::string statsFile;
+    bool appendStats;
 
     try
     {
@@ -82,10 +82,10 @@ int main(int argc, char** argv)
             ("prefix,p", po::value<std::string>(&prefix)->default_value("noPhix_"),
                                            "Prefix for outputted files")
             ("phix-seq,x", po::value<std::string>(&phix)->default_value(phixSeq_True), "Phix Sequence - default https://www.ncbi.nlm.nih.gov/nuccore/9626372")
-            ("phix-hits,h", po::value<size_t>(&hits)->default_value(50), "How many 8-mer hits to phix needs to happen to discard")
+            ("phix-hits,s", po::value<size_t>(&hits)->default_value(50), "How many 8-mer hits to phix needs to happen to discard")
             ("check-read-2,C", po::bool_switch(&checkR2)->default_value(false),    "Check R2 as well as R1 (pe)")
-            ("log-file,L",                 "Output-Logfile")
-            ("no-log,N",                   "No logfile <outputs to stderr>")
+            ("stats-file,L", po::value<std::string>(&statsFile)->default_value("stats.log") , "String for output stats file name")
+            ("append-stats-file,A", po::bool_switch(&appendStats)->default_value(false),  "Append Stats file.")
             ("help,h",                     "Prints help.");
 
         po::variables_map vm;
@@ -200,7 +200,7 @@ int main(int argc, char** argv)
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
                 helper_discard(ift, pe, se, counters, lookup, lookup_rc,  hits, checkR2);
             }  
-
+            write_stats(statsFile, appendStats, counters, program_name);
         }
         catch(po::error& e)
         {
@@ -218,7 +218,6 @@ int main(int argc, char** argv)
 
     }
 
-    std::cerr << "TotalRecords:" << counters["TotalRecords"] << '\n';
     return SUCCESS;
 
 }

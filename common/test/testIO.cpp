@@ -74,7 +74,6 @@ TEST_F(ReadsTest, testWriteFastqSingle) {
             se->write(*r);
         }
     }
-
     ASSERT_EQ(readData, out1->str());
 }
 

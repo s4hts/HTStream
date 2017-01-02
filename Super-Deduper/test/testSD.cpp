@@ -19,16 +19,20 @@ TEST_F(SDTest, HashMapLoadTest) {
     Counter counter;
     counter["TotalRecords"] = 0;
     counter["Replaced"] = 0;
-    counter["HasN"] = 0;
-
+    counter["Ignored"] = 0;
+  
     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(in1, in2);
+    std::shared_ptr<std::ostringstream> out1(new std::ostringstream);
+    std::shared_ptr<HtsOfstream> hts_of(new HtsOfstream(out1));
+    std::shared_ptr<OutputWriter> tab(new ReadBaseOutTab(hts_of));  
+   
     
-    load_map(ifp, counter, read_map, start, length);
+    load_map(ifp, counter, read_map, tab, tab, start, length);
     std::cout << read_map.size() << '\n';
     ASSERT_EQ(read_map.size(), 1);
     ASSERT_EQ(counter["TotalRecords"], 4);
     ASSERT_EQ(counter["Replaced"], 2);
-    ASSERT_EQ(counter["HasN"], 1);
+    ASSERT_EQ(counter["Ignored"], 1);
     
 };
 
