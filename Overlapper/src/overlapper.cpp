@@ -92,7 +92,7 @@ int main(int argc, char** argv)
             ("min-overlap,o", po::value<size_t>(&minOverlap)->default_value(8), "Min overlap required to merge two reads")
             ("adapter-trimming,a", po::bool_switch(&adapterTrimming)->default_value(false), "Trims adapters based on overlap, only returns PE reads, will correct quality scores and BP in the PE reads")
             ("stranded,s", po::bool_switch(&stranded)->default_value(false), "Makes sure the correct complement is returned upon overlap")
-            ("hist-file,l", po::value<std::string>(&histFile)->default_value(""), "A tab delimited hist file with insert lengths.")
+            ("hist-file,e", po::value<std::string>(&histFile)->default_value(""), "A tab delimited hist file with insert lengths.")
             ("stats-file,L", po::value<std::string>(&statsFile)->default_value("stats.log") , "String for output stats file name")
             ("append-stats-file,A", po::bool_switch(&appendStats)->default_value(false),  "Append Stats file.")
             ("help,h",                     "Prints help.");
