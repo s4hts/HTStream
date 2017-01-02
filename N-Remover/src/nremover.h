@@ -9,33 +9,34 @@
 #include <boost/dynamic_bitset.hpp>
 #include <boost/functional/hash.hpp>
 #include <algorithm>
+#include "utils.h"
 
-typedef std::unordered_map<std::string, size_t> Counter;
+int dist(int x, int y) {
+    return y - x;
+}
+
 /*This is a O(N) time algorithm
  * it will search for the longest base pair segment that has
  * no N's within it*/
 void trim_n(Read &rb, size_t min_length) {
-
-    std::string seq = rb.get_seq();
+    
+    const std::string &seq = rb.get_seq();
     int len = seq.length() - 1;
-    int bestLeft = 0, bestRight = len + 1;
+    int bestLeft = 0, currentLeft = 0, bestRight = 0;
 
-    for (int i = 0  ; i <= len; ++i) {
+    for (int i = 0; i <= len; ++i) {
         if (seq[i] == 'N') {
-            if ( (bestLeft - bestRight > bestRight - i || bestLeft - bestRight > bestLeft - i) && (bestLeft != 0 && bestRight != len)  ) {
-                //do nothing
-            } else if (i - bestLeft < bestRight - i) {
-                bestLeft = i + 1;
-            } else {
-                bestRight = i;
-            }
+            currentLeft = i + 1;
+        } else if (dist(bestLeft, bestRight) <= dist(currentLeft, i)) {
+            bestRight = i;
+            bestLeft = currentLeft;
         }
     }
-
     rb.setLCut(bestLeft);
-    rb.setRCut(bestRight);
-
+    rb.setRCut(bestRight+1);
 }
+
+
 /*Removes all Ns (ambiguity base) from a read*/
 template <class T, class Impl>
 void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, Counter& counters, bool stranded, size_t min_length) {
