@@ -32,7 +32,7 @@ int main(int argc, char** argv)
     Counter counters;
     setupCounter(counters);    
     
-    size_t start = 0, length = 0;
+    size_t start = 0, length = 0, avg_automatic_write = 0;
     std::string prefix;
     std::vector<std::string> default_outfiles = {"PE1", "PE2", "SE"};
 
@@ -68,7 +68,7 @@ int main(int argc, char** argv)
             ("stdin-input,S", po::bool_switch(&std_in)->default_value(false), "STDIN input <MUST BE TAB DELIMITED INPUT>")
             ("start,s", po::value<size_t>(&start)->default_value(10),  "Start location for unique ID <int>")
             ("length,l", po::value<size_t>(&length)->default_value(10), "Length of unique ID <int>")
-            ("quality-check-off,q",        "Quality Checking Off First Duplicate seen will be kept")
+            ("quality-check-off,q", po::value<size_t>(&avg_automatic_write)->default_value(40), "Avg quality score to have the read written automatically <int>")
             ("gzip-output,g", po::bool_switch(&gzip_out)->default_value(false),  "Output gzipped")
             ("interleaved-output,i", po::bool_switch(&interleaved_out)->default_value(false),     "Output to interleaved")
             ("fastq-output,f", po::bool_switch(&fastq_out)->default_value(false), "Fastq format output")
@@ -153,7 +153,7 @@ int main(int argc, char** argv)
                     bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
                     
                     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
-                    load_map(ifp, counters, read_map, pe, se, start, length);
+                    load_map(ifp, counters, read_map, pe, se,avg_automatic_write, start, length);
                 }
             }
 
@@ -162,7 +162,7 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> ser{ check_open_r(file), bi::close_handle};
                     InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(ser);
-                    load_map(ifs, counters, read_map, pe, se, start, length);
+                    load_map(ifs, counters, read_map, pe, se,avg_automatic_write, start, length);
                 }
             }
             
@@ -171,7 +171,7 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> tabin{ check_open_r(file), bi::close_handle};
                     InputReader<ReadBase, TabReadImpl> ift(tabin);
-                    load_map(ift, counters, read_map, pe, se, start, length);
+                    load_map(ift, counters, read_map, pe, se,avg_automatic_write, start, length);
                 }
             }
             
@@ -180,14 +180,14 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> inter{ check_open_r(file), bi::close_handle};
                     InputReader<PairedEndRead, InterReadImpl> ifp(inter);
-                    load_map(ifp, counters, read_map, pe, se, start, length);
+                    load_map(ifp, counters, read_map, pe, se,avg_automatic_write, start, length);
                 }
             }
             
             if (std_in) {
                 bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
-                load_map(ift, counters, read_map, pe, se, start, length);
+                load_map(ift, counters, read_map, pe, se,avg_automatic_write, start, length);
             }
             
              
