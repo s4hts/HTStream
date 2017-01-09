@@ -19,6 +19,7 @@ include(gtest.cmake)
 message( status "include dirs: " ${GTEST_INCLUDE_DIRS})
 
 enable_testing()
+set(EXECUTABLE_OUTPUT_PATH ${CMAKE_INSTALL_PREFIX}/bin)
 
 add_subdirectory(common)
 add_subdirectory(Super-Deduper)
@@ -28,3 +29,4 @@ add_subdirectory(Q-Window-Trim)
 add_subdirectory(Cut-Trim)
 add_subdirectory(Phix-Remover)
 add_subdirectory(Overlapper)
+
