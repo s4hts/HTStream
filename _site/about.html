@@ -1,0 +1,67 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>HTStream</title>
+    <link rel="stylesheet" href="assets/stylesheets/styles.css">
+    <link rel="stylesheet" href="assets/stylesheets/pygment_trac.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="assets/javascripts/main.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  </head>
+  <body>
+
+  <header>
+    <a class="anchor" href="">
+      <h1>HTStream</h1>
+      <p>Fast quailty control applications for HTS data</p>
+    </a>
+  </header>
+
+
+  <div id="banner">
+  <div class="banner-inner">
+    <span id="logo"><span class="octicon octicon-mark-github"></span></span>
+    <div class="downloads">
+      <span>Go to HTStream Github:</span>
+      <ul>
+        <li><a href="https://github.com/ibest/HTStream" class="button">Project</a></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+
+  <div class="wrapper">
+
+    <nav>
+    <ul>
+        <li><h3><a href="about.html">About</a></h3></li>
+        <li><h3><a href="install.html">Installation</a></h3></li>
+        <h4><a href="install.html#install_prereq">- Prerequisites</a></h4>
+        <h5><a href="install.html#install_prereq_linux">- Linux Prereqs</a></h4>
+        <h5><a href="install.html#install_prereq_mac">- Mac Prereqs</a></h4>
+        <h4><a href="install.html#install">- Installation</a></h4>
+        <h5><a href="install.html#trouble_shooting">- Trouble Shooting</a></h4>
+        <li><h3><a href="index.html">Applications</a></h3></li>
+        <h4><a href="index.html">- Super-Deduper</a></h4>
+    </ul>
+</nav>
+
+
+  <section>
+    <h1>About</h1>
+    <p>HTStream is a fast, quality control pipeline for HTS data. The difference between HTStream and other pipelines is that HTStreams uses a tab delimited fastq format which allows for streaming from application to application.
+    
+    This streaming creates some awesome efficiencies when processing HTS data.
+    </p>
+    <ul>
+        <li>No intermediate files (saves on files storage)</li>
+        <li>Reduce I/O (files are only read in and written out once)</li>
+        <li>Handles both single end and paired end reads at the same time</li>
+        <li>Processes can work at the same time allowing for process parallelization</li>
+    </ul>
