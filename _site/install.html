@@ -43,7 +43,9 @@
         <li><h3><a href="about.html">About</a></h3></li>
         <li><h3><a href="install.html">Installation</a></h3></li>
         <h4><a href="install.html#install_prereq">- Prerequisites</a></h4>
-        <h5><a href="install.html#install_prereq_linux">- Linux Prereqs</a></h4>
+        <h5><a href="install.html#install_prereq_linux_cmake">- Linux Prereqs CMake</a></h4>
+        <h5><a href="install.html#install_prereq_linux_boost_sudo">- Linux Prereqs Boost (sudo)</a></h4>
+        <h5><a href="install.html#install_prereq_linux_boost_non_sudo">- Linux Prereqs Boost (non sudo)</a></h4>
         <h5><a href="install.html#install_prereq_mac">- Mac Prereqs</a></h4>
         <h4><a href="install.html#install">- Installation</a></h4>
         <h5><a href="install.html#trouble_shooting">- Trouble Shooting</a></h4>
@@ -66,20 +68,34 @@ sudo apt-get update &amp;&amp; sudo apt-get upgrade
 rehash #might be needed if you are using zsh</code></pre>
    
     <p>Make sure you have Boost libraries installed - version must be greater than 1.56.0</p>
- 
-	<h3><a class="anchor" id="install_prereq_linux_boost">Install Prerequisites for Linux (sudo needed)</a></h3>
+
+	<h3><a class="anchor" id="install_prereq_linux_boost_sudo">Install Prerequisites for Linux (sudo)</a></h3>
+    <pre><code>wget -O 1_60.tar.bz2 https://sourceforge.net/projects/boost/files/boost/1.60.0/boost_1_60_0.tar.bz2/download
+tar --bzip2 -xf 1_60.tar.bz2
+cd boost_1_60_0
+./bootstrap.sh
+sudo ./b2 install
+rehash
+</code></pre>
+
+
+	<h3><a class="anchor" id="install_prereq_linux_boost_non_sudo">Install Prerequisites for Linux (non sudo)</a></h3>
     <pre><code>wget -O 1_60.tar.bz2 https://sourceforge.net/projects/boost/files/boost/1.60.0/boost_1_60_0.tar.bz2/download
 tar --bzip2 -xf 1_60.tar.bz2
 cd boost_1_60_0
 ./bootstrap.sh
 ./b2
-rehash #might be needed if you are using zsh</code></pre>
-
+BOOST_INCLUDE=$(pwd)
+BOOST_INCLUDE_LIB=$(pwd)/stage/lib
+#Need to modify the cmake command in install
+#cmake -DCMAKE_INLCUDE_PATH=$BOOST_INCLUDE -DCMAKE_LIBRARY_PATH=$BOOST_INCLUDE_LIB ..
+rehash
+</code></pre>
 
     <h3><a class="anchor" id="install_prereq_mac">Install Prerequisites for Mac</a></h3>
     <pre><p>#Homebrew is required for the following instructions - <a href="http://brew.sh/">Here is a tutorial to install homebrew</a><code>brew upgrade
 brew install cmake # Cmake install - <a href="https://cmake.org/install/">Additional help here</a>
-brew install boost # Boost install - <a href="http://stackoverflow.com/questions/104322/how-do-you-install-boost-on-macos">Additional help here</a>
+brew install boost # Boost install - <a href="http:/$/stackoverflow.com/questions/104322/how-do-you-install-boost-on-macos">Additional help here</a>
 rehash #might be needed if you are using zsh</code></pre>
     
     <h1><a id="install">Installation</a></h1>
@@ -90,7 +106,10 @@ rehash #might be needed if you are using zsh</code></pre>
 cd HTStream
 mkdir build &amp;&amp; cd build
 cmake ..
-make #install to /usr/local/bin
+#with non sudo access please run this command
+#cmake -DCMAKE_INCLUDE_PATH=$BOOST_INCLUDE -DCMAKE_LIBRARY_PATH=$BOOST_INCLUDE_LIB -DCMAKE_INSTALL_PREFIX=[PATH FOR EXECUTABLES TO BE WRITTEN TO] .. 
+#PATH:=$PATH:[PATH FOR EXECUTABLES TO BE WRITTEN TO]/bin
+make #install to /usr/local/bin with sudo access (or location specified with not sudo access)
 rehash #might be needed if you are using zsh</code></pre>
 
     <p>All applications have unit test that can be run</p>
