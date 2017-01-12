@@ -20,7 +20,7 @@ by Matt Graham
   box-sizing: border-box;
 }
 
-.anchor { top-padding: 150px; }
+.anchor { padding-top: 150px; }
 
 body {
   @include font-size(1.5);
@@ -194,8 +194,6 @@ section {
         margin-right: 10px;
         color: $color-brand-accent;
         font-weight: bold;
-        margin-top: 190px;
-
       }
     }
   }
