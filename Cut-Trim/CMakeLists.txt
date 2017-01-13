@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.2)
-project (cut_trim)
+project (cut-trim)
 
 file(GLOB sources "src/*.cpp")
 
@@ -15,8 +15,8 @@ FIND_PACKAGE( Boost 1.56 COMPONENTS system program_options iostreams filesystem 
 include_directories(${COMMON_INCLUDES} ${Boost_INCLUDE_DIR} )
 
 
-add_executable(cut_trim ${sources})
-target_link_libraries(cut_trim ${PROJECT_LINK_LIBS} ${Boost_LIBRARIES})
+add_executable(cut-trim ${sources})
+target_link_libraries(cut-trim ${PROJECT_LINK_LIBS} ${Boost_LIBRARIES})
 
 add_custom_target(valgrind_cut_trim
   DEPENDS cut_trim

@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.2)
-project (Super-Deduper)
+project (super-deduper)
 
 file(GLOB sources "src/*.cpp")
 
@@ -15,11 +15,11 @@ FIND_PACKAGE( Boost 1.56 COMPONENTS system program_options iostreams filesystem 
 include_directories(${COMMON_INCLUDES} ${Boost_INCLUDE_DIR} )
 
 
-add_executable(super_deduper ${sources})
-target_link_libraries(super_deduper ${PROJECT_LINK_LIBS} ${Boost_LIBRARIES})
+add_executable(super-deduper ${sources})
+target_link_libraries(super-deduper ${PROJECT_LINK_LIBS} ${Boost_LIBRARIES})
 
 add_custom_target(testSD
-  DEPENDS super_deduper
+  DEPENDS super-deduper
   COMMAND ${CMAKE_COMMAND} -E env "PATH=$ENV{PATH}:${CMAKE_BINARY_DIR}/Super-Deduper" python ${CMAKE_SOURCE_DIR}/Super-Deduper/test_suite/testSD.py
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/Super-Deduper/test_suite
 )
