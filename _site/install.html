@@ -16,10 +16,8 @@
   <body>
 
   <header>
-    <a class="anchor" href="">
       <h1>HTStream</h1>
       <p>Fast quailty control applications for HTS data</p>
-    </a>
   </header>
 
 
@@ -40,18 +38,26 @@
 
     <nav>
     <ul>
-        <li><h3><a href="about.html">About</a></h3></li>
-        <li><h3><a href="install.html">Installation</a></h3></li>
-        <h4><a href="install.html#install_prereq">- Prerequisites</a></h4>
-        <h5><a href="install.html#install_prereq_linux_cmake">- Linux Prereqs CMake</a></h4>
+        <h5><a href="about.html">About</a></h5>
+        <h5><a href="install.html">Installation</a></h5>
+        <h6><a href="install.html#install_prereq">- Prerequisites</a></h6>
+        <!-- <h5><a href="install.html#install_prereq_linux_cmake">- Linux Prereqs CMake</a></h4>
         <h5><a href="install.html#install_prereq_linux_boost_sudo">- Linux Prereqs Boost (sudo)</a></h4>
         <h5><a href="install.html#install_prereq_linux_boost_non_sudo">- Linux Prereqs Boost (non sudo)</a></h4>
-        <h5><a href="install.html#install_prereq_mac">- Mac Prereqs</a></h4>
-        <h4><a href="install.html#install">- Installation HTStream</a></h4>
-        <h5><a href="install.html#trouble_shooting">- Trouble Shooting</a></h4>
-        <li><h3><a href="index.html">Applications</a></h3></li>
-        <h4><a href="index.html">- Super-Deduper</a></h4>
-        <li><h3><a href="about_author.html">About the Author</a></h3></li>
+        <h5><a href="install.html#install_prereq_mac">- Mac Prereqs</a></h4>-->
+        <h6><a href="install.html#install">- Installation HTStream</a></h6>
+        <!-- <h5><a href="install.html#trouble_shooting">- Trouble Shooting</a></h4> -->
+        <h5><a href="apps.html">Applications</a></h5>
+        <h6><a href="apps.html#sd">- Super-Deduper</a></h6>
+        <h6><a href="apps.html#qwt">- Quality Window Trimmer</a></h6>
+        <h6><a href="apps.html#ct">- Cut Trimmer</a></h6>
+        <h6><a href="apps.html#polyat">- Poly AT Tail Remover</a></h6>
+        <h6><a href="apps.html#phix">- Phix (or Primer Dimer) Remover</a></h6>
+        <h6><a href="apps.html#nremover">- N Remover</a></h6>
+        <h6><a href="apps.html#overlapper">- Overlapper</a></h6>
+        <h6><a href="apps.html#commonargs">- Common Args</a></h6>
+        <h6><a href="apps.html#power">- HTStream POWER!!!</a></h6>
+        <h5><a href="about_author.html">About the Author</a></h5>
     </ul>
 </nav>
 
@@ -65,7 +71,7 @@
     <pre>#Cmake 3.2 or greater is needed
 <code>sudo apt-get install cmake # Cmake install - <a href=http://askubuntu.com/questions/610291/how-to-install-cmake-3-2-on-ubuntu-14-04>Additional help here</a>
 sudo apt-get update &amp;&amp; sudo apt-get upgrade
-rehash #might be needed if you are using zsh</code></pre>
+</code></pre>
    
 
     <h3><a class="anchor" id="install_prereq_linux_boost_sudo"> ></a>Install Boost Prerequisites for Linux (sudo)</h3>
@@ -74,8 +80,7 @@ rehash #might be needed if you are using zsh</code></pre>
 tar --bzip2 -xf 1_60.tar.bz2
 cd boost_1_60_0
 ./bootstrap.sh
-sudo ./b2 install
-rehash
+sudo ./b2 install #It is going to be a bit. :) 
 </code></pre>
 
 
@@ -84,24 +89,26 @@ rehash
 <code>wget -O 1_60.tar.bz2 https://sourceforge.net/projects/boost/files/boost/1.60.0/boost_1_60_0.tar.bz2/download
 tar --bzip2 -xf 1_60.tar.bz2
 cd boost_1_60_0
-./bootstrap.sh
-./b2
+./bootstrap.sh 
+./b2 #It is worth the wait. ;)
 BOOST_INCLUDE=$(pwd)
 BOOST_INCLUDE_LIB=$(pwd)/stage/lib
 #Need to modify the cmake command in install
 #cmake -DCMAKE_INLCUDE_PATH=$BOOST_INCLUDE -DCMAKE_LIBRARY_PATH=$BOOST_INCLUDE_LIB ..
-rehash
 </code></pre>
 
-    <p> For additionally help with the boost install please refer to <a href=http://www.boost.org/doc/libs/1_60_0/more/getting_started/unix-variants.html>the Boost website</a>
+    <p> For additionally help with the boost install please refer to <a href=http://www.boost.org/doc/libs/1_60_0/more/getting_started/unix-variants.html>the Boost website</a></p>
 
-    <h3><a class="anchor" id="install_prereq_mac"> ></a>Install Prerequisites for Mac</h3>
-    <pre><p>#Homebrew is required for the following instructions - <a href="http://brew.sh/">Here is a tutorial to install homebrew</a><code>brew upgrade
-brew install cmake # Cmake install - <a href="https://cmake.org/install/">Additional help here</a>
-brew install boost # Boost install - <a href="http:/$/stackoverflow.com/questions/104322/how-do-you-install-boost-on-macos">Additional help here</a>
-rehash #might be needed if you are using zsh</code></pre>
-    
-    <h1><a class="anchor" id="install"> ></a>Installation HTStream</h1>
+    <h3><a class="anchor" id="install_prereq_mac"></a>Install Prerequisites for Mac</h3>
+     
+    <pre>#Homebrew is required for the following instructions - <a href="http://brew.sh/">Here is a tutorial to install homebrew</a><code>
+brew upgrade
+brew install cmake
+brew install boost</code></pre>
+
+
+
+    <h1><a class="anchor" id="install"> </a>Installation HTStream</h1>
     <h3>The basic install</h3> 
     <pre><code>git clone https://github.com/ibest/HTStream.git
 cd HTStream
@@ -111,9 +118,13 @@ cmake ..
 #cmake -DCMAKE_INCLUDE_PATH=$BOOST_INCLUDE -DCMAKE_LIBRARY_PATH=$BOOST_INCLUDE_LIB -DCMAKE_INSTALL_PREFIX=[PATH FOR EXECUTABLES TO BE WRITTEN TO] .. 
 #PATH:=$PATH:[PATH FOR EXECUTABLES TO BE WRITTEN TO]/bin
 make #install to /usr/local/bin with sudo access (or location specified with not sudo access)
-rehash #might be needed if you are using zsh</code></pre>
+</code></pre>
 
     <p>All applications have unit test that can be run</p>
     
     <h1><a  id="trouble_shooting">Trouble Shooting</a></h1>
 
+    <p>Some users have experiences issues with the boost install. We think this arises from previous versions of boost being installed.</p>
+    <pre>#One solution was<code>
+    camke -DBoost_NO_SYSTEM_PATHS=TRUE -DBOOST_INCLUDEDIR=/usr/local/include/ ..
+    </code>#This works if boost was installed to /usr/local/include</pre>

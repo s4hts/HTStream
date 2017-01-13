@@ -7,144 +7,162 @@
     {% include page-nav.html %}
 
   <section>
-    <h1>About</h1>
-    <p>HTStream is a fast, quality control pipeline for HTS data. The difference between HTStream and other pipelines is that HTStreams uses a tab delimited fastq format which allows for streaming from application to application.
+    <h1>Applications</h1>
+    <p>You have HTStream installed and ready to go - awesome! If not checkout the installation page <a href="install.html">here</a></p>
     
-    This streaming creates some awesome efficiencies when processing HTS data.
-    </p>
-    <br>
-    <br>
+    <p> Hi all! thanks for using the software and looking at the docs. These are living and breathing documents so informations will be added and the format can change. Please, if you have feature request or application request, feel free post it to the github page.</p>
 
-    <ul>
-        <li>No intermediate files (saves on files storage)</li>
-        <li>Reduce I/O (files are only read in and written out once)</li>
-        <li>Handles both single end and paired end reads at the same time</li>
-        <li>Processes can work at the same time allowing for process parallelization</li>
-    </ul>
-    <br>
-    <h1><a class="anchor" id="install">Installation</h1>
-    <h2>Installation Guide</h2>
-    <br>
-    <h3>The basic install</h3> 
+    <h2>Super-Deduper<a class="anchor" id="sd"></a></h2>
+
+    <p>Super Deduper is a PCR duplicate remover from HTS data. It uses a subsequence within each read to detect duplicates.</p>
+
+    <pre>#How to get super deduper help<code>
+super-deduper --help</code>
+#Args of interest for SD<code>
+-s, --start (default 10) Will change the start location of subsequence used to detect duplicates
+-l, --lenght (default 10) Will change the length of the subsequence used to detect duplicates</code></pre>
+
+    <h2>Quality Window Trimmer<a class="anchor" id="qwt"></a></h2>
+    <p>This quality trimmer using a sliding window approach to remove low quality ends of the reads. A window will slide across the reads starting from the end and move to inwards, once the window reaches an average quality it will stop trimming.</p>
+
+    <pre>#How to get quality window trimmer help<code>
+q-window-trim --help</code>
+#Args of interest for q-window-trimmer<code>
+-l, --no-left (default false) Will not trim the right side of the read
+-r, --no-right (default false) Will not trim the left side of the read
+-w, --window_size (default 10) Sets the window size
+-q, --avg_qual (default 20) Sets the avg quality score the window must obtain before it will stop cutting</code>
+#It is best to run 
+#$ q-window-trim -1 fastq_R1.fastq.gz -2 fastq_R2.fastq.gz -O | q-window-trim -w 1 -S
+#-O in the first command takes it to stdout, -S in the second command reads it from stdin, with a window size of 1
+#this will clean up bases that were low quality, but had a high window value so they remained</pre>
+
+    <h2>Cut Trimmer<a class="anchor" id="ct"></a></h2>
+    <p>When wanting to remove low quality areas of the reads, however, need the reads to stay the same length, cut trim is a solution. This application will remove a set number of base pairs for the reads on the ends.</p>
+
+    
+    <pre>#How to get Cut trim help docs<code>
+cut-trim --help</code>
+#Args of interest for cut trim<code>
+-l, --no-left (default false) Will not trim the right side of the read
+-r, --no-right (default false) Will not trim the left side of the read
+-c, --cut-size (default 5) The number of base pairs removed on the sides</code></pre>
+
+    <h2>Poly-AT Tail Remover<a class="anchor" id="polyat"></a></h2>
+    <p>A simple poly AT tail remover. It will start on at the end of the reads and works inwards. It will trim a minimum number of A's or T's with a certain number of mismatches.</p>
+
+ <pre>#How to get Poly At Tail Trimmer help docs<code>
+polyAT-trim --help</code>
+#Args of interest for poly at trim<code>
+-l, --no-left (default false) Will not trim the right side of the read
+-r, --no-right (default false) Will not trim the left side of the read
+-t, --min-trim (default 5) Minimum number of bases trimmed
+-x, --max-mismatch (default 3) Number of mismatches that are allowed within the Poly AT Tail
+</code></pre>
+
+
+
+
+    <h2>Phix-Remover (Primer Dimer Remover<a class="anchor" id="phix"></a></h2>
+
+    <p>A quick screening application using a basic kmer lookup approach. It will take in a reference sequence, break it into kmers, and use it as a simple lookup. If enough kmers in the read "hit" this lookup table, the read will be discarded. Default is to use the Phix Sequence but it can also be used to remove Primer Dimers (and other small sequences).</p>
+
+ <pre>#How to get Phix-Remover help docs<code>
+phix-remover --help</code>
+#Args of interest for phix remover<code>
+-s, --seq (Default phix-seq [https://www.ncbi.nlm.nih.gov/nuccore/9626372]) This can change the lookup sequence. This seq can be used to screen primer dimers for Illumina GATCGGAAGAGCACACGTCTGAACTCCAGTCACAAACATCGATCTCGTATGCCGTCTTCTGCTTGAAAAAAAAAAAA.
+-x, --hits (Default 50) The number of hits that needs to hit the lookup table to discard the read
+</code></pre>
+
+    <h2>N Remover<a class="anchor" id="nremover"></a></h2>
+
+
+    <p>An application to remove N's for reads. It will take the longest subsequence that no N's appear in.</p>
+
+ <pre>#How to get N-Remover help docs<code>
+n-remover --help</code>
+</code></pre>
+
+
+    <h2>Overlapper<a class="anchor" id="overlapper"></a></h2>
+    <p>This application overlaps paired end reads and removes adapters from them</p>
+
+ <pre>#How to get Overlapper help docs<code>
+overlapper --help</code>
+#Args of interest for phix remover<code>
+-x, --mis-matches (Default 5) The number of mismatches that can occur within the overlap
+-c, --check-lengths (Default 20) Checks the first and last X bp in the reads for the overlap. 
+#Because of the algorighm, the overlap must be in the start or ends of the reads
+-o, --min-overlap (Default 8) Minimum overlap between paired end reads
+-a, --adapter-trimming (Default false) Does the overlap, corrects BPs, removes adapters, but returns PE reads, not an overlapped read
+-e, --hist-file (Default "") Hist file of insert lengths
+</code></pre>
+
+
+    <h2>Tab-Converter</h2>
+    <p>This converts PE or SE to interleaved, fastq, or tab delimited. All applications can handle all these types though. :)</p>
+
+<pre>#How to get Overlapper help docs<code>
+tab-converter --help</code></pre>
+
+    <h2>Common Args<a class="anchor" id="commonargs"></a></h2>
+    <p>Some common args that are pretty useful.</p>
     <pre><code>
-    git clone git@github.com:ibest/HTStream.git
-    cd HTStream
-    mkdir build && cd build
-    cmake ..
-    make
-    </code>#This will install excutable and unit test 
-            #to /usr/local/bin/</pre>
+  -1 [read1-input ] arg                Read 1 input [comma sep for multiple files]
+  -2 [ --read2-input ] arg             Read 2 input [comma sep for multiple files]
+  -U [ --singleend-input ] arg         Single end read input [comma sep for multiple files]
+  -T [ --tab-input ] arg               Tab input [comma sep for multiple files]
+  -I [ --interleaved-input ] arg       Interleaved input I [comma sep for multiple files]
+  -S [ --stdin-input ]                 STDIN input [MUST BE TAB DELIMITED INPUT]
+  -g [ --gzip-output ]                 Output gzipped
+  -i [ --interleaved-output ]          Output to interleaved
+  -f [ --fastq-output ]                Fastq format output
+  -F [ --force ]                       Forces overwrite of files
+  -t [ --tab-output ]                  Tab-delimited output
+  -O [ --to-stdout ]                   Prints to STDOUT in Tab Delimited
+  -p [ --prefix ] arg (=out)           Prefix for outputted files
+  -L [ --stats-file ] arg (=stats.log) String for output stats file name
+  -A [ --append-stats-file ]           Append Stats file.
+  -h [ --help ]                        Prints help.</code>
+#If there is a trimming algorithm, a minimum-length is used. If a read is shorter than
+#the min length, it will be discarded.
+#If R1 is discarded (because it is shorter than the min length) and
+#stranded option is selected (Stranded RNA library) R2 will be RC and written
+#as a SE read
+  -s [ --stranded ]                    If R1 is orphaned, R2 is RC (for
+                                       stranded RNA)
+                                       trimmed area
+  -m [ --min-length ] arg (=50)        Min length for acceptable outputted read
+</code></pre>
 
-    <p>All applications have unit test that can be run</p>
+    <h2>HTStream Power<a class="anchor" id="power"></a></h2>
+    <p> This is the cool part. All these applications can be stitched together remove limiting I/O steps, intermediate files, and creating cheap parralezation of applications. It goes pretty dang fast.</p>
+<p>We use a wacky and zany tab delimited fastq format (similair to SAM). Now, all apps can process SE and PE all at the same time and it is a unified format. Here is some example code</p>
 
-    <p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your page content will be preserved if it remained in markdown format.</p>
+    <pre>#Example stiching<code>
+phix-remover -1 example_fastq_R1.fastq.gz -2 example_fastq_R2.fastq.gz -U example_fastq_SE.fastq.gz -O | phix-remover -s "GATCGGAAGAGCACACGTCTGAACTCCAGTCACAAACATCGATCTCGTATGCCGTCTTCTGCTTGAAAAAAAAAAAA" -O -S | q-window-trim -O -S | q-window-trim -w 1 -O -S | n-remover -O -S | overlapper -O -S | q-window-trim -O -S | q-window-trim -w 1 -S -p "cleaned_reads" -F</code>
+#Holy Cow - what just happened, read below.</pre>
 
-    <ul>
-      <li>Hack by <a href="https://github.com/bleikamp">Ben Bleikamp</a></li>
-      <li>Merlot by <a href="https://github.com/cameronmcefee">Cameron McEfee</a></li>
-      <li>Slate by <a href="https://github.com/jsncostello">Jason Costello</a></li>
-      <li>Time Machine by <a href="https://github.com/jonrohan">Jon Rohan</a></li>
-      <li>Leap Day by <a href="https://github.com/mattgraham">Matt Graham</a></li>
-      <li>Midnight by <a href="https://github.com/mattgraham">Matt Graham</a></li>
-      <li>Minimal by <a href="https://github.com/orderedlist">Steve Smith</a></li>
-      <li>Modernist by <a href="https://github.com/orderedlist">Steve Smith</a></li>
-    </ul>
+    <p> So above shows the power of HTStream. We read in the file ONCE and write ONCE. No crazy unix redirection, fifos, or anything like that - just simple pipes. This means, instead of running app 1, 2, 3 and taking the sum of their execution time, it is the maximum of the execution times between app 1, 2, and 3. All applications can be re-ordered and stiched together however the data demands. The -O arg pipes the data to the tab delimited through stdout. The -S arg reads data from stdin. Pretty simple, but extremely fast and useful. </p>
 
-    <p>For more info on GitHub Pages, check out <a href="http://pages.github.com/">pages.github.com</a>. For help, check the <a href="http://help.github.com/pages">GitHub Pages documentation</a>.</p>
+    <h2>Python Wrapper for HTStream</h2>
+    <p>Still working on all of this. . . .</p> 
+    <h3>The sample sheet</h3>
+    <p>The sample sheet sets up the entire pipeline<p>
 
-    <h2>What will code look like?</h2>
-
-    <p>Your code should be beautiful, or at least that's what the designers think. </p>
-
-    <div class="highlight">
-<pre><span class="nb">require</span> <span class="s1">'adapter/memory'</span>
-<span class="nb">require</span> <span class="s1">'toystore'</span>
-
-<span class="k">class</span> <span class="nc">User</span>
-<span class="kp">include</span> <span class="no">Toy</span><span class="o">::</span><span class="no">Store</span>
-<span class="n">adapter</span> <span class="ss">:memory</span><span class="p">,</span> <span class="p">{}</span>
-
-<span class="n">attribute</span> <span class="ss">:name</span><span class="p">,</span> <span class="nb">String</span>
-<span class="k">end</span>
-</pre>
-    </div>
-
-    <p>So, this is what HTML Code looks like</p>
-
-    <div class="highlight">
-<pre><span class="nt">&lt;html&gt;</span>
-<span class="nt">&lt;body&gt;</span>
-  <span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">"header"</span><span class="nt">&gt;</span>
-    <span class="nt">&lt;nav&gt;</span>
-       <span class="nt">&lt;li&gt;</span>Home<span class="nt">&lt;/li&gt;</span>
-       <span class="nt">&lt;li&gt;</span>About Us<span class="nt">&lt;/li&gt;</span>
-       <span class="nt">&lt;li&gt;</span>Contact<span class="nt">&lt;/li&gt;</span>
-      <span class="nt">&lt;/nav&gt;</span>
-    <span class="nt">&lt;/div&gt;</span>
-<span class="nt">&lt;/body&gt;</span>
-<span class="nt">&lt;/html&gt;</span>
-</pre>
-    </div>
-
-    <p>And, then maybe some CSS</p>
-
-    <div class="highlight">
-<pre>
-<span class="nt">body</span> <span class="p">{</span>
-<span class="k">font</span><span class="o">:</span><span class=
-"m">14px</span><span class="o">/</span><span class="m">22px</span> <span class=
-"s1">'Quattrocento Sans'</span><span class="o">,</span> <span class=
-"s2">"Helvetica Neue"</span><span class="o">,</span> <span class=
-"n">Helvetica</span><span class="o">,</span> <span class=
-"n">Arial</span><span class="o">,</span> <span class=
-"k">sans-serif</span><span class="p">;</span>
-<span class="k">color</span><span class="o">:</span><span class=
-"m">#666</span><span class="p">;</span>
-<span class="k">font-weight</span><span class=
-"o">:</span><span class="m">300</span><span class="p">;</span>
-<span class="k">margin</span><span class="o">:</span> <span class=
-"m">0px</span><span class="p">;</span>
-<span class="k">padding</span><span class="o">:</span><span class=
-"m">0px</span> <span class="m">0</span> <span class=
-"m">20px</span> <span class="m">0px</span><span class="p">;</span>
-<span class="k">background</span><span class=
-"o">:</span> <span class="sx">url(../images/body-background.png)</span> <span class="m">#eae6d1</span><span class="p">;</span>
-<span class="p">}</span>
-
-<span class="nt">h1</span><span class="o">,</span> <span class=
-"nt">h2</span><span class="o">,</span> <span class="nt">h3</span><span class=
-"o">,</span> <span class="nt">h4</span><span class="o">,</span> <span class=
-"nt">h5</span><span class="o">,</span> <span class="nt">h6</span> <span class=
-"p">{</span>
-<span class="k">color</span><span class="o">:</span><span class=
-"m">#333</span><span class="p">;</span>
-<span class="k">margin</span><span class="o">:</span><span class=
-"m">0</span> <span class="m">0</span> <span class="m">10px</span><span class=
-"p">;</span>
-<span class="p">}</span>
-
-<span class="nt">p</span><span class="o">,</span> <span class=
-"nt">ul</span><span class="o">,</span> <span class="nt">ol</span><span class=
-"o">,</span> <span class="nt">table</span><span class="o">,</span> <span class=
-"nt">pre</span><span class="o">,</span> <span class="nt">dl</span> <span class=
-"p">{</span>
-<span class="k">margin</span><span class="o">:</span><span class=
-"m">0</span> <span class="m">0</span> <span class="m">20px</span><span class=
-"p">;</span>
-<span class="p">}</span>
-</pre>
-    </div>
-
-    <p>Inline code would look a little different. <code>We want you to see</code> where it is, but its going to be a little less noticeable. It might also be as simple as <code>:hover</code> and as unique as <code>:first-child</code>. It is up to you. </p>
-
-    <h2>Sub-Nav Questions</h2>
-
-    <p>The sub-navigation is automatically generated using a little JS based on the H1 and H2 tags in your markdown file. The goal was to make it a quick <code>and exciting</code> way to write a markdown file and create an amazing pages site.  </p>
-
-    {% include mattgraham.html %}
+    <pre>An example of a sample sheet<code>
+#comment
+#comment
+*app0:phix_remover
+*app1:super_deduper
+*app2:q-window-trim
+*app3:q-window-trim -w 1
+*app4:polyATtrim
+*appPath:~/HTStream/build
+*rawReads:~/Alida/Test/00-RawData/13D-1_S27
+*preprocessed:~/Alida/Test/01-Cleaned
+13D-1_S27*  13D-1_S27
+</code></pre>
 
     </section>
 
-	{{ content }}
-
-{% include footer.html %}
