@@ -15,8 +15,8 @@ FIND_PACKAGE( Boost 1.56 COMPONENTS system program_options iostreams filesystem 
 include_directories(${COMMON_INCLUDES} ${Boost_INCLUDE_DIR} )
 
 
-add_executable(polyATtrim ${sources})
-target_link_libraries(polyATtrim ${PROJECT_LINK_LIBS} ${Boost_LIBRARIES})
+add_executable(polyAT-trim ${sources})
+target_link_libraries(polyAT-trim ${PROJECT_LINK_LIBS} ${Boost_LIBRARIES})
 
 add_custom_target(valgrind_atTrim
   DEPENDS polyATtrim

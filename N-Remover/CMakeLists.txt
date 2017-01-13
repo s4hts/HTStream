@@ -15,8 +15,8 @@ FIND_PACKAGE( Boost 1.56 COMPONENTS system program_options iostreams filesystem 
 include_directories(${COMMON_INCLUDES} ${Boost_INCLUDE_DIR} )
 
 
-add_executable(NRemover ${sources})
-target_link_libraries(NRemover ${PROJECT_LINK_LIBS} ${Boost_LIBRARIES})
+add_executable(n-remover ${sources})
+target_link_libraries(n-remover ${PROJECT_LINK_LIBS} ${Boost_LIBRARIES})
 
 add_custom_target(valgrind_N_Remover
   DEPENDS NRemover
