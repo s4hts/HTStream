@@ -28,7 +28,6 @@ void writer_helper(ReadBase *r, std::shared_ptr<OutputWriter> pe, std::shared_pt
         if (!ser) {
             throw std::runtime_error("Unknow read found");
         }
-
         if (! (ser->non_const_read_one()).getDiscard() ) {
             ++c["SE_Out"];
             ser->setStats(c);
