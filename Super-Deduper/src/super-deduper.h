@@ -10,8 +10,6 @@
 #include <boost/dynamic_bitset.hpp>
 #include <boost/functional/hash.hpp>
 
-
-#define AVG_AUTOMATIC_WRITE 20
 class dbhash {
 public:
     std::size_t operator() (const boost::dynamic_bitset<>& bs) const {
@@ -22,7 +20,7 @@ public:
 typedef std::unordered_map <boost::dynamic_bitset<>, std::unique_ptr<ReadBase>, dbhash> BitMap;
 
 template <class T, class Impl>
-void load_map(InputReader<T, Impl> &reader, Counter& counters, BitMap& read_map, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, size_t start, size_t length) {
+void load_map(InputReader<T, Impl> &reader, Counter& counters, BitMap& read_map, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, size_t avg_automatic_write, size_t start, size_t length) {
     double tmpAvg;
 
     while(reader.has_next()) {
@@ -32,7 +30,7 @@ void load_map(InputReader<T, Impl> &reader, Counter& counters, BitMap& read_map,
         if (auto key=i->get_key(start, length)) {
             // find faster than count on some compilers
             if(read_map.find(*key) == read_map.end()) {
-                if (i->avg_q_score() > AVG_AUTOMATIC_WRITE) {
+                if (i->avg_q_score() > avg_automatic_write) {
                     writer_helper(i.get(), pe, se, false, counters);
                     read_map[*key] = nullptr;
                 } else {
@@ -41,7 +39,7 @@ void load_map(InputReader<T, Impl> &reader, Counter& counters, BitMap& read_map,
             } else if (read_map[*key] == nullptr) { //key had a q-score of 20 or higher (it was all ready written out)
                 ++counters["Replaced"];
             } else if((tmpAvg = i->avg_q_score()) > read_map[*key]->avg_q_score()){
-                if (tmpAvg > AVG_AUTOMATIC_WRITE) {
+                if (tmpAvg > avg_automatic_write) {
                     writer_helper(i.get(), pe, se, false, counters);
                     read_map[*key] = nullptr;
                 } else {
