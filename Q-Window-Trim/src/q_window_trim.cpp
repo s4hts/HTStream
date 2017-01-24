@@ -82,7 +82,7 @@ int main(int argc, char** argv)
             ("force,F", po::bool_switch(&force)->default_value(false),         "Forces overwrite of files")
             ("tab-output,t", po::bool_switch(&tab_out)->default_value(false),   "Tab-delimited output")
             ("to-stdout,O", po::bool_switch(&std_out)->default_value(false),    "Prints to STDOUT in Tab Delimited")
-            ("prefix,p", po::value<std::string>(&prefix)->default_value("poly_at_trim_"),
+            ("prefix,p", po::value<std::string>(&prefix)->default_value("q_window_trim_"),
                                            "Prefix for outputted files")
             ("no-left,l", po::bool_switch(&no_left)->default_value(false),    "Turns of trimming of the left side of the read")
             ("no-right,r", po::bool_switch(&no_right)->default_value(false),    "Turns of trimming of the right side of the read")
