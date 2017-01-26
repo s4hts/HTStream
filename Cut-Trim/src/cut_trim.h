@@ -20,7 +20,7 @@ void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe,
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());        
         if (per) {
             Read &rb1 = per->non_const_read_one();
-            Read &rb2 = per->non_const_read_one();
+            Read &rb2 = per->non_const_read_two();
             if (!no_left) {
                 rb1.setLCut(cut_size);
                 rb2.setLCut(cut_size);
