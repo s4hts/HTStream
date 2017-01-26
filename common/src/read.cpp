@@ -88,20 +88,24 @@ char Read::complement(char bp) {
 }
 
 void PairedEndRead::setStats(Counter &c) { //Could take stats on one that is discard PE_OUt is not incremented here
-    c["R1_Length"] += one.getLengthTrue();
-    c["R2_Length"] += two.getLengthTrue();
+    if (!one.getDiscard()) {
+        c["R1_Length"] += one.getLengthTrue();
+        c["R1_Left_Trim"] += one.getLTrim();
+        c["R1_Right_Trim"] += one.getRTrim();
+    }
+    if (!two.getDiscard()) {
+        c["R2_Length"] += two.getLengthTrue();
+        c["R2_Left_Trim"] += two.getLTrim();
+        c["R2_Right_Trim"] += two.getRTrim(); 
+    }
 
-    c["R1_Left_Trim"] += one.getLTrim();
-    c["R2_Left_Trim"] += two.getLTrim();
-
-    c["R1_Right_Trim"] += one.getRTrim();
-    c["R2_Right_Trim"] += two.getRTrim(); 
 }
 
 void SingleEndRead::setStats(Counter &c) {
-    c["SE_Length"] += one.getLengthTrue();
-    c["SE_Left_Trim"] += one.getLTrim();
-    c["SE_Right_Trim"] += one.getRTrim();
-
+    if (!one.getDiscard()) {
+        c["SE_Length"] += one.getLengthTrue();
+        c["SE_Left_Trim"] += one.getLTrim();
+        c["SE_Right_Trim"] += one.getRTrim();
+    }
 }
 
