@@ -1,19 +1,19 @@
 #include "ioHandler.h"
 #include <exception>
 
-void writer_helper(ReadBase *r, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, bool stranded, Counter &c) {
+void writer_helper(ReadBase *r, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, bool stranded, Counter &c, bool no_orphans ) {
     PairedEndRead *per = dynamic_cast<PairedEndRead*>(r);
     if (per) {
         if (!(per->non_const_read_one()).getDiscard() && !(per->non_const_read_two()).getDiscard()) {
             ++c["PE_Out"];
             per->setStats(c);
             pe->write(*per);
-        } else if (!(per->non_const_read_one()).getDiscard()) { //if stranded RC
+        } else if (!(per->non_const_read_one()).getDiscard() && !no_orphans) { //if stranded RC
             ++c["SE_Out"];
             ++c["R1_Discarded"];
             per->setStats(c);
             se->write_read((per->get_read_one()), false);
-        } else if (!(per->non_const_read_two()).getDiscard()) { // Will never be RC
+        } else if (!(per->non_const_read_two()).getDiscard() && !no_orphans) { // Will never be RC
             ++c["SE_Out"];
             ++c["R2_Discarded"];
             per->setStats(c);

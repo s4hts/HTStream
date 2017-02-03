@@ -12,7 +12,7 @@
 #include "utils.h"
 
 template <class T, class Impl>
-void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, Counter& counters, size_t min_length, size_t cut_size, bool stranded, bool no_left, bool no_right) {
+void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, Counter& counters, size_t min_length, size_t cut_size, bool stranded, bool no_left, bool no_right, bool no_orphans) {
     
     while(reader.has_next()) {
         auto i = reader.next();
@@ -30,7 +30,7 @@ void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe,
                 rb2.setRCut(rb2.getLength() - cut_size);
             }
             per->checkDiscarded(min_length);
-            writer_helper(per, pe, se, stranded, counters);
+            writer_helper(per, pe, se, stranded, counters, no_orphans);
         } else {
             SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
             

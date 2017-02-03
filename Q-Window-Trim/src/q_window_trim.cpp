@@ -53,7 +53,7 @@ int main(int argc, char** argv)
     bool stranded ;
     bool no_left ;
     bool no_right ;
-
+    bool no_orphans;
     std::string statsFile;
     bool appendStats;
 
@@ -84,6 +84,7 @@ int main(int argc, char** argv)
             ("to-stdout,O", po::bool_switch(&std_out)->default_value(false),    "Prints to STDOUT in Tab Delimited")
             ("prefix,p", po::value<std::string>(&prefix)->default_value("poly_at_trim_"),
                                            "Prefix for outputted files")
+            ("no-orphans,n", po::bool_switch(&no_orphans)->default_value(false), "SE reads will not be written out")
             ("no-left,l", po::bool_switch(&no_left)->default_value(false),    "Turns of trimming of the left side of the read")
             ("no-right,r", po::bool_switch(&no_right)->default_value(false),    "Turns of trimming of the right side of the read")
             ("stranded,s", po::bool_switch(&stranded)->default_value(false),    "If R1 is orphaned, R2 is RC (for stranded RNA)")
@@ -166,7 +167,7 @@ int main(int argc, char** argv)
                     bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
                    
                     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
-                    helper_trim(ifp, pe, se, counters, min_length, sum_qual, window_size, stranded, no_left, no_right);
+                    helper_trim(ifp, pe, se, counters, min_length, sum_qual, window_size, stranded, no_left, no_right, no_orphans);
                 }
             }
 
@@ -175,7 +176,7 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> sef{ check_open_r(file), bi::close_handle};
                     InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(sef);
-                    helper_trim(ifs, pe, se, counters, min_length, sum_qual, window_size, stranded, no_left, no_right);
+                    helper_trim(ifs, pe, se, counters, min_length, sum_qual, window_size, stranded, no_left, no_right, no_orphans);
                 }
             }
             
@@ -184,7 +185,7 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> tabin{ check_open_r(file), bi::close_handle};
                     InputReader<ReadBase, TabReadImpl> ift(tabin);
-                    helper_trim(ift, pe, se, counters, min_length, sum_qual, window_size, stranded, no_left, no_right);
+                    helper_trim(ift, pe, se, counters, min_length, sum_qual, window_size, stranded, no_left, no_right, no_orphans);
                 }
             }
             
@@ -193,14 +194,14 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> inter{ check_open_r(file), bi::close_handle};
                     InputReader<PairedEndRead, InterReadImpl> ifp(inter);
-                    helper_trim(ifp, pe, se, counters, min_length, sum_qual, window_size, stranded, no_left, no_right);
+                    helper_trim(ifp, pe, se, counters, min_length, sum_qual, window_size, stranded, no_left, no_right, no_orphans);
                 }
             }
            
             if (std_in) {
                 bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
-                helper_trim(ift, pe, se, counters, min_length, sum_qual, window_size, stranded, no_left, no_right);
+                helper_trim(ift, pe, se, counters, min_length, sum_qual, window_size, stranded, no_left, no_right, no_orphans);
             }  
 
             write_stats(statsFile, appendStats, counters, program_name);
