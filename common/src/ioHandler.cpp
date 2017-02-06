@@ -10,12 +10,12 @@ void writer_helper(ReadBase *r, std::shared_ptr<OutputWriter> pe, std::shared_pt
             pe->write(*per);
         } else if (!(per->non_const_read_one()).getDiscard() && !no_orphans) { //if stranded RC
             ++c["SE_Out"];
-            ++c["R1_Discarded"];
+            ++c["R2_Discarded"];
             per->setStats(c);
             se->write_read((per->get_read_one()), false);
         } else if (!(per->non_const_read_two()).getDiscard() && !no_orphans) { // Will never be RC
             ++c["SE_Out"];
-            ++c["R2_Discarded"];
+            ++c["R1_Discarded"];
             per->setStats(c);
             se->write_read((per->get_read_two()), stranded);
         } else {
@@ -28,7 +28,6 @@ void writer_helper(ReadBase *r, std::shared_ptr<OutputWriter> pe, std::shared_pt
         if (!ser) {
             throw std::runtime_error("Unknow read found");
         }
-
         if (! (ser->non_const_read_one()).getDiscard() ) {
             ++c["SE_Out"];
             ser->setStats(c);

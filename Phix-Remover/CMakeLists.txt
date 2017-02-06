@@ -15,8 +15,8 @@ FIND_PACKAGE( Boost 1.56 COMPONENTS system program_options iostreams filesystem 
 include_directories(${COMMON_INCLUDES} ${Boost_INCLUDE_DIR} )
 
 
-add_executable(phix_remover ${sources})
-target_link_libraries(phix_remover ${PROJECT_LINK_LIBS} ${Boost_LIBRARIES})
+add_executable(phix-remover ${sources})
+target_link_libraries(phix-remover ${PROJECT_LINK_LIBS} ${Boost_LIBRARIES})
 
 add_custom_target(valgrind_phix_remover
   DEPENDS phix_remover

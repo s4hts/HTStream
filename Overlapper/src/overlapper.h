@@ -113,7 +113,7 @@ spReadBase checkIfOverlap(Read &r1, Read &r2, size_t loc1, size_t loc2, size_t m
         r2.setRCut(maxLoop);
     }
 
-    spReadBase overlap(new SingleEndRead(Read(finalSeq, finalQual, "ID")));
+    spReadBase overlap(new SingleEndRead(Read(finalSeq, finalQual, r1.get_id())));
     return overlap;
 }
 

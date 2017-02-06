@@ -81,8 +81,8 @@ int main(int argc, char** argv)
             ("to-stdout,O", po::bool_switch(&std_out)->default_value(false),    "Prints to STDOUT in Tab Delimited")
             ("prefix,p", po::value<std::string>(&prefix)->default_value("noPhix_"),
                                            "Prefix for outputted files")
-            ("phix-seq,x", po::value<std::string>(&phix)->default_value(phixSeq_True), "Phix Sequence - default https://www.ncbi.nlm.nih.gov/nuccore/9626372")
-            ("phix-hits,s", po::value<size_t>(&hits)->default_value(50), "How many 8-mer hits to phix needs to happen to discard")
+            ("seq,s", po::value<std::string>(&phix)->default_value(phixSeq_True), "Phix Sequence - default https://www.ncbi.nlm.nih.gov/nuccore/9626372")
+            ("hits,x", po::value<size_t>(&hits)->default_value(50), "How many 8-mer hits to phix needs to happen to discard")
             ("check-read-2,C", po::bool_switch(&checkR2)->default_value(false),    "Check R2 as well as R1 (pe)")
             ("stats-file,L", po::value<std::string>(&statsFile)->default_value("stats.log") , "String for output stats file name")
             ("append-stats-file,A", po::bool_switch(&appendStats)->default_value(false),  "Append Stats file.")
@@ -98,7 +98,7 @@ int main(int argc, char** argv)
              */
             if ( vm.count("help")  || vm.size() == 0)
             {
-                std::cout << "Tab-Converter" << std::endl
+                std::cout << program_name << std::endl
                           << desc << std::endl;
                 return SUCCESS;
             }

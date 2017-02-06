@@ -135,6 +135,7 @@ public:
     SingleEndReadOutFastq(std::shared_ptr<HtsOfstream> &out_) : output(out_) { }
     ~SingleEndReadOutFastq() { output->flush(); }
     void write(const SingleEndRead &read) { format_writer(read.get_read()); }
+    void write_read(const Read &read, bool rc) { if (rc) { format_writer_rc(read); } else { format_writer(read); } }
     void write(const ReadBase &read) {
         const SingleEndRead *ser = dynamic_cast<const SingleEndRead*>(&read);
         if (ser) {
