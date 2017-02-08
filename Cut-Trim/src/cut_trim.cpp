@@ -82,7 +82,7 @@ int main(int argc, char** argv)
             ("to-stdout,O", po::bool_switch(&std_out)->default_value(false),    "Prints to STDOUT in Tab Delimited")
             ("prefix,p", po::value<std::string>(&prefix)->default_value("cut_trim_"),
                                            "Prefix for outputted files")
-            ("no-orhans,n", po::bool_switch(&no_orphans)->default_value(false),    "Will not return SE reads")
+            ("no-orphans,n", po::bool_switch(&no_orphans)->default_value(false),    "Will not return SE reads")
             ("no-left,l", po::bool_switch(&no_left)->default_value(false),    "Turns of trimming of the left side of the read")
             ("no-right,r", po::bool_switch(&no_right)->default_value(false),    "Turns of trimming of the right side of the read")
             ("stranded,s", po::bool_switch(&stranded)->default_value(false),    "If R1 is orphaned, R2 is RC (for stranded RNA)")
