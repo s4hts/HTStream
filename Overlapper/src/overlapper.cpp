@@ -53,6 +53,10 @@ int main(int argc, char** argv)
 
     size_t minLength;
     size_t minOverlap;
+
+    size_t kmer;
+    size_t kmerOffset;
+
     bool adapterTrimming;
     bool stranded;
     std::string histFile;
@@ -88,6 +92,8 @@ int main(int argc, char** argv)
             ("prefix,p", po::value<std::string>(&prefix)->default_value("overlapped_"),
                                            "Prefix for outputted files")
             ("minLength,l", po::value<size_t>(&minLength)->default_value(50), "Minimum sequence length allowed without being discarded")
+            ("kmer,k", po::value<size_t>(&kmer)->default_value(8), "Kmer size of the lookup table for the longer read")
+            ("kmer-offset,r", po::value<size_t>(&kmerOffset)->default_value(1), "Offset of kmers. Offset of 1, would be perfect overlapping kmers. An offset of kmer would be non-overlapping kmers that are right next to each other. Must be greater than 0.")
             ("max-mismatch-errorDensity,x", po::value<double>(&errorDensity)->default_value(.25), "Max percent of mismatches allowed in overlapped section")
             ("check-lengths,c", po::value<size_t>(&checkLengths)->default_value(20), "Check lengths on the ends")
             ("min-overlap,o", po::value<size_t>(&minOverlap)->default_value(8), "Min overlap required to merge two reads")
@@ -112,14 +118,16 @@ int main(int argc, char** argv)
                           << desc << std::endl;
                 return SUCCESS;
             }
-            
-            if (errorDensity < 0.0 || errorDensity > 1.0) {
-                throw std::runtime_error("Woah, there human. It seems you have entered a wacky, zany number that isn't between 0.0 and 1.0 for max mismatch errorDensity.\nThat is why there is this error message. (>^_^)>\n");
-            }
-
-            po::notify(vm); // throws on error, so do after help in case
+                       po::notify(vm); // throws on error, so do after help in case
             //Index 1 start location (making it more human friendly)
             
+            if (errorDensity < 0.0 ||  errorDensity > 1.0) {
+                throw std::runtime_error("Woah, there human. It seems you have entered a wacky, zany number that isn't between 0.0 and 1.0 for max mismatch errorDensity.\nThat is why there is this error message. (>^_^)>\n\n");
+            }
+            if (kmerOffset == 0) {
+                throw std::runtime_error("Human - you cannot have a kmer offset of zero! You almost sent me in an infinite loop. Do you know what that feels like? I would never do that to you. Please, try again, but this time make sure the kmer-offset,r flag is set to above 0.\n\n");
+            }
+ 
             std::shared_ptr<HtsOfstream> out_1 = nullptr;
             std::shared_ptr<HtsOfstream> out_2 = nullptr;
             std::shared_ptr<HtsOfstream> out_3 = nullptr;
@@ -180,7 +188,7 @@ int main(int argc, char** argv)
                     bi::stream<bi::file_descriptor_source> is1{check_open_r(read1_files[i]), bi::close_handle};
                     bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
                     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
-                    helper_overlapper(ifp, pe, se, counters, errorDensity,  minOverlap, insertLengths, stranded, minLength, checkLengths,  adapterTrimming);
+                    helper_overlapper(ifp, pe, se, counters, errorDensity,  minOverlap, insertLengths, stranded, minLength, checkLengths,  adapterTrimming, kmer, kmerOffset);
                 }
             }
 
@@ -190,7 +198,7 @@ int main(int argc, char** argv)
                     bi::stream<bi::file_descriptor_source> sef{ check_open_r(file), bi::close_handle};
                     InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(sef);
                     //JUST WRITE se read out - no way to overlap
-                    helper_overlapper(ifs, pe, se, counters, errorDensity,  minOverlap, insertLengths, stranded, minLength, checkLengths,  adapterTrimming);
+                    helper_overlapper(ifs, pe, se, counters, errorDensity,  minOverlap, insertLengths, stranded, minLength, checkLengths,  adapterTrimming, kmer, kmerOffset);
                 }
             }
             
@@ -199,7 +207,7 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> tabin{ check_open_r(file), bi::close_handle};
                     InputReader<ReadBase, TabReadImpl> ift(tabin);
-                    helper_overlapper(ift, pe, se, counters, errorDensity,  minOverlap, insertLengths, stranded, minLength, checkLengths,  adapterTrimming);
+                    helper_overlapper(ift, pe, se, counters, errorDensity,  minOverlap, insertLengths, stranded, minLength, checkLengths,  adapterTrimming, kmer, kmerOffset);
                 }
             }
             
@@ -208,14 +216,14 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> inter{ check_open_r(file), bi::close_handle};
                     InputReader<PairedEndRead, InterReadImpl> ifp(inter);
-                    helper_overlapper(ifp, pe, se, counters, errorDensity,  minOverlap, insertLengths, stranded, minLength, checkLengths,  adapterTrimming);
+                    helper_overlapper(ifp, pe, se, counters, errorDensity,  minOverlap, insertLengths, stranded, minLength, checkLengths,  adapterTrimming, kmer, kmerOffset);
                 }
             }
            
             if (std_in) {
                 bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
-                helper_overlapper(ift, pe, se, counters, errorDensity,  minOverlap, insertLengths, stranded, minLength, checkLengths,  adapterTrimming);
+                helper_overlapper(ift, pe, se, counters, errorDensity,  minOverlap, insertLengths, stranded, minLength, checkLengths,  adapterTrimming, kmer, kmerOffset);
             }  
 
 
