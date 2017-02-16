@@ -63,7 +63,7 @@ int main(int argc, char** argv)
     size_t checkLengths;
     std::string statsFile;
     bool appendStats;
-
+    bool no_orphan;
     try
     {
         /** Define and parse the program options
@@ -91,6 +91,7 @@ int main(int argc, char** argv)
             ("to-stdout,O", po::bool_switch(&std_out)->default_value(false),    "Prints to STDOUT in Tab Delimited")
             ("prefix,p", po::value<std::string>(&prefix)->default_value("overlapped_"),
                                            "Prefix for outputted files")
+            ("no-orphans,n", po::bool_switch(&no_orphan)->default_value(false),         "Only applicable with adapter trimming - orphaned pairs will not be written out. SE overlap reads will be outputted (if min length is met).")
             ("minLength,l", po::value<size_t>(&minLength)->default_value(50), "Minimum sequence length allowed without being discarded")
             ("kmer,k", po::value<size_t>(&kmer)->default_value(8), "Kmer size of the lookup table for the longer read")
             ("kmer-offset,r", po::value<size_t>(&kmerOffset)->default_value(1), "Offset of kmers. Offset of 1, would be perfect overlapping kmers. An offset of kmer would be non-overlapping kmers that are right next to each other. Must be greater than 0.")
@@ -188,7 +189,7 @@ int main(int argc, char** argv)
                     bi::stream<bi::file_descriptor_source> is1{check_open_r(read1_files[i]), bi::close_handle};
                     bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
                     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
-                    helper_overlapper(ifp, pe, se, counters, errorDensity,  minOverlap, insertLengths, stranded, minLength, checkLengths,  adapterTrimming, kmer, kmerOffset);
+                    helper_overlapper(ifp, pe, se, counters, errorDensity,  minOverlap, insertLengths, stranded, minLength, checkLengths,  adapterTrimming, kmer, kmerOffset, no_orphan);
                 }
             }
 
@@ -198,7 +199,7 @@ int main(int argc, char** argv)
                     bi::stream<bi::file_descriptor_source> sef{ check_open_r(file), bi::close_handle};
                     InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(sef);
                     //JUST WRITE se read out - no way to overlap
-                    helper_overlapper(ifs, pe, se, counters, errorDensity,  minOverlap, insertLengths, stranded, minLength, checkLengths,  adapterTrimming, kmer, kmerOffset);
+                    helper_overlapper(ifs, pe, se, counters, errorDensity,  minOverlap, insertLengths, stranded, minLength, checkLengths,  adapterTrimming, kmer, kmerOffset, no_orphan);
                 }
             }
             
@@ -207,7 +208,7 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> tabin{ check_open_r(file), bi::close_handle};
                     InputReader<ReadBase, TabReadImpl> ift(tabin);
-                    helper_overlapper(ift, pe, se, counters, errorDensity,  minOverlap, insertLengths, stranded, minLength, checkLengths,  adapterTrimming, kmer, kmerOffset);
+                    helper_overlapper(ift, pe, se, counters, errorDensity,  minOverlap, insertLengths, stranded, minLength, checkLengths,  adapterTrimming, kmer, kmerOffset, no_orphan);
                 }
             }
             
@@ -216,14 +217,14 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> inter{ check_open_r(file), bi::close_handle};
                     InputReader<PairedEndRead, InterReadImpl> ifp(inter);
-                    helper_overlapper(ifp, pe, se, counters, errorDensity,  minOverlap, insertLengths, stranded, minLength, checkLengths,  adapterTrimming, kmer, kmerOffset);
+                    helper_overlapper(ifp, pe, se, counters, errorDensity,  minOverlap, insertLengths, stranded, minLength, checkLengths,  adapterTrimming, kmer, kmerOffset, no_orphan);
                 }
             }
            
             if (std_in) {
                 bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
-                helper_overlapper(ift, pe, se, counters, errorDensity,  minOverlap, insertLengths, stranded, minLength, checkLengths,  adapterTrimming, kmer, kmerOffset);
+                helper_overlapper(ift, pe, se, counters, errorDensity,  minOverlap, insertLengths, stranded, minLength, checkLengths,  adapterTrimming, kmer, kmerOffset, no_orphan);
             }  
 
 

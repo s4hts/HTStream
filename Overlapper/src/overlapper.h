@@ -51,6 +51,7 @@ spReadBase checkIfOverlap(Read &r1, Read &r2, size_t loc1, size_t loc2, const do
     size_t loc2_t = loc2 - minLoc;
     size_t maxLoop = std::min(r1.getLength() - loc1_t, r2.getLength() - loc2_t);
     size_t maxMis = maxLoop * misDensity;
+
     if (maxLoop <= minOverlap) {
         return nullptr;
     }
@@ -67,16 +68,9 @@ spReadBase checkIfOverlap(Read &r1, Read &r2, size_t loc1, size_t loc2, const do
     std::string finalQual;
     size_t misMatches = 0;
 
-    if ( loc1_t >= loc2_t ) {
-        finalSeq += seq1.substr(0, loc1_t);
-        finalQual += qual1.substr(0, loc1_t);
-    } else if (adapterTrimming) {
-        r1.setLCut(loc1_t);
-    }
-
     char bp;
     char qual;
-   
+
     for (size_t i = 0; i < maxLoop; ++i) {
         read1_bp = loc1_t + i;
         read2_bp = loc2_t + i;
@@ -87,6 +81,7 @@ spReadBase checkIfOverlap(Read &r1, Read &r2, size_t loc1, size_t loc2, const do
         } else {
             bp = qual1[read1_bp] > qual2[read2_bp] ? seq1[read1_bp] : seq2[read2_bp];
             qual = std::max(qual1[read1_bp] - qual2[read2_bp] + 33, 1 + 33);
+            
             if (++misMatches > maxMis) {
                 /*Not valid match*/
                 return nullptr;
@@ -101,6 +96,13 @@ spReadBase checkIfOverlap(Read &r1, Read &r2, size_t loc1, size_t loc2, const do
             r2.changeSeq(read2_bp, bp);
             r2.changeQual(read2_bp, qual);
         }
+    }
+
+    if ( loc1_t >= loc2_t ) {
+        finalSeq = seq1.substr(0, loc1_t) + finalSeq;
+        finalQual = qual1.substr(0, loc1_t) + finalQual;
+    } else if (adapterTrimming) {
+        r1.setLCut(loc1_t);
     }
     
     if (r1.getLength() - loc1_t < r2.getLength()) {
@@ -144,7 +146,7 @@ spReadBase getOverlappedReads(Read &r1, Read &r2, const seqLookup &seq1Map,  con
 
 }
 
-spReadBase check_read(PairedEndRead &pe , const double misDensity, const size_t &minOver, histVec &insertLength, const bool &stranded, const size_t &checkLengths, const bool &adapterTrimming, const size_t kmer, const size_t kmerOffset) {
+spReadBase check_read(PairedEndRead &pe , Counter &counters, const double misDensity, const size_t &minOver, histVec &insertLength, const bool &stranded, const size_t &checkLengths, const bool &adapterTrimming, const size_t kmer, const size_t kmerOffset, const size_t minLength) {
     
     Read &r1 = pe.non_const_read_one();
     Read &r2 = pe.non_const_read_two();
@@ -160,20 +162,37 @@ spReadBase check_read(PairedEndRead &pe , const double misDensity, const size_t 
     /*returns null if no much
      * r1 and r2 and passed by ref in case only adapter trimming is on*/
     spReadBase overlapped = getOverlappedReads(r1, r2, mOne, misDensity, minOver, checkLengths, adapterTrimming, kmer) ;
-    if (insertLength && overlapped) { //overlap plus writing out
-        /*This is important for the hist file
-         * Shows distribution of lins and sins*/
+    //we need to check it overlapper is greater than min length;
+
+    if (overlapped && overlapped->non_const_read_one().getLength() < minLength) {
+        if (insertLength) { /*No overlap*/
+            ++(*insertLength)[0];
+        }
+        return nullptr;
+    }
+
+    if (overlapped) {
         std::string s = overlapped->get_read().get_seq();
         size_t len = s.length();
-        if (insertLength->size() < len) {
-            insertLength->resize(len + 1);
-        }
-        ++((*insertLength)[len]);
 
+        if (insertLength) { //overlap plus writing out
+            /*This is important for the hist file
+            * Shows distribution of lins and sins*/
+            if (insertLength->size() < len) {
+                insertLength->resize(len + 1);
+            }
+            ++((*insertLength)[len]);
+        }
+        if (len > r1.getLength() && len > r2.getLength()) {
+            ++counters["Lins"];
+        } else {
+            ++counters["Sins"];
+        }
     } else if (insertLength) {
         /*No overlap*/
         ++(*insertLength)[0];
     }
+ 
     return overlapped;
 }
 
@@ -187,7 +206,7 @@ spReadBase check_read(PairedEndRead &pe , const double misDensity, const size_t 
  * With a lin it is useful to have a higher confidence in the bases in the overlap and longer read
  * With a sin it is useful to have the higher confidence as well as removing the adapters*/
 template <class T, class Impl>
-void helper_overlapper(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, Counter& counters, const double misDensity, const size_t &minOver, histVec &insertLength, const bool &stranded, const size_t &min_length, const size_t &checkLengths, const bool &adapterTrimming, const size_t kmer, const size_t kmerOffset) {
+void helper_overlapper(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, Counter& counters, const double misDensity, const size_t &minOver, histVec &insertLength, const bool &stranded, const size_t &min_length, const size_t &checkLengths, const bool &adapterTrimming, const size_t kmer, const size_t kmerOffset, bool no_orphan = false ) {
     
     while(reader.has_next()) {
         auto i = reader.next();
@@ -201,15 +220,20 @@ void helper_overlapper(InputReader<T, Impl> &reader, std::shared_ptr<OutputWrite
         ++counters["TotalRecords"];
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());        
         if (per) {
-            spReadBase overlapped = check_read(*per, misDensity, minOver, insertLength, stranded, checkLengths, adapterTrimming, kmer, kmerOffset);
-
-            if (!overlapped || adapterTrimming) {
-                per->checkDiscarded(min_length);    
-                writer_helper(per, pe, se, stranded, counters); 
-            } else {
-                overlapped->checkDiscarded(min_length);    
-                writer_helper(overlapped.get(), pe, se, stranded, counters);
+            spReadBase overlapped = check_read(*per, counters, misDensity, minOver, insertLength, stranded, checkLengths, adapterTrimming, kmer, kmerOffset, min_length);
+            if (!overlapped) {
+                writer_helper(per, pe, se, stranded, counters); //write out as is
+            } else if (overlapped) { //if there is an overlap
+                if (adapterTrimming) { //just adapter trimming, removes adapters
+                    per->checkDiscarded(min_length);    
+                    writer_helper(per, pe, se, stranded, counters, no_orphan); 
+                } else {
+                    overlapped->checkDiscarded(min_length);    
+                    writer_helper(overlapped.get(), pe, se, stranded, counters);
+                }
             }
+
+
         } else {
             SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
             
