@@ -40,9 +40,9 @@ void write_stats(const std::string &statsFile, const bool &appendStats, const Co
     } else {
         outStats.open(statsFile, std::ofstream::out); //overwritte
     }
-    outStats << "Program" << '\t';
+
     if (end == -1 || !appendStats) {
-        std::string header;
+        std::string header("Program\t");
         for (const auto name : c) {
             header += name.first + '\t';
         }
