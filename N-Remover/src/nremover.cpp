@@ -52,6 +52,7 @@ int main(int argc, char** argv)
     bool stranded ;
     bool no_left ;
     bool no_right ;
+    bool no_orphans;
 
     std::string statsFile;
     bool appendStats;
@@ -83,6 +84,7 @@ int main(int argc, char** argv)
             ("to-stdout,O", po::bool_switch(&std_out)->default_value(false),    "Prints to STDOUT in Tab Delimited")
             ("prefix,p", po::value<std::string>(&prefix)->default_value("n_removed_"),
                                            "Prefix for outputted files")
+            ("no-orphans,n", po::bool_switch(&no_orphans)->default_value(false),    "Will not return SE reads")
             ("stranded,s", po::bool_switch(&stranded)->default_value(false),    "If R1 is orphaned, R2 is RC (for stranded RNA)")
             ("min-length,m", po::value<size_t>(&min_length)->default_value(50),    "Min length for acceptable outputted read")
             ("stats-file,L", po::value<std::string>(&statsFile)->default_value("stats.log") , "String for output stats file name")
