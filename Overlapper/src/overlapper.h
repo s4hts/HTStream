@@ -117,13 +117,10 @@ spReadBase checkIfOverlap(Read &r1, Read &r2, size_t loc1, size_t loc2, const do
 /*Because of the way overlapping works, you only need to check the ends of the shorter read*/
 spReadBase getOverlappedReads(Read &r1, Read &r2, const seqLookup &seq1Map,  const double misDensity, const size_t &minOver, const size_t &checkLengths, const bool &adapterTrimming, const size_t kmer) {
     std::string seq2 = r2.get_seq_rc();
-    std::cout << "HERE\n";
-    std::cout << "CheckLenghts " << checkLengths << '\n';
     for (size_t bp = 0; bp < checkLengths; ++bp) {
         /*Do a quick check if the shorter read kmer shows up in longer read (read 2)
          * If it does, then try the brute force approach*/
         auto test = seq1Map.equal_range(seq2.substr(bp, kmer));
-        std::cout << bp << '\n';
         for (auto it = test.first; it != test.second; ++it) {
             spReadBase overlapped = checkIfOverlap(r1, r2, it->second, bp, misDensity, minOver, adapterTrimming);
             if (overlapped != nullptr) {
@@ -175,9 +172,6 @@ spReadBase check_read(PairedEndRead &pe , const double misDensity, const size_t 
 
     } else if (insertLength) {
         /*No overlap*/
-        if (insertLength->size() < 1) {
-            insertLength->resize(1);
-        }
         ++(*insertLength)[0];
     }
     return overlapped;
@@ -197,11 +191,18 @@ void helper_overlapper(InputReader<T, Impl> &reader, std::shared_ptr<OutputWrite
     
     while(reader.has_next()) {
         auto i = reader.next();
+        //Saves check
+        if (insertLength) {
+            if (insertLength->size() < 1) {
+                insertLength->resize(1);
+            }
+        }
 
         ++counters["TotalRecords"];
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());        
         if (per) {
             spReadBase overlapped = check_read(*per, misDensity, minOver, insertLength, stranded, checkLengths, adapterTrimming, kmer, kmerOffset);
+
             if (!overlapped || adapterTrimming) {
                 per->checkDiscarded(min_length);    
                 writer_helper(per, pe, se, stranded, counters); 
