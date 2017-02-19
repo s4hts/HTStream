@@ -202,6 +202,43 @@ protected:
     }
 };
 
+class ReadBaseOutUnmapped : public OutputWriter {
+public:
+    ReadBaseOutTab(std::shared_ptr<HtsOfstream> &out_) : output(out_) { }
+    ~ReadBaseOutTab() { output->flush(); }
+    void write(const PairedEndRead &read) { format_writer(read.get_read_one(), read.get_read_two()); }
+    void write(const SingleEndRead &read) { format_writer(read.get_read()); }
+    void write_read(const Read &read, bool rc) { if (rc) { format_writer_rc(read); } else { format_writer(read); } }
+    
+    void write(const ReadBase &read) {  
+        const PairedEndRead *per = dynamic_cast<const PairedEndRead*>(&read);
+        if (per) {
+            format_writer(per->get_read_one(), per->get_read_two());
+        } else {
+            const SingleEndRead *ser = dynamic_cast<const SingleEndRead*>(&read);
+            if (ser == NULL) {
+                throw std::runtime_error("ReadBaseOutTab::write could not cast read as SE or PE read");
+            }
+            format_writer(ser->get_read());
+        }    
+    }
+protected:
+    std::shared_ptr<HtsOfstream> output = nullptr;
+    
+    void format_writer(const Read &read) { 
+        *output << read.get_id() << '\t' << read.get_sub_seq() << '\t' << read.get_sub_qual() << '\n'; 
+    }
+
+    void format_writer(const Read &read1, const Read &read2) {
+        *output << read1.get_id() << '\t' << read1.get_sub_seq() << '\t' << read1.get_sub_qual() << '\t' << read2.get_sub_seq() << '\t' << read2.get_sub_qual() << '\n';
+    }
+   
+    void format_writer_rc(const Read &read) { 
+       *output <<  read.get_id() << '\t' << read.get_seq_rc() << "\t" << read.get_qual_rc() << '\n'; 
+    } 
+};
+
+
 class ReadBaseOutTab : public OutputWriter {
 public:
     ReadBaseOutTab(std::shared_ptr<HtsOfstream> &out_) : output(out_) { }
