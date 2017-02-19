@@ -101,7 +101,7 @@ int main(int argc, char** argv)
              */
             if ( vm.count("help")  || vm.size() == 0)
             {
-                std::cout << "Tab-Converter" << std::endl
+                std::cout << program_name << std::endl
                           << desc << std::endl;
                 return SUCCESS;
             }
