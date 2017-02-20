@@ -9,9 +9,10 @@ FIND_PACKAGE( Boost 1.56 COMPONENTS system filesystem iostreams REQUIRED )
 set(COMMON_INCLUDES ${CMAKE_SOURCE_DIR}/common/src)
 include_directories(${GTEST_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} ${COMMON_INCLUDES} )
 
-add_library(hts_common SHARED ${sources})
-target_link_libraries(hts_common  ${Boost_LIBRARIES})
+add_library(${PROJECT_NAME} SHARED ${sources})
+target_link_libraries(${PROJECT_NAME}  ${Boost_LIBRARIES})
 
+install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION lib)
 
 ## test
 set(PROJECT_TEST_NAME ${PROJECT_NAME}_test)
@@ -25,5 +26,3 @@ add_executable(${PROJECT_TEST_NAME} ${TEST_SRC_FILES} ${sources})
 #add_dependencies(${PROJECT_TEST_NAME} googletest)
 target_link_libraries(${PROJECT_TEST_NAME} gtest gtest_main ${CMAKE_THREAD_LIBS_INIT} ${Boost_LIBRARIES} ${PROJECT_LINK_LIBS})
 add_test(test_common ${PROJECT_TEST_NAME})
-
-

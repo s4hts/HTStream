@@ -15,11 +15,11 @@ FIND_PACKAGE( Boost 1.56 COMPONENTS system program_options iostreams filesystem 
 include_directories(${COMMON_INCLUDES} ${Boost_INCLUDE_DIR} )
 
 
-add_executable(super-deduper ${sources})
-target_link_libraries(super-deduper ${PROJECT_LINK_LIBS} ${Boost_LIBRARIES})
+add_executable(${PROJECT_NAME} ${sources})
+target_link_libraries(${PROJECT_NAME} ${PROJECT_LINK_LIBS} ${Boost_LIBRARIES})
 
 add_custom_target(testSD
-  DEPENDS super-deduper
+  DEPENDS ${PROJECT_NAME}
   COMMAND ${CMAKE_COMMAND} -E env "PATH=$ENV{PATH}:${CMAKE_BINARY_DIR}/Super-Deduper" python ${CMAKE_SOURCE_DIR}/Super-Deduper/test_suite/testSD.py
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/Super-Deduper/test_suite
 )
@@ -28,6 +28,9 @@ add_custom_target(valgrind
   DEPENDS super_deduper
   COMMAND valgrind ./super_deduper -F -1 ${CMAKE_SOURCE_DIR}/test_suite/fastqFiles/testCase_1X_R1.fastq -2 ${CMAKE_SOURCE_DIR}/test_suite/fastqFiles/testCase_1X_R1.fastq -O
 )
+
+install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
+
 
 ## test
 set(PROJECT_TEST_NAME ${PROJECT_NAME}_test)

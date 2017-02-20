@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.2)
-project (Tab-Converter)
+project (tab-converter)
 
 file(GLOB sources "src/*.cpp")
 
@@ -15,8 +15,10 @@ FIND_PACKAGE( Boost 1.56 COMPONENTS system program_options iostreams filesystem 
 include_directories(${COMMON_INCLUDES} ${Boost_INCLUDE_DIR} )
 
 
-add_executable(tab-converter ${sources})
-target_link_libraries(tab-converter ${PROJECT_LINK_LIBS} ${Boost_LIBRARIES})
+add_executable(${PROJECT_NAME} ${sources})
+target_link_libraries(${PROJECT_NAME} ${PROJECT_LINK_LIBS} ${Boost_LIBRARIES})
+
+install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
 
 #add_custom_target(testSD
 #  DEPENDS tab_converter

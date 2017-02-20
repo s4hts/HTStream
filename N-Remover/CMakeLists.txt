@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.2)
-project (NRemover)
+project (n-remover)
 
 file(GLOB sources "src/*.cpp")
 
@@ -15,13 +15,15 @@ FIND_PACKAGE( Boost 1.56 COMPONENTS system program_options iostreams filesystem 
 include_directories(${COMMON_INCLUDES} ${Boost_INCLUDE_DIR} )
 
 
-add_executable(n-remover ${sources})
-target_link_libraries(n-remover ${PROJECT_LINK_LIBS} ${Boost_LIBRARIES})
+add_executable(${PROJECT_NAME} ${sources})
+target_link_libraries(${PROJECT_NAME} ${PROJECT_LINK_LIBS} ${Boost_LIBRARIES})
 
 add_custom_target(valgrind_N_Remover
   DEPENDS NRemover
   COMMAND valgrind ./NRemover -F -1 ${CMAKE_SOURCE_DIR}/test_suite/fastqFiles/testCase_1X_R1.fastq -2 ${CMAKE_SOURCE_DIR}/test_suite/fastqFiles/testCase_1X_R1.fastq -O
 )
+
+install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
 
 ## test
 set(PROJECT_TEST_NAME ${PROJECT_NAME}_test)
