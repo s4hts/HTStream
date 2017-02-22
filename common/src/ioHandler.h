@@ -21,7 +21,8 @@
 
 #include <iostream>
 #include <string>
-#include "utils.h"
+
+typedef std::unordered_map <std::string, size_t> Counter;
 
 namespace bf = boost::filesystem;
 namespace bi = boost::iostreams;
@@ -202,10 +203,11 @@ protected:
     }
 };
 
+/*Unmapped reads*/
 class ReadBaseOutUnmapped : public OutputWriter {
 public:
-    ReadBaseOutTab(std::shared_ptr<HtsOfstream> &out_) : output(out_) { }
-    ~ReadBaseOutTab() { output->flush(); }
+    ReadBaseOutUnmapped(std::shared_ptr<HtsOfstream> &out_) : output(out_) { }
+    ~ReadBaseOutUnmapped() { output->flush(); }
     void write(const PairedEndRead &read) { format_writer(read.get_read_one(), read.get_read_two()); }
     void write(const SingleEndRead &read) { format_writer(read.get_read()); }
     void write_read(const Read &read, bool rc) { if (rc) { format_writer_rc(read); } else { format_writer(read); } }
@@ -225,16 +227,69 @@ public:
 protected:
     std::shared_ptr<HtsOfstream> output = nullptr;
     
+    /*sam format specs spaces are for readability 
+     * id \t bitwise flag \t rname \t pos \t mapQ \t CIGAR \t RNEXT \t PNEXT \t TLEN \t SEQ \t QUAL\n
+     *
+     * id = id
+     * bitwas flag
+     * SE - 68
+     * PE R1 - 69
+     * PE R2 - 133
+     * RNAME - *
+     * POS - 0
+     * MAPQ - 255
+     * CIGAR - *
+     * RNEXT - *
+     * PNEXT - *
+     * TLEN - SEQ.length
+     * SEQ - seq
+     * QUAL - qual */
+    const size_t se_bitwise = 68;
+    const size_t pe1_bitwise = 69;
+    const size_t pe2_bitwise = 133;
+
+    void samout(const Read &read, size_t bitwiseflag) {
+        *output << read.get_id() << '\t'
+            << bitwiseflag << '\t'
+            << "*\t" /*RNAME*/
+            << "0\t" /*POS*/
+            << "255\t" /*MAPQ*/
+            << "*\t" /*CIGAR*/
+            << "0\t" /*RNEXT*/
+            << "0\t" /*PNEXT*/
+            << read.getLength() << "\t"
+            << read.get_sub_seq() << "\t"
+            << read.get_sub_qual() << "\n";
+    }
+
+    void samout_rc(const Read &read, size_t bitwiseflag) {
+        *output << read.get_id() << '\t'
+            << bitwiseflag << '\t'
+            << "*\t" /*RNAME*/
+            << "0\t" /*POS*/
+            << "255\t" /*MAPQ*/
+            << "*\t" /*CIGAR*/
+            << "0\t" /*RNEXT*/
+            << "0\t" /*PNEXT*/
+            << read.getLength() << "\t"
+            << read.get_seq_rc() << "\t"
+            << read.get_qual_rc() << "\n";
+    }
+
+
+
+    /*Unmapped specs for SE reads*/
     void format_writer(const Read &read) { 
-        *output << read.get_id() << '\t' << read.get_sub_seq() << '\t' << read.get_sub_qual() << '\n'; 
+        samout(read, se_bitwise);
     }
 
     void format_writer(const Read &read1, const Read &read2) {
-        *output << read1.get_id() << '\t' << read1.get_sub_seq() << '\t' << read1.get_sub_qual() << '\t' << read2.get_sub_seq() << '\t' << read2.get_sub_qual() << '\n';
+        samout(read1, pe1_bitwise);
+        samout(read2, pe2_bitwise);
     }
    
     void format_writer_rc(const Read &read) { 
-       *output <<  read.get_id() << '\t' << read.get_seq_rc() << "\t" << read.get_qual_rc() << '\n'; 
+       samout_rc(read, se_bitwise);
     } 
 };
 

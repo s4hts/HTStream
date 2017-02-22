@@ -60,3 +60,55 @@ void write_stats(const std::string &statsFile, const bool &appendStats, const Co
     outStats << info;
 }
 
+void outputWriters(std::shared_ptr<OutputWriter> &pe, std::shared_ptr<OutputWriter> &se, bool fastq_out, bool tab_out, bool interleaved_out, bool unmapped_out,  bool force, bool gzip_out, bool std_out, std::string &prefix) {
+
+    std::vector<std::string> default_outfiles = {"PE1", "PE2", "SE"};
+
+    std::shared_ptr<HtsOfstream> out_1 = nullptr;
+    std::shared_ptr<HtsOfstream> out_2 = nullptr;
+    std::shared_ptr<HtsOfstream> out_3 = nullptr;
+
+    if (fastq_out || (! std_out && ! tab_out) ) {
+        for (auto& outfile: default_outfiles) {
+            outfile = prefix + outfile + ".fastq";
+        }
+
+        out_1.reset(new HtsOfstream(default_outfiles[0], force, gzip_out, false));
+        out_2.reset(new HtsOfstream(default_outfiles[1], force, gzip_out, false));
+        out_3.reset(new HtsOfstream(default_outfiles[2], force, gzip_out, false));
+
+        pe.reset(new PairedEndReadOutFastq(out_1, out_2));
+        se.reset(new SingleEndReadOutFastq(out_3));
+    } else if (interleaved_out)  {
+        for (auto& outfile: default_outfiles) {
+            outfile = prefix + "INTER" + ".fastq";
+        }
+
+        out_1.reset(new HtsOfstream(default_outfiles[0], force, gzip_out, false));
+        out_3.reset(new HtsOfstream(default_outfiles[1], force, gzip_out, false));
+
+        pe.reset(new PairedEndReadOutInter(out_1));
+        se.reset(new SingleEndReadOutFastq(out_3));
+    } else if (tab_out || std_out) {
+        for (auto& outfile: default_outfiles) {
+            outfile = prefix + "tab" + ".tastq";
+        }
+        out_1.reset(new HtsOfstream(default_outfiles[0], force, gzip_out, std_out));
+
+        pe.reset(new ReadBaseOutTab(out_1));
+        se.reset(new ReadBaseOutTab(out_1));
+    }
+
+}
+
+void setDefaultParams(boost::program_options::options_description &descp) {
+    descp.add_options() ("test,t", "Test");
+    /*namespace po = boost::program_options;
+    po::options_description test;
+    test.add_options()
+        ("version,v", "Version Print");*/
+/*
+        desc.add_options()
+        ("version,v",                  "Version print");*/
+}
+

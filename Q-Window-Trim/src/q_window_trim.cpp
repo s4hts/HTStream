@@ -1,6 +1,6 @@
 #include <iostream>
 #include <string>
-#include <boost/program_options.hpp>
+//#include <boost/program_options.hpp>
 #include <vector>
 #include <fstream>
 #include "ioHandler.h"
@@ -37,7 +37,6 @@ int main(int argc, char** argv)
     setupCounter(counters);
 
     std::string prefix;
-    std::vector<std::string> default_outfiles = {"PE1", "PE2", "SE"};
 
     bool fastq_out;
     bool tab_out;
@@ -64,14 +63,7 @@ int main(int argc, char** argv)
         namespace po = boost::program_options;
         po::options_description desc("Options");
         desc.add_options()
-            ("version,v",                  "Version print")
-            ("read1-input,1", po::value< std::vector<std::string> >(),
-                                           "Read 1 input <comma sep for multiple files>") 
-            ("read2-input,2", po::value< std::vector<std::string> >(), 
-                                           "Read 2 input <comma sep for multiple files>")
-            ("singleend-input,U", po::value< std::vector<std::string> >(),
-                                           "Single end read input <comma sep for multiple files>")
-            ("tab-input,T", po::value< std::vector<std::string> >(),
+           ("tab-input,T", po::value< std::vector<std::string> >(),
                                            "Tab input <comma sep for multiple files>")
             ("interleaved-input,I", po::value< std::vector<std::string> >(),
                                            "Interleaved input I <comma sep for multiple files>")
@@ -113,15 +105,11 @@ int main(int argc, char** argv)
             po::notify(vm); // throws on error, so do after help in case
             
             size_t sum_qual = (avg_qual + 33) * window_size; //Window must be greater than this
-            
-            std::shared_ptr<HtsOfstream> out_1 = nullptr;
-            std::shared_ptr<HtsOfstream> out_2 = nullptr;
-            std::shared_ptr<HtsOfstream> out_3 = nullptr;
-            
             std::shared_ptr<OutputWriter> pe = nullptr;
             std::shared_ptr<OutputWriter> se = nullptr;
-            
-            if (fastq_out || (! std_out && ! tab_out) ) {
+            bool unmapped_out = false;
+            outputWriters(pe, se, fastq_out, tab_out, interleaved_out, unmapped_out, force, gzip_out, std_out, prefix);
+            /*if (fastq_out || (! std_out && ! tab_out) ) {
                 for (auto& outfile: default_outfiles) {
                     outfile = prefix + outfile + ".fastq";
                 }
@@ -150,7 +138,7 @@ int main(int argc, char** argv)
 
                 pe.reset(new ReadBaseOutTab(out_1));
                 se.reset(new ReadBaseOutTab(out_1));
-            }
+            }*/
 
             // there are any problems
             if(vm.count("read1-input")) {
