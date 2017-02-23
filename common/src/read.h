@@ -60,8 +60,8 @@ public:
     Read(const std::string& seq_, const std::string& qual_, const std::string& id_) :
         seq(seq_), qual(qual_), id(id_), length(seq.length()), cut_R(seq.length()), cut_L(0), discard(false), minLength(0) {  }
     Read() : seq(""), qual(""), id(""), length(0), cut_R(seq.length()), cut_L(0), discard(false), minLength(0) { } 
-    Read subread(size_t start, size_t length);
-    std::string subseq(size_t start, size_t length);
+    Read subread(size_t _start, size_t _length);
+    std::string subseq(size_t _start, size_t _length);
     const std::string& get_seq() const  { return seq; }
     const std::string& get_qual() const { return qual; }
     const std::string& get_id() const { return id; }
@@ -90,7 +90,7 @@ public:
     void setLCut( size_t cut_L_ ) { cut_L = cut_L_; }
     bool getDiscard() { return int(minLength) > int(cut_R) - int(cut_L); }
     void setDiscard(size_t minLength_) { minLength = minLength_; }
-    const size_t getLength() const { return length; }
+    size_t getLength() const { return length; }
     size_t getLengthTrue() { return cut_R - cut_L; }
     size_t getLTrim() { return cut_L; }
     size_t getRTrim() { return length - cut_R; }

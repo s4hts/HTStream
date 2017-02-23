@@ -1,6 +1,6 @@
 #include <iostream>
 #include <string>
-//#include <boost/program_options.hpp>
+#include <boost/program_options.hpp>
 #include <vector>
 #include <fstream>
 #include "ioHandler.h"
@@ -62,6 +62,7 @@ int main(int argc, char** argv)
          */
         namespace po = boost::program_options;
         po::options_description desc("Options");
+        setDefaultParams(desc, program_name);
         desc.add_options()
            ("tab-input,T", po::value< std::vector<std::string> >(),
                                            "Tab input <comma sep for multiple files>")

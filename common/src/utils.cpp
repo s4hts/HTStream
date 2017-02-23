@@ -67,8 +67,35 @@ void outputWriters(std::shared_ptr<OutputWriter> &pe, std::shared_ptr<OutputWrit
     std::shared_ptr<HtsOfstream> out_1 = nullptr;
     std::shared_ptr<HtsOfstream> out_2 = nullptr;
     std::shared_ptr<HtsOfstream> out_3 = nullptr;
+    
+    if (interleaved_out)  {
+        for (auto& outfile: default_outfiles) {
+            outfile = prefix + "INTER" + ".fastq";
+        }
 
-    if (fastq_out || (! std_out && ! tab_out) ) {
+        out_1.reset(new HtsOfstream(default_outfiles[0], force, gzip_out, false));
+        out_3.reset(new HtsOfstream(default_outfiles[1], force, gzip_out, false));
+
+        pe.reset(new PairedEndReadOutInter(out_1));
+        se.reset(new SingleEndReadOutFastq(out_3));
+    } else if (unmapped_out) {
+        for (auto& outfile: default_outfiles) {
+            outfile = prefix + ".sam";
+        }
+        out_1.reset(new HtsOfstream(default_outfiles[0], force, gzip_out, std_out));
+
+        pe.reset(new ReadBaseOutUnmapped(out_1));
+        se.reset(new ReadBaseOutUnmapped(out_1));
+
+    } else if (tab_out || std_out) {
+        for (auto& outfile: default_outfiles) {
+            outfile = prefix + "tab" + ".tastq";
+        }
+        out_1.reset(new HtsOfstream(default_outfiles[0], force, gzip_out, std_out));
+
+        pe.reset(new ReadBaseOutUnmapped(out_1));
+        se.reset(new ReadBaseOutUnmapped(out_1));
+    } else if (fastq_out || (! std_out && ! tab_out) ) {
         for (auto& outfile: default_outfiles) {
             outfile = prefix + outfile + ".fastq";
         }
@@ -79,36 +106,38 @@ void outputWriters(std::shared_ptr<OutputWriter> &pe, std::shared_ptr<OutputWrit
 
         pe.reset(new PairedEndReadOutFastq(out_1, out_2));
         se.reset(new SingleEndReadOutFastq(out_3));
-    } else if (interleaved_out)  {
-        for (auto& outfile: default_outfiles) {
-            outfile = prefix + "INTER" + ".fastq";
-        }
-
-        out_1.reset(new HtsOfstream(default_outfiles[0], force, gzip_out, false));
-        out_3.reset(new HtsOfstream(default_outfiles[1], force, gzip_out, false));
-
-        pe.reset(new PairedEndReadOutInter(out_1));
-        se.reset(new SingleEndReadOutFastq(out_3));
-    } else if (tab_out || std_out) {
-        for (auto& outfile: default_outfiles) {
-            outfile = prefix + "tab" + ".tastq";
-        }
-        out_1.reset(new HtsOfstream(default_outfiles[0], force, gzip_out, std_out));
-
-        pe.reset(new ReadBaseOutTab(out_1));
-        se.reset(new ReadBaseOutTab(out_1));
     }
-
 }
 
-void setDefaultParams(boost::program_options::options_description &descp) {
-    descp.add_options() ("test,t", "Test");
-    /*namespace po = boost::program_options;
-    po::options_description test;
-    test.add_options()
-        ("version,v", "Version Print");*/
-/*
-        desc.add_options()
-        ("version,v",                  "Version print");*/
+void setDefaultParams(po::options_description &desc, std::string program_name) {
+
+    desc.add_options()
+            ("version,v", "Version print")
+            ("read1-input,1", po::value< std::vector<std::string> >(),
+                                           "Read 1 input <comma sep for multiple files>")
+            ("read2-input,2", po::value< std::vector<std::string> >(),
+                                           "Read 2 input <comma sep for multiple files>")
+            ("singleend-input,U", po::value< std::vector<std::string> >(),
+                                           "Single end read input <comma sep for multiple files>")
+            ("tab-input,T", po::value< std::vector<std::string> >(),
+                                           "Tab input <comma sep for multiple files>")
+            ("interleaved-input,I", po::value< std::vector<std::string> >(),
+                                           "Interleaved input I <comma sep for multiple files>")
+            ("stdin-input,S", "STDIN input <MUST BE TAB DELIMITED INPUT>")
+            ("gzip-output,g", po::bool_switch()->default_value(false),  "Output gzipped")
+            ("interleaved-output,i", po::bool_switch()->default_value(false),     "Output to interleaved")
+            ("fastq-output,f", po::bool_switch()->default_value(true), "Fastq format output")
+            ("force,F", po::bool_switch()->default_value(false),         "Forces overwrite of files")
+            ("tab-output,t", po::bool_switch()->default_value(false),   "Tab-delimited output")
+            ("unmapped-output,u", po::bool_switch()->default_value(false),   "Unmapped sam output")
+            ("to-stdout,O", po::bool_switch()->default_value(false),    "Prints to STDOUT in Tab Delimited")
+            ("stats-file,L", po::value<std::string>()->default_value("stats.log") , "String for output stats file name")
+            ("append-stats-file,A", po::bool_switch()->default_value(false),  "Append Stats file.")
+            ("prefix,p", po::value<std::string>()->default_value(program_name),
+                                           "Prefix for outputted files") 
+
+
+            ("help,h",                     "Prints help.");
+
 }
 

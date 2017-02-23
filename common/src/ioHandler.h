@@ -49,8 +49,7 @@ public:
         }
     }
     
-    HtsOfstream(std::string filename_, bool force_, bool gzip_, bool stdout_) : force(force_), filename(filename_), gzip(gzip_),
-                                                                                std_out(stdout_)  { }
+    HtsOfstream(std::string filename_, bool force_, bool gzip_, bool stdout_) : filename(filename_), force(force_), gzip(gzip_), std_out(stdout_)  { }
     
     HtsOfstream(std::shared_ptr<std::ostream> out_) : out(out_) { }
 
@@ -125,10 +124,10 @@ protected:
 class OutputWriter {
 public:
     virtual ~OutputWriter() {  }
-    virtual void write(const PairedEndRead& read) { throw std::runtime_error("No PE implementation of write (Probably a SE read)"); }
-    virtual void write(const SingleEndRead& read) { throw std::runtime_error("No SE implementaiton of write (Probably a PE read)"); }
-    virtual void write_read(const Read &read, bool rc) { throw std::runtime_error("No write_read class, only accessable with SE"); } //only SE
-    virtual void write(const ReadBase &read) { throw std::runtime_error("No ReadBase class, only accessable with tab"); } //maybe typecase eventually 
+    virtual void write(const PairedEndRead& ) { throw std::runtime_error("No PE implementation of write (Probably a SE read)"); }
+    virtual void write(const SingleEndRead& ) { throw std::runtime_error("No SE implementaiton of write (Probably a PE read)"); }
+    virtual void write_read(const Read &, bool ) { throw std::runtime_error("No write_read class, only accessable with SE"); } //only SE
+    virtual void write(const ReadBase &) { throw std::runtime_error("No ReadBase class, only accessable with tab"); } //maybe typecase eventually 
 };
 
 class SingleEndReadOutFastq : public OutputWriter {
@@ -275,8 +274,6 @@ protected:
             << read.get_seq_rc() << "\t"
             << read.get_qual_rc() << "\n";
     }
-
-
 
     /*Unmapped specs for SE reads*/
     void format_writer(const Read &read) { 
