@@ -21,7 +21,7 @@
 #include <utility>
 #include "utils.h"
 
-typedef std::multimap<std::string, std::size_t> seqLookup;
+typedef std::unordered_multimap<std::string, std::size_t> seqLookup;
 typedef std::shared_ptr<SingleEndRead> spReadBase;
 typedef std::shared_ptr<std::vector<unsigned long long int>> histVec;
 
