@@ -53,19 +53,11 @@ int main(int argc, char** argv)
 
             /** --help option
              */
-            if (vm.count("version")) {
-                std::cout << program_name << std::endl;
-                std::cout << "Version " << VERSION << std::endl;
-                return SUCCESS;
-            } else if ( vm.count("help")  || vm.size() == 0) {
-                std::cout << program_name << std::endl
-                          << "Version " << VERSION << std::endl
-                          << desc << std::endl;
-                return SUCCESS;
-            }
 
             po::notify(vm); // throws on error, so do after help in case
             //Index 1 start location (making it more human friendly)
+            version_or_help(vm.count("help"), vm.count("version"), program_name, desc, vm);
+            
             start--;
 
             std::string statsFile(vm["stats-file"].as<std::string>());

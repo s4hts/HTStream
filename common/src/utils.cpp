@@ -141,3 +141,33 @@ void setDefaultParams(po::options_description &desc, std::string program_name) {
 
 }
 
+void setDefaultParamsTrim(po::options_description &desc) {
+    desc.add_options()
+        ("no-left,l", po::bool_switch()->default_value(false),    "Turns of trimming of the left side of the read")
+        ("no-right,r", po::bool_switch()->default_value(false),    "Turns of trimming of the right side of the read");
+ 
+}
+
+void setDefaultParamsCutting(po::options_description &desc) {
+
+    desc.add_options()
+            ("no-orphans,n", po::bool_switch()->default_value(false), "SE reads will be NOT be written out")
+            ("stranded,s", po::bool_switch()->default_value(false),    "If R1 is orphaned, R2 is RC (for stranded RNA)")
+            ("min-length,m", po::value<size_t>()->default_value(50),    "Min length for acceptable outputted read");
+
+}
+
+void version_or_help(std::string program_name, po::options_description &desc, po::variables_map vm) {
+
+    int SUCCESS = 0;
+    if (vm.count("version")) {
+        std::cout << program_name << std::endl;
+        std::cout << "Version " << VERSION << std::endl;
+        exit(SUCCESS); //success
+    } else if ( vm.count("help")  || vm.size() == 0) {
+        std::cout << program_name << std::endl
+                  << "Version " << VERSION << std::endl
+                  << desc << std::endl;
+        exit(SUCCESS); //success
+    } 
+}
