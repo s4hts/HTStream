@@ -18,7 +18,8 @@
 
 #include "overlapper.h"
 
-#define AST_COUNT 4096
+#define AST_COUNT 4096 //number of reads per one *
+
 namespace
 {
     const size_t SUCCESS = 0;
@@ -36,146 +37,61 @@ int main(int argc, char** argv)
     Counter counters;
     setupCounter(counters); 
 
-    std::string prefix;
-    std::vector<std::string> default_outfiles = {"PE1", "PE2", "SE"};
-
-    bool fastq_out;
-    bool tab_out;
-    bool std_out;
-    bool std_in;
-    bool gzip_out;
-    bool interleaved_out;
-    bool force; 
-
-    bool checkR2;
-
-    double errorDensity;
-
-    size_t minLength;
-    size_t minOverlap;
-
-    size_t kmer;
-    size_t kmerOffset;
-
-    bool adapterTrimming;
-    bool stranded;
-    std::string histFile;
-    size_t checkLengths;
-    std::string statsFile;
-    bool appendStats;
-    bool no_orphan;
     try
     {
         /** Define and parse the program options
          */
         namespace po = boost::program_options;
         po::options_description desc("Options");
-        desc.add_options()
-            ("version,v",                  "Version print")
-            ("read1-input,1", po::value< std::vector<std::string> >(),
-                                           "Read 1 input <comma sep for multiple files>") 
-            ("read2-input,2", po::value< std::vector<std::string> >(), 
-                                           "Read 2 input <comma sep for multiple files>")
-            ("singleend-input,U", po::value< std::vector<std::string> >(),
-                                           "Single end read input <comma sep for multiple files>")
-            ("tab-input,T", po::value< std::vector<std::string> >(),
-                                           "Tab input <comma sep for multiple files>")
-            ("interleaved-input,I", po::value< std::vector<std::string> >(),
-                                           "Interleaved input I <comma sep for multiple files>")
-            ("stdin-input,S", po::bool_switch(&std_in)->default_value(false), "STDIN input <MUST BE TAB DELIMITED INPUT>")
-            ("gzip-output,g", po::bool_switch(&gzip_out)->default_value(false),  "Output gzipped")
-            ("interleaved-output,i", po::bool_switch(&interleaved_out)->default_value(false),     "Output to interleaved")
-            ("fastq-output,f", po::bool_switch(&fastq_out)->default_value(false), "Fastq format output")
-            ("force,F", po::bool_switch(&force)->default_value(false),         "Forces overwrite of files")
-            ("tab-output,t", po::bool_switch(&tab_out)->default_value(false),   "Tab-delimited output")
-            ("to-stdout,O", po::bool_switch(&std_out)->default_value(false),    "Prints to STDOUT in Tab Delimited")
-            ("prefix,p", po::value<std::string>(&prefix)->default_value("overlapped_"),
-                                           "Prefix for outputted files")
-            ("no-orphans,n", po::bool_switch(&no_orphan)->default_value(false),         "Only applicable with adapter trimming - orphaned pairs will not be written out. SE overlap reads will be outputted (if min length is met).")
-            ("minLength,l", po::value<size_t>(&minLength)->default_value(50), "Minimum sequence length allowed without being discarded")
-            ("kmer,k", po::value<size_t>(&kmer)->default_value(8), "Kmer size of the lookup table for the longer read")
-            ("kmer-offset,r", po::value<size_t>(&kmerOffset)->default_value(1), "Offset of kmers. Offset of 1, would be perfect overlapping kmers. An offset of kmer would be non-overlapping kmers that are right next to each other. Must be greater than 0.")
-            ("max-mismatch-errorDensity,x", po::value<double>(&errorDensity)->default_value(.25), "Max percent of mismatches allowed in overlapped section")
-            ("check-lengths,c", po::value<size_t>(&checkLengths)->default_value(20), "Check lengths on the ends")
-            ("min-overlap,o", po::value<size_t>(&minOverlap)->default_value(8), "Min overlap required to merge two reads")
-            ("adapter-trimming,a", po::bool_switch(&adapterTrimming)->default_value(false), "Trims adapters based on overlap, only returns PE reads, will correct quality scores and BP in the PE reads")
-            ("stranded,s", po::bool_switch(&stranded)->default_value(false), "Makes sure the correct complement is returned upon overlap")
-            ("hist-file,e", po::value<std::string>(&histFile)->default_value(""), "A tab delimited hist file with insert lengths.")
-            ("stats-file,L", po::value<std::string>(&statsFile)->default_value("stats.log") , "String for output stats file name")
-            ("append-stats-file,A", po::bool_switch(&appendStats)->default_value(false),  "Append Stats file.")
-            ("help,h",                     "Prints help.");
 
-        po::variables_map vm;
+        setDefaultParams(desc, program_name);
+        setDefaultParamsCutting(desc);
+        setDefaultParamsTrim(desc);
+
+        desc.add_options()
+            ("kmer,k", po::value<size_t>()->default_value(8), "Kmer size of the lookup table for the longer read")
+            ("kmer-offset,r", po::value<size_t>()->default_value(1), "Offset of kmers. Offset of 1, would be perfect overlapping kmers. An offset of kmer would be non-overlapping kmers that are right next to each other. Must be greater than 0.")
+            ("max-mismatch-errorDensity,x", po::value<double>()->default_value(.25), "Max percent of mismatches allowed in overlapped section")
+            ("check-lengths,c", po::value<size_t>()->default_value(20), "Check lengths on the ends")
+            ("min-overlap,o", po::value<size_t>()->default_value(8), "Min overlap required to merge two reads")
+            ("adapter-trimming,a", po::bool_switch()->default_value(false), "Trims adapters based on overlap, only returns PE reads, will correct quality scores and BP in the PE reads")
+           ("hist-file,e", po::value<std::string>()->default_value(""), "A tab delimited hist file with insert lengths.");
+
+                   po::variables_map vm;
         try
         {
             po::store(po::parse_command_line(argc, argv, desc),
                       vm); // can throw
-
-            /** --help option
-             */
-            if ( vm.count("help")  || vm.size() == 0)
-            {
-                std::cout << "Tab-Converter" << std::endl
-                          << desc << std::endl;
-                return SUCCESS;
-            }
-                       po::notify(vm); // throws on error, so do after help in case
-            //Index 1 start location (making it more human friendly)
             
-            if (errorDensity < 0.0 ||  errorDensity > 1.0) {
+            version_or_help(program_name, desc, vm);
+
+            po::notify(vm); // throws on error, so do after help in case
+         
+            if (vm["max-mismatch-errorDensity"].as<double>() < 0.0 ||  vm["max-mismatch-errorDensity"].as<double>() > 1.0) {
                 throw std::runtime_error("Woah, there human. It seems you have entered a wacky, zany number that isn't between 0.0 and 1.0 for max mismatch errorDensity.\nThat is why there is this error message. (>^_^)>\n\n");
             }
-            if (kmerOffset == 0) {
-                throw std::runtime_error("Human - you cannot have a kmer offset of zero! You almost sent me in an infinite loop. Do you know what that feels like? I would never do that to you. Please, try again, but this time make sure the kmer-offset,r flag is set to above 0.\n\n");
+
+            if (vm["kmer-offset"].as<size_t>() == 0) {
+                throw std::runtime_error("Human - you cannot have a kmer offset of zero! Madness would ensue. Please, try again, but this time make sure the kmer-offset,r flag is set to above 0.\n\n");
             }
- 
-            std::shared_ptr<HtsOfstream> out_1 = nullptr;
-            std::shared_ptr<HtsOfstream> out_2 = nullptr;
-            std::shared_ptr<HtsOfstream> out_3 = nullptr;
-            
+        
+            std::string statsFile(vm["stats-file"].as<std::string>());
+            std::string prefix(vm["prefix"].as<std::string>());
+   
             std::shared_ptr<OutputWriter> pe = nullptr;
             std::shared_ptr<OutputWriter> se = nullptr;
             
-            if (fastq_out || (! std_out && ! tab_out) ) {
-                for (auto& outfile: default_outfiles) {
-                    outfile = prefix + outfile + ".fastq";
-                }
-                
-                out_1.reset(new HtsOfstream(default_outfiles[0], force, gzip_out, false));
-                out_2.reset(new HtsOfstream(default_outfiles[1], force, gzip_out, false));
-                out_3.reset(new HtsOfstream(default_outfiles[2], force, gzip_out, false));
+            outputWriters(pe, se, vm["fastq-output"].as<bool>(), vm["tab-output"].as<bool>(), vm["interleaved-output"].as<bool>(), vm["unmapped-output"].as<bool>(), vm["force"].as<bool>(), vm["gzip-output"].as<bool>(), vm["to-stdout"].as<bool>(), prefix );
 
-                pe.reset(new PairedEndReadOutFastq(out_1, out_2));
-                se.reset(new SingleEndReadOutFastq(out_3));
-            } else if (interleaved_out)  {
-                for (auto& outfile: default_outfiles) {
-                    outfile = prefix + "INTER" + ".fastq";
-                }
-
-                out_1.reset(new HtsOfstream(default_outfiles[0], force, gzip_out, false));
-                out_3.reset(new HtsOfstream(default_outfiles[1], force, gzip_out, false));
-
-                pe.reset(new PairedEndReadOutInter(out_1));
-                se.reset(new SingleEndReadOutFastq(out_3));
-            } else if (tab_out || std_out) {
-                for (auto& outfile: default_outfiles) {
-                    outfile = prefix + "tab" + ".tastq";
-                }
-                out_1.reset(new HtsOfstream(default_outfiles[0], force, gzip_out, std_out));
-
-                pe.reset(new ReadBaseOutTab(out_1));
-                se.reset(new ReadBaseOutTab(out_1));
-            }
             histVec insertLengths;
 
-            if (histFile == "") {
+            if (vm["hist-file"].as<std::string>() == "") {
                 insertLengths = nullptr;
             } else {
                 insertLengths = histVec(new std::vector<unsigned long long int>);
             }
             
-            //setLookup(lookup, lookup_rc, readPhix);
-            // there are any problems
+
             if(vm.count("read1-input")) {
                 if (!vm.count("read2-input")) {
                     throw std::runtime_error("must specify both read1 and read2 input files.");
@@ -189,8 +105,7 @@ int main(int argc, char** argv)
                     bi::stream<bi::file_descriptor_source> is1{check_open_r(read1_files[i]), bi::close_handle};
                     bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
                     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
-                    helper_overlapper(ifp, pe, se, counters, errorDensity,  minOverlap, insertLengths, stranded, minLength, checkLengths,  adapterTrimming, kmer, kmerOffset, no_orphan);
-                }
+                    helper_overlapper(ifp, pe, se, counters, vm["max-mismatch-errorDensity"].as<double>(),  vm["min-overlap"].as<size_t>(), insertLengths, vm["stranded"].as<bool>(), vm["min-length"].as<size_t>(), vm["check-lengths"].as<size_t>(),  vm["adapter-trimming"].as<size_t>(), vm["kmer"].as<size_t>(), vm["kmer-offset"].as<size_t>(), vm["no-orphan"].as<bool>() ); }
             }
 
             if(vm.count("singleend-input")) {
@@ -199,7 +114,7 @@ int main(int argc, char** argv)
                     bi::stream<bi::file_descriptor_source> sef{ check_open_r(file), bi::close_handle};
                     InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(sef);
                     //JUST WRITE se read out - no way to overlap
-                    helper_overlapper(ifs, pe, se, counters, errorDensity,  minOverlap, insertLengths, stranded, minLength, checkLengths,  adapterTrimming, kmer, kmerOffset, no_orphan);
+                    helper_overlapper(ifs, pe, se, counters, vm["max-mismatch-errorDensity"].as<double>(),  vm["min-overlap"].as<size_t>(), insertLengths, vm["stranded"].as<bool>(), vm["min-length"].as<size_t>(), vm["check-lengths"].as<size_t>(),  vm["adapter-trimming"].as<size_t>(), vm["kmer"].as<size_t>(), vm["kmer-offset"].as<size_t>(), vm["no-orphan"].as<bool>() );
                 }
             }
             
@@ -208,7 +123,7 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> tabin{ check_open_r(file), bi::close_handle};
                     InputReader<ReadBase, TabReadImpl> ift(tabin);
-                    helper_overlapper(ift, pe, se, counters, errorDensity,  minOverlap, insertLengths, stranded, minLength, checkLengths,  adapterTrimming, kmer, kmerOffset, no_orphan);
+                    helper_overlapper(ift, pe, se, counters, vm["max-mismatch-errorDensity"].as<double>(),  vm["min-overlap"].as<size_t>(), insertLengths, vm["stranded"].as<bool>(), vm["min-length"].as<size_t>(), vm["check-lengths"].as<size_t>(),  vm["adapter-trimming"].as<size_t>(), vm["kmer"].as<size_t>(), vm["kmer-offset"].as<size_t>(), vm["no-orphan"].as<bool>() );
                 }
             }
             
@@ -217,33 +132,34 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> inter{ check_open_r(file), bi::close_handle};
                     InputReader<PairedEndRead, InterReadImpl> ifp(inter);
-                    helper_overlapper(ifp, pe, se, counters, errorDensity,  minOverlap, insertLengths, stranded, minLength, checkLengths,  adapterTrimming, kmer, kmerOffset, no_orphan);
+                    helper_overlapper(ifp, pe, se, counters, vm["max-mismatch-errorDensity"].as<double>(),  vm["min-overlap"].as<size_t>(), insertLengths, vm["stranded"].as<bool>(), vm["min-length"].as<size_t>(), vm["check-lengths"].as<size_t>(),  vm["adapter-trimming"].as<size_t>(), vm["kmer"].as<size_t>(), vm["kmer-offset"].as<size_t>(), vm["no-orphan"].as<bool>() );
                 }
             }
            
-            if (std_in) {
+            if (vm.count("std-input")) {
                 bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
-                helper_overlapper(ift, pe, se, counters, errorDensity,  minOverlap, insertLengths, stranded, minLength, checkLengths,  adapterTrimming, kmer, kmerOffset, no_orphan);
+                helper_overlapper(ift, pe, se, counters, vm["max-mismatch-errorDensity"].as<double>(),  vm["min-overlap"].as<size_t>(), insertLengths, vm["stranded"].as<bool>(), vm["min-length"].as<size_t>(), vm["check-lengths"].as<size_t>(),  vm["adapter-trimming"].as<size_t>(), vm["kmer"].as<size_t>(), vm["kmer-offset"].as<size_t>(), vm["no-orphan"].as<bool>() );
             }  
 
 
             if (insertLengths) {
-                std::ofstream histOutputFile(histFile);
+                std::ofstream histOutputFile(vm["hist-file"].as<std::string>() );
                 //0 is reserved for no overlap
                 std::string stars;
-                for (int i = 1; i < insertLengths->size(); ++i) {
+                for (size_t i = 1; i < insertLengths->size(); ++i) {
                     stars = "";
                     if ((*insertLengths)[i]) {
                         stars = stars.insert(0, (*insertLengths)[i]/AST_COUNT, '*');
                         histOutputFile << i << '\t' << (*insertLengths)[i] << '\t' << stars << '\n';
                     }
                 }
+                //No overalp at the end
                 stars = stars.insert(0, (*insertLengths)[0]/AST_COUNT, '*');
                 histOutputFile << "None" << '\t' << (*insertLengths)[0] << '\t' << stars << '\n';
                 histOutputFile.close();
             }
-            write_stats(statsFile, appendStats, counters, program_name);
+
         }
         catch(po::error& e)
         {

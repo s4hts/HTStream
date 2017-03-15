@@ -11,20 +11,20 @@
 #include <algorithm>
 #include "utils.h"
 
-int dist(int x, int y) {
+size_t dist(size_t x, size_t y) {
     return y - x;
 }
 
 /*This is a O(N) time algorithm
  * it will search for the longest base pair segment that has
  * no N's within it*/
-void trim_n(Read &rb, size_t min_length) {
+void trim_n(Read &rb) {
     
     const std::string &seq = rb.get_seq();
-    int len = seq.length() - 1;
-    int bestLeft = 0, currentLeft = 0, bestRight = 0;
+    size_t len = seq.length() - 1;
+    size_t bestLeft = 0, currentLeft = 0, bestRight = 0;
 
-    for (int i = 0; i <= len; ++i) {
+    for (size_t i = 0; i <= len; ++i) {
         if (seq[i] == 'N') {
             currentLeft = i + 1;
         } else if (dist(bestLeft, bestRight) <= dist(currentLeft, i)) {
@@ -46,15 +46,15 @@ void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe,
         ++counters["TotalRecords"];
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());        
         if (per) {
-            trim_n(per->non_const_read_one(), min_length);            
-            trim_n(per->non_const_read_two(), min_length); 
+            trim_n(per->non_const_read_one());            
+            trim_n(per->non_const_read_two()); 
             per->checkDiscarded(min_length);
             writer_helper(per, pe, se, stranded, counters);
         } else {
             SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
             
             if (ser) {
-                trim_n(ser->non_const_read_one(), min_length);
+                trim_n(ser->non_const_read_one());
                 ser->checkDiscarded(min_length);
                 writer_helper(ser, pe, se, stranded, counters);
             } else {
