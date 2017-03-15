@@ -4,14 +4,14 @@ project (hts_common)
 file(GLOB sources "src/*.cpp")
 message( status "sources: " ${sources})
 
+set(Boost_USE_STATIC_LIBS   ON)
 FIND_PACKAGE( Boost 1.56 COMPONENTS system program_options filesystem iostreams REQUIRED )
 
 set(COMMON_INCLUDES ${CMAKE_SOURCE_DIR}/common/src)
 include_directories(${GTEST_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} ${COMMON_INCLUDES} )
 
-add_library(hts_common SHARED ${sources})
-target_link_libraries(hts_common  ${Boost_LIBRARIES})
-
+add_library(${PROJECT_NAME} STATIC ${sources})
+target_link_libraries(${PROJECT_NAME}  ${Boost_LIBRARIES})
 
 ## test
 set(PROJECT_TEST_NAME ${PROJECT_NAME}_test)

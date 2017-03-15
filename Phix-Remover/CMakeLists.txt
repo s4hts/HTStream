@@ -11,6 +11,7 @@ set(COMMON_INCLUDES ${CMAKE_SOURCE_DIR}/common/src)
 set(PROJECT_LINK_LIBS hts_common)
 link_directories(${CMAKE_BINARY_DIR}/common)
 
+set(Boost_USE_STATIC_LIBS   ON)
 FIND_PACKAGE( Boost 1.56 COMPONENTS system program_options iostreams filesystem REQUIRED )
 include_directories(${COMMON_INCLUDES} ${Boost_INCLUDE_DIR} )
 
@@ -18,10 +19,12 @@ include_directories(${COMMON_INCLUDES} ${Boost_INCLUDE_DIR} )
 add_executable(phix-remover ${sources})
 target_link_libraries(phix-remover ${PROJECT_LINK_LIBS} ${Boost_LIBRARIES})
 
-add_custom_target(valgrind_phix_remover
-  DEPENDS phix_remover
-  COMMAND valgrind ./phix_remover -F -1 ${CMAKE_SOURCE_DIR}/test_suite/fastqFiles/testCase_1X_R1.fastq -2 ${CMAKE_SOURCE_DIR}/test_suite/fastqFiles/testCase_1X_R1.fastq -O
+add_custom_target(valgrind_${PROJECT_NAME}
+  DEPENDS ${PROJECT_NAME}
+  COMMAND valgrind ./${PROJECT_NAME} -F -1 ${CMAKE_SOURCE_DIR}/test_suite/fastqFiles/testCase_1X_R1.fastq -2 ${CMAKE_SOURCE_DIR}/test_suite/fastqFiles/testCase_1X_R1.fastq -O
 )
+
+install(TARGETS phix-remover RUNTIME DESTINATION bin)
 
 ## test
 set(PROJECT_TEST_NAME ${PROJECT_NAME}_test)

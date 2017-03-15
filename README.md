@@ -8,7 +8,7 @@ https://ibest.github.io/HTStream/
 mkdir -p build
 cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
-make all 
+make all
 ```
 
 ## debug build
@@ -39,7 +39,7 @@ make all
 
 ```
 
-## verbose 
+## verbose
 ```
 make VERBOSE=1
 
@@ -50,15 +50,23 @@ make testSD
 make test
 ```
 
+## install (defaults to /usr/local/bin)
+
+override by `cmake -DCMAKE_INSTALL_PREFIX=/foo`
+
+```
+make install
+```
+
 
 ## Trouble shooting the build
 If you use a module system, or have alternative versions of gcc or boost installed cmake may fail to correctly detect the required g++ or boost versions. Try a varaition on the the following commands, where paths are modified to match the approriate paths for your environment.:
 ```
 
 ```
-export CC=`which gcc` 
+export CC=`which gcc`
 export CXX=`which g++`
 mkdir -p build
 cd build
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INCLUDE_PATH=/opt/modules/devel/boost/1.61.0/include -DCMAKE_LIBRARY_PATH=/opt/modules/devel/boost/1.61.0/lib .. 
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INCLUDE_PATH=/opt/modules/devel/boost/1.61.0/include -DCMAKE_LIBRARY_PATH=/opt/modules/devel/boost/1.61.0/lib ..
 ```
