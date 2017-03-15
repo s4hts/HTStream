@@ -14,16 +14,16 @@
 void trim_left(Read &rb, size_t sum_qual, size_t window_size) {
 
     std::string qual = rb.get_qual();
-    int current_sum = 0;
-    int cut = 0;
+    size_t current_sum = 0;
+    size_t cut = 0;
 
-    for (int i = 0; i < qual.length(); ++i) {
+    for (size_t i = 0; i < qual.length(); ++i) {
          
-        current_sum += qual[i];
+        current_sum += static_cast<size_t>(qual[i]);
 
         if (i >= window_size) { //once we hit window size, subtract the first value off
             cut = (i - window_size + 1);
-            current_sum -= qual[i - window_size];
+            current_sum -= static_cast<size_t>(qual[i - window_size]);
         }
         if (current_sum >= sum_qual) {
             break;
@@ -41,16 +41,16 @@ void trim_left(Read &rb, size_t sum_qual, size_t window_size) {
 void trim_right(Read &rb, size_t sum_qual, size_t window_size) {
 
     std::string qual = rb.get_qual();
-    int len = qual.length() - 1;
-    int current_sum = 0;
-    int cut = len;
+    size_t len = qual.length() - 1;
+    size_t current_sum = 0;
+    size_t cut = len;
 
-    for (int i = len ; i >=0; --i) {
-        current_sum += qual[i];
+    for (size_t i = len ; i > 0; --i) {
+        current_sum += static_cast<size_t>(qual[i]);
 
         if (i < len - window_size) { //once we hit window size, subtract the first value off
             cut = i + window_size - 1;
-            current_sum -= qual[i + window_size];
+            current_sum -= static_cast<size_t>(qual[i + window_size]);
         }
         
         if (current_sum >= sum_qual) {

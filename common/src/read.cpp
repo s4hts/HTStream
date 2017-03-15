@@ -27,8 +27,8 @@ Read Read::subread(size_t _start, size_t _length){
     return Read(seq.substr(_start, _length), qual.substr(_start,_length), id);
 }
 
-std::string Read::subseq(size_t start, size_t length){
-    return seq.substr(start, length);
+std::string Read::subseq(size_t _start, size_t _length){
+    return seq.substr(_start, _length);
 }
 
 //PairedEndRead

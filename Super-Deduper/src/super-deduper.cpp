@@ -56,7 +56,7 @@ int main(int argc, char** argv)
 
             po::notify(vm); // throws on error, so do after help in case
             //Index 1 start location (making it more human friendly)
-            version_or_help(vm.count("help"), vm.count("version"), program_name, desc, vm);
+            version_or_help( program_name, desc, vm);
             
             start--;
 

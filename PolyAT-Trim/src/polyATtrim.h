@@ -16,8 +16,8 @@ void trim_left(Read &rb, size_t min_trim, size_t max_mismatch) {
     size_t t_mismatch = 0;
 
     std::string seq = rb.get_seq();
-    int temp_loc = 0;
-    for (int i = 0; i < seq.length(); ++i) {
+    size_t temp_loc = 0;
+    for (size_t i = 0; i < seq.length(); ++i) {
         if (seq[i] != 'A') {
             ++a_mismatch;
         } else if (a_mismatch <= max_mismatch) {
@@ -46,10 +46,11 @@ void trim_right(Read &rb, size_t min_trim, size_t max_mismatch) {
     size_t t_mismatch = 0;
 
     std::string seq = rb.get_seq();
-    int len = seq.length() - 1;
-    int temp_loc = len ;
 
-    for (int i = len  ; i >=0; --i) {
+    size_t len = seq.length() - 1;
+    size_t temp_loc = len ;
+
+    for (size_t i = len  ; i > 0; --i) {
         if (seq[i] != 'A') {
             ++a_mismatch;
         } else if (a_mismatch <= max_mismatch) {
@@ -80,7 +81,7 @@ void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe,
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());        
         if (per) {
             if (!no_left) {
-                trim_left(per->non_const_read_one(), min_trim, max_mismatch);            
+                trim_left(per->non_const_read_one(), min_trim, max_mismatch);
                 trim_left(per->non_const_read_two(), min_trim, max_mismatch);            
             }
             if (!no_right) {
