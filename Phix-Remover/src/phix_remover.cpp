@@ -61,11 +61,14 @@ int main(int argc, char** argv)
              */
             version_or_help(program_name, desc, vm);
             po::notify(vm); // throws on error, so do after help in case
-            
+           
+            std::string statsFile(vm["stats-file"].as<std::string>());
+            std::string prefix(vm["prefix"].as<std::string>());
+
             std::shared_ptr<OutputWriter> pe = nullptr;
             std::shared_ptr<OutputWriter> se = nullptr;
-           
-
+          
+             outputWriters(pe, se, vm["fastq-output"].as<bool>(), vm["tab-output"].as<bool>(), vm["interleaved-output"].as<bool>(), vm["unmapped-output"].as<bool>(), vm["force"].as<bool>(), vm["gzip-output"].as<bool>(), vm["to-stdout"].as<bool>(), prefix );
 
             //sets read information 
             Read readSeq = Read(vm["seq"].as<std::string>() , "", "");
@@ -89,7 +92,7 @@ int main(int argc, char** argv)
                     bi::stream<bi::file_descriptor_source> is1{check_open_r(read1_files[i]), bi::close_handle};
                     bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
                     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
-                    helper_discard(ifp, pe, se, counters, lookup, lookup_rc, vm["hits"].as<size_t>(), vm["checkR2"].as<bool>() );
+                    helper_discard(ifp, pe, se, counters, lookup, lookup_rc, vm["hits"].as<size_t>(), vm["check-read-2"].as<bool>() );
                 }
             }
 
@@ -107,7 +110,7 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> tabin{ check_open_r(file), bi::close_handle};
                     InputReader<ReadBase, TabReadImpl> ift(tabin);
-                    helper_discard(ift, pe, se, counters, lookup, lookup_rc, vm["hits"].as<size_t>(), vm["checkR2"].as<bool>() );
+                    helper_discard(ift, pe, se, counters, lookup, lookup_rc, vm["hits"].as<size_t>(), vm["check-read-2"].as<bool>() );
                 }
             }
             
@@ -116,14 +119,14 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> inter{ check_open_r(file), bi::close_handle};
                     InputReader<PairedEndRead, InterReadImpl> ifp(inter);
-                    helper_discard(ifp, pe, se, counters, lookup, lookup_rc, vm["hits"].as<size_t>(), vm["checkR2"].as<bool>() );
+                    helper_discard(ifp, pe, se, counters, lookup, lookup_rc, vm["hits"].as<size_t>(), vm["check-read-2"].as<bool>() );
                 }
             }
            
             if (vm.count("std-input")) {
                 bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
-                helper_discard(ift, pe, se, counters, lookup, lookup_rc, vm["hits"].as<size_t>(), vm["checkR2"].as<bool>() );
+                helper_discard(ift, pe, se, counters, lookup, lookup_rc, vm["hits"].as<size_t>(), vm["check-read-2"].as<bool>() );
             }  
 
         }

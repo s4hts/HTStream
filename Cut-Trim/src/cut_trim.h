@@ -37,10 +37,10 @@ void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe,
             if (ser) {
                 Read &rb = per->non_const_read_one();
                 if (!no_left) {
-                    rb.setLCut(cut_size);
+                    ser->non_const_read_one().setLCut(cut_size);
                 } 
                 if (!no_right) {
-                    rb.setRCut((per->non_const_read_two()).getLength() - cut_size);
+                    ser->non_const_read_one().setRCut(ser->non_const_read_one().getLength() - cut_size);
                 }
                 ser->checkDiscarded(min_length);
                 writer_helper(ser, pe, se, stranded, counters);
