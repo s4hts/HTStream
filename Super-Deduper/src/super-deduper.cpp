@@ -32,8 +32,6 @@ int main(int argc, char** argv)
     Counter counters;
     setupCounter(counters);    
     
-    size_t start, length, avg_automatic_write;
-
     try
     {
         /** Define and parse the program options
@@ -42,9 +40,9 @@ int main(int argc, char** argv)
         setDefaultParams(desc, program_name);
 
         desc.add_options()
-            ("start,s", po::value<size_t>(&start)->default_value(10),  "Start location for unique ID <int>")
-            ("length,l", po::value<size_t>(&length)->default_value(10), "Length of unique ID <int>")
-            ("quality-check,q", po::value<size_t>(&avg_automatic_write)->default_value(40), "Avg quality score to have the read written automatically <int>");
+            ("start,s", po::value<size_t>()->default_value(10),  "Start location for unique ID <int>")
+            ("length,l", po::value<size_t>()->default_value(10), "Length of unique ID <int>")
+            ("avg-qual-score,q", po::value<size_t>()->default_value(40), "Avg quality score to have the read written automatically <int>");
                    po::variables_map vm;
         try
         {
@@ -55,11 +53,9 @@ int main(int argc, char** argv)
              */
 
             po::notify(vm); // throws on error, so do after help in case
-            //Index 1 start location (making it more human friendly)
+
             version_or_help( program_name, desc, vm);
             
-            start--;
-
             std::string statsFile(vm["stats-file"].as<std::string>());
             std::string prefix(vm["prefix"].as<std::string>());
 
@@ -83,7 +79,7 @@ int main(int argc, char** argv)
                     bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
                     
                     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
-                    load_map(ifp, counters, read_map, pe, se,avg_automatic_write, start, length);
+                    load_map(ifp, counters, read_map, pe, se,vm["avg-qual-score"].as<size_t>(), vm["start"].as<size_t>() - 1, vm["length"].as<size_t>());
                 }
             }
 
@@ -92,7 +88,7 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> ser{ check_open_r(file), bi::close_handle};
                     InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(ser);
-                    load_map(ifs, counters, read_map, pe, se,avg_automatic_write, start, length);
+                    load_map(ifs, counters, read_map, pe, se,vm["avg-qual-score"].as<size_t>(), vm["start"].as<size_t>() - 1, vm["length"].as<size_t>());
                 }
             }
             
@@ -101,7 +97,7 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> tabin{ check_open_r(file), bi::close_handle};
                     InputReader<ReadBase, TabReadImpl> ift(tabin);
-                    load_map(ift, counters, read_map, pe, se,avg_automatic_write, start, length);
+                    load_map(ift, counters, read_map, pe, se,vm["avg-qual-score"].as<size_t>(), vm["start"].as<size_t>() - 1, vm["length"].as<size_t>());
                 }
             }
             
@@ -110,14 +106,14 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> inter{ check_open_r(file), bi::close_handle};
                     InputReader<PairedEndRead, InterReadImpl> ifp(inter);
-                    load_map(ifp, counters, read_map, pe, se,avg_automatic_write, start, length);
+                    load_map(ifp, counters, read_map, pe, se,vm["avg-qual-score"].as<size_t>(), vm["start"].as<size_t>() - 1, vm["length"].as<size_t>());
                 }
             }
             
             if (vm.count("stdin-input")) {
                 bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
-                load_map(ift, counters, read_map, pe, se,avg_automatic_write, start, length);
+                load_map(ift, counters, read_map, pe, se,vm["avg-qual-score"].as<size_t>(), vm["start"].as<size_t>() - 1, vm["length"].as<size_t>());
             }
             
             for(auto const &i : read_map) {

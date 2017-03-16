@@ -32,11 +32,9 @@ namespace bi = boost::iostreams;
 int main(int argc, char** argv)
 {
     const std::string program_name = "Cut_Trim";
+
     Counter counters;
     setupCounter(counters);
-
-    std::string prefix;
-    std::vector<std::string> default_outfiles = {"PE1", "PE2", "SE"};
 
     try
     {
@@ -44,7 +42,7 @@ int main(int argc, char** argv)
          */
         namespace po = boost::program_options;
         po::options_description desc("Options");
-       setDefaultParams(desc, program_name);
+        setDefaultParams(desc, program_name);
         setDefaultParamsCutting(desc);
         setDefaultParamsTrim(desc); 
 
@@ -60,11 +58,15 @@ int main(int argc, char** argv)
 
             /** --help option
              */
+            version_or_help(program_name, desc, vm);
             
             po::notify(vm); // throws on error, so do after help in case
 
-            version_or_help(program_name, desc, vm);
 
+
+            std::string statsFile(vm["stats-file"].as<std::string>());
+            std::string prefix(vm["prefix"].as<std::string>());
+            
             std::shared_ptr<OutputWriter> pe = nullptr;
             std::shared_ptr<OutputWriter> se = nullptr;
             
@@ -84,7 +86,7 @@ int main(int argc, char** argv)
                     bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
                    
                     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
-                    helper_trim(ifp, pe, se, counters, vm["min-length"].as<size_t>() , vm["cut-size"].as<size_t>(), vm["stranded"].as<size_t>(), vm["no-left"].as<size_t>(), vm["no-right"].as<size_t>() , vm["no-orphans"].as<size_t>() );
+                    helper_trim(ifp, pe, se, counters, vm["min-length"].as<size_t>() , vm["cut-size"].as<size_t>(), vm["stranded"].as<bool>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>() , vm["no-orphans"].as<bool>() );
                 }
             }
 
@@ -93,7 +95,7 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> sef{ check_open_r(file), bi::close_handle};
                     InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(sef);
-                    helper_trim(ifs, pe, se, counters, vm["min-length"].as<size_t>() , vm["cut-size"].as<size_t>(), vm["stranded"].as<size_t>(), vm["no-left"].as<size_t>(), vm["no-right"].as<size_t>() , vm["no-orphans"].as<size_t>() );
+                    helper_trim(ifs, pe, se, counters, vm["min-length"].as<size_t>() , vm["cut-size"].as<size_t>(), vm["stranded"].as<bool>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>() , vm["no-orphans"].as<bool>() );
                 }
             }
             
@@ -102,7 +104,7 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> tabin{ check_open_r(file), bi::close_handle};
                     InputReader<ReadBase, TabReadImpl> ift(tabin);
-                    helper_trim(ift, pe, se, counters, vm["min-length"].as<size_t>() , vm["cut-size"].as<size_t>(), vm["stranded"].as<size_t>(), vm["no-left"].as<size_t>(), vm["no-right"].as<size_t>() , vm["no-orphans"].as<size_t>() );
+                    helper_trim(ift, pe, se, counters, vm["min-length"].as<size_t>() , vm["cut-size"].as<size_t>(), vm["stranded"].as<bool>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>() , vm["no-orphans"].as<bool>() );
                 }
             }
             
@@ -111,14 +113,14 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> inter{ check_open_r(file), bi::close_handle};
                     InputReader<PairedEndRead, InterReadImpl> ifp(inter);
-                    helper_trim(ifp, pe, se, counters, vm["min-length"].as<size_t>() , vm["cut-size"].as<size_t>(), vm["stranded"].as<size_t>(), vm["no-left"].as<size_t>(), vm["no-right"].as<size_t>() , vm["no-orphans"].as<size_t>() );
+                    helper_trim(ifp, pe, se, counters, vm["min-length"].as<size_t>() , vm["cut-size"].as<size_t>(), vm["stranded"].as<bool>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>() , vm["no-orphans"].as<bool>() );
                 }
             }
            
             if (vm.count("std-input")) {
                 bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
-                helper_trim(ift, pe, se, counters, vm["min-length"].as<size_t>() , vm["cut-size"].as<size_t>(), vm["stranded"].as<size_t>(), vm["no-left"].as<size_t>(), vm["no-right"].as<size_t>() , vm["no-orphans"].as<size_t>() );
+                helper_trim(ift, pe, se, counters, vm["min-length"].as<size_t>() , vm["cut-size"].as<size_t>(), vm["stranded"].as<bool>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>() , vm["no-orphans"].as<bool>() );
             }  
 
         }
@@ -137,7 +139,6 @@ int main(int argc, char** argv)
         return ERROR_UNHANDLED_EXCEPTION;
 
     }
-
-    return SUCCESS;
+return SUCCESS;
 
 }

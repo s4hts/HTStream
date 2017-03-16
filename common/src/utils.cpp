@@ -93,8 +93,8 @@ void outputWriters(std::shared_ptr<OutputWriter> &pe, std::shared_ptr<OutputWrit
         }
         out_1.reset(new HtsOfstream(default_outfiles[0], force, gzip_out, std_out));
 
-        pe.reset(new ReadBaseOutUnmapped(out_1));
-        se.reset(new ReadBaseOutUnmapped(out_1));
+        pe.reset(new ReadBaseOutTab(out_1));
+        se.reset(new ReadBaseOutTab(out_1));
     } else if (fastq_out || (! std_out && ! tab_out) ) {
         for (auto& outfile: default_outfiles) {
             outfile = prefix + outfile + ".fastq";

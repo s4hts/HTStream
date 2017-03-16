@@ -49,7 +49,7 @@ int main(int argc, char** argv)
 
         desc.add_options()
             ("max-mismatch,x", po::value<size_t>()->default_value(3),    "Max amount of mismatches allowed in trimmed area")
-            ("min-trim,t", po::value<size_t>()->default_value(5),    "Min base pairs trim for AT tail");
+            ("min-trim,M", po::value<size_t>()->default_value(5),    "Min base pairs trim for AT tail");
 
         po::variables_map vm;
         try
@@ -86,7 +86,7 @@ int main(int argc, char** argv)
                     bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
                    
                     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
-                    helper_trim(ifp, pe, se, counters, vm["min-length"].as<std::size_t>(), vm["min-trim"].as<std::size_t>(), vm["max-mismatch"].as<std::size_t>(), vm["stranded"].as<std::size_t>(), vm["no-left"].as<std::size_t>(), vm["no-right"].as<std::size_t>(), vm["no-orphans"].as<std::size_t>() );
+                    helper_trim(ifp, pe, se, counters, vm["min-length"].as<std::size_t>(), vm["min-trim"].as<std::size_t>(), vm["max-mismatch"].as<std::size_t>(), vm["stranded"].as<bool>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>(), vm["no-orphans"].as<bool>() );
                 }
             }
 
@@ -95,7 +95,7 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> sef{ check_open_r(file), bi::close_handle};
                     InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(sef);
-                    helper_trim(ifs, pe, se, counters, vm["min-length"].as<std::size_t>(), vm["min-trim"].as<std::size_t>(), vm["max-mismatch"].as<std::size_t>(), vm["stranded"].as<std::size_t>(), vm["no-left"].as<std::size_t>(), vm["no-right"].as<std::size_t>(), vm["no-orphans"].as<std::size_t>() );
+                    helper_trim(ifs, pe, se, counters, vm["min-length"].as<std::size_t>(), vm["min-trim"].as<std::size_t>(), vm["max-mismatch"].as<std::size_t>(), vm["stranded"].as<bool>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>(), vm["no-orphans"].as<bool>() );
                 }
             }
             
@@ -104,7 +104,7 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> tabin{ check_open_r(file), bi::close_handle};
                     InputReader<ReadBase, TabReadImpl> ift(tabin);
-                    helper_trim(ift, pe, se, counters, vm["min-length"].as<std::size_t>(), vm["min-trim"].as<std::size_t>(), vm["max-mismatch"].as<std::size_t>(), vm["stranded"].as<std::size_t>(), vm["no-left"].as<std::size_t>(), vm["no-right"].as<std::size_t>(), vm["no-orphans"].as<std::size_t>() );
+                    helper_trim(ift, pe, se, counters, vm["min-length"].as<std::size_t>(), vm["min-trim"].as<std::size_t>(), vm["max-mismatch"].as<std::size_t>(), vm["stranded"].as<bool>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>(), vm["no-orphans"].as<bool>() );
                 }
             }
             
@@ -113,14 +113,14 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> inter{ check_open_r(file), bi::close_handle};
                     InputReader<PairedEndRead, InterReadImpl> ifp(inter);
-                    helper_trim(ifp, pe, se, counters, vm["min-length"].as<std::size_t>(), vm["min-trim"].as<std::size_t>(), vm["max-mismatch"].as<std::size_t>(), vm["stranded"].as<std::size_t>(), vm["no-left"].as<std::size_t>(), vm["no-right"].as<std::size_t>(), vm["no-orphans"].as<std::size_t>() );
+                    helper_trim(ifp, pe, se, counters, vm["min-length"].as<std::size_t>(), vm["min-trim"].as<std::size_t>(), vm["max-mismatch"].as<std::size_t>(), vm["stranded"].as<bool>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>(), vm["no-orphans"].as<bool>() );
                 }
             }
            
             if (vm.count("std-input")) {
                 bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
-                helper_trim(ift, pe, se, counters, vm["min-length"].as<std::size_t>(), vm["min-trim"].as<std::size_t>(), vm["max-mismatch"].as<std::size_t>(), vm["stranded"].as<std::size_t>(), vm["no-left"].as<std::size_t>(), vm["no-right"].as<std::size_t>(), vm["no-orphans"].as<std::size_t>() );
+                helper_trim(ift, pe, se, counters, vm["min-length"].as<std::size_t>(), vm["min-trim"].as<std::size_t>(), vm["max-mismatch"].as<std::size_t>(), vm["stranded"].as<bool>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>(), vm["no-orphans"].as<bool>() );
             }  
 
         }
