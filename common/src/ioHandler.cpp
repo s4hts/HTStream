@@ -1,5 +1,6 @@
 #include "ioHandler.h"
 #include <exception>
+#include <cerrno>
 
 void writer_helper(ReadBase *r, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, bool stranded, Counter &c, bool no_orphans ) {
     PairedEndRead *per = dynamic_cast<PairedEndRead*>(r);
@@ -46,21 +47,34 @@ void skip_lr(std::istream *input) {
     }
 }
 
+void throw_error(const std::string& filename) {
+    throw std::runtime_error(filename + ": " +  std::strerror( errno ));
+}
+
 int check_open_r(const std::string& filename) {
+    FILE* f = NULL;
+
     bf::path p(filename);
     if (!bf::exists(p)) {
         throw std::runtime_error("File " + filename + " was not found.");
     }
 
     if (p.extension() == ".gz") {
-        return fileno(popen(("gunzip -c " + filename).c_str(), "r"));
+        f = popen(("gunzip -c " + filename).c_str(), "r");
     } else {
-        return fileno(fopen(filename.c_str(), "r"));
+        f = fopen(filename.c_str(), "r");
     }
+
+    if (!f) {
+        throw_error(filename);
+    }
+    return fileno(f);
 }
 
-int check_exists(const std::string& filename, bool force, bool gzip, bool std_out) {
 
+int check_exists(const std::string& filename, bool force, bool gzip, bool std_out) {
+    FILE* f = NULL;
+    
     if (std_out) {
         return fileno(stdout);
     }
@@ -68,14 +82,17 @@ int check_exists(const std::string& filename, bool force, bool gzip, bool std_ou
 
     if (force || !bf::exists(p)) {
         if (gzip) {
-            return fileno(popen(("gzip > " + filename + ".gz").c_str(), "w"));
+            f = popen(("gzip > " + filename + ".gz").c_str(), "w");
         } else {
-            return fileno(fopen(filename.c_str(), "w"));
+            f = fopen(filename.c_str(), "w");
         }
+        if (!f) {
+            throw_error(filename);
+        }
+        return fileno(f);
     } else {
         throw std::runtime_error("File " + filename + " all ready exists. Please use -F or delete it\n");
     }
-
 }
 
 
