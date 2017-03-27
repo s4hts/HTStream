@@ -3,16 +3,33 @@
 #include <iostream>
 #include "q_window_trim.h"
 
-class SDTest : public ::testing::Test {
+class QTrimTest : public ::testing::Test {
     public:
         const std::string readData_1 = "@Read1\nTTTTTGGAAAAAAAAAGTCTTTGTTG\n+\n#####AAAAAAAAAAAAAAAA#####\n";
         const std::string readData_2 = "@Read1\nTTTTTGGAAAAAAAAAGTCTTTGTTG\n+\n##########################\n";
+        const std::string readData_Perf="@Read1\nTTTTTGGAAAAAAAAAGTCTTTGTTG\n+\nAAAAAAAAAAAAAAAAAAAAAAAAAA\n";
         size_t min_length = 5;
         size_t window_size = 5;
         size_t sum_qual = (20 + 33) * window_size;
 };
 
-TEST_F(SDTest, BasicTrim) {
+TEST_F(QTrimTest, NoTrim) {
+    std::istringstream in1(readData_Perf);
+    std::istringstream in2(readData_Perf);
+
+    InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(in1, in2);
+
+    while(ifp.has_next()) {
+        auto i = ifp.next();
+        PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
+        trim_left(per->non_const_read_one(), sum_qual, window_size);
+        trim_right(per->non_const_read_one(), sum_qual, window_size);
+        ASSERT_EQ("AAAAAAAAAAAAAAAAAAAAAAAAAA", (per->non_const_read_one()).get_sub_qual());
+        ASSERT_EQ("AAAAAAAAAAAAAAAAAAAAAAAAAA", (per->non_const_read_two()).get_sub_qual());
+    }
+};
+
+TEST_F(QTrimTest, BasicTrim) {
     std::istringstream in1(readData_1);
     std::istringstream in2(readData_2);
 
@@ -27,7 +44,7 @@ TEST_F(SDTest, BasicTrim) {
     }
 };
 
-TEST_F(SDTest, AllTrim) {
+TEST_F(QTrimTest, AllTrim) {
     std::istringstream in1(readData_1);
     std::istringstream in2(readData_2);
 
@@ -42,7 +59,7 @@ TEST_F(SDTest, AllTrim) {
     }
 };
 
-TEST_F(SDTest, Stranded) {
+TEST_F(QTrimTest, Stranded) {
     std::istringstream in1(readData_2); //REverse these two so R1 is discarded and R2 is RCed
     std::istringstream in2(readData_1);
 

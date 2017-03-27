@@ -10,10 +10,10 @@
 #include <vector>
 #include <boost/program_options.hpp>
 #include "version.h"
+#include "typedefs.h"
 
 namespace po = boost::program_options;
 
-typedef std::unordered_map <std::string, size_t> Counter;
 
 void setupCounter(Counter &c);
 void write_stats(const std::string &statsFile, const bool &appendStats, const Counter &c, const std::string &program_name);
