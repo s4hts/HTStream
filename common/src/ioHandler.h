@@ -21,7 +21,6 @@
 
 #include <iostream>
 #include <string>
-#include "utils.h"
 
 namespace bf = boost::filesystem;
 namespace bi = boost::iostreams;
@@ -48,8 +47,7 @@ public:
         }
     }
     
-    HtsOfstream(std::string filename_, bool force_, bool gzip_, bool stdout_) : force(force_), filename(filename_), gzip(gzip_),
-                                                                                std_out(stdout_)  { }
+    HtsOfstream(std::string filename_, bool force_, bool gzip_, bool stdout_) : filename(filename_), force(force_), gzip(gzip_), std_out(stdout_)  { }
     
     HtsOfstream(std::shared_ptr<std::ostream> out_) : out(out_) { }
 
@@ -124,10 +122,10 @@ protected:
 class OutputWriter {
 public:
     virtual ~OutputWriter() {  }
-    virtual void write(const PairedEndRead& read) { throw std::runtime_error("No PE implementation of write (Probably a SE read)"); }
-    virtual void write(const SingleEndRead& read) { throw std::runtime_error("No SE implementaiton of write (Probably a PE read)"); }
-    virtual void write_read(const Read &read, bool rc) { throw std::runtime_error("No write_read class, only accessable with SE"); } //only SE
-    virtual void write(const ReadBase &read) { throw std::runtime_error("No ReadBase class, only accessable with tab"); } //maybe typecase eventually 
+    virtual void write(const PairedEndRead& ) { throw std::runtime_error("No PE implementation of write (Probably a SE read)"); }
+    virtual void write(const SingleEndRead& ) { throw std::runtime_error("No SE implementaiton of write (Probably a PE read)"); }
+    virtual void write_read(const Read &, bool ) { throw std::runtime_error("No write_read class, only accessable with SE"); } //only SE
+    virtual void write(const ReadBase &) { throw std::runtime_error("No ReadBase class, only accessable with tab"); } //maybe typecase eventually 
 };
 
 class SingleEndReadOutFastq : public OutputWriter {
@@ -201,6 +199,95 @@ protected:
         *out1 << "@" << read2.get_id() << '\n' << read2.get_sub_seq() << "\n+\n" << read2.get_sub_qual() << '\n'; 
     }
 };
+
+/*Unmapped reads*/
+class ReadBaseOutUnmapped : public OutputWriter {
+public:
+    ReadBaseOutUnmapped(std::shared_ptr<HtsOfstream> &out_) : output(out_) { }
+    ~ReadBaseOutUnmapped() { output->flush(); }
+    void write(const PairedEndRead &read) { format_writer(read.get_read_one(), read.get_read_two()); }
+    void write(const SingleEndRead &read) { format_writer(read.get_read()); }
+    void write_read(const Read &read, bool rc) { if (rc) { format_writer_rc(read); } else { format_writer(read); } }
+    
+    void write(const ReadBase &read) {  
+        const PairedEndRead *per = dynamic_cast<const PairedEndRead*>(&read);
+        if (per) {
+            format_writer(per->get_read_one(), per->get_read_two());
+        } else {
+            const SingleEndRead *ser = dynamic_cast<const SingleEndRead*>(&read);
+            if (ser == NULL) {
+                throw std::runtime_error("ReadBaseOutTab::write could not cast read as SE or PE read");
+            }
+            format_writer(ser->get_read());
+        }    
+    }
+protected:
+    std::shared_ptr<HtsOfstream> output = nullptr;
+    
+    /*sam format specs spaces are for readability 
+     * id \t bitwise flag \t rname \t pos \t mapQ \t CIGAR \t RNEXT \t PNEXT \t TLEN \t SEQ \t QUAL\n
+     *
+     * id = id
+     * bitwas flag
+     * SE - 68
+     * PE R1 - 69
+     * PE R2 - 133
+     * RNAME - *
+     * POS - 0
+     * MAPQ - 255
+     * CIGAR - *
+     * RNEXT - *
+     * PNEXT - *
+     * TLEN - SEQ.length
+     * SEQ - seq
+     * QUAL - qual */
+    const size_t se_bitwise = 68;
+    const size_t pe1_bitwise = 69;
+    const size_t pe2_bitwise = 133;
+
+    void samout(const Read &read, size_t bitwiseflag) {
+        *output << read.get_id() << '\t'
+            << bitwiseflag << '\t'
+            << "*\t" /*RNAME*/
+            << "0\t" /*POS*/
+            << "255\t" /*MAPQ*/
+            << "*\t" /*CIGAR*/
+            << "0\t" /*RNEXT*/
+            << "0\t" /*PNEXT*/
+            << read.getLength() << "\t"
+            << read.get_sub_seq() << "\t"
+            << read.get_sub_qual() << "\n";
+    }
+
+    void samout_rc(const Read &read, size_t bitwiseflag) {
+        *output << read.get_id() << '\t'
+            << bitwiseflag << '\t'
+            << "*\t" /*RNAME*/
+            << "0\t" /*POS*/
+            << "255\t" /*MAPQ*/
+            << "*\t" /*CIGAR*/
+            << "0\t" /*RNEXT*/
+            << "0\t" /*PNEXT*/
+            << read.getLength() << "\t"
+            << read.get_seq_rc() << "\t"
+            << read.get_qual_rc() << "\n";
+    }
+
+    /*Unmapped specs for SE reads*/
+    void format_writer(const Read &read) { 
+        samout(read, se_bitwise);
+    }
+
+    void format_writer(const Read &read1, const Read &read2) {
+        samout(read1, pe1_bitwise);
+        samout(read2, pe2_bitwise);
+    }
+   
+    void format_writer_rc(const Read &read) { 
+       samout_rc(read, se_bitwise);
+    } 
+};
+
 
 class ReadBaseOutTab : public OutputWriter {
 public:

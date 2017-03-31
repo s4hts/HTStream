@@ -11,9 +11,6 @@ class TrimN : public ::testing::Test {
         const std::string readData_4 = "@Read1\nNTTTTAGGATTTTTTTTTTTTTN\n+\n#######################\n";
         const std::string readData_5 = "@Read1\nATTTTAGGATTTTTTTTTTTTTN\n+\n#######################\n";
         const std::string readData_6 = "@Read1\nNTTTTAGGATTTTTTTTTTTTTA\n+\n#######################\n";
-        size_t min_trim = 5;
-        size_t min_length = 5;
-        size_t max_mismatch = 3;
 };
 
 TEST_F(TrimN, EdgeRightN) {
@@ -25,7 +22,7 @@ TEST_F(TrimN, EdgeRightN) {
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        trim_n(per->non_const_read_one(), min_trim);
+        trim_n(per->non_const_read_one());
         ASSERT_EQ("ATTTTAGGATTTTTTTTTTTTT", (per->non_const_read_one()).get_sub_seq());
     }
 };
@@ -40,7 +37,7 @@ TEST_F(TrimN, EdgeLeftN) {
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        trim_n(per->non_const_read_one(), min_trim);
+        trim_n(per->non_const_read_one());
         ASSERT_EQ("TTTTAGGATTTTTTTTTTTTTA", (per->non_const_read_one()).get_sub_seq());
     }
 };
@@ -55,7 +52,7 @@ TEST_F(TrimN, EdgeCaseNonEnds) {
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        trim_n(per->non_const_read_one(), min_trim);
+        trim_n(per->non_const_read_one());
         ASSERT_EQ("TTTTAGGATTTTTTTTTTTTT", (per->non_const_read_one()).get_sub_seq());
     }
 };
@@ -69,7 +66,7 @@ TEST_F(TrimN, BasicTrim) {
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        trim_n(per->non_const_read_one(), min_trim);
+        trim_n(per->non_const_read_one());
         ASSERT_EQ("GAAAAAAAAAG", (per->non_const_read_one()).get_sub_seq());
     }
 };
@@ -83,7 +80,7 @@ TEST_F(TrimN, NoTrim) {
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        trim_n(per->non_const_read_two(), min_trim);
+        trim_n(per->non_const_read_two());
         ASSERT_EQ("AAAAAAAAAAAAAAAAAAAAAAAA", (per->non_const_read_two()).get_sub_seq());
     }
 };
@@ -97,7 +94,7 @@ TEST_F(TrimN, TwoBasicTrim) {
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        trim_n(per->non_const_read_one(), min_trim);
+        trim_n(per->non_const_read_one());
         ASSERT_EQ("TTTTTTTTTTTTT", (per->non_const_read_one()).get_sub_seq());
     }
 };

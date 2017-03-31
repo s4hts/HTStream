@@ -61,7 +61,7 @@ size_t check_read(const Read &r, const kmerArray &lookup, const kmerArray &looku
             forwardBits.reset();
         }
 
-        forwardBits &= ~(3 << 14); //only check forward strand against both RC and non-rc
+        forwardBits &= static_cast<size_t>(~(3 << 14)); //only check forward strand against both RC and non-rc
         forwardBits <<= 2;
         forwardBits ^= bin;
         
@@ -137,7 +137,7 @@ void setLookup(kmerArray &lookup, kmerArray &lookup_rc, Read &rb) {
 
     std::string seq = rb.get_seq();
 
-    for (int i = 0; i < 1<<(kmerBits); ++i) {
+    for (size_t i = 0; i < 1<<(kmerBits); ++i) {
         lookup[i] = 0;
         lookup_rc[i] = 0;
     }
@@ -156,7 +156,7 @@ void setLookup(kmerArray &lookup, kmerArray &lookup_rc, Read &rb) {
         /*Sets the 14 and 15th bit to zero to allow room to shift
          * over by two. The 0 and 1st bit are not able to be set
          * based on the bp seen*/
-        forwardBits &= ~(3 << ((kmerBits)-2));
+        forwardBits &= static_cast<size_t>(~(3 << ((kmerBits)-2)));
         forwardBits <<= 2;
         forwardBits ^= bin;
         

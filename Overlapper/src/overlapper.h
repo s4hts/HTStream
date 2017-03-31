@@ -27,15 +27,18 @@ typedef std::shared_ptr<std::vector<unsigned long long int>> histVec;
 
 /*Create the quick lookup table
  * Multi map because a single kemr could appear multiple places*/
-seqLookup readOneMap(const std::string &seq1, const size_t kmer, const size_t kmerOffset) {
+seqLookup readOneMap(std::string seq1, const size_t kmer, const size_t kmerOffset) {
 
     seqLookup baseReadMap;
-    size_t seqLen = seq1.length() - 1;
-
-    for (size_t bp = 0; bp < seqLen - kmer; bp+=kmerOffset) {
-        baseReadMap.insert(std::make_pair(seq1.substr(bp, kmer), bp));
+    std::string::iterator it;
+    for ( it = seq1.begin() ; it < seq1.end() - ( static_cast<long> ( kmerOffset + kmer ) ) ; it += static_cast<long> ( kmerOffset )   ) {
+        baseReadMap.insert(std::make_pair( std::string ( it, it+ static_cast<long> ( kmer )  ) , it - seq1.begin() ));
     }
-    baseReadMap.insert(std::make_pair(seq1.substr(seqLen - kmer, kmer), seqLen - kmer));
+
+    if ( seq1.begin() + static_cast<long> (kmer) > seq1.end() ) {
+        it = seq1.end() - static_cast<long> ( kmer );
+        baseReadMap.insert(std::make_pair(  std::string( it , it + static_cast<long> (kmer)), it - seq1.begin()   ) );
+    }
 
     return baseReadMap;
 }
@@ -50,7 +53,7 @@ spReadBase checkIfOverlap(Read &r1, Read &r2, size_t loc1, size_t loc2, const do
     size_t loc1_t = loc1 - minLoc;
     size_t loc2_t = loc2 - minLoc;
     size_t maxLoop = std::min(r1.getLength() - loc1_t, r2.getLength() - loc2_t);
-    size_t maxMis = maxLoop * misDensity;
+    size_t maxMis = static_cast<size_t>(maxLoop * misDensity);
 
     if (maxLoop <= minOverlap) {
         return nullptr;
@@ -77,10 +80,10 @@ spReadBase checkIfOverlap(Read &r1, Read &r2, size_t loc1, size_t loc2, const do
         
         if (seq1[read1_bp] == seq2[read2_bp]) {
             bp = seq1[read1_bp];
-            qual = std::min(qual1[read1_bp] + qual2[read2_bp] - 33, 40 + 33); //addition of qual (minus just one of the ascii values 
+            qual = static_cast<char>(std::min(qual1[read1_bp] + qual2[read2_bp] - 33, 40 + 33)); //addition of qual (minus just one of the ascii values 
         } else {
             bp = qual1[read1_bp] > qual2[read2_bp] ? seq1[read1_bp] : seq2[read2_bp];
-            qual = std::max(qual1[read1_bp] - qual2[read2_bp] + 33, 1 + 33);
+            qual = static_cast<char>(std::max(qual1[read1_bp] - qual2[read2_bp] + 33, 1 + 33));
             
             if (++misMatches > maxMis) {
                 /*Not valid match*/
@@ -146,7 +149,7 @@ spReadBase getOverlappedReads(Read &r1, Read &r2, const seqLookup &seq1Map,  con
 
 }
 
-spReadBase check_read(PairedEndRead &pe , Counter &counters, const double misDensity, const size_t &minOver, histVec &insertLength, const bool &stranded, const size_t &checkLengths, const bool &adapterTrimming, const size_t kmer, const size_t kmerOffset, const size_t minLength) {
+spReadBase check_read(PairedEndRead &pe , Counter &counters, const double misDensity, const size_t &minOver, histVec &insertLength, const size_t &checkLengths, const bool &adapterTrimming, const size_t kmer, const size_t kmerOffset, const size_t minLength) {
     
     Read &r1 = pe.non_const_read_one();
     Read &r2 = pe.non_const_read_two();
@@ -206,7 +209,7 @@ spReadBase check_read(PairedEndRead &pe , Counter &counters, const double misDen
  * With a lin it is useful to have a higher confidence in the bases in the overlap and longer read
  * With a sin it is useful to have the higher confidence as well as removing the adapters*/
 template <class T, class Impl>
-void helper_overlapper(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, Counter& counters, const double misDensity, const size_t &minOver, histVec &insertLength, const bool &stranded, const size_t &min_length, const size_t &checkLengths, const bool &adapterTrimming, const size_t kmer, const size_t kmerOffset, bool no_orphan = false ) {
+void helper_overlapper(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, Counter& counters, const double misDensity, const size_t minOver, histVec &insertLength, const bool stranded, const size_t min_length, const size_t checkLengths, const bool adapterTrimming, const size_t kmer, const size_t kmerOffset, bool no_orphan = false ) {
     
     while(reader.has_next()) {
         auto i = reader.next();
@@ -220,7 +223,7 @@ void helper_overlapper(InputReader<T, Impl> &reader, std::shared_ptr<OutputWrite
         ++counters["TotalRecords"];
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());        
         if (per) {
-            spReadBase overlapped = check_read(*per, counters, misDensity, minOver, insertLength, stranded, checkLengths, adapterTrimming, kmer, kmerOffset, min_length);
+            spReadBase overlapped = check_read(*per, counters, misDensity, minOver, insertLength, checkLengths, adapterTrimming, kmer, kmerOffset, min_length);
             if (!overlapped) {
                 writer_helper(per, pe, se, stranded, counters); //write out as is
             } else if (overlapped) { //if there is an overlap

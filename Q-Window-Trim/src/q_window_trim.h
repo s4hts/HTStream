@@ -14,22 +14,22 @@
 void trim_left(Read &rb, size_t sum_qual, size_t window_size) {
 
     std::string qual = rb.get_qual();
-    int current_sum = 0;
-    int cut = 0;
-
-    for (int i = 0; i < qual.length(); ++i) {
-         
-        current_sum += qual[i];
-
+    size_t current_sum = 0;
+    size_t cut = 0;
+    size_t i = 0;
+    for (std::string::iterator it = qual.begin() ; it != qual.end() ; ++it) {
+        i = static_cast<size_t>(it - qual.begin());
+        current_sum += static_cast<size_t>(*it);
         if (i >= window_size) { //once we hit window size, subtract the first value off
             cut = (i - window_size + 1);
-            current_sum -= qual[i - window_size];
+            //current_sum -= static_cast<size_t>(qual[i - window_size]);
+            current_sum -= static_cast<size_t>( *(it - static_cast<long>(window_size) ) );
         }
         if (current_sum >= sum_qual) {
             break;
         }
     }
-
+    
     if (current_sum < sum_qual) {
         rb.setLCut(qual.length() - 1);
     } else {
@@ -41,28 +41,30 @@ void trim_left(Read &rb, size_t sum_qual, size_t window_size) {
 void trim_right(Read &rb, size_t sum_qual, size_t window_size) {
 
     std::string qual = rb.get_qual();
-    int len = qual.length() - 1;
-    int current_sum = 0;
-    int cut = len;
+    size_t len = qual.length();
+    size_t current_sum = 0;
+    size_t cut = 0;
+    size_t i = 0;
 
-    for (int i = len ; i >=0; --i) {
-        current_sum += qual[i];
-
-        if (i < len - window_size) { //once we hit window size, subtract the first value off
-            cut = i + window_size - 1;
-            current_sum -= qual[i + window_size];
+    for (std::string::reverse_iterator it = qual.rbegin() ; it != qual.rend() ; ++it) {
+        i = static_cast<size_t>(it - qual.rbegin());
+        current_sum += static_cast<size_t>(*it);
+        if (i >= window_size) { //once we hit window size, subtract the first value off
+            cut = i - window_size + 1;
+            current_sum -= static_cast<size_t>( *(it - static_cast<long>(window_size)) );
         }
         
         if (current_sum >= sum_qual) {
             break;
         }
     }
-    if (current_sum < sum_qual) {
+
+    if (current_sum < sum_qual || cut > len ) { // will protect from cut - length causing an underflow
         rb.setRCut(0);
     } else {
-        rb.setRCut(cut);
+        rb.setRCut(len - cut);
     }
-
+ 
 }
 
 template <class T, class Impl>
