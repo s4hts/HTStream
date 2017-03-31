@@ -27,15 +27,18 @@ typedef std::shared_ptr<std::vector<unsigned long long int>> histVec;
 
 /*Create the quick lookup table
  * Multi map because a single kemr could appear multiple places*/
-seqLookup readOneMap(const std::string &seq1, const size_t kmer, const size_t kmerOffset) {
+seqLookup readOneMap(std::string seq1, const size_t kmer, const size_t kmerOffset) {
 
     seqLookup baseReadMap;
-    size_t seqLen = seq1.length() - 1;
-
-    for (size_t bp = 0; bp < seqLen - kmer; bp+=kmerOffset) {
-        baseReadMap.insert(std::make_pair(seq1.substr(bp, kmer), bp));
+    std::string::iterator it;
+    for ( it = seq1.begin() ; it < seq1.end() - ( static_cast<long> ( kmerOffset + kmer ) ) ; it += static_cast<long> ( kmerOffset )   ) {
+        baseReadMap.insert(std::make_pair( std::string ( it, it+ static_cast<long> ( kmer )  ) , it - seq1.begin() ));
     }
-    baseReadMap.insert(std::make_pair(seq1.substr(seqLen - kmer, kmer), seqLen - kmer));
+
+    if ( seq1.begin() + static_cast<long> (kmer) > seq1.end() ) {
+        it = seq1.end() - static_cast<long> ( kmer );
+        baseReadMap.insert(std::make_pair(  std::string( it , it + static_cast<long> (kmer)), it - seq1.begin()   ) );
+    }
 
     return baseReadMap;
 }
@@ -206,7 +209,7 @@ spReadBase check_read(PairedEndRead &pe , Counter &counters, const double misDen
  * With a lin it is useful to have a higher confidence in the bases in the overlap and longer read
  * With a sin it is useful to have the higher confidence as well as removing the adapters*/
 template <class T, class Impl>
-void helper_overlapper(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, Counter& counters, const double misDensity, const size_t &minOver, histVec &insertLength, const bool &stranded, const size_t &min_length, const size_t &checkLengths, const bool &adapterTrimming, const size_t kmer, const size_t kmerOffset, bool no_orphan = false ) {
+void helper_overlapper(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, Counter& counters, const double misDensity, const size_t minOver, histVec &insertLength, const bool stranded, const size_t min_length, const size_t checkLengths, const bool adapterTrimming, const size_t kmer, const size_t kmerOffset, bool no_orphan = false ) {
     
     while(reader.has_next()) {
         auto i = reader.next();

@@ -16,29 +16,27 @@ void trim_left(Read &rb, size_t min_trim, size_t max_mismatch) {
     size_t t_mismatch = 0;
 
     std::string seq = rb.get_seq();
-    size_t temp_loc = 0;
-    for (size_t i = 0; i < seq.length(); ++i) {
-        if (seq[i] != 'A') {
+    std::string::iterator current_loc, tmp_loc = seq.begin();
+    
+    for (current_loc = seq.begin(); current_loc != seq.end() ; ++current_loc ) {
+        if ( *current_loc == 'A' ) {
             ++a_mismatch;
-        } else if (a_mismatch <= max_mismatch) {
-            temp_loc = i;
+        } else if (a_mismatch <= max_mismatch ) {
+            tmp_loc = current_loc;
         }
-
-        if (seq[i] != 'T') {
+        if ( *current_loc == 'T' ) {
             ++t_mismatch;
-        } else if (t_mismatch <= max_mismatch) {
-            temp_loc = i;
+        } else if (t_mismatch <= max_mismatch ) {
+            tmp_loc = current_loc;
         }
-
         if (t_mismatch > max_mismatch && a_mismatch > max_mismatch) {
             break;    
         }
     }
-
-    if (temp_loc + 1 >= min_trim) {
-        rb.setLCut(temp_loc + 1);
+   if (tmp_loc - seq.begin() >= static_cast<long> (min_trim) ) {
+        rb.setLCut( static_cast<size_t>(  (tmp_loc) - (seq.begin() + 1) ) );
     }
-
+ 
 }
 
 void trim_right(Read &rb, size_t min_trim, size_t max_mismatch) {
@@ -46,30 +44,26 @@ void trim_right(Read &rb, size_t min_trim, size_t max_mismatch) {
     size_t t_mismatch = 0;
 
     std::string seq = rb.get_seq();
-
-    size_t len = seq.length() - 1;
-    size_t temp_loc = len ;
-
-    for (size_t i = len  ; i > 0; --i) {
-        if (seq[i] != 'A') {
+    std::string::reverse_iterator current_loc, tmp_loc = seq.rbegin();
+    
+    for (current_loc = seq.rbegin(); current_loc != seq.rend() ; ++current_loc ) {
+        if ( *current_loc == 'A' ) {
             ++a_mismatch;
-        } else if (a_mismatch <= max_mismatch) {
-            temp_loc = i;
+        } else if (a_mismatch <= max_mismatch ) {
+            tmp_loc = current_loc;
         }
-
-        if (seq[i] != 'T') {
+        if ( *current_loc == 'T' ) {
             ++t_mismatch;
-        } else if (t_mismatch <= max_mismatch) {
-            temp_loc = i;
+        } else if (t_mismatch <= max_mismatch ) {
+            tmp_loc = current_loc;
         }
         if (t_mismatch > max_mismatch && a_mismatch > max_mismatch) {
-            break; 
+            break;    
         }
     }
-    if ( len - temp_loc  >= min_trim) {
-        rb.setRCut(temp_loc );
+    if (tmp_loc - seq.rbegin() >= static_cast<long> (min_trim) && seq.rend() > tmp_loc ) {
+        rb.setRCut( static_cast<size_t>(  seq.rend() - tmp_loc ) );
     }
-
 }
 
 template <class T, class Impl>

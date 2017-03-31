@@ -12,6 +12,7 @@
 #include "utils.h"
 
 size_t dist(size_t x, size_t y) {
+    assert(x <= y); 
     return y - x;
 }
 
@@ -20,12 +21,14 @@ size_t dist(size_t x, size_t y) {
  * no N's within it*/
 void trim_n(Read &rb) {
     
-    const std::string &seq = rb.get_seq();
-    size_t len = seq.length() - 1;
+    std::string seq = rb.get_seq();
     size_t bestLeft = 0, currentLeft = 0, bestRight = 0;
+    size_t i = 0;
 
-    for (size_t i = 0; i <= len; ++i) {
-        if (seq[i] == 'N') {
+    for (std::string::iterator it = seq.begin(); it != seq.end(); ++it) {
+        i = static_cast<size_t>(it - seq.begin() );
+        
+        if (*it == 'N') {
             currentLeft = i + 1;
         } else if (dist(bestLeft, bestRight) <= dist(currentLeft, i)) {
             bestRight = i;

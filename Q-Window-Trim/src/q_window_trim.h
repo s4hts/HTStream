@@ -18,6 +18,7 @@ void trim_left(Read &rb, size_t sum_qual, size_t window_size) {
     size_t cut = 0;
     size_t i = 0;
     for (std::string::iterator it = qual.begin() ; it != qual.end() ; ++it) {
+        i = static_cast<size_t>(it - qual.begin());
         current_sum += static_cast<size_t>(*it);
         if (i >= window_size) { //once we hit window size, subtract the first value off
             cut = (i - window_size + 1);
@@ -27,7 +28,6 @@ void trim_left(Read &rb, size_t sum_qual, size_t window_size) {
         if (current_sum >= sum_qual) {
             break;
         }
-        ++i; 
     }
     
     if (current_sum < sum_qual) {
@@ -47,6 +47,7 @@ void trim_right(Read &rb, size_t sum_qual, size_t window_size) {
     size_t i = 0;
 
     for (std::string::reverse_iterator it = qual.rbegin() ; it != qual.rend() ; ++it) {
+        i = static_cast<size_t>(it - qual.rbegin());
         current_sum += static_cast<size_t>(*it);
         if (i >= window_size) { //once we hit window size, subtract the first value off
             cut = i - window_size + 1;
@@ -56,7 +57,6 @@ void trim_right(Read &rb, size_t sum_qual, size_t window_size) {
         if (current_sum >= sum_qual) {
             break;
         }
-        ++i;
     }
 
     if (current_sum < sum_qual || cut > len ) { // will protect from cut - length causing an underflow

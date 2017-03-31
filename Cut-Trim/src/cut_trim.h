@@ -11,6 +11,18 @@
 #include <algorithm>
 #include "utils.h"
 
+void cut_trim(Read &r, bool no_left, bool no_right, size_t cut_size) {
+    if (!no_left) {
+        r.setLCut(cut_size);
+    }
+    if (!no_right) {
+        if (r.getLength() > cut_size) {
+            r.setRCut(r.getLength() - cut_size);
+        }
+    }
+}
+
+
 template <class T, class Impl>
 void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, Counter& counters, size_t min_length, size_t cut_size, bool stranded, bool no_left, bool no_right, bool no_orphans) {
     
@@ -19,29 +31,15 @@ void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe,
         ++counters["TotalRecords"];
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());        
         if (per) {
-            Read &rb1 = per->non_const_read_one();
-            Read &rb2 = per->non_const_read_two();
-            if (!no_left) {
-                rb1.setLCut(cut_size);
-                rb2.setLCut(cut_size);
-            }
-            if (!no_right) {
-                rb1.setRCut(rb1.getLength() - cut_size);
-                rb2.setRCut(rb2.getLength() - cut_size);
-            }
+            cut_trim( per->non_const_read_one(), no_left, no_right, cut_size);
+            cut_trim( per->non_const_read_two(), no_left, no_right, cut_size);
             per->checkDiscarded(min_length);
             writer_helper(per, pe, se, stranded, counters, no_orphans);
         } else {
             SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
             
             if (ser) {
-                Read &rb = per->non_const_read_one();
-                if (!no_left) {
-                    ser->non_const_read_one().setLCut(cut_size);
-                } 
-                if (!no_right) {
-                    ser->non_const_read_one().setRCut(ser->non_const_read_one().getLength() - cut_size);
-                }
+                cut_trim( per->non_const_read_one(), no_left, no_right, cut_size);
                 ser->checkDiscarded(min_length);
                 writer_helper(ser, pe, se, stranded, counters);
             } else {

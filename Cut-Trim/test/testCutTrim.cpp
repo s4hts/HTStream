@@ -3,7 +3,7 @@
 #include <iostream>
 #include "cut_trim.h"
 
-class SDTest : public ::testing::Test {
+class CutTrim : public ::testing::Test {
     public:
         const std::string readData_1 = "@Read1\nGGGGGGGGGGCAAAAAAAACGGGGGGGGGG\n+\n##############################\n";
         const std::string readData_2 = "@Read1\nAAAAAAAAAAAAAAAAAAAAAAAA\n+\n########################\n";
@@ -12,7 +12,7 @@ class SDTest : public ::testing::Test {
         size_t cut_size = 10;
 };
 
-TEST_F(SDTest, BasicTrim) {
+TEST_F(CutTrim, BasicTrim) {
     std::istringstream in1(readData_1);
     std::istringstream in2(readData_2);
 
@@ -21,15 +21,12 @@ TEST_F(SDTest, BasicTrim) {
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        Read &rb1 = per->non_const_read_one();
-        Read &rb2 = per->non_const_read_two();
-        rb1.setRCut(rb1.getLength() - cut_size);
-        rb1.setLCut(cut_size);
+        cut_trim(per->non_const_read_one(), false, false, cut_size);
         ASSERT_EQ("CAAAAAAAAC", (per->non_const_read_one()).get_sub_seq());
     }
 };
 
-TEST_F(SDTest, Stranded) {
+TEST_F(CutTrim, Stranded) {
     std::istringstream in1(readData_2); //REverse these two so R1 is discarded and R2 is RCed
     std::istringstream in2(readData_1);
 
@@ -42,14 +39,9 @@ TEST_F(SDTest, Stranded) {
         while(ifp.has_next()) {
             auto i = ifp.next();
             PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-            Read &rb1 = per->non_const_read_one();
-            Read &rb2 = per->non_const_read_two();
-
-            rb1.setRCut(rb1.getLength() - cut_size);
-            rb1.setLCut(cut_size);
-            rb2.setRCut(rb2.getLength() - cut_size);
-            rb2.setLCut(cut_size);
             per->checkDiscarded(min_length);
+            cut_trim(per->non_const_read_one(), false, false, cut_size);
+            cut_trim(per->non_const_read_two(), false, false, cut_size);
             writer_helper(per, tab, tab, true, c);
         }
     }

@@ -73,39 +73,39 @@ void outputWriters(std::shared_ptr<OutputWriter> &pe, std::shared_ptr<OutputWrit
             outfile = prefix + "INTER" + ".fastq";
         }
 
-        out_1.reset(new HtsOfstream(default_outfiles[0], force, gzip_out, false));
-        out_3.reset(new HtsOfstream(default_outfiles[1], force, gzip_out, false));
+        out_1= std::make_shared<HtsOfstream>(default_outfiles[0], force, gzip_out, false);
+        out_3= std::make_shared<HtsOfstream>(default_outfiles[1], force, gzip_out, false);
 
-        pe.reset(new PairedEndReadOutInter(out_1));
-        se.reset(new SingleEndReadOutFastq(out_3));
+        pe= std::make_shared<PairedEndReadOutInter>(out_1);
+        se= std::make_shared<SingleEndReadOutFastq>(out_3);
     } else if (unmapped_out) {
         for (auto& outfile: default_outfiles) {
             outfile = prefix + ".sam";
         }
-        out_1.reset(new HtsOfstream(default_outfiles[0], force, gzip_out, std_out));
+        out_1= std::make_shared<HtsOfstream>(default_outfiles[0], force, gzip_out, std_out);
 
-        pe.reset(new ReadBaseOutUnmapped(out_1));
-        se.reset(new ReadBaseOutUnmapped(out_1));
+        pe= std::make_shared<ReadBaseOutUnmapped>(out_1);
+        se= std::make_shared<ReadBaseOutUnmapped>(out_1);
 
     } else if (tab_out || std_out) {
         for (auto& outfile: default_outfiles) {
             outfile = prefix + "tab" + ".tastq";
         }
-        out_1.reset(new HtsOfstream(default_outfiles[0], force, gzip_out, std_out));
+        out_1= std::make_shared<HtsOfstream>(default_outfiles[0], force, gzip_out, std_out);
 
-        pe.reset(new ReadBaseOutTab(out_1));
-        se.reset(new ReadBaseOutTab(out_1));
+        pe= std::make_shared<ReadBaseOutTab>(out_1);
+        se= std::make_shared<ReadBaseOutTab>(out_1);
     } else if (fastq_out || (! std_out && ! tab_out) ) {
         for (auto& outfile: default_outfiles) {
             outfile = prefix + outfile + ".fastq";
         }
 
-        out_1.reset(new HtsOfstream(default_outfiles[0], force, gzip_out, false));
-        out_2.reset(new HtsOfstream(default_outfiles[1], force, gzip_out, false));
-        out_3.reset(new HtsOfstream(default_outfiles[2], force, gzip_out, false));
+        out_1= std::make_shared<HtsOfstream>(default_outfiles[0], force, gzip_out, false);
+        out_2= std::make_shared<HtsOfstream>(default_outfiles[1], force, gzip_out, false);
+        out_3= std::make_shared<HtsOfstream>(default_outfiles[2], force, gzip_out, false);
 
-        pe.reset(new PairedEndReadOutFastq(out_1, out_2));
-        se.reset(new SingleEndReadOutFastq(out_3));
+        pe= std::make_shared<PairedEndReadOutFastq>(out_1, out_2);
+        se= std::make_shared<SingleEndReadOutFastq>(out_3);
     }
 }
 
