@@ -3,22 +3,23 @@
  * each possible kmer in the 2 bit format (A -> 00, T -> 11, C -> 01, G->10) and
  * need foward and Reverse strands. Each read is then parsed into 8mers (again
  * represented by their 2 bit format, and checked against these lookup tables
- * (simply the arrays)*/ 
+ * (simply the arrays)*/
 
 #ifndef AT_TRIM_H
 #define AT_TRIM_H
 
 #define BOOST_DYNAMIC_BITSET_DONT_USE_FRIENDS
 
+#include "utils.h"
 #include "ioHandler.h"
+
 #include <map>
 #include <unordered_map>
-#include <boost/dynamic_bitset.hpp>
-#include <boost/functional/hash.hpp>
 #include <algorithm>
 #include <bitset>
-#include "utils.h"
 #include <unordered_set>
+#include <boost/dynamic_bitset.hpp>
+#include <boost/functional/hash.hpp>
 
 /*This will be the size_t will be the number of hits to that kmer
  * and the number of entries will be the number of possible kmers
@@ -36,7 +37,7 @@ public:
 typedef std::unordered_set < boost::dynamic_bitset<>, dbhash> kmerSet;
 
 uint8_t getBin(char c) {
-    if (c == 'A') 
+    if (c == 'A')
         return 0;
     else if (c == 'T')
         return 3;
@@ -69,19 +70,19 @@ int setter(boost::dynamic_bitset<> &lookup, size_t loc, char c, bool rc) {
 }
 
 /*Check read will only return back the number of hits to the lookup tables,
- * the look up tables at this point should all ready be set for phix at this point. It 
- * will return the maximum number of hits from either the forward or rc 
+ * the look up tables at this point should all ready be set for phix at this point. It
+ * will return the maximum number of hits from either the forward or rc
  * lookup table. If there are enough hits, then the read will be assumed to be phix,
  * and will be discarded.*/
 size_t check_read(const Read &r, const kmerSet &lookup, const kmerSet &lookup_rc, size_t kmerSize) {
-    
+
     boost::dynamic_bitset <> forwardBits(kmerSize * 2);
     size_t kmerCheck = kmerSize - 1;
     size_t bin = 0;
     size_t hits = 0, hits_rc = 0;
     size_t loc = (kmerSize * 2) - 2;
     std::string seq = r.get_seq();
-    
+
     for (std::string::iterator bp = seq.begin(); bp < seq.end(); ++bp) {
 
         if ( !setter(forwardBits, loc, *bp, false) ) {
@@ -98,18 +99,18 @@ size_t check_read(const Read &r, const kmerSet &lookup, const kmerSet &lookup_rc
                 loc -= 2;
             }
         }
-    } 
-    
+    }
+
     return std::max(hits, hits_rc);
 }
 
 
 template <class T, class Impl>
 void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, Counter& c, kmerSet &lookup, kmerSet &lookup_rc, size_t hits, bool checkR2, size_t kmerSize) {
-    
+
     while(reader.has_next()) {
         auto i = reader.next();
-        PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());        
+        PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
         if (per) {
             size_t val = check_read(per->get_read_one(), lookup, lookup_rc, kmerSize);
             if (checkR2) {
@@ -126,7 +127,7 @@ void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> 
 
         } else {
             SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
-            
+
             if (ser) {
                 size_t val = check_read(ser->get_read(), lookup, lookup_rc, kmerSize);
                 if (val < hits) {
@@ -186,7 +187,7 @@ void setLookup(kmerSet &lookup, kmerSet &lookup_rc, Read &rb, size_t kmerSize) {
                 loc_rc += 2;
             }
         }
-        
+
         /* This is for the reverse complement of the lookup string.
          * It is possible to either see the forward or RC strand of Phix
          * Versus checking every forward and reverse strand of each sequence seen
@@ -195,8 +196,7 @@ void setLookup(kmerSet &lookup, kmerSet &lookup_rc, Read &rb, size_t kmerSize) {
 
         /*If kmerCheck is zero (all bp accounted for), add a point to the lookup table*/
     }
-    
+
 }
 
 #endif
-
