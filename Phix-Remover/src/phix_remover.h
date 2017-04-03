@@ -7,7 +7,7 @@
 
 #ifndef AT_TRIM_H
 #define AT_TRIM_H
-//  this is so we can implment hash function for dynamic_bitset
+
 #define BOOST_DYNAMIC_BITSET_DONT_USE_FRIENDS
 
 #include "ioHandler.h"
@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <bitset>
 #include "utils.h"
+#include <set>
 
 const size_t kmer = 8;
 const size_t kmerBits = kmer*2;
@@ -26,6 +27,15 @@ const size_t kmerBits = kmer*2;
  * ~64k. This will create a quick lookup table to use for both the
  * forward and reverse complement of phix.*/
 typedef std::array< size_t, 1<<(kmerBits) > kmerArray;
+
+class dbhash {
+public:
+    std::size_t operator() ( const boost::dynamic_bitset<>& bs) const {
+        return boost::hash_value(bs.to_ulong());
+    }
+};
+
+//typedef std::unordered_set < boost::dynamic_bitset<>, dbhash> kmerSet;
 
 uint8_t getBin(char c) {
     if (c == 'A') 
