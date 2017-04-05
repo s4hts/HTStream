@@ -9,7 +9,7 @@
 #define AT_TRIM_H
 
 #define BOOST_DYNAMIC_BITSET_DONT_USE_FRIENDS
-
+#define KMER_LOOKUP_SIZE 32
 #include "utils.h"
 #include "ioHandler.h"
 
@@ -27,6 +27,21 @@
  * forward and reverse complement of phix.*/
 //typedef std::array< size_t, 1<<(kmerBits) > kmerArray;
 
+
+class Lookup {
+public:
+    Lookup() {
+    }
+    ~Lookup() {
+    }
+private:
+    std::shared_ptr< std::vector< boost::dynamic_bitset<> > > vecBits;
+
+};
+
+
+
+
 class dbhash {
 public:
     std::size_t operator() ( const boost::dynamic_bitset<>& bs) const {
@@ -35,6 +50,7 @@ public:
 };
 
 typedef std::unordered_set < boost::dynamic_bitset<>, dbhash> kmerSet;
+typedef std::array< std::shared_ptr<Lookup>, 4294967296UL > firstLookup;
 
 uint8_t getBin(char c) {
     if (c == 'A')
@@ -141,6 +157,56 @@ void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> 
         }
     }
 }
+/*Hand phix read to set lookup tables
+ *The lookup tables might make more sense in a map format
+ * the key would be the two bit format of the 8mer (so a uint_16_t)
+ * and the value would be number of hits
+ * The reason we are using arrays though is because we can use the
+ * pigeon hole theorm and have a constant lookup time because
+ * the arrays are small enough.
+ * These lookup tables give us a quick way to count the "hits" of 8mers
+ * from the sequencing read. If there are enough "hits", we can assume it
+ * is a phix read.
+ * */
+void setLookup(Lookup *lookup, Read &rb, size_t kmerSize) {
+    std::cout << "Made\n";
+    boost::dynamic_bitset <> forwardLookup(KMER_LOOKUP_SIZE);
+    boost::dynamic_bitset <> reverseLookup(KMER_LOOKUP_SIZE);
+
+    size_t lookup_loc = 0; // change bit 0 and 1 the << 2
+    size_t lookup_loc_rc = KMER_LOOKUP_SIZE - 2; // change bit 31 and 30 then >> 2
+    size_t current_added = 0;
+
+    size_t bitKmer = kmerSize * 2;
+
+    //No matter what we will do the lookup madness of of 16 mers
+    //however, so people might want to do a kmer greater than that
+    //this allows us to keep the quick 16 mer lookup and then
+    //additional bits
+    boost::dynamic_bitset <> forwardRest;
+    boost::dynamic_bitset <> reverseRest;
+
+    if (bitKmer > KMER_LOOKUP_SIZE) {
+        forwardRest = boost::dynamic_bitset<>( (bitKmer) - KMER_LOOKUP_SIZE);
+        reverseRest = boost::dynamic_bitset<>( (bitKmer) - KMER_LOOKUP_SIZE);
+    }
+    
+    std::string seq = rb.get_seq();
+
+    for (std::string::iterator bp = seq.begin(); bp < seq.end(); ++bp) {
+        if (current_added >= kmerSize) {
+            //take lookup bits and put it into restBits
+            //add to lookup
+        }  else if(current_added > bitKmer) {
+            //add to lookup
+        } else {
+            //add to rest
+        }
+        ++current_added;
+    }
+         
+}
+
 
 /*Hand phix read to set lookup tables
  *The lookup tables might make more sense in a map format
