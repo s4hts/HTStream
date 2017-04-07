@@ -51,7 +51,8 @@ int main(int argc, char** argv)
             ("seq,s", po::value<std::string>()->default_value(phixSeq_True), "Phix Sequence - default https://www.ncbi.nlm.nih.gov/nuccore/9626372")
             ("check-read-2,C", po::bool_switch()->default_value(false),    "Check R2 as well as R1 (pe)")
             ("kmerSize,k", po::value<size_t>()->default_value(8), "Size of the kmer lookup")
-            ("hits,x", po::value<size_t>()->default_value(50), "How many K-mer hits to phix needs to happen to discard");
+            ("kmerLookupSize,K", po::value<size_t>()->default_value(8), "Size of the kmer Used to iniate the search")
+            ("hits,x", po::value<double>()->default_value(.25), "How many K-mer hits to phix needs to happen to discard");
 
         po::variables_map vm;
         try
@@ -79,16 +80,13 @@ int main(int argc, char** argv)
             kmerSet lookup;
             kmerSet lookup_rc;
             size_t kmerSize = vm["kmerSize"].as<size_t>();
-            std::cout << "HERE\n";
-            std::cout << std::endl;
-            //std::vector<std::shared_ptr<Lookup> > fl(1ULL << 32);
-            
-            std::unique_ptr< std::shared_ptr<Lookup>[] > fl(new std::shared_ptr<Lookup>[1ULL << 32]);
-            std::cout << "HERE\n";
+            size_t kmerLookupSize = std::min(vm["kmerLookupSize"].as<size_t>(), kmerSize);
+            firstLookup fl(new std::shared_ptr<Lookup>[1ULL << (kmerLookupSize * 2)]);
+            firstLookupPointer searchPointer = fl.get();
+            setLookup(searchPointer, readSeq, kmerSize, kmerLookupSize); 
 
-            exit(0);
-            setLookup(lookup, lookup_rc, readSeq, kmerSize);
-            
+            //setLookup(lookup, lookup_rc, readSeq, kmerSize);
+             
             if(vm.count("read1-input")) {
                 if (!vm.count("read2-input")) {
                     throw std::runtime_error("must specify both read1 and read2 input files.");
@@ -102,7 +100,9 @@ int main(int argc, char** argv)
                     bi::stream<bi::file_descriptor_source> is1{check_open_r(read1_files[i]), bi::close_handle};
                     bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
                     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
-                    helper_discard(ifp, pe, se, counters, lookup, lookup_rc, vm["hits"].as<size_t>(), vm["check-read-2"].as<bool>(),kmerSize);
+
+                    helper_discard(ifp, pe, se, counters, searchPointer, vm["hits"].as<double>(), vm["check-read-2"].as<bool>(),kmerSize, kmerLookupSize);
+                    //helper_discard(ifp, pe, se, counters, lookup, lookup_rc, vm["hits"].as<size_t>(), vm["check-read-2"].as<bool>(),kmerSize);
                 }
             }
 
@@ -111,7 +111,8 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> sef{ check_open_r(file), bi::close_handle};
                     InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(sef);
-                    helper_discard(ifs, pe, se, counters, lookup, lookup_rc, vm["hits"].as<size_t>(), vm["check-read-2"].as<bool>(),kmerSize);
+                    helper_discard(ifs, pe, se, counters, searchPointer, vm["hits"].as<double>(), vm["check-read-2"].as<bool>(),kmerSize, kmerLookupSize);
+                    //helper_discard(ifs, pe, se, counters, lookup, lookup_rc, vm["hits"].as<size_t>(), vm["check-read-2"].as<bool>(),kmerSize);
                 }
             }
 
@@ -120,7 +121,7 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> tabin{ check_open_r(file), bi::close_handle};
                     InputReader<ReadBase, TabReadImpl> ift(tabin);
-                    helper_discard(ift, pe, se, counters, lookup, lookup_rc, vm["hits"].as<size_t>(), vm["check-read-2"].as<bool>(),kmerSize);
+                    helper_discard(ift, pe, se, counters, lookup, lookup_rc, vm["hits"].as<double>(), vm["check-read-2"].as<bool>(),kmerSize);
                 }
             }
 
@@ -129,14 +130,14 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> inter{ check_open_r(file), bi::close_handle};
                     InputReader<PairedEndRead, InterReadImpl> ifp(inter);
-                    helper_discard(ifp, pe, se, counters, lookup, lookup_rc, vm["hits"].as<size_t>(), vm["check-read-2"].as<bool>(),kmerSize);
+                    helper_discard(ifp, pe, se, counters, lookup, lookup_rc, vm["hits"].as<double>(), vm["check-read-2"].as<bool>(),kmerSize);
                 }
             }
 
             if (vm.count("std-input")) {
                 bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
-                helper_discard(ift, pe, se, counters, lookup, lookup_rc, vm["hits"].as<size_t>(), vm["check-read-2"].as<bool>(),kmerSize);
+                helper_discard(ift, pe, se, counters, lookup, lookup_rc, vm["hits"].as<double>(), vm["check-read-2"].as<bool>(),kmerSize);
             }
 
         }

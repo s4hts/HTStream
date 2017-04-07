@@ -7,6 +7,7 @@ class PhixRemover : public ::testing::Test {
     public:
         const std::string phixTest = "ACTGACTGACTGACTGACTGACTGACTG";
         const std::string readData_1 = "@R1\nAAAAACTGACTGACTGTTTT\n+\nAAAAACTGACTGACTGTTTT\n";
+        const size_t lookup_kmer_test = 2;
 };
 
 TEST_F(PhixRemover, PhixTest) {
@@ -37,58 +38,23 @@ TEST_F(PhixRemover, PhixTest) {
     }
 };
 
-TEST_F(PhixRemover, LookupTable) {
-    
-    const size_t kmer = 8;
-    Read readPhix = Read("AAAAAAAACTG", "", ""); 
+TEST_F(PhixRemover, setLookupTest) {
+    Read readPhix = Read("AAAAAAAAAAAAAAAAG", "", ""); 
+    Read read = Read("AAAAAAAAAAAAAAAAG", "", ""); 
+    size_t lookup_kmer_test = 7;
+    size_t true_kmer = 7; 
+    firstLookup fl( new std::shared_ptr<Lookup> [1UL << (lookup_kmer_test * 2)] );
+    firstLookupPointer l = fl.get();
 
-    kmerSet lookup;
-    kmerSet lookup_rc;
-    setLookup(lookup, lookup_rc, readPhix, 8);
-    boost::dynamic_bitset<> test(16);
-    for (auto it = lookup.begin(); it != lookup.end(); ++it) {
-        std::cout << *it << '\n';
-    }
-    for (auto it = lookup_rc.begin(); it != lookup_rc.end(); ++it) {
-        std::cout << *it << '\n';
-    }
-    int lookupTest =   lookup.find( test ) != lookup.end(); // ALL A's
-    ASSERT_EQ(1, lookupTest );
+    setLookup(l, readPhix, true_kmer, lookup_kmer_test );
+    boost::dynamic_bitset<> location_equals_to(32); // (16 * 2) - (2 * 2) for the size;
 
-    test.set(0);
-    lookupTest =   lookup.find( test ) != lookup.end(); // C added to the end
-    ASSERT_EQ(1,  lookupTest  );
-    
-    test <<= 2;
-    test.set(0);
-    test.set(1);
-    lookupTest = lookup.find( test ) != lookup.end(); // T added to the end
-    ASSERT_EQ(1,  lookupTest  );
-    
-    test <<= 2;
-    test.set(1);
-    lookupTest = lookup.find( test ) != lookup.end(); // T added to the end
-    ASSERT_EQ(1,  lookupTest  );
+    std::cout << "Done\n"; 
+    l[ (1UL << (lookup_kmer_test * 2)) - 1]->print();
+    exit(0);
+    l[7]->print(); 
+    l[(1 << (lookup_kmer_test * 2)) - 1]->print();
+    std::cout << "HERE\n";
 
-    test.reset(); // test rc
-    test.flip();  //start with ALL T's
-    lookupTest = lookup_rc.find( test ) != lookup_rc.end(); // T added to the end
-
-    ASSERT_EQ(1,  lookupTest  );
-    
-    test.flip(14); // flips 14th pos 1011111... For "G" but in string "C"
-    lookupTest = lookup_rc.find( test ) != lookup_rc.end(); 
-    ASSERT_EQ(1,  lookupTest  );
-    
-    test >>= 2; // 0 in 14 and 15 for T
-    lookupTest = lookup_rc.find( test ) != lookup_rc.end(); 
-    
-    ASSERT_EQ(1,  lookupTest );
-    
-    test >>= 2; // 1 at 14 for "C" but acutally "G"
-    test.set(14);
-    lookupTest = lookup_rc.find( test ) != lookup_rc.end(); 
-
-    ASSERT_EQ(1,  lookupTest );
-
-}
+    std::cout << check_read(l, read, 16, 2) << '\n';
+};

@@ -9,7 +9,7 @@
 #define AT_TRIM_H
 
 #define BOOST_DYNAMIC_BITSET_DONT_USE_FRIENDS
-#define KMER_LOOKUP_SIZE 32
+
 #include "utils.h"
 #include "ioHandler.h"
 
@@ -30,12 +30,28 @@
 
 class Lookup {
 public:
-    Lookup() {
+    Lookup(boost::dynamic_bitset<> bs) {
+        vecBits.push_back(bs);
     }
     ~Lookup() {
     }
-private:
-    std::shared_ptr< std::vector< boost::dynamic_bitset<> > > vecBits;
+    void insert(boost::dynamic_bitset<> bs) {
+        vecBits.push_back(bs);
+    }
+    void print() {
+        for (auto &a : vecBits) {
+            std::cout << a << "\n";
+        }
+    }
+    unsigned int check(boost::dynamic_bitset<> &bs) {
+        for (auto &a : vecBits) {
+            if (a == bs) {
+                return 1;
+            }   
+        }
+        return 0;
+    }
+    std::vector< boost::dynamic_bitset<> >  vecBits;
 
 };
 
@@ -50,7 +66,8 @@ public:
 };
 
 typedef std::unordered_set < boost::dynamic_bitset<>, dbhash> kmerSet;
-typedef std::array< std::shared_ptr<Lookup>, 4294967296UL > firstLookup;
+typedef std::unique_ptr< std::shared_ptr<Lookup>[] >firstLookup;
+typedef std::shared_ptr<Lookup > *firstLookupPointer;
 
 uint8_t getBin(char c) {
     if (c == 'A')
@@ -62,6 +79,34 @@ uint8_t getBin(char c) {
     else if (c == 'G')
         return 2;
     return 5;
+}
+
+
+
+void setBitsBools(boost::dynamic_bitset<> &bs, size_t loc, bool set1, bool set2) {
+    bs[loc] = set1;
+    bs[loc + 1] = set2;
+}
+
+int setBitsChar(boost::dynamic_bitset<> &lookup, size_t loc, char c, bool rc) {
+
+    if (c == 'A') {
+        lookup[loc] = (0 ^ rc);
+        lookup[loc+1] = (0 ^ rc);
+    } else if (c == 'T') {
+        lookup[loc] = (1 ^ rc);
+        lookup[loc+1] = (1 ^ rc);
+    } else if (c == 'C') {
+        lookup[loc] = (1 ^ rc);
+        lookup[loc+1] = (0 ^ rc);
+    } else if (c == 'G') {
+        lookup[loc] = (0 ^ rc)  ;
+        lookup[loc+1] = (1 ^ rc);
+    } else {
+        return 0; //N
+    }
+    return 1;
+
 }
 
 
@@ -120,21 +165,98 @@ size_t check_read(const Read &r, const kmerSet &lookup, const kmerSet &lookup_rc
     return std::max(hits, hits_rc);
 }
 
+unsigned int check_read( firstLookupPointer lookup, const Read &rb, size_t kmerSize, size_t lookupKmer) {
+
+    size_t rest_loc = 0;
+    size_t rest_loc_rc = 0;
+
+    size_t bitKmer = kmerSize * 2;
+    size_t bitKmerLookupSize = lookupKmer * 2;
+    size_t lookup_loc = 0; // change bit 0 and 1 the << 2
+    size_t lookup_loc_rc = bitKmerLookupSize - 2; // change bit 31 and 30 then >> 2
+    size_t current_added = 0;
+    size_t diff = 0;
+    boost::dynamic_bitset <> forwardLookup(bitKmerLookupSize);
+    boost::dynamic_bitset <> reverseLookup(bitKmerLookupSize);
+
+    boost::dynamic_bitset <> forwardRest;
+    boost::dynamic_bitset <> reverseRest;
+
+    if (bitKmer > bitKmerLookupSize) {
+        diff = bitKmer - bitKmerLookupSize;
+        forwardRest = boost::dynamic_bitset<>(  diff  );
+        reverseRest = boost::dynamic_bitset<>(  diff );
+        rest_loc = 0;
+        rest_loc_rc = diff - 2;
+    }
+    
+    std::string seq = rb.get_seq();
+    char bin = 0;
+    unsigned long ulLookup = 0;
+    unsigned int hits = 0;
+    for (std::string::iterator bp = seq.begin(); bp < seq.end(); ++bp) {
+        if (*bp == 'N' ) { // N
+            forwardLookup.reset();
+            reverseLookup.reset();
+            if (diff) {
+                forwardRest.reset();
+                reverseRest.reset();
+            }
+            current_added = 0;
+            //reset stuff that needs to be reset
+        } else {
+           if(current_added >= diff) { //if diff is zero, no need to add to the rest bits
+                forwardLookup <<=2;
+                reverseLookup >>=2;
+                setBitsChar(forwardLookup, lookup_loc, *bp, false);
+                setBitsChar(reverseLookup, lookup_loc_rc, *bp, true);
+            } else {
+                forwardRest <<=2;
+                reverseRest >>=2;
+                setBitsChar(forwardRest, rest_loc, *bp, false);
+                setBitsChar(reverseRest, rest_loc_rc, *bp, true);
+            }
+            current_added += 2;
+            if (current_added >= bitKmer) {
+               boost::dynamic_bitset<> &bs = forwardLookup > reverseLookup ? forwardRest : reverseRest;
+                ulLookup = forwardLookup > reverseLookup ? forwardLookup.to_ulong() : reverseLookup.to_ulong();
+                if ( lookup[ulLookup ] ) {
+                    if (diff) {
+                        hits += lookup[ulLookup]->check(bs);
+                    } else {
+                        ++hits;
+                    }
+                }
+ 
+                if (diff) {
+                    forwardRest <<= 2;
+                    reverseRest >>= 2;
+                    setBitsBools(forwardRest, rest_loc, forwardLookup[bitKmer -2], forwardLookup[bitKmer - 2 + 1]);
+                    setBitsBools(reverseRest, rest_loc_rc, reverseLookup[0], reverseLookup[1]);
+                }
+            } 
+            
+         }
+    }
+    return hits; 
+}
+
 
 template <class T, class Impl>
-void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, Counter& c, kmerSet &lookup, kmerSet &lookup_rc, size_t hits, bool checkR2, size_t kmerSize) {
+void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, Counter& c, kmerSet &lookup, kmerSet &lookup_rc, double hits, bool checkR2, size_t kmerSize) {
 
     while(reader.has_next()) {
         auto i = reader.next();
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
         if (per) {
-            size_t val = check_read(per->get_read_one(), lookup, lookup_rc, kmerSize);
+            double val = check_read(per->get_read_one(), lookup, lookup_rc, kmerSize);
             if (checkR2) {
-                size_t val2 = check_read(per->get_read_two(), lookup, lookup_rc, kmerSize);
-                val = std::max(val, val2);
+                double val2 = check_read(per->get_read_two(), lookup, lookup_rc, kmerSize);
+                val = std::max(val , val2);
+
             }
 
-            if (val < hits) {
+            if (val < hits ) {
                 writer_helper(per, pe, se, false, c);
             } else {
                 ++c["R1_Discarded"];
@@ -157,6 +279,47 @@ void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> 
         }
     }
 }
+
+template <class T, class Impl>
+void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, Counter& c, firstLookupPointer lookup, double hits, bool checkR2, size_t kmerSize, size_t kmerLookupSize) {
+
+    while(reader.has_next()) {
+        auto i = reader.next();
+        PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
+        if (per) {
+            double val = check_read(lookup, per->get_read_one(), kmerSize, kmerLookupSize);
+            val = val /( per->get_read_one().getLength() - kmerSize);
+
+            if (checkR2) {
+                double val2 = check_read(lookup, per->get_read_two(), kmerSize, kmerLookupSize) ;
+
+                val = std::max(val, val2);
+            }
+
+            if (val < hits) {
+                writer_helper(per, pe, se, false, c);
+            } else {
+                ++c["R1_Discarded"];
+                ++c["R2_Discarded"];
+            }
+
+        } else {
+            SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
+
+            if (ser) {
+                double val = check_read(lookup, ser->get_read(), kmerSize, kmerLookupSize);
+                val = val / ( ser->get_read().getLength() - kmerSize);
+                if (val < hits) {
+                    writer_helper(ser, pe, se, false, c);
+                } else {
+                    ++c["SE_Discarded"];
+                }
+            } else {
+                throw std::runtime_error("Unknown read type");
+            }
+        }
+    }
+}
 /*Hand phix read to set lookup tables
  *The lookup tables might make more sense in a map format
  * the key would be the two bit format of the 8mer (so a uint_16_t)
@@ -168,43 +331,82 @@ void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> 
  * from the sequencing read. If there are enough "hits", we can assume it
  * is a phix read.
  * */
-void setLookup(Lookup *lookup, Read &rb, size_t kmerSize) {
-    std::cout << "Made\n";
-    boost::dynamic_bitset <> forwardLookup(KMER_LOOKUP_SIZE);
-    boost::dynamic_bitset <> reverseLookup(KMER_LOOKUP_SIZE);
-
-    size_t lookup_loc = 0; // change bit 0 and 1 the << 2
-    size_t lookup_loc_rc = KMER_LOOKUP_SIZE - 2; // change bit 31 and 30 then >> 2
-    size_t current_added = 0;
+void setLookup( firstLookupPointer lookup, Read &rb, size_t kmerSize, size_t lookupKmer) {
+    size_t rest_loc = 0;
+    size_t rest_loc_rc = 0;
 
     size_t bitKmer = kmerSize * 2;
+    size_t bitKmerLookupSize = lookupKmer * 2;
+    size_t lookup_loc = 0; // change bit 0 and 1 the << 2
+    size_t lookup_loc_rc = bitKmerLookupSize - 2; // change bit 31 and 30 then >> 2
+    size_t current_added = 0;
+    size_t diff = 0;
+    boost::dynamic_bitset <> forwardLookup(bitKmerLookupSize);
+    boost::dynamic_bitset <> reverseLookup(bitKmerLookupSize);
 
-    //No matter what we will do the lookup madness of of 16 mers
-    //however, so people might want to do a kmer greater than that
-    //this allows us to keep the quick 16 mer lookup and then
-    //additional bits
     boost::dynamic_bitset <> forwardRest;
     boost::dynamic_bitset <> reverseRest;
 
-    if (bitKmer > KMER_LOOKUP_SIZE) {
-        forwardRest = boost::dynamic_bitset<>( (bitKmer) - KMER_LOOKUP_SIZE);
-        reverseRest = boost::dynamic_bitset<>( (bitKmer) - KMER_LOOKUP_SIZE);
+    if (bitKmer > bitKmerLookupSize) {
+        diff = bitKmer - bitKmerLookupSize;
+        forwardRest = boost::dynamic_bitset<>(  diff  );
+        reverseRest = boost::dynamic_bitset<>(  diff );
+        rest_loc = 0;
+        rest_loc_rc = diff - 2;
     }
     
     std::string seq = rb.get_seq();
-
+    char bin = 0;
+    unsigned long ulLookup = 0, ulLookup_rc = 0;
     for (std::string::iterator bp = seq.begin(); bp < seq.end(); ++bp) {
-        if (current_added >= kmerSize) {
-            //take lookup bits and put it into restBits
-            //add to lookup
-        }  else if(current_added > bitKmer) {
-            //add to lookup
+        if (*bp == 'N' ) { // N
+            forwardLookup.reset();
+            reverseLookup.reset();
+            if (diff) {
+                forwardRest.reset();
+                reverseRest.reset();
+            }
+            current_added = 0;
+            //reset stuff that needs to be reset
         } else {
-            //add to rest
-        }
-        ++current_added;
+            
+            if(current_added >= diff) { //if diff is zero, no need to add to the rest bits
+                forwardLookup <<=2;
+                reverseLookup >>=2;
+                setBitsChar(forwardLookup, lookup_loc, *bp, false);
+                setBitsChar(reverseLookup, lookup_loc_rc, *bp, true);
+            } else {
+                forwardRest <<=2;
+                reverseRest >>=2;
+                setBitsChar(forwardRest, rest_loc, *bp, false);
+                setBitsChar(reverseRest, rest_loc_rc, *bp, true);
+            }
+
+            current_added += 2;
+
+            if (current_added >= bitKmer) {
+                //take lookup bits and put it into restBits
+                //add to lookup
+                boost::dynamic_bitset<> &bs = forwardLookup > reverseLookup ? forwardRest : reverseRest;
+                boost::dynamic_bitset<> &bs_2 = forwardLookup > reverseLookup ? forwardLookup : reverseLookup;
+                ulLookup = forwardLookup > reverseLookup ? forwardLookup.to_ulong() : reverseLookup.to_ulong();
+                if ( !lookup[ulLookup ] ) {
+                    lookup[ulLookup ] = std::make_shared<Lookup>(bs);
+                } else if (diff) {
+                    lookup[ulLookup]->insert(bs);
+                }
+                if (diff) {
+                    forwardRest <<= 2;
+                    reverseRest >>= 2;
+                    setBitsBools(forwardRest, rest_loc, forwardLookup[bitKmer -2], forwardLookup[bitKmer - 2 + 1]);
+                    setBitsBools(reverseRest, rest_loc_rc, reverseLookup[0], reverseLookup[1]);
+                }
+                
+            } 
+           }
     }
-         
+
+    
 }
 
 
