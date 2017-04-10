@@ -238,7 +238,7 @@ void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> 
             SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
 
             if (ser) {
-                double val = check_read(lookup, per->get_read(), kmerSize, kmerLookupSize, rest_loc, rest_loc_rc, bitKmer, bitKmerLookupSize, lookup_loc, lookup_loc_rc, diff, forwardLookup, reverseLookup, forwardRest, reverseRest );
+                double val = check_read(lookup, ser->get_read(), kmerSize, kmerLookupSize, rest_loc, rest_loc_rc, bitKmer, bitKmerLookupSize, lookup_loc, lookup_loc_rc, diff, forwardLookup, reverseLookup, forwardRest, reverseRest );
                 if (val <= hits) {
                     writer_helper(ser, pe, se, false, c);
                 } else {
