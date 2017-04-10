@@ -74,7 +74,6 @@ unsigned int check_read( kmerSet &lookup, const Read &rb, const size_t bitKmer, 
 
     std::string seq = rb.get_seq();
 
-    unsigned long ulLookup = 0;
     unsigned int hits = 0;
     unsigned int current_added = 0;
 
@@ -96,7 +95,7 @@ unsigned int check_read( kmerSet &lookup, const Read &rb, const size_t bitKmer, 
 
     for (std::string::iterator bp = seq.begin(); bp < seq.end(); ++bp) { //goes through each bp of the read
          
-        if (*bp == 'N' ) { // N resets everythign
+        if (*bp == 'N' || *bp == 'n') { // N resets everythign
             current_added = 0;
         } else {
             reverseLookup >>= 2;
@@ -119,7 +118,7 @@ unsigned int check_read( kmerSet &lookup, const Read &rb, const size_t bitKmer, 
 }
 
 template <class T, class Impl>
-void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, Counter& c, kmerSet &lookup, double hits, bool checkR2, size_t kmerSize, size_t kmerLookupSize, bool inverse = false) {
+void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, Counter& c, kmerSet &lookup, double hits, bool checkR2, size_t kmerSize, bool inverse = false) {
 
     /*These are set here so each read doesn't have to recalcuate these stats*/
 
@@ -201,14 +200,13 @@ void setLookup( kmerSet &lookup, Read &rb, size_t kmerSize) {
     size_t lookup_loc_rc = bitKmer - 2;
     
     size_t current_added = 0;
-    size_t diff = 0;
     boost::dynamic_bitset <> forwardLookup(bitKmer);
     boost::dynamic_bitset <> reverseLookup(bitKmer);
 
     std::string seq = rb.get_seq();
 
     for (std::string::iterator bp = seq.begin(); bp < seq.end(); ++bp) {
-        if (*bp == 'N' ) { // N
+        if (*bp == 'N' || *bp == 'n' ) { // N
             current_added = 0;
         } else {
             reverseLookup >>= 2;
