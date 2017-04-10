@@ -181,7 +181,7 @@ unsigned int check_read( firstLookupPointer lookup, const Read &rb, const size_t
 }
 
 template <class T, class Impl>
-void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, Counter& c, firstLookupPointer lookup, double hits, bool checkR2, size_t kmerSize, size_t kmerLookupSize) {
+void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, Counter& c, firstLookupPointer lookup, double hits, bool checkR2, size_t kmerSize, size_t kmerLookupSize, bool inverse = false) {
 
     /*These are set here so each read doesn't have to recalcuate these stats*/
 
@@ -226,7 +226,9 @@ void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> 
                 val = std::max(val, val2);
             }
 
-            if (val <= hits) {
+            if (val <= hits && !inverse) {
+                writer_helper(per, pe, se, false, c);
+            } else if (val >= hits && inverse) {
                 writer_helper(per, pe, se, false, c);
             } else {
                 ++c["R1_Discarded"];
@@ -238,7 +240,9 @@ void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> 
 
             if (ser) {
                 double val = check_read(lookup, ser->get_read(), kmerSize, kmerLookupSize, rest_loc, rest_loc_rc, bitKmer, bitKmerLookupSize, lookup_loc, lookup_loc_rc, diff, forwardLookup, reverseLookup, forwardRest, reverseRest );
-                if (val <= hits) {
+                if (val <= hits && !inverse) {
+                    writer_helper(ser, pe, se, false, c);
+                } else if (val >= hits && inverse) {
                     writer_helper(ser, pe, se, false, c);
                 } else {
                     ++c["SE_Discarded"];
