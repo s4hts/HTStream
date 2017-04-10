@@ -27,6 +27,8 @@ namespace bi = boost::iostreams;
 
 int check_open_r(const std::string& filename) ;
 int check_exists(const std::string& filename, bool force, bool gzip, bool std_out) ;
+std::string get_fasta_seq(std::istream &inFasta);
+Read fasta_to_read(std::string fasta_file);
 
 class HtsOfstream {
 private:

@@ -40,7 +40,6 @@ void writer_helper(ReadBase *r, std::shared_ptr<OutputWriter> pe, std::shared_pt
             
     }
 }
-
 void skip_lr(std::istream *input) {
     while(input and input->good() and (input->peek() == '\n' || input->peek() == '\r')) {
         input->get();
@@ -50,6 +49,36 @@ void skip_lr(std::istream *input) {
 void throw_error(const std::string& filename) {
     throw std::runtime_error(filename + ": " +  std::strerror( errno ));
 }
+
+
+std::string get_fasta_seq(std::istream &inFasta) {
+    std::string tmpStr, refSeq;
+    while (inFasta >> tmpStr) { 
+        if (tmpStr[0] != '>') { //header line
+            if (tmpStr[tmpStr.length() - 1] == '\n') {
+                tmpStr.pop_back();
+            }
+            refSeq += tmpStr;
+        }
+    }
+
+    return refSeq;
+
+}
+
+Read fasta_to_read(std::string fasta_file) {
+    FILE *f = fopen(fasta_file.c_str(), "r");
+    if (!f) {
+        throw_error(fasta_file);
+    }
+    fclose(f);
+    std::ifstream inFasta(fasta_file);
+
+    
+    return Read(  get_fasta_seq(inFasta)  , "", "");
+
+}
+
 
 int check_open_r(const std::string& filename) {
     FILE* f = NULL;

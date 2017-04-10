@@ -72,24 +72,23 @@ void setBitsBools(boost::dynamic_bitset<> &bs, size_t loc, bool set1, bool set2)
     bs[loc + 1] = set2;
 }
 
-int setBitsChar(boost::dynamic_bitset<> &lookup, size_t loc, char c, bool rc) {
+void setBitsChar(boost::dynamic_bitset<> &lookup, size_t loc, char c, bool rc) {
 
-    if (c == 'A') {
+    if (c == 'A' || c == 'a' ) {
         lookup[loc] = (0 ^ rc);
         lookup[loc+1] = (0 ^ rc);
-    } else if (c == 'T') {
+    } else if (c == 'T' || c == 't') {
         lookup[loc] = (1 ^ rc);
         lookup[loc+1] = (1 ^ rc);
-    } else if (c == 'C') {
+    } else if (c == 'C' || c == 'c') {
         lookup[loc] = (1 ^ rc);
         lookup[loc+1] = (0 ^ rc);
-    } else if (c == 'G') {
+    } else if (c == 'G' || c == 'g') {
         lookup[loc] = (0 ^ rc)  ;
         lookup[loc+1] = (1 ^ rc);
     } else {
-        return 0; //N
+        throw std::runtime_error("Unknown base pair in sequence " + c);
     }
-    return 1;
 
 }
 
@@ -238,7 +237,7 @@ void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> 
             SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
 
             if (ser) {
-                double val = check_read(lookup, per->get_read(), kmerSize, kmerLookupSize, rest_loc, rest_loc_rc, bitKmer, bitKmerLookupSize, lookup_loc, lookup_loc_rc, diff, forwardLookup, reverseLookup, forwardRest, reverseRest );
+                double val = check_read(lookup, ser->get_read(), kmerSize, kmerLookupSize, rest_loc, rest_loc_rc, bitKmer, bitKmerLookupSize, lookup_loc, lookup_loc_rc, diff, forwardLookup, reverseLookup, forwardRest, reverseRest );
                 if (val <= hits) {
                     writer_helper(ser, pe, se, false, c);
                 } else {

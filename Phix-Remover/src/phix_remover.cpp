@@ -48,7 +48,7 @@ int main(int argc, char** argv)
         setDefaultParamsTrim(desc);
 
         desc.add_options()
-            ("seq,S", po::value<std::string>()->default_value(""), "Phix Sequence - default https://www.ncbi.nlm.nih.gov/nuccore/9626372")
+            ("seq,S", po::value<std::string>()->default_value(""), "Please supply a fasta file - default - Phix Sequence - default https://www.ncbi.nlm.nih.gov/nuccore/9626372")
             ("check-read-2,C", po::bool_switch()->default_value(false),    "Check R2 as well as R1 (pe)")
             ("kmerSize,k", po::value<size_t>()->default_value(8), "Size of the kmer lookup")
             ("kmerLookupSize,K", po::value<size_t>()->default_value(8), "Size of the kmer Used to iniate the search")
@@ -77,7 +77,7 @@ int main(int argc, char** argv)
             //Phix isn't set to default since it makes help a PITA to read
             Read readSeq;
             if (vm["seq"].as<std::string>() != "") {
-                readSeq = Read(vm["seq"].as<std::string>(), "", "");
+                readSeq =  fasta_to_read(vm["seq"].as<std::string>());
             } else {
                 readSeq = Read(phixSeq_True, "", "");
             }

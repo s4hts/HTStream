@@ -9,7 +9,16 @@ public:
     const std::string readTabData = "TESTOne\tACTG\t####\tACTG\t####\nTestTwo\tACTG\t####\n";
     const std::string readDataInter = "@Whatever1\nAAAAAAA\n+\n#######\n@Whatever2\nGGGCCCT\n+\nBBBBBBB\n";
 };
+
+TEST_F(ReadsTest, fasta_to_read) {
+    std::istringstream testFasta(">TestHeader\nAACCCAAC\nACGTACGT\n");
     
+    std::string s (get_fasta_seq(testFasta));
+    ASSERT_EQ("AACCCAACACGTACGT", s);
+
+}
+
+
 TEST_F(ReadsTest, parseTabRead) {
     std::istringstream in1(readTabData);
     InputReader<ReadBase, TabReadImpl> ifs(in1);
