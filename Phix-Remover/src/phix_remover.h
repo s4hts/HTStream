@@ -1,5 +1,5 @@
 /*The idea of this program is to screen out reads that "look like" a reference
- * this is accomplised by making a lookup table (hash table), and if enough Kmers
+ * this is accomplised by making a lookup table (hash table) that uses kmer binaries as their hash, and if enough Kmers
  * "hit" this table, it is considered close enough, and is discarded
   */
 #ifndef PHIX_REMOVER_H
@@ -94,7 +94,7 @@ int setBitsChar(boost::dynamic_bitset<> &lookup, size_t loc, char c, bool rc) {
 }
 
 
-/*The intent of this read is to check against the lookup table and return the number of hits
+/*The intent of this is to check  reads against the lookup table and return the number of hits
  * The function arguments are long because I did not want to recalculate those values each time
  * Especially reallocating the bitsets each time was costly.
  * Bitsets are safe, all positions will be overwritten without need to reset
