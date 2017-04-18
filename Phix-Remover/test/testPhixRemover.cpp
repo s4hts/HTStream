@@ -10,6 +10,15 @@ class PhixRemover : public ::testing::Test {
         const size_t lookup_kmer_test = 2;
 };
 
+TEST_F(PhixRemover, all_from_fastq) {
+    const std::string faFile = ">1\nACGT\nACGT\n>2\nTTTT\n";
+    std::istringstream fa(faFile);
+    InputReader<SingleEndRead, FastaReadImpl> f(fa);
+    Read r = fasta_set_to_one_read( f );
+    std::cout << r.get_seq() << '\n';
+    ASSERT_EQ("ACGTACGTTTTT", r.get_seq());
+};
+
 TEST_F(PhixRemover, check_check_read) {
     std::string s("AAAAAAAGCT");
     Read readPhix = Read(s, "", ""); 
@@ -35,5 +44,16 @@ TEST_F(PhixRemover, setLookupTestOrderedVec) {
     kmerSet lookup;
     setLookup(lookup, readPhix, 5);
     ASSERT_EQ(4, lookup.size());
+};
+
+TEST_F(PhixRemover, setLookupTest) {
+    std::string s("AAAAAAAGCT");
+    std::cout << "Testing Building Lookup Table with sequence " << s << '\n';
+    Read readPhix = Read(s, "", ""); 
+    kmerSet lookup;
+    setLookup(lookup, readPhix, 5);
+    //ASSERT_EQ(true , lookup.end != lookup.find(boost::dynamic_bitset<>(10, "1001111111")))
+    //std::string s("1001111111");
+
 };
 

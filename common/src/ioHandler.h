@@ -88,6 +88,20 @@ protected:
     std::string id, seq, id2, qual;
 };
 
+class InputFasta {
+protected:
+    Read load_read(std::istream *input);
+    std::string id, seq;
+    std::string tmpSeq;
+};
+
+class FastaReadImpl : public InputFasta {
+public:
+    FastaReadImpl(std::istream& input_) : input(&input_) {}
+protected:
+    std::istream* input = 0;
+};
+
 class SingleEndReadFastqImpl : public InputFastq{
 public:
     SingleEndReadFastqImpl(std::istream& in) : input(&in) {}

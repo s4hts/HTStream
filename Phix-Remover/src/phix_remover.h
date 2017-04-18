@@ -17,6 +17,8 @@
 #include <unordered_set>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/functional/hash.hpp>
+#include <tuple>
+
 
 class dbhash {
 public:
@@ -32,24 +34,31 @@ void setBitsBools(boost::dynamic_bitset<> &bs, size_t loc, bool set1, bool set2)
     bs[loc + 1] = set2;
 }
 
-void setBitsChar(boost::dynamic_bitset<> &lookup, size_t loc, char c, bool rc) {
+Read fasta_set_to_one_read(InputReader<SingleEndRead, FastaReadImpl> &faReader     ) {
+    std::string s;
 
-    if (c == 'A' || c == 'a' ) {
-        lookup[loc] = (0 ^ rc);
-        lookup[loc+1] = (0 ^ rc);
-    } else if (c == 'T' || c == 't') {
-        lookup[loc] = (1 ^ rc);
-        lookup[loc+1] = (1 ^ rc);
-    } else if (c == 'C' || c == 'c') {
-        lookup[loc] = (1 ^ rc);
-        lookup[loc+1] = (0 ^ rc);
-    } else if (c == 'G' || c == 'g') {
-        lookup[loc] = (0 ^ rc)  ;
-        lookup[loc+1] = (1 ^ rc);
-    } else {
-        throw std::runtime_error("Unknown base pair in sequence " + c);
+    while(faReader.has_next()) {
+        auto r = faReader.next();
+        s += (r->get_read().get_seq());
     }
+    return Read(s, "", "All_Header");
+}
 
+
+std::pair <bool, bool> setBitsChar(char c) {
+    
+    switch (std::tolower(c)) {
+        case 'a':
+            return std::pair<bool, bool> (0, 0);
+        case 't':
+            return std::pair<bool, bool> (1, 1);
+        case 'c':
+            return std::pair<bool, bool> (0, 1);
+        case 'g':
+            return std::pair<bool, bool> (1, 0);
+        default:
+            throw std::runtime_error("Unknown base pair in sequence " + c);
+    }
 }
 
 
@@ -92,16 +101,20 @@ unsigned int check_read( kmerSet &lookup, const Read &rb, const size_t bitKmer, 
 
     /*These the lookups are compared, the larger Lookup is taken and searched for,
      * if there is a "soft hit", initiate a search of the vector with the cooresponding Rest*/
-
+    std::pair <bool, bool> bits;
     for (std::string::iterator bp = seq.begin(); bp < seq.end(); ++bp) { //goes through each bp of the read
          
-        if (*bp == 'N' || *bp == 'n') { // N resets everythign
+        if (std::tolower(*bp) == 'n') { // N resets everythign
             current_added = 0;
         } else {
             reverseLookup >>= 2;
-            setBitsChar(reverseLookup,lookup_loc_rc, *bp, true); //Just add RC to lookup if Rest doesn't exist
             forwardLookup <<=2; //No special condition needed for Forward Looup
-            setBitsChar(forwardLookup, lookup_loc, *bp, false);
+            bits = setBitsChar(*bp);
+            forwardLookup[lookup_loc] = bits.first;
+            forwardLookup[lookup_loc+1] = bits.second;
+            reverseLookup[lookup_loc_rc ] = !bits.first; 
+            reverseLookup[lookup_loc_rc + 1] = !bits.second; 
+            
             current_added += 2;
            
             if (current_added >= bitKmer) { //initiate hit search
@@ -160,6 +173,7 @@ void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> 
 
             if (ser) {
                 double val = check_read(lookup, ser->get_read(), bitKmer, lookup_loc, lookup_loc_rc, forwardLookup, reverseLookup );
+                val = val / ( ser->get_read().getLength() - kmerSize);
                 if (val <= hits && !inverse) {
                     writer_helper(ser, pe, se, false, c);
                 } else if (val >= hits && inverse) {
@@ -204,15 +218,19 @@ void setLookup( kmerSet &lookup, Read &rb, size_t kmerSize) {
     boost::dynamic_bitset <> reverseLookup(bitKmer);
 
     std::string seq = rb.get_seq();
-
+    std::pair<bool, bool> bits;
     for (std::string::iterator bp = seq.begin(); bp < seq.end(); ++bp) {
-        if (*bp == 'N' || *bp == 'n' ) { // N
+        if (std::tolower(*bp) == 'n' ) { // N
             current_added = 0;
         } else {
             reverseLookup >>= 2;
-            setBitsChar(reverseLookup,lookup_loc_rc, *bp, true);
             forwardLookup <<=2;
-            setBitsChar(forwardLookup, lookup_loc, *bp, false);
+            
+            bits = setBitsChar(*bp);
+            forwardLookup[lookup_loc] = bits.first;
+            forwardLookup[lookup_loc + 1] = bits.second;
+            reverseLookup[lookup_loc_rc] = !bits.first;
+            reverseLookup[lookup_loc_rc + 1] = !bits.second;
             current_added += 2;
 
             if (current_added >= bitKmer) {

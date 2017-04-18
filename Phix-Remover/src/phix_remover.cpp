@@ -77,7 +77,9 @@ int main(int argc, char** argv)
             //Phix isn't set to default since it makes help a PITA to read
             Read readSeq;
             if (vm["seq"].as<std::string>() != "") {
-                readSeq =  fasta_to_read(vm["seq"].as<std::string>());
+                bi::stream <bi::file_descriptor_source> fa{check_open_r(vm["seq"].as<std::string>()), bi::close_handle};
+                InputReader<SingleEndRead, FastaReadImpl> faReader(fa);
+                readSeq = fasta_set_to_one_read(faReader);
             } else {
                 readSeq = Read(phixSeq_True, "", "");
             }

@@ -123,7 +123,7 @@ void setDefaultParams(po::options_description &desc, std::string program_name) {
                                            "Tab input <comma sep for multiple files>")
             ("interleaved-input,I", po::value< std::vector<std::string> >(),
                                            "Interleaved input I <comma sep for multiple files>")
-            ("stdin-input,S", "STDIN input <MUST BE TAB DELIMITED INPUT>")
+            ("std-input,S", "STDIN input <MUST BE TAB DELIMITED INPUT>")
             ("gzip-output,g", po::bool_switch()->default_value(false),  "Output gzipped")
             ("interleaved-output,i", po::bool_switch()->default_value(false),     "Output to interleaved")
             ("fastq-output,f", po::bool_switch()->default_value(true), "Fastq format output")
