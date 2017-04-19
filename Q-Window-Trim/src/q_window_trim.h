@@ -21,8 +21,7 @@ void trim_left(Read &rb, size_t sum_qual, size_t window_size) {
         i = static_cast<size_t>(it - qual.begin());
         current_sum += static_cast<size_t>(*it);
         if (i >= window_size) { //once we hit window size, subtract the first value off
-            cut = (i - window_size + 1);
-            //current_sum -= static_cast<size_t>(qual[i - window_size]);
+            cut = i;
             current_sum -= static_cast<size_t>( *(it - static_cast<long>(window_size) ) );
         }
         if (current_sum >= sum_qual) {
@@ -50,7 +49,6 @@ void trim_right(Read &rb, size_t sum_qual, size_t window_size) {
         i = static_cast<size_t>(it - qual.rbegin());
         current_sum += static_cast<size_t>(*it);
         if (i >= window_size) { //once we hit window size, subtract the first value off
-            cut = i - window_size + 1;
             current_sum -= static_cast<size_t>( *(it - static_cast<long>(window_size)) );
         }
         
