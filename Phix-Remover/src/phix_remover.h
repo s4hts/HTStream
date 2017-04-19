@@ -47,7 +47,7 @@ Read fasta_set_to_one_read(InputReader<SingleEndRead, FastaReadImpl> &faReader  
 
 std::pair <bool, bool> setBitsChar(char c) {
     
-    switch (std::tolower(c)) {
+    switch (std::toupper(c)) {
         case 'a':
             return std::pair<bool, bool> (0, 0);
         case 't':
@@ -104,7 +104,7 @@ unsigned int check_read( kmerSet &lookup, const Read &rb, const size_t bitKmer, 
     std::pair <bool, bool> bits;
     for (std::string::iterator bp = seq.begin(); bp < seq.end(); ++bp) { //goes through each bp of the read
          
-        if (std::tolower(*bp) == 'n') { // N resets everythign
+        if (std::toupper(*bp) == 'n') { // N resets everythign
             current_added = 0;
         } else {
             reverseLookup >>= 2;
@@ -220,7 +220,7 @@ void setLookup( kmerSet &lookup, Read &rb, size_t kmerSize) {
     std::string seq = rb.get_seq();
     std::pair<bool, bool> bits;
     for (std::string::iterator bp = seq.begin(); bp < seq.end(); ++bp) {
-        if (std::tolower(*bp) == 'n' ) { // N
+        if (std::toupper(*bp) == 'n' ) { // N
             current_added = 0;
         } else {
             reverseLookup >>= 2;
