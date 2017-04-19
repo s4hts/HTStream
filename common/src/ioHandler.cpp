@@ -40,7 +40,6 @@ void writer_helper(ReadBase *r, std::shared_ptr<OutputWriter> pe, std::shared_pt
             
     }
 }
-
 void skip_lr(std::istream *input) {
     while(input and input->good() and (input->peek() == '\n' || input->peek() == '\r')) {
         input->get();
@@ -50,6 +49,7 @@ void skip_lr(std::istream *input) {
 void throw_error(const std::string& filename) {
     throw std::runtime_error(filename + ": " +  std::strerror( errno ));
 }
+
 
 int check_open_r(const std::string& filename) {
     FILE* f = NULL;
@@ -128,6 +128,32 @@ Read InputFastq::load_read(std::istream *input) {
     return Read(seq, qual, id.substr(1));
 }
 
+Read InputFasta::load_read(std::istream *input) {
+    while(std::getline(*input, id) && id.size() < 1) {
+    }
+    if (id.size() < 1) {
+        throw std::runtime_error("invalid id - line empty");
+    }
+    if (id[0] != '>') {
+        throw std::runtime_error("id line did not begin with >");
+    }
+    seq = "";
+    while (std::getline(*input, tmpSeq)) {
+        seq += tmpSeq;
+        if (input->peek() == '>') {
+            break;
+        }
+    }
+    if (seq.size() < 1) {
+        throw std::runtime_error("no sequence");  
+    }
+    while(input->good() and (input->peek() == '\n' || input->peek() == '\r')) {
+        input->get();
+    }
+    return Read(seq, "", id);
+
+}
+
 //Overrides load_read for tab delimited reads
 std::vector<Read> TabReadImpl::load_read(std::istream *input) {
 
@@ -177,6 +203,18 @@ bool InputReader<SingleEndRead, SingleEndReadFastqImpl>::has_next() {
 template <>
 InputReader<SingleEndRead, SingleEndReadFastqImpl>::value_type InputReader<SingleEndRead, SingleEndReadFastqImpl>::next() {
     return InputReader<SingleEndRead, SingleEndReadFastqImpl>::value_type(new SingleEndRead(load_read(input)));
+}
+
+template <>
+bool InputReader<SingleEndRead, FastaReadImpl>::has_next() {
+    // ignore extra lines at end of file
+    skip_lr(input);
+    return (input and input->good());
+};
+
+template<>
+InputReader<SingleEndRead, FastaReadImpl>::value_type InputReader<SingleEndRead, FastaReadImpl>::next() {
+    return InputReader<SingleEndRead, FastaReadImpl>::value_type(new SingleEndRead(load_read(input)));
 }
 
 template <>
