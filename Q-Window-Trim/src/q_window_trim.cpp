@@ -49,7 +49,8 @@ int main(int argc, char** argv)
 
         desc.add_options()
             ("window-size,w", po::value<size_t>()->default_value(10),    "Min base pairs trim for AT tail")
-            ("avg-qual,q", po::value<size_t>()->default_value(20),    "Max amount of mismatches allowed in trimmed area");
+            ("avg-qual,q", po::value<size_t>()->default_value(20),    "Threshold for quality score average in the window");
+            ("qual-offset,o", po::value<size_t>()->default_value(33), "Quality offset for ascii q-score (default is 33)");
         po::variables_map vm;
 
         try
@@ -62,7 +63,7 @@ int main(int argc, char** argv)
             po::notify(vm); // throws on error, so do after help in case
            
              
-            size_t qual_threshold = (vm["avg-qual"].as<size_t>() + 33);
+            size_t qual_threshold = (vm["avg-qual"].as<size_t>() + vm["qual-offset"].as<size_t>() );
 
             std::string statsFile(vm["stats-file"].as<std::string>());
             std::string prefix(vm["prefix"].as<std::string>());
