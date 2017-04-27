@@ -48,13 +48,13 @@ Read fasta_set_to_one_read(InputReader<SingleEndRead, FastaReadImpl> &faReader  
 std::pair <bool, bool> setBitsChar(char c) {
     
     switch (std::toupper(c)) {
-        case 'a':
+        case 'A':
             return std::pair<bool, bool> (0, 0);
-        case 't':
+        case 'T':
             return std::pair<bool, bool> (1, 1);
-        case 'c':
+        case 'C':
             return std::pair<bool, bool> (0, 1);
-        case 'g':
+        case 'G':
             return std::pair<bool, bool> (1, 0);
         default:
             throw std::runtime_error("Unknown base pair in sequence " + c);
@@ -104,7 +104,7 @@ unsigned int check_read( kmerSet &lookup, const Read &rb, const size_t bitKmer, 
     std::pair <bool, bool> bits;
     for (std::string::iterator bp = seq.begin(); bp < seq.end(); ++bp) { //goes through each bp of the read
          
-        if (std::toupper(*bp) == 'n') { // N resets everythign
+        if (std::toupper(*bp) == 'N') { // N resets everythign
             current_added = 0;
         } else {
             reverseLookup >>= 2;
@@ -219,8 +219,8 @@ void setLookup( kmerSet &lookup, Read &rb, size_t kmerSize) {
 
     std::string seq = rb.get_seq();
     std::pair<bool, bool> bits;
-    for (std::string::iterator bp = seq.begin(); bp < seq.end(); ++bp) {
-        if (std::toupper(*bp) == 'n' ) { // N
+    for (std::string::iterator bp = seq.begin(); bp != seq.end(); ++bp) {
+        if (std::toupper(*bp) == 'N' ) { // N
             current_added = 0;
         } else {
             reverseLookup >>= 2;
@@ -232,7 +232,6 @@ void setLookup( kmerSet &lookup, Read &rb, size_t kmerSize) {
             reverseLookup[lookup_loc_rc] = !bits.first;
             reverseLookup[lookup_loc_rc + 1] = !bits.second;
             current_added += 2;
-
             if (current_added >= bitKmer) {
                 boost::dynamic_bitset<> &bs = forwardLookup > reverseLookup ? forwardLookup : reverseLookup;
                 lookup.insert(bs);

@@ -40,9 +40,14 @@ TEST_F(PhixRemover, check_check_read) {
 TEST_F(PhixRemover, setLookupTestOrderedVec) {
     std::string s("AAAAAAAGCT");
     std::cout << "Testing Building Lookup Table with sequence " << s << '\n';
+    std::cout << "HERE 1\n";
     Read readPhix = Read(s, "", ""); 
+    std::cout << "HERE 2\n";
     kmerSet lookup;
+    
     setLookup(lookup, readPhix, 5);
+    std::cout << "HERE 3\n";
+    std::cout << lookup.size() << '\n';
     ASSERT_EQ(4, lookup.size());
 };
 
