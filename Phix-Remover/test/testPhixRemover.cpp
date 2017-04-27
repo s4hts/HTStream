@@ -43,6 +43,7 @@ TEST_F(PhixRemover, setLookupTestOrderedVec) {
     Read readPhix = Read(s, "", ""); 
     kmerSet lookup;
     setLookup(lookup, readPhix, 5);
+    std::cout << lookup.size() << '\n';
     ASSERT_EQ(4, lookup.size());
 };
 
