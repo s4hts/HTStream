@@ -5,7 +5,9 @@ file(GLOB sources "src/*.cpp")
 message( status "sources: " ${sources})
 
 set(Boost_USE_STATIC_LIBS   ON)
-FIND_PACKAGE( Boost 1.56 COMPONENTS system program_options filesystem iostreams REQUIRED )
+set(Boost_USE_MULTITHREADED ON)  
+
+FIND_PACKAGE( Boost 1.56 COMPONENTS thread serialization system program_options filesystem iostreams REQUIRED )
 
 set(COMMON_INCLUDES ${CMAKE_SOURCE_DIR}/common/src)
 include_directories(${GTEST_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} ${COMMON_INCLUDES} )

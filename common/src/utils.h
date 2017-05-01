@@ -9,6 +9,8 @@
 #include <memory>
 #include <vector>
 #include <boost/program_options.hpp>
+#include <boost/bind.hpp>
+#include <boost/thread/thread.hpp>
 #include "version.h"
 #include "typedefs.h"
 
@@ -25,5 +27,58 @@ void version_or_help(std::string program_name, po::options_description &desc, po
 void setDefaultParams(po::options_description &desc, std::string program_name);
 void setDefaultParamsCutting(po::options_description &desc);
 void setDefaultParamsTrim(po::options_description &desc);
+
+class Thread_Pool {
+public:
+    Thread_Pool(int _thread_count) : thread_count(_thread_count) { }
+
+    void done() {
+        ++thread_count;
+        thread_limit_cv.notify_one();
+    }
+
+    template <typename FUNC, typename WRITER>
+    void worker_function(FUNC f, WRITER w) {
+
+        while(thread_count <= 0) {
+            boost::mutex::scoped_lock scoped_lock(thread_limit_mutex);
+            if (scoped_lock) {
+                thread_limit_cv.wait(scoped_lock);
+            }
+        }
+        --thread_count;
+        boost::thread *t = new boost::thread(  [this, f, w] {
+            auto i = f();
+            {
+                boost::unique_lock<boost::shared_mutex> lock(io_mutex);
+                if (lock) {
+                    w(i);
+                    done();
+                }
+            }
+        } ) ;
+        g.add_thread(t);
+    }
+
+    void wait() {
+        g.join_all();
+    }
+
+    ~Thread_Pool() {
+        wait();
+    }
+
+private:
+    int thread_count = 0;
+    boost::mutex thread_limit_mutex;
+    boost::shared_mutex io_mutex;
+    boost::condition_variable thread_limit_cv;
+    boost::thread_group g;
+
+};
+
+
+
+
 
 #endif

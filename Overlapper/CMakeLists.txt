@@ -12,7 +12,8 @@ set(PROJECT_LINK_LIBS hts_common)
 link_directories(${CMAKE_BINARY_DIR}/common)
 
 set(Boost_USE_STATIC_LIBS   ON)
-FIND_PACKAGE( Boost 1.56 COMPONENTS system program_options iostreams filesystem REQUIRED )
+set(Boost_USE_MULTITHREADED ON)
+FIND_PACKAGE( Boost 1.56 COMPONENTS thread serialization system program_options iostreams filesystem REQUIRED )
 include_directories(${COMMON_INCLUDES} ${Boost_INCLUDE_DIR} )
 
 

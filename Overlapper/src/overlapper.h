@@ -16,6 +16,8 @@
 #include <unordered_map>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/functional/hash.hpp>
+#include <boost/bind.hpp>
+#include <boost/thread/thread.hpp>
 #include <algorithm>
 #include <bitset>
 #include <utility>
@@ -153,7 +155,7 @@ spReadBase check_read(PairedEndRead &pe , Counter &counters, const double misDen
     
     Read &r1 = pe.non_const_read_one();
     Read &r2 = pe.non_const_read_two();
-
+    
     bool swapped = false;
     /*Read1 is always longer than Read 2)*/
     if (r1.getLength() < r2.getLength()) {
@@ -199,6 +201,22 @@ spReadBase check_read(PairedEndRead &pe , Counter &counters, const double misDen
     return overlapped;
 }
 
+
+void local_helper_writer(spReadBase overlapped, PairedEndRead *per, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, bool stranded, bool adapterTrimming, bool no_orphan, const size_t min_length, Counter& counters) {
+    if (!overlapped) {
+        writer_helper(per, pe, se, stranded, counters); //write out as is
+    } else if (overlapped) { //if there is an overlap
+        if (adapterTrimming) { //just adapter trimming, removes adapters
+            per->checkDiscarded(min_length);    
+            writer_helper(per, pe, se, stranded, counters, no_orphan); 
+        } else {
+            overlapped->checkDiscarded(min_length);
+            writer_helper(overlapped.get(), pe, se, stranded, counters);
+        }
+    }
+
+}
+
 /*This is the helper class for overlap
  * The idea is in the wet lab, they set up sequences to sequences toward each other
  * Sometimes, these squences can overlap
@@ -210,7 +228,8 @@ spReadBase check_read(PairedEndRead &pe , Counter &counters, const double misDen
  * With a sin it is useful to have the higher confidence as well as removing the adapters*/
 template <class T, class Impl>
 void helper_overlapper(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, Counter& counters, const double misDensity, const size_t minOver, histVec &insertLength, const bool stranded, const size_t min_length, const size_t checkLengths, const bool adapterTrimming, const size_t kmer, const size_t kmerOffset, bool no_orphan = false ) {
-    
+    Thread_Pool *tp = new Thread_Pool(10);
+
     while(reader.has_next()) {
         auto i = reader.next();
         //Saves check
@@ -223,19 +242,10 @@ void helper_overlapper(InputReader<T, Impl> &reader, std::shared_ptr<OutputWrite
         ++counters["TotalRecords"];
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());        
         if (per) {
-            spReadBase overlapped = check_read(*per, counters, misDensity, minOver, insertLength, checkLengths, adapterTrimming, kmer, kmerOffset, min_length);
-            if (!overlapped) {
-                writer_helper(per, pe, se, stranded, counters); //write out as is
-            } else if (overlapped) { //if there is an overlap
-                if (adapterTrimming) { //just adapter trimming, removes adapters
-                    per->checkDiscarded(min_length);    
-                    writer_helper(per, pe, se, stranded, counters, no_orphan); 
-                } else {
-                    overlapped->checkDiscarded(min_length);    
-                    writer_helper(overlapped.get(), pe, se, stranded, counters);
-                }
-            }
-
+            //boost::function<void (spReadBase) > write = boost::bind(local_helper_writer, _1, per, pe, se, stranded, adapterTrimming, no_orphan, min_length, counters);
+            //boost::function<spReadBase ()> func = boost::bind(check_read, *per, counters, misDensity, minOver, insertLength, checkLengths, adapterTrimming, kmer, kmerOffset, min_length);
+            //tp->worker_function (func, write);
+            //spReadBase overlapped = check_read(*per, counters, misDensity, minOver, insertLength, checkLengths, adapterTrimming, kmer, kmerOffset, min_length);
 
         } else {
             SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
@@ -248,6 +258,7 @@ void helper_overlapper(InputReader<T, Impl> &reader, std::shared_ptr<OutputWrite
             }
         }
     }
+    delete tp;
 }
 
 #endif
