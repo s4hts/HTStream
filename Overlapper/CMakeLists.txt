@@ -11,14 +11,15 @@ set(COMMON_INCLUDES ${CMAKE_SOURCE_DIR}/common/src)
 set(PROJECT_LINK_LIBS hts_common)
 link_directories(${CMAKE_BINARY_DIR}/common)
 
+FIND_PACKAGE(Threads)
 set(Boost_USE_STATIC_LIBS   ON)
 set(Boost_USE_MULTITHREADED ON)
 FIND_PACKAGE( Boost 1.56 COMPONENTS thread serialization system program_options iostreams filesystem REQUIRED )
-include_directories(${COMMON_INCLUDES} ${Boost_INCLUDE_DIR} )
+include_directories( ${COMMON_INCLUDES} ${Boost_INCLUDE_DIR} )
 
 
 add_executable(${PROJECT_NAME} ${sources})
-target_link_libraries(${PROJECT_NAME} ${PROJECT_LINK_LIBS} ${Boost_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} pthread ${PROJECT_LINK_LIBS} ${Boost_LIBRARIES})
 
 add_custom_target(valgrind_${PROJECT_NAME}
   DEPENDS ${PROJECT_NAME}
