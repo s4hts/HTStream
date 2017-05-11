@@ -185,9 +185,7 @@ void local_helper_writer(spReadBase overlapped, PairedEndRead &per, std::shared_
             per.checkDiscarded(min_length);    
             writer_helper(&per, pe, se, stranded, counters, no_orphan); 
         } else {
-            std::cout << "HERE" << std::endl;
             overlapped->checkDiscarded(min_length);
-            std::cout << overlapped->get_read().get_seq() << std::endl;
             writer_helper(overlapped.get(), pe, se, stranded, counters);
         }
     }
@@ -203,22 +201,17 @@ void local_helper_writer(spReadBase overlapped, PairedEndRead &per, std::shared_
  * With a lin it is useful to have a higher confidence in the bases in the overlap and longer read
  * With a sin it is useful to have the higher confidence as well as removing the adapters*/
 template <class T, class Impl>
-void helper_overlapper(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, Counter& counters, const double misDensity, const size_t minOver, histVec &insertLength, const bool stranded, const size_t min_length, const size_t checkLengths, const bool adapterTrimming, const size_t kmer, const size_t kmerOffset, bool no_orphan = false ) {
+void helper_overlapper(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, Counter& counters, const double misDensity, const size_t minOver, histVec &insertLength, const bool stranded, const size_t min_length, const size_t checkLengths, const bool adapterTrimming, const size_t kmer, const size_t kmerOffset, bool no_orphan = false, unsigned int threads = 1 ) {
 
     boost::function< spReadBase(PairedEndRead&)> func_overlap = boost::bind(check_read, _1, misDensity, minOver,checkLengths, adapterTrimming, kmer, kmerOffset, min_length);
     boost::function<void (spReadBase, PairedEndRead&) > write = boost::bind(local_helper_writer, _1, _2, pe, se, stranded, adapterTrimming, no_orphan, min_length, counters);
 
     //Thread_Pool< PairedEndRead,  boost::function<spReadBase(PairedEndRead&)>, boost::function<void (spReadBase, PairedEndRead&)> > tp(4, func_overlap, write);
-    Thread_Pool< PairedEndRead,  boost::function<spReadBase(PairedEndRead&)>, boost::function<void (spReadBase, PairedEndRead&)> > *tp = new Thread_Pool< PairedEndRead,  boost::function<spReadBase(PairedEndRead&)>, boost::function<void (spReadBase, PairedEndRead&)> >(10, func_overlap, write);
+    Thread_Pool< PairedEndRead ,  boost::function<spReadBase(PairedEndRead&)>, boost::function<void (spReadBase, PairedEndRead&)> > *tp = new Thread_Pool<PairedEndRead,  boost::function<spReadBase(PairedEndRead&)>, boost::function<void (spReadBase, PairedEndRead&)> >(threads, func_overlap, write);
 
     while(reader.has_next()) {
         auto i = reader.next();
         //Saves check
-        if (insertLength) {
-            if (insertLength->size() < 1) {
-                insertLength->resize(1);
-            }
-        }
 
         ++counters["TotalRecords"];
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());        
@@ -242,7 +235,6 @@ void helper_overlapper(InputReader<T, Impl> &reader, std::shared_ptr<OutputWrite
     }
     //delete tp;
     tp->wait();
-    std::cout << "Done\n";
 }
 
 #endif

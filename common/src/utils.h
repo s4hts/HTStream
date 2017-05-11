@@ -40,8 +40,6 @@ public:
             boost::thread *t = new boost::thread(&Thread_Pool::worker_helper_thread, this); 
             g.add_thread(t);
         }
-        boost::thread *t = new boost::thread(&Thread_Pool::writer_helper_thread, this); 
-        g.add_thread(t);
     }
 
     void worker_helper_thread() {
@@ -59,35 +57,16 @@ public:
                 
                 {
                     boost::mutex::scoped_lock lock_io(io_mutex);
-                    writer_queue.push(boost::bind(writer_function, i, r));
+                    writer_function(i, r);
                     lock_io.unlock();
-                    avail_io.notify_one();
                 }
             }
         }   
     }
 
-    void writer_helper_thread() {
-        while (!finished || !protected_empty_io() || !protected_empty()  ) {
-            boost::mutex::scoped_lock lock_io( io_mutex);
-            if (writer_queue.empty()) {
-                avail_io.wait(lock_io);
-            } else {
-                (writer_queue.front())();
-                writer_queue.pop();
-                lock_io.unlock();
-            }
-        }
-    } 
-
     bool protected_empty() {
         boost::mutex::scoped_lock lock(queue_protect);
         return worker_queue.empty();
-    }
-
-    bool protected_empty_io() {
-        boost::mutex::scoped_lock lock_io(io_mutex);
-        return writer_queue.empty();
     }
 
     void push(READ r) {
@@ -98,13 +77,11 @@ public:
     }
 
     void wait() {
-        finished = true;
-        while ( !protected_empty() ) {
+        if ( !protected_empty() ) {
             avail_data.notify_all();
         }
-        while ( !protected_empty_io() ) {
-            avail_io.notify_all();
-        }
+        finished = true;
+        avail_data.notify_all();
         g.join_all();
     }
 
@@ -123,7 +100,6 @@ private:
     boost::condition_variable avail_io;
     boost::thread_group g;
     std::queue<READ> worker_queue;
-    std::queue<boost::function<void()> > writer_queue;
     FUNC worker_function;
     WRITER writer_function;
 };
