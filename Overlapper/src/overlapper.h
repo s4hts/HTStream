@@ -178,17 +178,16 @@ spReadBase check_read(PairedEndRead &pe , const double misDensity, const size_t 
 
 
 void local_helper_writer(spReadBase overlapped, PairedEndRead &per, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, bool stranded, bool adapterTrimming, bool no_orphan, const size_t min_length, Counter& counters) {
-    std::cout << "OOOHHH YES" << std::endl;
     if (!overlapped) {
-        std::cout << "Here\n" << std::endl;
         writer_helper(&per, pe, se, stranded, counters, no_orphan); //write out as is
-        std::cout << "Done" << std::endl;
     } else if (overlapped) { //if there is an overlap
         if (adapterTrimming) { //just adapter trimming, removes adapters
             per.checkDiscarded(min_length);    
             writer_helper(&per, pe, se, stranded, counters, no_orphan); 
         } else {
+            std::cout << "HERE" << std::endl;
             overlapped->checkDiscarded(min_length);
+            std::cout << overlapped->get_read().get_seq() << std::endl;
             writer_helper(overlapped.get(), pe, se, stranded, counters);
         }
     }

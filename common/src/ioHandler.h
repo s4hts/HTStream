@@ -137,7 +137,7 @@ protected:
 
 class OutputWriter {
 public:
-    virtual ~OutputWriter() {  }
+    //virtual ~OutputWriter() {  }
     virtual void write(const PairedEndRead& ) { throw std::runtime_error("No PE implementation of write (Probably a SE read)"); }
     virtual void write(const SingleEndRead& ) { throw std::runtime_error("No SE implementaiton of write (Probably a PE read)"); }
     virtual void write_read(const Read &, bool ) { throw std::runtime_error("No write_read class, only accessable with SE"); } //only SE
@@ -308,12 +308,13 @@ protected:
 class ReadBaseOutTab : public OutputWriter {
 public:
     ReadBaseOutTab(std::shared_ptr<HtsOfstream> &out_) : output(out_) { }
-    ~ReadBaseOutTab() { output->flush(); }
+    ~ReadBaseOutTab() {std::cout << "RAAAAWWRRR" << std::endl;  output->flush(); }
     void write(const PairedEndRead &read) { format_writer(read.get_read_one(), read.get_read_two()); }
-    void write(const SingleEndRead &read) { format_writer(read.get_read()); }
+    void write(const SingleEndRead &read) { std::cout << "Bleh " << read.get_read().get_sub_seq() << std::endl; format_writer(read.get_read()); }
     void write_read(const Read &read, bool rc) { if (rc) { format_writer_rc(read); } else { format_writer(read); } }
     
     void write(const ReadBase &read) {  
+        std::cout << "HERE MEMEMEM" << std::endl;
         const PairedEndRead *per = dynamic_cast<const PairedEndRead*>(&read);
         if (per) {
             format_writer(per->get_read_one(), per->get_read_two());
@@ -322,6 +323,7 @@ public:
             if (ser == NULL) {
                 throw std::runtime_error("ReadBaseOutTab::write could not cast read as SE or PE read");
             }
+            std::cout << "HERE IN WRITE\n";
             format_writer(ser->get_read());
         }    
     }
@@ -329,7 +331,9 @@ protected:
     std::shared_ptr<HtsOfstream> output = nullptr;
     
     void format_writer(const Read &read) { 
+        std::cout << "HERE in writer" << std::endl;
         *output << read.get_id() << '\t' << read.get_sub_seq() << '\t' << read.get_sub_qual() << '\n'; 
+        output->flush();
     }
 
     void format_writer(const Read &read1, const Read &read2) {

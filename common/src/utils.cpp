@@ -94,7 +94,8 @@ void outputWriters(std::shared_ptr<OutputWriter> &pe, std::shared_ptr<OutputWrit
         out_1= std::make_shared<HtsOfstream>(default_outfiles[0], force, gzip_out, std_out);
 
         pe= std::make_shared<ReadBaseOutTab>(out_1);
-        se= std::make_shared<ReadBaseOutTab>(out_1);
+        //se= std::make_shared<ReadBaseOutTab>(out_1);
+        se = pe;
     } else if (fastq_out || (! std_out && ! tab_out) ) {
         for (auto& outfile: default_outfiles) {
             outfile = prefix + outfile + ".fastq";

@@ -40,88 +40,77 @@ public:
             boost::thread *t = new boost::thread(&Thread_Pool::worker_helper_thread, this); 
             g.add_thread(t);
         }
+        boost::thread *t = new boost::thread(&Thread_Pool::writer_helper_thread, this); 
+        g.add_thread(t);
     }
 
     void worker_helper_thread() {
-        std::cout << "STart" << std::endl;
-        while (!finished || protected_empty()) {
+        while (!finished || !protected_empty()) {
              
             boost::mutex::scoped_lock lock(queue_protect);
             if ( worker_queue.empty() ) {
-                std::cout << "Bleh\n" << std::endl;
                 avail_data.wait(lock);
             } else {
-                std::cout << "Woot\n";
                 READ r = worker_queue.front();
                 worker_queue.pop();
                 lock.unlock();
+                avail_data.notify_one();
                 auto i = worker_function(r);
-                boost::mutex::scoped_lock lock_io(io_mutex);
-                //boost::bind( writer_function, i, r)();
-                writer_function(i, r);
-                lock_io.unlock();
+                
+                {
+                    boost::mutex::scoped_lock lock_io(io_mutex);
+                    writer_queue.push(boost::bind(writer_function, i, r));
+                    lock_io.unlock();
+                    avail_io.notify_one();
+                }
             }
         }   
-        std::cout << "DONE" << std::endl;
     }
- 
+
+    void writer_helper_thread() {
+        while (!finished || !protected_empty_io() || !protected_empty()  ) {
+            boost::mutex::scoped_lock lock_io( io_mutex);
+            if (writer_queue.empty()) {
+                avail_io.wait(lock_io);
+            } else {
+                (writer_queue.front())();
+                writer_queue.pop();
+                lock_io.unlock();
+            }
+        }
+    } 
+
     bool protected_empty() {
         boost::mutex::scoped_lock lock(queue_protect);
         return worker_queue.empty();
     }
 
+    bool protected_empty_io() {
+        boost::mutex::scoped_lock lock_io(io_mutex);
+        return writer_queue.empty();
+    }
+
     void push(READ r) {
-        std::cout << "Push" << std::endl;
-        boost::mutex::scoped_lock lock(queue_protect);
+        boost::mutex::scoped_lock lock(io_mutex);
         worker_queue.push( r );
         lock.unlock();
         avail_data.notify_one(); 
     }
 
     void wait() {
-        std::cout << "Notify " << std::endl;
         finished = true;
         while ( !protected_empty() ) {
-            //std::cout << worker_queue.size() << std::endl;;
             avail_data.notify_all();
-            //std::cout << "shitty busy waiting" << std::endl; 
         }
-        std::cout << "Endl" << std::endl;
-            avail_data.notify_all();
-            avail_data.notify_all();
-            avail_data.notify_all();
-            avail_data.notify_all();
-            avail_data.notify_all();
-            avail_data.notify_all();
-            avail_data.notify_all();
-            avail_data.notify_all();
-            avail_data.notify_all();
-            avail_data.notify_all();
-            avail_data.notify_all();
-            avail_data.notify_all();
-            avail_data.notify_all();
-            avail_data.notify_all();
-        finished = true;
-            avail_data.notify_all();
-            avail_data.notify_all();
-            avail_data.notify_all();
-            avail_data.notify_all();
-            avail_data.notify_all();
-            avail_data.notify_all();
-            avail_data.notify_all();
-            avail_data.notify_all();
-        //g.interrupt_all();
-        //g.interrupt_all();
-        //g.join_all();
+        while ( !protected_empty_io() ) {
+            avail_io.notify_all();
+        }
+        g.join_all();
     }
 
     ~Thread_Pool() {
-        std::cout << "Starting deconstruct " << std::endl;
         finished = true;
-        std::cout << "Starting deconstruct " << std::endl;
         wait();
-        std::cout << "Starting deconstruct " << std::endl;
-        std::cout << "Done waiting " << std::endl;
     }
 
 private:
@@ -131,9 +120,10 @@ private:
     boost::mutex queue_protect;
      
     boost::condition_variable avail_data;
+    boost::condition_variable avail_io;
     boost::thread_group g;
     std::queue<READ> worker_queue;
-    std::queue<WRITER> writer_queue;
+    std::queue<boost::function<void()> > writer_queue;
     FUNC worker_function;
     WRITER writer_function;
 };
