@@ -43,9 +43,10 @@ public:
     }
 
     void worker_helper_thread() {
-        while (!finished || !protected_empty()) {
+        while (!finished || !protected_empty() ) {
              
             boost::mutex::scoped_lock lock(queue_protect);
+
             if ( worker_queue.empty() ) {
                 avail_data.wait(lock);
             } else {
@@ -54,14 +55,13 @@ public:
                 lock.unlock();
                 avail_data.notify_one();
                 auto i = worker_function(r);
-                
                 {
                     boost::mutex::scoped_lock lock_io(io_mutex);
                     writer_function(i, r);
                     lock_io.unlock();
                 }
             }
-        }   
+        }
     }
 
     bool protected_empty() {
@@ -70,7 +70,7 @@ public:
     }
 
     void push(READ r) {
-        boost::mutex::scoped_lock lock(io_mutex);
+        boost::mutex::scoped_lock lock(queue_protect);
         worker_queue.push( r );
         lock.unlock();
         avail_data.notify_one(); 
