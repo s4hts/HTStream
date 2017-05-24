@@ -25,7 +25,6 @@ void cut_trim(Read &r, bool no_left, bool no_right, size_t cut_size) {
 
 template <class T, class Impl>
 void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, Counter& counters, size_t min_length, size_t cut_size, bool stranded, bool no_left, bool no_right, bool no_orphans) {
-    
     while(reader.has_next()) {
         auto i = reader.next();
         ++counters["TotalRecords"];
@@ -37,9 +36,8 @@ void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe,
             writer_helper(per, pe, se, stranded, counters, no_orphans);
         } else {
             SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
-            
             if (ser) {
-                cut_trim( per->non_const_read_one(), no_left, no_right, cut_size);
+                cut_trim( ser->non_const_read_one(), no_left, no_right, cut_size);
                 ser->checkDiscarded(min_length);
                 writer_helper(ser, pe, se, stranded, counters);
             } else {
