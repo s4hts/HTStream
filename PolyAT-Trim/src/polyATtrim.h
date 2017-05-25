@@ -92,7 +92,7 @@ void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe,
                     trim_left(ser->non_const_read_one(), min_trim, max_mismatch);            
                 } 
                 if (!no_right) {
-                    trim_left(ser->non_const_read_one(), min_trim, max_mismatch);            
+                    trim_right(ser->non_const_read_one(), min_trim, max_mismatch);            
                 }
                 ser->checkDiscarded(min_length);
                 writer_helper(ser, pe, se, stranded, counters);
