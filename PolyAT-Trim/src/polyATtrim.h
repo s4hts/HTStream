@@ -19,22 +19,23 @@ void trim_left(Read &rb, size_t min_trim, size_t max_mismatch) {
     std::string::iterator current_loc, tmp_loc = seq.begin();
     
     for (current_loc = seq.begin(); current_loc != seq.end() ; ++current_loc ) {
-        if ( *current_loc == 'A' ) {
+        if ( *current_loc != 'A' ) {
             ++a_mismatch;
         } else if (a_mismatch <= max_mismatch ) {
             tmp_loc = current_loc;
         }
-        if ( *current_loc == 'T' ) {
+        if ( *current_loc != 'T' ) {
             ++t_mismatch;
         } else if (t_mismatch <= max_mismatch ) {
             tmp_loc = current_loc;
         }
-        if (t_mismatch > max_mismatch && a_mismatch > max_mismatch) {
+        if (t_mismatch >= max_mismatch && a_mismatch >= max_mismatch) {
             break;    
         }
     }
-   if (tmp_loc - seq.begin() >= static_cast<long> (min_trim) ) {
-        rb.setLCut( static_cast<size_t>(  (tmp_loc) - (seq.begin() + 1) ) );
+    std::cout << tmp_loc - seq.begin() << '\n';
+    if (tmp_loc - seq.begin() + 1 >= static_cast<long> (min_trim) ) { //+1 for 0 condtion
+        rb.setLCut( static_cast<size_t>(  (tmp_loc) - (seq.begin()) ) + 1 );
     }
  
 }
@@ -47,22 +48,23 @@ void trim_right(Read &rb, size_t min_trim, size_t max_mismatch) {
     std::string::reverse_iterator current_loc, tmp_loc = seq.rbegin();
     
     for (current_loc = seq.rbegin(); current_loc != seq.rend() ; ++current_loc ) {
-        if ( *current_loc == 'A' ) {
+        if ( *current_loc != 'A' ) {
             ++a_mismatch;
         } else if (a_mismatch <= max_mismatch ) {
             tmp_loc = current_loc;
         }
-        if ( *current_loc == 'T' ) {
+        if ( *current_loc != 'T' ) {
             ++t_mismatch;
         } else if (t_mismatch <= max_mismatch ) {
             tmp_loc = current_loc;
         }
-        if (t_mismatch > max_mismatch && a_mismatch > max_mismatch) {
+        std::cout << *current_loc << " T Mis: " << t_mismatch << " A Mis " << a_mismatch <<  '\n' ;
+        if (t_mismatch >= max_mismatch && a_mismatch >= max_mismatch) {
             break;    
         }
     }
-    if (tmp_loc - seq.rbegin() >= static_cast<long> (min_trim) && seq.rend() > tmp_loc ) {
-        rb.setRCut( static_cast<size_t>(  seq.rend() - tmp_loc ) );
+    if (tmp_loc - seq.rbegin() + 1 >= static_cast<long> (min_trim) && seq.rend() > tmp_loc ) {
+        rb.setRCut( static_cast<size_t>( seq.rend() - (tmp_loc + 1)) );
     }
 }
 
@@ -73,6 +75,7 @@ void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe,
         auto i = reader.next();
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());        
         if (per) {
+            counters.input(*per);
             if (!no_left) {
                 trim_left(per->non_const_read_one(), min_trim, max_mismatch);
                 trim_left(per->non_const_read_two(), min_trim, max_mismatch);            
@@ -88,6 +91,8 @@ void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe,
             SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
             
             if (ser) {
+                counters.input(*ser);
+                std::cout << min_trim << " " << max_mismatch << '\n';
                 if (!no_left) {
                     trim_left(ser->non_const_read_one(), min_trim, max_mismatch);            
                 } 
@@ -95,7 +100,8 @@ void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe,
                     trim_right(ser->non_const_read_one(), min_trim, max_mismatch);            
                 }
                 ser->checkDiscarded(min_length);
-                //writer_helper(ser, pe, se, stranded, counters);
+                counters.output(*ser); 
+                writer_helper(ser, pe, se, stranded, no_orphans);
             } else {
                 throw std::runtime_error("Unknow read type");
             }
