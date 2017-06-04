@@ -88,7 +88,7 @@ public:
 
     void setRCut( size_t cut_R_ ) { cut_R = cut_R_;;}
     void setLCut( size_t cut_L_ ) { cut_L = cut_L_; }
-    bool getDiscard() { return int(minLength) > int(cut_R) - int(cut_L); }
+    bool getDiscard() { discard = int(minLength) > int(cut_R) - int(cut_L); return discard; }
     void setDiscard(size_t minLength_) { minLength = minLength_; }
     size_t getLength() const { return length; }
     size_t getLengthTrue() { return cut_R - cut_L; }

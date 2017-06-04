@@ -49,7 +49,7 @@ TEST_F(PolyATTail, Stranded) {
     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(in1, in2);
     std::shared_ptr<std::ostringstream> out1(new std::ostringstream);
     Counter counters;
-    setupCounter(counters);
+    //setupCounter(counters);
     {
         std::shared_ptr<HtsOfstream> hts_of(new HtsOfstream(out1));
         std::shared_ptr<OutputWriter> tab(new ReadBaseOutTab(hts_of));

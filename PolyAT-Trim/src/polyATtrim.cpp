@@ -3,7 +3,6 @@
 #include <boost/program_options.hpp>
 #include <vector>
 #include <fstream>
-#include "ioHandler.h"
 #include <boost/iostreams/filter/gzip.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/device/file_descriptor.hpp>
@@ -15,7 +14,6 @@
 #include <map>
 #include <unordered_map>
 #include <boost/functional/hash.hpp>
-#include "utils.h"
 
 #include "polyATtrim.h"
 
@@ -34,8 +32,7 @@ int main(int argc, char** argv)
 
     const std::string program_name = "AT_Trim";
 
-    Counter counters;
-    setupCounter(counters);
+    TrimmingCounters counters;
 
     try
     {
