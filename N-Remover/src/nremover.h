@@ -42,24 +42,27 @@ void trim_n(Read &rb) {
 
 /*Removes all Ns (ambiguity base) from a read*/
 template <class T, class Impl>
-void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, Counter& counters, bool stranded, size_t min_length) {
+void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, TrimmingCounters& counters, bool stranded, size_t min_length) {
     
     while(reader.has_next()) {
         auto i = reader.next();
-        ++counters["TotalRecords"];
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());        
         if (per) {
+            counters.input(*per);
             trim_n(per->non_const_read_one());            
             trim_n(per->non_const_read_two()); 
             per->checkDiscarded(min_length);
-            writer_helper(per, pe, se, stranded, counters);
+            counters.output(*per);
+            writer_helper(per, pe, se, stranded);
         } else {
             SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
             
             if (ser) {
+                counters.input(*ser);
                 trim_n(ser->non_const_read_one());
                 ser->checkDiscarded(min_length);
-                writer_helper(ser, pe, se, stranded, counters);
+                counters.output(*ser);
+                writer_helper(ser, pe, se, stranded);
             } else {
                 throw std::runtime_error("Unknow read type");
             }

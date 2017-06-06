@@ -81,15 +81,24 @@ public:
     }
 
     virtual void write_out(std::string &statsFile, bool appendStats, std::string program_name, std::string notes) {
-        std::ofstream outStats;
+        
+        std::ifstream testEnd(statsFile);
+        int end = testEnd.peek();
+        testEnd.close();
+        
+        std::fstream outStats;
         bool first = true;
-        if (appendStats) {
-            outStats.open(statsFile, std::ofstream::out | std::ofstream::app); //overwritte
+       
+        if (appendStats && end != -1) {
+            //outStats.open(statsFile, std::ofstream::out | std::ofstream::app); //overwritte
+            outStats.open(statsFile, std::ios::out|std::ios::in); //overwritte
+            outStats.seekp(-1, std::ios::end );
+            outStats << "\n,\"" << program_name << "\": {\n";
         } else {
-            outStats.open(statsFile, std::ofstream::out); //overwritte
+            //outStats.open(statsFile, std::ofstream::out); //overwritte
+            outStats.open(statsFile, std::ios::out); //overwritt
+            outStats << "{\n \"" << program_name << "\": {\n";
         }
-
-        outStats << "{\n\"Program\" : \"" << program_name << "\",\n";
         outStats << "\"Notes\" : \"" << notes << "\",\n";
         for (const auto name : c) {
             if (first) {
@@ -99,7 +108,10 @@ public:
             }
             outStats << "\"" << name.first << "\" : " << name.second; //it will get the comma in conditionals tatement about
         }
-        outStats << "\n}" << std::endl;
+        outStats << "\n}";
+        outStats << "\n}";
+        outStats.flush();
+         
     }
 };
 

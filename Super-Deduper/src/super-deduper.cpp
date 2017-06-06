@@ -29,8 +29,7 @@ int main(int argc, char** argv)
 
     BitMap read_map;
     
-    Counter counters;
-    setupCounter(counters);    
+    SuperDeduperCounters counters;
     
     try
     {
@@ -118,10 +117,10 @@ int main(int argc, char** argv)
             
             for(auto const &i : read_map) {
                 if (i.second.get() != nullptr) {
-                    writer_helper(i.second.get(), pe, se, false, counters);
+                    writer_helper(i.second.get(), pe, se, false);
                 }
             }
-            //write_stats(statsFile, appendStats, counters, program_name);
+            counters.write_out(statsFile, vm["append-stats-file"].as<bool>() , program_name, vm["notes"].as<std::string>());
         } catch(po::error& e) {
             std::cerr << "ERROR: " << e.what() << std::endl << std::endl;
             std::cerr << desc << std::endl;

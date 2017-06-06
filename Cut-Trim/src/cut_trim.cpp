@@ -33,8 +33,7 @@ int main(int argc, char** argv)
 {
     const std::string program_name = "Cut_Trim";
 
-    Counter counters;
-    setupCounter(counters);
+    TrimmingCounters counters;
 
     try
     {
@@ -122,7 +121,7 @@ int main(int argc, char** argv)
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
                 helper_trim(ift, pe, se, counters, vm["min-length"].as<size_t>() , vm["cut-size"].as<size_t>(), vm["stranded"].as<bool>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>() , vm["no-orphans"].as<bool>() );
             }  
-
+            counters.write_out(statsFile, vm["append-stats-file"].as<bool>() , program_name, vm["notes"].as<std::string>());
         }
         catch(po::error& e)
         {

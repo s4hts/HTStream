@@ -34,8 +34,6 @@ namespace bi = boost::iostreams;
 int main(int argc, char** argv)
 {
     const std::string program_name = "Phix-Remover";
-    Counter counters;
-    setupCounter(counters);
 
     try
     {
@@ -46,6 +44,7 @@ int main(int argc, char** argv)
         setDefaultParams(desc, program_name);
         setDefaultParamsCutting(desc);
         setDefaultParamsTrim(desc);
+        PhixCounters counters;
 
         desc.add_options()
             ("seq,S", po::value<std::string>()->default_value(""), "Please supply a fasta file - default - Phix Sequence - default https://www.ncbi.nlm.nih.gov/nuccore/9626372")
@@ -139,7 +138,7 @@ int main(int argc, char** argv)
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
                 helper_discard(ift, pe, se, counters, lookup, vm["hits"].as<double>(), vm["check-read-2"].as<bool>(),kmerSize,  inverse);
             }
-
+            counters.write_out(statsFile, vm["append-stats-file"].as<bool>() , program_name, vm["notes"].as<std::string>());
         }
         catch(po::error& e)
         {
