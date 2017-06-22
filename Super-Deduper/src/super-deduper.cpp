@@ -42,7 +42,7 @@ int main(int argc, char** argv)
         desc.add_options()
             ("start,s", po::value<size_t>()->default_value(10),  "Start location for unique ID <int>")
             ("length,l", po::value<size_t>()->default_value(10), "Length of unique ID <int>")
-            ("avg-qual-score,q", po::value<size_t>()->default_value(40), "Avg quality score to have the read written automatically <int>");
+            ("avg-qual-score,q", po::value<size_t>()->default_value(20), "Avg quality score to have the read written automatically <int>");
                    po::variables_map vm;
         try
         {
@@ -110,7 +110,7 @@ int main(int argc, char** argv)
                 }
             }
             
-            if (vm.count("stdin-input")) {
+            if (vm.count("std-input")) {
                 bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
                 load_map(ift, counters, read_map, pe, se,vm["avg-qual-score"].as<size_t>(), vm["start"].as<size_t>() - 1, vm["length"].as<size_t>());

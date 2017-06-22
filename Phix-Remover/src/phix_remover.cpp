@@ -48,7 +48,7 @@ int main(int argc, char** argv)
         setDefaultParamsTrim(desc);
 
         desc.add_options()
-            ("seq,S", po::value<std::string>()->default_value(""), "Please supply a fasta file - default - Phix Sequence - default https://www.ncbi.nlm.nih.gov/nuccore/9626372")
+            ("seq,s", po::value<std::string>()->default_value(""), "Please supply a fasta file - default - Phix Sequence - default https://www.ncbi.nlm.nih.gov/nuccore/9626372")
             ("check-read-2,C", po::bool_switch()->default_value(false),    "Check R2 as well as R1 (pe)")
             ("kmerSize,k", po::value<size_t>()->default_value(8), "Size of the kmer lookup")
             ("hits,x", po::value<double>()->default_value(.25), "How many K-mer hits to phix needs to happen to discard")
