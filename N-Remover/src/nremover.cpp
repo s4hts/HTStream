@@ -33,8 +33,7 @@ int main(int argc, char** argv)
 
     const std::string program_name = "N-Remover";
 
-    Counter counters;
-    setupCounter(counters);
+    TrimmingCounters counters;
 
      try
     {
@@ -114,6 +113,7 @@ int main(int argc, char** argv)
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
                 helper_trim(ift, pe, se, counters, vm["stranded"].as<bool>() , vm["min-length"].as<size_t>() );
             }  
+            counters.write_out(statsFile, vm["append-stats-file"].as<bool>() , program_name, vm["notes"].as<std::string>());
         }
         catch(po::error& e)
         {
@@ -121,7 +121,6 @@ int main(int argc, char** argv)
             std::cerr << desc << std::endl;
             return ERROR_IN_COMMAND_LINE;
         }
-
     }
     catch(std::exception& e)
     {

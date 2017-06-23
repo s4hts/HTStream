@@ -35,10 +35,11 @@ void write_stats(const std::string &statsFile, const bool &appendStats, const Co
 
     std::ofstream outStats;
 
-    if (appendStats) {
+    if (appendStats && end != -1) {
         outStats.open(statsFile, std::ofstream::out | std::ofstream::app); //overwritte
+        outStats.seekp(outStats.tellp() - 1); //overwrites and rewrites last {
     } else {
-        outStats.open(statsFile, std::ofstream::out); //overwritte
+        outStats.open(statsFile, std::ofstream::out); //overwrites
     }
 
     if (end == -1 || !appendStats) {
@@ -133,6 +134,7 @@ void setDefaultParams(po::options_description &desc, std::string program_name) {
             ("to-stdout,O", po::bool_switch()->default_value(false),    "Prints to STDOUT in Tab Delimited")
             ("stats-file,L", po::value<std::string>()->default_value("stats.log") , "String for output stats file name")
             ("append-stats-file,A", po::bool_switch()->default_value(false),  "Append Stats file.")
+            ("notes,N", po::value<std::string>()->default_value(""),  "Notes for the JSON.")
             ("prefix,p", po::value<std::string>()->default_value(program_name),
                                            "Prefix for outputted files") 
 

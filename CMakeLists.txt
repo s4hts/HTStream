@@ -22,7 +22,7 @@ enable_testing()
 
 add_subdirectory(common)
 add_subdirectory(Super-Deduper)
-add_subdirectory(Tab-Converter)
+#add_subdirectory(Tab-Converter)
 add_subdirectory(PolyAT-Trim)
 add_subdirectory(Q-Window-Trim)
 add_subdirectory(Cut-Trim)

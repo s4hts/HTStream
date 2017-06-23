@@ -9,6 +9,7 @@
 
 #include "utils.h"
 #include "ioHandler.h"
+#include "counters.h"
 
 #include <map>
 #include <unordered_map>
@@ -26,6 +27,16 @@ public:
         return boost::hash_value(bs.m_bits);
     }
 };
+
+class PhixCounters : public Counters {
+
+public:
+    PhixCounters() {
+        Common();
+    }
+    //just a place holder incase sam or matt want some features in here
+};
+
 
 typedef std::unordered_set < boost::dynamic_bitset<>, dbhash> kmerSet;
 
@@ -131,7 +142,7 @@ unsigned int check_read( kmerSet &lookup, const Read &rb, const size_t bitKmer, 
 }
 
 template <class T, class Impl>
-void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, Counter& c, kmerSet &lookup, double hits, bool checkR2, size_t kmerSize, bool inverse = false) {
+void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, PhixCounters& c, kmerSet &lookup, double hits, bool checkR2, size_t kmerSize, bool inverse = false) {
 
     /*These are set here so each read doesn't have to recalcuate these stats*/
 
@@ -148,7 +159,7 @@ void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> 
         auto i = reader.next();
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
         if (per) {
-
+            c.input(*per);
             double val = check_read(lookup, per->get_read_one(), bitKmer, lookup_loc, lookup_loc_rc, forwardLookup, reverseLookup );
             val = val / ( per->get_read_one().getLength() - kmerSize);
            
@@ -160,26 +171,26 @@ void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> 
             }
 
             if (val <= hits && !inverse) {
-                writer_helper(per, pe, se, false, c);
+                c.output(*per);
+                writer_helper(per, pe, se, false);
             } else if (val >= hits && inverse) {
-                writer_helper(per, pe, se, false, c);
-            } else {
-                ++c["R1_Discarded"];
-                ++c["R2_Discarded"];
+                c.output(*per);
+                writer_helper(per, pe, se, false);
             }
 
         } else {
             SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
 
             if (ser) {
+                c.input(*ser);
                 double val = check_read(lookup, ser->get_read(), bitKmer, lookup_loc, lookup_loc_rc, forwardLookup, reverseLookup );
                 val = val / ( ser->get_read().getLength() - kmerSize);
                 if (val <= hits && !inverse) {
-                    writer_helper(ser, pe, se, false, c);
+                    c.output(*ser);
+                    writer_helper(ser, pe, se, false);
                 } else if (val >= hits && inverse) {
-                    writer_helper(ser, pe, se, false, c);
-                } else {
-                    ++c["SE_Discarded"];
+                    c.output(*ser);
+                    writer_helper(ser, pe, se, false);
                 }
             } else {
                 throw std::runtime_error("Unknown read type");
@@ -241,6 +252,5 @@ void setLookup( kmerSet &lookup, Read &rb, size_t kmerSize) {
     }
 
 }
-
 
 #endif
