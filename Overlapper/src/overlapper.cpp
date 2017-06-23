@@ -127,7 +127,7 @@ int main(int argc, char** argv)
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
                 helper_overlapper(ift, pe, se, counters, vm["max-mismatch-errorDensity"].as<double>(),  vm["min-overlap"].as<size_t>(), vm["stranded"].as<bool>(), vm["min-length"].as<size_t>(), vm["check-lengths"].as<size_t>(),   vm["kmer"].as<size_t>(), vm["kmer-offset"].as<size_t>(), vm["no-orphans"].as<bool>() );
             }  
-
+            counters.write_out(statsFile, vm["append-stats-file"].as<bool>(), program_name, vm["notes"].as<std::string>());
         }
         catch(po::error& e)
         {

@@ -126,25 +126,3 @@ TEST_F(Overlapper, perfectOverlap) {
     ASSERT_EQ(r.get_seq(), "ACTTGACATTAAGCAAGTACCAGTACCGATACCATAGGACCCAAGGTA");
 };
 
-TEST_F(Overlapper, testHist) {
-    std::istringstream in1(readData_perfect_overlap_R1);
-    std::istringstream in2(readData_perfect_overlap_R2);
-
-    InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(in1, in2);
-    spReadBase rb;
-    
-    OverlapperCounters counters;	
-    
-    while(ifp.has_next()) {
-        auto i = ifp.next();
-
-     PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        rb = check_read(*per, counters, misDensity, 10, 10, kmer, kmerOffset, 10);
-    }
-    const Read &r = rb->get_read();
-    std::string overlapOutput =  "ACTTGACATTAAGCAAGTACCAGTACCGATACCATAGGACCCAAGGTA";
-
-    //ASSERT_EQ((*tmp)[overlapOutput.length()], 1);
-    //ASSERT_EQ(r.get_seq(), overlapOutput);
-};
-

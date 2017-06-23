@@ -28,9 +28,10 @@ TEST_F(SDTest, HashMapLoadTest) {
     load_map(ifp, counter, read_map, tab, tab, avg_auto_write, start, length);
     std::cout << read_map.size() << '\n';
     ASSERT_EQ(read_map.size(), 1);
-    ASSERT_EQ(counter.c["TotalRecords"], 4);
+    ASSERT_EQ(counter.c["TotalReadsInput"], 4);
     ASSERT_EQ(counter.c["Replaced"], 2);
     ASSERT_EQ(counter.c["Ignored"], 1);
+
     
 };
 

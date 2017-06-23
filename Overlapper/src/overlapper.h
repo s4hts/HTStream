@@ -39,6 +39,7 @@ public:
         c["R1_Adapter_Trim"] = 0;
         c["R2_Adapter_Trim"] = 0;
         c["SE_Length"] = 0;
+        c["Nolins"] = 0;
         insertLength.resize(1);
     }
    
@@ -49,7 +50,14 @@ public:
 
     }
 
-    void output(PairedEndRead &per, SingleEndRead *overlapped) {
+    void output(SingleEndRead &ser) {
+        if (ser.non_const_read_one().getDiscard()) {
+            ++c["SE_Discard"];
+        } else {
+            ++c["SE_Out"];
+        }
+    }
+    void output(PairedEndRead &per, spReadBase &overlapped) {
         //test lin or sin
         Read &one = per.non_const_read_one();
         Read &two = per.non_const_read_two();
@@ -67,8 +75,7 @@ public:
             }
             ++insertLength[insertSize];
         } else {
-            ++c["lins"]; //lin
-            ++insertLength[0];
+            ++c["Nolins"]; //lin
         }
 
         if (overlapped) {
@@ -90,6 +97,44 @@ public:
                 ++c["R2_Discard"];
             }
         }
+    }
+
+    void write_out(std::string &statsFile, bool appendStats, std::string program_name, std::string notes) {
+
+        std::ifstream testEnd(statsFile);
+        int end = testEnd.peek();
+        testEnd.close();
+
+        std::fstream outStats;
+        bool first = true;
+
+        if (appendStats && end != -1) {
+            //outStats.open(statsFile, std::ofstream::out | std::ofstream::app); //overwritte
+            outStats.open(statsFile, std::ios::out|std::ios::in); //overwritte
+            outStats.seekp(-1, std::ios::end );
+            outStats << "\n,\"" << program_name << "\": {\n";
+        } else {
+            //outStats.open(statsFile, std::ofstream::out); //overwritte
+            outStats.open(statsFile, std::ios::out); //overwritt
+            outStats << "{\n \"" << program_name << "\": {\n";
+        }
+        outStats << "\"Notes\" : \"" << notes << "\",\n";
+        for (const auto name : c) {
+            if (first) {
+                first = false;
+            } else {
+                outStats << ",\n"; //make sure json format is kept
+            }
+            outStats << "\"" << name.first << "\" : " << name.second; //it will get the comma in conditionals tatement about
+        }
+        for (int i = 1; i < insertLength.size(); ++i) {
+            outStats << ",\n"; //make sure json format is kept
+            outStats << i << " : "  << insertLength[i];
+        }
+        outStats << "\n}";
+        outStats << "\n}";
+        outStats.flush();
+
     }
 
 };
@@ -249,6 +294,7 @@ void helper_overlapper(InputReader<T, Impl> &reader, std::shared_ptr<OutputWrite
 
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());        
         if (per) {
+            counters.input(*per);
             spReadBase overlapped = check_read(*per, counters, misDensity, minOver, checkLengths, kmer, kmerOffset, min_length);
             if (!overlapped) {
                 writer_helper(per, pe, se, stranded); //write out as is
@@ -256,14 +302,16 @@ void helper_overlapper(InputReader<T, Impl> &reader, std::shared_ptr<OutputWrite
                 overlapped->checkDiscarded(min_length);    
                 writer_helper(overlapped.get(), pe, se, stranded);
             }
+            counters.output(*per, overlapped);
 
 
         } else {
             SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
             
             if (ser) {
-
+                counters.input(*ser);
                 writer_helper(ser, pe, se, stranded);
+                counters.output(*ser);
             } else {
                 throw std::runtime_error("Unknown read type");
             }

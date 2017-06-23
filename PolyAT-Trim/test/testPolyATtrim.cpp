@@ -5,7 +5,7 @@
 
 class PolyATTail : public ::testing::Test {
     public:
-        const std::string readData_1 = "@Read1\nTTTTTGGAAAAAAAAAGTCTTTGTTG\n+\n##########################\n";
+        const std::string readData_1 = "@Read1\nTTTTTGGAAAAAAAAAGTTTTTGTTG\n+\n##########################\n";
         const std::string readData_2 = "@Read1\nAAAAAAAAAAAAAAAAAAAAAAAA\n+\n########################\n";
         size_t min_trim = 5;
         size_t min_length = 5;

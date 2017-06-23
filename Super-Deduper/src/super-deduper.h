@@ -35,7 +35,6 @@ public:
     void increment_ignored() {
         ++c["Ignored"];
     }
-
 };
 
 template <class T, class Impl>

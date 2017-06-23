@@ -22,7 +22,115 @@
 #include "utils.h"
 
 typedef std::unordered_multimap<std::string, std::size_t> seqLookup;
-typedef std::shared_ptr<std::vector<unsigned long long int>> histVec;
+
+
+
+
+
+
+class AdapterTrimmerCounters : public Counters {
+
+public:
+    std::vector<unsigned long long int> insertLength;
+
+    AdapterTrimmerCounters() {
+        Common();
+        c["Lins"] = 0;
+        c["Sins"] = 0;
+        c["SE_Discard"] = 0;
+        c["R1_Discard"] = 0;
+        c["R2_Discard"] = 0;
+        c["R1_Adapter_Trim"] = 0;
+        c["R2_Adapter_Trim"] = 0;
+        c["Nolins"] = 0;
+        insertLength.resize(1);
+    }
+
+    void SE_stats(Read &se, Read &one, Read &two) {
+        c["SE_Length"] += se.getLengthTrue();
+        c["R1_Adapter_Trim"] += one.getLTrim();
+        c["R2_Adapter_Trim"] += two.getLTrim();
+
+    }
+
+    void output(PairedEndRead &per, SingleEndRead *overlapped) {
+        //test lin or sin
+        Read &one = per.non_const_read_one();
+        Read &two = per.non_const_read_two();
+
+        if (overlapped) {
+            size_t insertSize = (overlapped->non_const_read_one()).getLengthTrue();
+
+            if (one.getLengthTrue() > insertSize || two.getLengthTrue() > insertSize ) {
+                ++c["sins"]; //adapters must be had (short insert)
+            } else {
+                ++c["lins"]; //must be a long insert
+            }
+            if ( insertSize + 1 > insertLength.size() ) {
+                insertLength.resize(insertSize + 1);
+            }
+            ++insertLength[insertSize];
+        } else {
+            ++c["Nolins"]; //lin
+        }
+
+            if (!one.getDiscard() && !two.getDiscard() ) {
+                ++c["PE_Out"];
+            } else if (one.getDiscard() && two.getDiscard()) {
+                ++c["R1_Discard"];
+                ++c["R2_Discard"];
+            } else if (one.getDiscard()) {
+                ++c["R1_Discard"];
+            } else if (two.getDiscard()) {
+                ++c["R2_Discard"];
+            }
+    }
+
+    void write_out(std::string &statsFile, bool appendStats, std::string program_name, std::string notes) {
+
+        std::ifstream testEnd(statsFile);
+        int end = testEnd.peek();
+        testEnd.close();
+
+        std::fstream outStats;
+        bool first = true;
+
+        if (appendStats && end != -1) {
+            //outStats.open(statsFile, std::ofstream::out | std::ofstream::app); //overwritte
+            outStats.open(statsFile, std::ios::out|std::ios::in); //overwritte
+            outStats.seekp(-1, std::ios::end );
+            outStats << "\n,\"" << program_name << "\": {\n";
+        } else {
+            //outStats.open(statsFile, std::ofstream::out); //overwritte
+            outStats.open(statsFile, std::ios::out); //overwritt
+            outStats << "{\n \"" << program_name << "\": {\n";
+        }
+        outStats << "\"Notes\" : \"" << notes << "\",\n";
+        for (const auto name : c) {
+            if (first) {
+                first = false;
+            } else {
+                outStats << ",\n"; //make sure json format is kept
+            }
+            outStats << "\"" << name.first << "\" : " << name.second; //it will get the comma in conditionals tatement about
+        }
+        for (int i = 1; i < insertLength.size(); ++i) {
+            outStats << ",\n"; //make sure json format is kept
+            outStats << i << " : "  << insertLength[i];
+        }
+        outStats << "\n}";
+        outStats << "\n}";
+        outStats.flush();
+
+    }
+
+};
+
+
+
+
+
+
 
 /*Create the quick lookup table
  * Multi map because a single kemr could appear multiple places*/
@@ -94,8 +202,6 @@ unsigned int checkIfOverlap(Read &r1, Read &r2, size_t loc1, size_t loc2, const 
         r1.changeQual(read1_bp, qual);
         r2.changeSeq(read2_bp, bp);
         r2.changeQual(read2_bp, qual);
-        
-       
     }
 
     if ( loc1_t >= loc2_t ) { //no adapter but need to figure out sides
@@ -144,7 +250,7 @@ unsigned int getOverlappedReads(Read &r1, Read &r2, const seqLookup &seq1Map,  c
 
 }
 
-unsigned int check_read(PairedEndRead &pe , Counter &counters, const double misDensity, const size_t &minOver, histVec &insertLength, const size_t &checkLengths, const size_t kmer, const size_t kmerOffset, const size_t minLength) {
+unsigned int check_read(PairedEndRead &pe , const double misDensity, const size_t &minOver, const size_t &checkLengths, const size_t kmer, const size_t kmerOffset, const size_t minLength) {
     
     Read &r1 = pe.non_const_read_one();
     Read &r2 = pe.non_const_read_two();
@@ -162,29 +268,6 @@ unsigned int check_read(PairedEndRead &pe , Counter &counters, const double misD
     unsigned int overlapped = getOverlappedReads(r1, r2, mOne, misDensity, minOver, checkLengths, kmer) ;
     //we need to check it overlapper is greater than min length;
 
-    if (overlapped < minLength) {
-        if (insertLength) { /*No overlap*/
-            ++(*insertLength)[0];
-        }
-        return 0;
-    }
-
-    if (overlapped) {
-        if (insertLength) { //overlap plus writing out
-            /*This is important for the hist file
-            * Shows distribution of lins and sins*/
-            if (insertLength->size() < overlapped) {
-                insertLength->resize(overlapped + 1);
-            }
-            ++((*insertLength)[overlapped]);
-        }
-        if (overlapped > r1.getLength() && overlapped > r2.getLength()) {
-            ++counters["Lins"];
-        } else {
-            ++counters["Sins"];
-        }
-    }
- 
     return overlapped;
 }
 
@@ -198,29 +281,21 @@ unsigned int check_read(PairedEndRead &pe , Counter &counters, const double misD
  * With a lin it is useful to have a higher confidence in the bases in the overlap and longer read
  * With a sin it is useful to have the higher confidence as well as removing the adapters*/
 template <class T, class Impl>
-void helper_overlapper(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, Counter& counters, const double misDensity, const size_t minOver, histVec &insertLength, const bool stranded, const size_t min_length, const size_t checkLengths, const size_t kmer, const size_t kmerOffset, bool no_orphan = false ) {
+void helper_overlapper(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, AdapterTrimmerCounters &counter, const double misDensity, const size_t minOver, const bool stranded, const size_t min_length, const size_t checkLengths, const size_t kmer, const size_t kmerOffset, bool no_orphan = false ) {
     
     while(reader.has_next()) {
         auto i = reader.next();
-        //Saves check
-        if (insertLength) {
-            if (insertLength->size() < 1) {
-                insertLength->resize(1);
-            }
-        }
-
-        ++counters["TotalRecords"];
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());        
         if (per) {
-            unsigned int overlapped = check_read(*per, counters, misDensity, minOver, insertLength, checkLengths, kmer, kmerOffset, min_length);
+            unsigned int overlapped = check_read(*per, misDensity, minOver, checkLengths, kmer, kmerOffset, min_length);
             per->checkDiscarded(min_length);    
-            writer_helper(per, pe, se, stranded, counters, no_orphan); 
+            writer_helper(per, pe, se, stranded, no_orphan); 
         } else {
             SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
             
             if (ser) {
                 ser->checkDiscarded(min_length);
-                writer_helper(ser, pe, se, stranded, counters);
+                writer_helper(ser, pe, se, stranded);
             } else {
                 throw std::runtime_error("Unknown read type");
             }
