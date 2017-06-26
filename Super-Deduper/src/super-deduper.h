@@ -24,7 +24,7 @@ class SuperDeduperCounters : public Counters {
 public:
     SuperDeduperCounters() {
         Common();
-        c["Replace"] = 0;
+        c["Replaced"] = 0;
         c["Ignored"] = 0;
     }
 

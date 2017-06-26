@@ -23,11 +23,6 @@
 
 typedef std::unordered_multimap<std::string, std::size_t> seqLookup;
 
-
-
-
-
-
 class AdapterTrimmerCounters : public Counters {
 
 public:
@@ -35,8 +30,8 @@ public:
 
     AdapterTrimmerCounters() {
         Common();
-        c["Lins"] = 0;
-        c["Sins"] = 0;
+        c["lins"] = 0;
+        c["sins"] = 0;
         c["SE_Discard"] = 0;
         c["R1_Discard"] = 0;
         c["R2_Discard"] = 0;
@@ -45,45 +40,47 @@ public:
         c["Nolins"] = 0;
         insertLength.resize(1);
     }
-
-    void SE_stats(Read &se, Read &one, Read &two) {
-        c["SE_Length"] += se.getLengthTrue();
-        c["R1_Adapter_Trim"] += one.getLTrim();
-        c["R2_Adapter_Trim"] += two.getLTrim();
+    
+    void output(SingleEndRead &ser) {
+        if (ser.non_const_read_one().getDiscard()) {
+            ++c["SE_Discard"];
+        } else {
+            ++c["SE_Out"];
+        }
 
     }
 
-    void output(PairedEndRead &per, SingleEndRead *overlapped) {
+    void output(PairedEndRead &per, unsigned int overlapped) {
         //test lin or sin
         Read &one = per.non_const_read_one();
         Read &two = per.non_const_read_two();
 
         if (overlapped) {
-            size_t insertSize = (overlapped->non_const_read_one()).getLengthTrue();
 
-            if (one.getLengthTrue() > insertSize || two.getLengthTrue() > insertSize ) {
+            if (one.getLengthTrue() > overlapped || two.getLengthTrue() > overlapped ) {
                 ++c["sins"]; //adapters must be had (short insert)
             } else {
                 ++c["lins"]; //must be a long insert
             }
-            if ( insertSize + 1 > insertLength.size() ) {
-                insertLength.resize(insertSize + 1);
+            if ( overlapped + 1 > insertLength.size() ) {
+                insertLength.resize(overlapped + 1);
             }
-            ++insertLength[insertSize];
+            ++insertLength[overlapped];
         } else {
             ++c["Nolins"]; //lin
         }
 
-            if (!one.getDiscard() && !two.getDiscard() ) {
-                ++c["PE_Out"];
-            } else if (one.getDiscard() && two.getDiscard()) {
-                ++c["R1_Discard"];
-                ++c["R2_Discard"];
-            } else if (one.getDiscard()) {
-                ++c["R1_Discard"];
-            } else if (two.getDiscard()) {
-                ++c["R2_Discard"];
-            }
+        if (!one.getDiscard() && !two.getDiscard() ) {
+            ++c["PE_Out"];
+        } else if (one.getDiscard() && two.getDiscard()) {
+            ++c["R1_Discard"];
+            ++c["R2_Discard"];
+        } else if (one.getDiscard()) {
+            ++c["R1_Discard"];
+        } else if (two.getDiscard()) {
+            ++c["R2_Discard"];
+        }
+
     }
 
     void write_out(std::string &statsFile, bool appendStats, std::string program_name, std::string notes) {
@@ -99,11 +96,11 @@ public:
             //outStats.open(statsFile, std::ofstream::out | std::ofstream::app); //overwritte
             outStats.open(statsFile, std::ios::out|std::ios::in); //overwritte
             outStats.seekp(-1, std::ios::end );
-            outStats << "\n,\"" << program_name << "\": {\n";
+            outStats << "\n,\"" << program_name << "_" << getpid()  << "\": {\n";
         } else {
             //outStats.open(statsFile, std::ofstream::out); //overwritte
             outStats.open(statsFile, std::ios::out); //overwritt
-            outStats << "{\n \"" << program_name << "\": {\n";
+            outStats << "{\n \"" << program_name << "_" << getpid() <<  "\": {\n";
         }
         outStats << "\"Notes\" : \"" << notes << "\",\n";
         for (const auto name : c) {
@@ -116,7 +113,7 @@ public:
         }
         for (int i = 1; i < insertLength.size(); ++i) {
             outStats << ",\n"; //make sure json format is kept
-            outStats << i << " : "  << insertLength[i];
+            outStats << '"' << i << '"' << " : "  << insertLength[i];
         }
         outStats << "\n}";
         outStats << "\n}";
@@ -125,12 +122,6 @@ public:
     }
 
 };
-
-
-
-
-
-
 
 /*Create the quick lookup table
  * Multi map because a single kemr could appear multiple places*/
@@ -148,6 +139,20 @@ seqLookup readOneMap(std::string seq1, const size_t kmer, const size_t kmerOffse
     }
 
     return baseReadMap;
+}
+
+char rc(const char bp) {
+    if (bp == 'C') {
+        return 'G';
+    } else if (bp == 'G') {
+        return 'C';
+    } else if (bp == 'T') {
+        return 'A';
+    } else if (bp == 'A') {
+        return 'T';
+    } else {
+        return 'N';
+    }
 }
 /*If adapater trimming is turned on that means adapter trimming and do not overlap
  * so trim adapter, but don't worry about the overlap.
@@ -170,10 +175,12 @@ unsigned int checkIfOverlap(Read &r1, Read &r2, size_t loc1, size_t loc2, const 
     size_t read2_bp;
 
     const std::string &seq1 = r1.get_seq();
-    const std::string &seq2 = r2.get_seq_rc();
+    const std::string &seq2 = r2.get_seq();
     const std::string &qual1 = r1.get_qual();
-    const std::string &qual2 = r2.get_qual_rc();
+    const std::string &qual2 = r2.get_qual();
 
+    const size_t seq2_length =  seq2.length() - 1;
+    
     std::string finalSeq;
     std::string finalQual;
     size_t misMatches = 0;
@@ -184,24 +191,23 @@ unsigned int checkIfOverlap(Read &r1, Read &r2, size_t loc1, size_t loc2, const 
     unsigned int insert_length = maxLoop;
     for (size_t i = 0; i < maxLoop; ++i) {
         read1_bp = loc1_t + i;
-        read2_bp = loc2_t + i;
+        read2_bp = seq2_length - (loc2_t + i);
         
-        if (seq1[read1_bp] == seq2[read2_bp]) {
-            bp = seq1[read1_bp];
-            qual = static_cast<char>(std::min(qual1[read1_bp] + qual2[read2_bp] - 33, 40 + 33)); //addition of qual (minus just one of the ascii values 
-        } else {
-            bp = qual1[read1_bp] > qual2[read2_bp] ? seq1[read1_bp] : seq2[read2_bp];
+        if (seq1[read1_bp] != rc(seq2[read2_bp]) )  {
+            bp = qual1[read1_bp] > qual2[read2_bp] ? seq1[read1_bp] : rc(seq2[read2_bp]);
             qual = static_cast<char>(std::max(qual1[read1_bp] - qual2[read2_bp] + 33, 1 + 33));
+            
+            r1.changeSeq(read1_bp, bp);
+            r1.changeQual(read1_bp, qual);
+            //Something clever with RC
+            r2.changeSeq( read2_bp, rc(bp) );
+            r2.changeQual(read2_bp, qual);
             
             if (++misMatches > maxMis) {
                 /*Not valid match*/
                 return 0;
             }
         }
-        r1.changeSeq(read1_bp, bp);
-        r1.changeQual(read1_bp, qual);
-        r2.changeSeq(read2_bp, bp);
-        r2.changeQual(read2_bp, qual);
     }
 
     if ( loc1_t >= loc2_t ) { //no adapter but need to figure out sides
@@ -287,15 +293,19 @@ void helper_overlapper(InputReader<T, Impl> &reader, std::shared_ptr<OutputWrite
         auto i = reader.next();
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());        
         if (per) {
+            counter.input(*per);
             unsigned int overlapped = check_read(*per, misDensity, minOver, checkLengths, kmer, kmerOffset, min_length);
             per->checkDiscarded(min_length);    
             writer_helper(per, pe, se, stranded, no_orphan); 
+            counter.output(*per, overlapped);
         } else {
             SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
             
             if (ser) {
+                counter.input(*ser);
                 ser->checkDiscarded(min_length);
                 writer_helper(ser, pe, se, stranded);
+                counter.output(*ser);
             } else {
                 throw std::runtime_error("Unknown read type");
             }

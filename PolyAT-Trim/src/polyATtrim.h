@@ -33,7 +33,6 @@ void trim_left(Read &rb, size_t min_trim, size_t max_mismatch) {
             break;    
         }
     }
-    std::cout << tmp_loc - seq.begin() << '\n';
     if (tmp_loc - seq.begin() + 1 >= static_cast<long> (min_trim) ) { //+1 for 0 condtion
         rb.setLCut( static_cast<size_t>(  (tmp_loc) - (seq.begin()) ) + 1 );
     }
@@ -58,7 +57,6 @@ void trim_right(Read &rb, size_t min_trim, size_t max_mismatch) {
         } else if (t_mismatch <= max_mismatch ) {
             tmp_loc = current_loc;
         }
-        std::cout << *current_loc << " T Mis: " << t_mismatch << " A Mis " << a_mismatch <<  '\n' ;
         if (t_mismatch >= max_mismatch && a_mismatch >= max_mismatch) {
             break;    
         }
@@ -92,7 +90,6 @@ void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe,
             
             if (ser) {
                 counters.input(*ser);
-                std::cout << min_trim << " " << max_mismatch << '\n';
                 if (!no_left) {
                     trim_left(ser->non_const_read_one(), min_trim, max_mismatch);            
                 } 

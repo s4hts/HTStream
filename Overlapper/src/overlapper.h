@@ -31,8 +31,8 @@ public:
 
     OverlapperCounters() {
         Common();
-        c["Lins"] = 0;
-        c["Sins"] = 0;
+        c["lins"] = 0;
+        c["sins"] = 0;
         c["SE_Discard"] = 0;
         c["R1_Discard"] = 0;
         c["R2_Discard"] = 0;
@@ -112,11 +112,11 @@ public:
             //outStats.open(statsFile, std::ofstream::out | std::ofstream::app); //overwritte
             outStats.open(statsFile, std::ios::out|std::ios::in); //overwritte
             outStats.seekp(-1, std::ios::end );
-            outStats << "\n,\"" << program_name << "\": {\n";
+            outStats << "\n,\"" << program_name << "_" << getpid() << "\": {\n";
         } else {
             //outStats.open(statsFile, std::ofstream::out); //overwritte
             outStats.open(statsFile, std::ios::out); //overwritt
-            outStats << "{\n \"" << program_name << "\": {\n";
+            outStats << "{\n \"" << program_name << "_" << getpid() <<  "\": {\n";
         }
         outStats << "\"Notes\" : \"" << notes << "\",\n";
         for (const auto name : c) {
@@ -129,7 +129,7 @@ public:
         }
         for (int i = 1; i < insertLength.size(); ++i) {
             outStats << ",\n"; //make sure json format is kept
-            outStats << i << " : "  << insertLength[i];
+            outStats << '"' << i << '"' <<  " : "  << insertLength[i];
         }
         outStats << "\n}";
         outStats << "\n}";
@@ -138,6 +138,20 @@ public:
     }
 
 };
+
+char rc(const char bp) {
+    if (bp == 'C') {
+        return 'G';
+    } else if (bp == 'G') {
+        return 'C';
+    } else if (bp == 'T') {
+        return 'A';
+    } else if (bp == 'A') {
+        return 'T';
+    } else {
+        return 'N';
+    }
+}
 
 /*Create the quick lookup table
  * Multi map because a single kemr could appear multiple places*/
