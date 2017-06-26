@@ -93,12 +93,10 @@ public:
         bool first = true;
 
         if (appendStats && end != -1) {
-            //outStats.open(statsFile, std::ofstream::out | std::ofstream::app); //overwritte
             outStats.open(statsFile, std::ios::out|std::ios::in); //overwritte
             outStats.seekp(-1, std::ios::end );
             outStats << "\n,\"" << program_name << "_" << getpid()  << "\": {\n";
         } else {
-            //outStats.open(statsFile, std::ofstream::out); //overwritte
             outStats.open(statsFile, std::ios::out); //overwritt
             outStats << "{\n \"" << program_name << "_" << getpid() <<  "\": {\n";
         }
