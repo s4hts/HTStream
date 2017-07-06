@@ -98,7 +98,7 @@ public:
             outStats << "{\n \"" << program_name << "_" << getpid() <<  "\": {\n";
         }
         outStats << "\"Notes\" : \"" << notes << "\",\n";
-        for (const auto name : c) {
+        for (const auto &name : c) {
             if (first) {
                 first = false;
             } else {
@@ -158,7 +158,7 @@ public:
             outStats << "{\n \"" << program_name << "_" << getpid() <<  "\": {\n";
         }
         outStats << "\"Notes\" : \"" << notes << "\",\n";
-        for (const auto name : c) {
+        for (const auto &name : c) {
             if (first) {
                 first = false;
             } else {
@@ -166,7 +166,7 @@ public:
             }
             outStats << "\"" << name.first << "\" : " << name.second; //it will get the comma in conditionals tatement about
         }
-        for (int i = 1; i < insertLength.size(); ++i) {
+        for (size_t i = 1; i < insertLength.size(); ++i) {
             outStats << ",\n"; //make sure json format is kept
             outStats << '"' << i << '"' << " : "  << insertLength[i];
         }
