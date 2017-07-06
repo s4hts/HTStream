@@ -24,4 +24,6 @@ void setDefaultParams(po::options_description &desc, std::string program_name);
 void setDefaultParamsCutting(po::options_description &desc);
 void setDefaultParamsTrim(po::options_description &desc);
 
+
+char rc(const char bp);
 #endif

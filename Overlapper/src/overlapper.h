@@ -24,39 +24,30 @@
 typedef std::unordered_multimap<std::string, std::size_t> seqLookup;
 typedef std::shared_ptr<SingleEndRead> spReadBase;
 
-class OverlapperCounters : public Counters {
+class OverlapperCounters : public OverlappingCounters {
 
 public:
     std::vector<unsigned long long int> insertLength;
 
-    OverlapperCounters() {
-        Common();
-        c["lins"] = 0;
-        c["sins"] = 0;
-        c["SE_Discard"] = 0;
-        c["R1_Discard"] = 0;
-        c["R2_Discard"] = 0;
-        c["R1_Adapter_Trim"] = 0;
-        c["R2_Adapter_Trim"] = 0;
-        c["SE_Length"] = 0;
-        c["Nolins"] = 0;
-        insertLength.resize(1);
+    OverlapperCounters() : OverlappingCounters() {
+       c["SE_Length"] = 0;
     }
-   
-    void SE_stats(Read &se, Read &one, Read &two) {
-        c["SE_Length"] += se.getLengthTrue();
-        c["R1_Adapter_Trim"] += one.getLTrim();
-        c["R2_Adapter_Trim"] += two.getLTrim();
-
-    }
-
-    void output(SingleEndRead &ser) {
+    
+    virtual void output(SingleEndRead &ser)  {
         if (ser.non_const_read_one().getDiscard()) {
             ++c["SE_Discard"];
         } else {
             ++c["SE_Out"];
         }
+
     }
+ 
+    void SE_stats(Read &se, Read &one, Read &two) {
+        c["SE_Length"] += se.getLengthTrue();
+        c["R1_Adapter_Trim"] += one.getLTrim();
+        c["R2_Adapter_Trim"] += two.getLTrim();
+    }
+
     void output(PairedEndRead &per, spReadBase &overlapped) {
         //test lin or sin
         Read &one = per.non_const_read_one();
@@ -99,60 +90,7 @@ public:
         }
     }
 
-    void write_out(std::string &statsFile, bool appendStats, std::string program_name, std::string notes) {
-
-        std::ifstream testEnd(statsFile);
-        int end = testEnd.peek();
-        testEnd.close();
-
-        std::fstream outStats;
-        bool first = true;
-
-        if (appendStats && end != -1) {
-            //outStats.open(statsFile, std::ofstream::out | std::ofstream::app); //overwritte
-            outStats.open(statsFile, std::ios::out|std::ios::in); //overwritte
-            outStats.seekp(-1, std::ios::end );
-            outStats << "\n,\"" << program_name << "_" << getpid() << "\": {\n";
-        } else {
-            //outStats.open(statsFile, std::ofstream::out); //overwritte
-            outStats.open(statsFile, std::ios::out); //overwritt
-            outStats << "{\n \"" << program_name << "_" << getpid() <<  "\": {\n";
-        }
-        outStats << "\"Notes\" : \"" << notes << "\",\n";
-        for (const auto name : c) {
-            if (first) {
-                first = false;
-            } else {
-                outStats << ",\n"; //make sure json format is kept
-            }
-            outStats << "\"" << name.first << "\" : " << name.second; //it will get the comma in conditionals tatement about
-        }
-        for (int i = 1; i < insertLength.size(); ++i) {
-            outStats << ",\n"; //make sure json format is kept
-            outStats << '"' << i << '"' <<  " : "  << insertLength[i];
-        }
-        outStats << "\n}";
-        outStats << "\n}";
-        outStats.flush();
-
-    }
-
 };
-
-char rc(const char bp) {
-    if (bp == 'C') {
-        return 'G';
-    } else if (bp == 'G') {
-        return 'C';
-    } else if (bp == 'T') {
-        return 'A';
-    } else if (bp == 'A') {
-        return 'T';
-    } else {
-        return 'N';
-    }
-}
-
 /*Create the quick lookup table
  * Multi map because a single kemr could appear multiple places*/
 seqLookup readOneMap(std::string seq1, const size_t kmer, const size_t kmerOffset) {
