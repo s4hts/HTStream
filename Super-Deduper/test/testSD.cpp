@@ -15,12 +15,9 @@ TEST_F(SDTest, HashMapLoadTest) {
     std::istringstream in2(readData);
     size_t start = 5;
     size_t length = 5;
-    size_t avg_auto_write = 100;
+    double avg_auto_write = 100;
     BitMap read_map;
-    Counter counter;
-    counter["TotalRecords"] = 0;
-    counter["Replaced"] = 0;
-    counter["Ignored"] = 0;
+    SuperDeduperCounters counter;
   
     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(in1, in2);
     std::shared_ptr<std::ostringstream> out1(new std::ostringstream);
@@ -28,12 +25,13 @@ TEST_F(SDTest, HashMapLoadTest) {
     std::shared_ptr<OutputWriter> tab(new ReadBaseOutTab(hts_of));  
    
     
-    load_map(ifp, counter, read_map, tab, tab, avg_auto_write, start, length);
+    load_map(ifp, counter, read_map, tab, tab, avg_auto_write, 3, start, length);
     std::cout << read_map.size() << '\n';
     ASSERT_EQ(read_map.size(), 1);
-    ASSERT_EQ(counter["TotalRecords"], 4);
-    ASSERT_EQ(counter["Replaced"], 2);
-    ASSERT_EQ(counter["Ignored"], 1);
+    ASSERT_EQ(counter.c["TotalReadsInput"], 4);
+    ASSERT_EQ(counter.c["Replaced"], 2);
+    ASSERT_EQ(counter.c["Ignored"], 1);
+
     
 };
 

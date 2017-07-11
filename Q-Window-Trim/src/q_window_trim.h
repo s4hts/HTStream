@@ -10,6 +10,7 @@
 #include <boost/functional/hash.hpp>
 #include <algorithm>
 #include "utils.h"
+#include "counters.h"
 
 void trim_left(Read &rb, size_t qual_threshold, size_t window_size) {
 
@@ -82,35 +83,38 @@ void trim_right(Read &rb, size_t qual_threshold, size_t window_size) {
 }
 
 template <class T, class Impl>
-void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, Counter& counters, size_t min_length, size_t qual_threshold, size_t window_size, bool stranded, bool no_left, bool no_right, bool no_orphans) {
+void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, TrimmingCounters &counters, size_t min_length, size_t qual_threshold, size_t window_size, bool stranded, bool no_left, bool no_right, bool no_orphans) {
     
     while(reader.has_next()) {
         auto i = reader.next();
-        ++counters["TotalRecords"];
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());        
         if (per) {
+            counters.input(*per);
             if (!no_left) {
-                trim_left(per->non_const_read_one(), qual_threshold, window_size);            
+                trim_left(per->non_const_read_one(), qual_threshold, window_size);
                 trim_left(per->non_const_read_two(), qual_threshold, window_size);            
             }
             if (!no_right) {
                 trim_right(per->non_const_read_one(), qual_threshold, window_size);
-                trim_right(per->non_const_read_two(), qual_threshold, window_size);            
+                trim_right(per->non_const_read_two(), qual_threshold, window_size);
             }
             per->checkDiscarded(min_length);
-            writer_helper(per, pe, se, stranded, counters, no_orphans);
+            counters.output(*per);
+            writer_helper(per, pe, se, stranded, no_orphans);
         } else {
             SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
             
             if (ser) {
+                counters.input(*ser);
                 if (!no_left) {
                     trim_left(ser->non_const_read_one(), qual_threshold, window_size);            
                 } 
                 if (!no_right) {
                     trim_right(ser->non_const_read_one(), qual_threshold, window_size);            
                 }
+                counters.output(*ser);
                 ser->checkDiscarded(min_length);
-                writer_helper(ser, pe, se, stranded, counters);
+                writer_helper(ser, pe, se, stranded);
             } else {
                 throw std::runtime_error("Unknow read type");
             }

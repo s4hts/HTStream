@@ -5,7 +5,7 @@
 
 class PolyATTail : public ::testing::Test {
     public:
-        const std::string readData_1 = "@Read1\nTTTTTGGAAAAAAAAAGTCTTTGTTG\n+\n##########################\n";
+        const std::string readData_1 = "@Read1\nTTTTTGGAAAAAAAAAGTTTTTGTTG\n+\n##########################\n";
         const std::string readData_2 = "@Read1\nAAAAAAAAAAAAAAAAAAAAAAAA\n+\n########################\n";
         size_t min_trim = 5;
         size_t min_length = 5;
@@ -49,7 +49,7 @@ TEST_F(PolyATTail, Stranded) {
     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(in1, in2);
     std::shared_ptr<std::ostringstream> out1(new std::ostringstream);
     Counter counters;
-    setupCounter(counters);
+    //setupCounter(counters);
     {
         std::shared_ptr<HtsOfstream> hts_of(new HtsOfstream(out1));
         std::shared_ptr<OutputWriter> tab(new ReadBaseOutTab(hts_of));

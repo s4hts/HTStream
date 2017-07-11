@@ -2,6 +2,35 @@
 #include <exception>
 #include <cerrno>
 
+void writer_helper(ReadBase *r, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, bool stranded, bool no_orphans ) { //class writer
+    PairedEndRead *per = dynamic_cast<PairedEndRead*>(r);
+    if (per) {
+        Read &one = per->non_const_read_one();
+        Read &two = per->non_const_read_two();
+
+        if (!one.getDiscard() && !two.getDiscard()) {
+            pe->write(*per);
+        } else if (!one.getDiscard() && !no_orphans) { //if stranded RC
+            se->write_read(one, false);
+        } else if (!two.getDiscard() && !no_orphans) { // Will never be RC
+            se->write_read((per->get_read_two()), stranded);
+        } else {
+
+        }
+    } else {
+        SingleEndRead *ser = dynamic_cast<SingleEndRead*>(r);
+        if (!ser) {
+            throw std::runtime_error("Unknow read found");
+        }
+        if (! (ser->non_const_read_one()).getDiscard() ) {
+            se->write(*ser);
+        } else {
+            
+        }
+            
+    }
+}
+
 void writer_helper(ReadBase *r, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, bool stranded, Counter &c, bool no_orphans ) {
     PairedEndRead *per = dynamic_cast<PairedEndRead*>(r);
     if (per) {
@@ -40,6 +69,7 @@ void writer_helper(ReadBase *r, std::shared_ptr<OutputWriter> pe, std::shared_pt
             
     }
 }
+
 void skip_lr(std::istream *input) {
     while(input and input->good() and (input->peek() == '\n' || input->peek() == '\r')) {
         input->get();
