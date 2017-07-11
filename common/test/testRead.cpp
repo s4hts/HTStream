@@ -35,9 +35,9 @@ TEST(ConvertToTwobit, ConvertToTwobitWorks){
 
 TEST(qual, avgQualScore) {
     SingleEndRead r1(Read("aaa",
-                       "aaa",
+                       "###",
                        "foo"));
-    ASSERT_EQ(r1.avg_q_score(), 97.0);
+    ASSERT_EQ(r1.avg_q_score(), 2);
 
 }
 

@@ -54,21 +54,21 @@ boost::optional<BitSet> SingleEndRead::get_key(size_t _start, size_t _length){
     return str_to_bit("C" + one.subseq(_start, _length*2));
 }
 
-inline size_t qual_sum(size_t s, const char c) {
-    return size_t(c) + s;
+inline double qual_sum(double s, const char c) {
+    return (double(c) - 33) + s; //need ascii offset
 }
 
 double SingleEndRead::avg_q_score()
 {
-    size_t sum = std::accumulate(one.get_qual().begin(), one.get_qual().end(), size_t(0), qual_sum);
+    double sum = std::accumulate(one.get_qual().begin(), one.get_qual().end(), double(0), qual_sum);
     return sum/double(one.get_qual().length());
 
 }
 
 double PairedEndRead::avg_q_score()
 {
-    size_t sum = std::accumulate(one.get_qual().begin(), one.get_qual().end(), size_t(0), qual_sum);
-    sum += std::accumulate(two.get_qual().begin(), two.get_qual().end(), size_t(0), qual_sum);
+    double sum = std::accumulate(one.get_qual().begin(), one.get_qual().end(), double(0), qual_sum);
+    sum += std::accumulate(one.get_qual().begin(), one.get_qual().end(), double(0), qual_sum);
     return sum/double(one.get_qual().length() + two.get_qual().length());
 }
 

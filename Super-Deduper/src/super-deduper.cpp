@@ -41,7 +41,8 @@ int main(int argc, char** argv)
         desc.add_options()
             ("start,s", po::value<size_t>()->default_value(10),  "Start location for unique ID <int>")
             ("length,l", po::value<size_t>()->default_value(10), "Length of unique ID <int>")
-            ("avg-qual-score,q", po::value<size_t>()->default_value(20), "Avg quality score to have the read written automatically <int>");
+            ("avg-qual-score,q", po::value<double>()->default_value(20), "Avg quality score to have the read written automatically <int>")
+            ("inform-avg-qual-score,a", po::value<double>()->default_value(5), "Avg quality score to considered a read informative <int> "); //I know this says user input is a int, but is actually a double
                    po::variables_map vm;
         try
         {
@@ -78,7 +79,7 @@ int main(int argc, char** argv)
                     bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
                     
                     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
-                    load_map(ifp, counters, read_map, pe, se,vm["avg-qual-score"].as<size_t>(), vm["start"].as<size_t>() - 1, vm["length"].as<size_t>());
+                    load_map(ifp, counters, read_map, pe, se,vm["avg-qual-score"].as<double>(), vm["inform-avg-qual-score"].as<double>(), vm["start"].as<size_t>() - 1, vm["length"].as<size_t>());
                 }
             }
 
@@ -87,7 +88,7 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> ser{ check_open_r(file), bi::close_handle};
                     InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(ser);
-                    load_map(ifs, counters, read_map, pe, se,vm["avg-qual-score"].as<size_t>(), vm["start"].as<size_t>() - 1, vm["length"].as<size_t>());
+                    load_map(ifs, counters, read_map, pe, se,vm["avg-qual-score"].as<double>(), vm["inform-avg-qual-score"].as<double>(), vm["start"].as<size_t>() - 1, vm["length"].as<size_t>());
                 }
             }
             
@@ -96,7 +97,7 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> tabin{ check_open_r(file), bi::close_handle};
                     InputReader<ReadBase, TabReadImpl> ift(tabin);
-                    load_map(ift, counters, read_map, pe, se,vm["avg-qual-score"].as<size_t>(), vm["start"].as<size_t>() - 1, vm["length"].as<size_t>());
+                    load_map(ift, counters, read_map, pe, se,vm["avg-qual-score"].as<double>(),  vm["inform-avg-qual-score"].as<double>(),  vm["start"].as<size_t>() - 1, vm["length"].as<size_t>());
                 }
             }
             
@@ -105,14 +106,14 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> inter{ check_open_r(file), bi::close_handle};
                     InputReader<PairedEndRead, InterReadImpl> ifp(inter);
-                    load_map(ifp, counters, read_map, pe, se,vm["avg-qual-score"].as<size_t>(), vm["start"].as<size_t>() - 1, vm["length"].as<size_t>());
+                    load_map(ifp, counters, read_map, pe, se,vm["avg-qual-score"].as<double>(),  vm["inform-avg-qual-score"].as<double>(), vm["start"].as<size_t>() - 1, vm["length"].as<size_t>());
                 }
             }
             
             if (vm.count("std-input")) {
                 bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
-                load_map(ift, counters, read_map, pe, se,vm["avg-qual-score"].as<size_t>(), vm["start"].as<size_t>() - 1, vm["length"].as<size_t>());
+                load_map(ift, counters, read_map, pe, se,vm["avg-qual-score"].as<double>(),  vm["inform-avg-qual-score"].as<double>(),  vm["start"].as<size_t>() - 1, vm["length"].as<size_t>());
             }
             
             for(auto const &i : read_map) {

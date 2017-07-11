@@ -38,7 +38,7 @@ public:
 };
 
 template <class T, class Impl>
-void load_map(InputReader<T, Impl> &reader, SuperDeduperCounters& counters, BitMap& read_map, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, size_t avg_automatic_write, size_t start, size_t length) {
+void load_map(InputReader<T, Impl> &reader, SuperDeduperCounters& counters, BitMap& read_map, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, double avg_automatic_write, double discard_qual, size_t start, size_t length) {
     double tmpAvg;
 
     while(reader.has_next()) {
@@ -48,11 +48,11 @@ void load_map(InputReader<T, Impl> &reader, SuperDeduperCounters& counters, BitM
         if (auto key=i->get_key(start, length)) {
             // find faster than count on some compilers
             if(read_map.find(*key) == read_map.end()) {
-                if (i->avg_q_score() > avg_automatic_write) {
+                if ((tmpAvg = i->avg_q_score()) > avg_automatic_write) {
                     writer_helper(i.get(), pe, se, false);
                     counters.output(*i);
                     read_map[*key] = nullptr;
-                } else {
+                } else if (tmpAvg > discard_qual) {
                     read_map[*key] = std::move(i);
                 }
             } else if (read_map[*key] == nullptr) { //key had a q-score of 20 or higher (it was all ready written out)
@@ -62,7 +62,7 @@ void load_map(InputReader<T, Impl> &reader, SuperDeduperCounters& counters, BitM
                     writer_helper(i.get(), pe, se, false);
                     counters.output(*i);
                     read_map[*key] = nullptr;
-                } else {
+                } else if (tmpAvg > discard_qual) {
                     read_map[*key] = std::move(i);
                 }
                 counters.increment_replace();

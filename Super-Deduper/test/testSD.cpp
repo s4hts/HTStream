@@ -15,7 +15,7 @@ TEST_F(SDTest, HashMapLoadTest) {
     std::istringstream in2(readData);
     size_t start = 5;
     size_t length = 5;
-    size_t avg_auto_write = 100;
+    double avg_auto_write = 100;
     BitMap read_map;
     SuperDeduperCounters counter;
   
@@ -25,7 +25,7 @@ TEST_F(SDTest, HashMapLoadTest) {
     std::shared_ptr<OutputWriter> tab(new ReadBaseOutTab(hts_of));  
    
     
-    load_map(ifp, counter, read_map, tab, tab, avg_auto_write, start, length);
+    load_map(ifp, counter, read_map, tab, tab, avg_auto_write, 3, start, length);
     std::cout << read_map.size() << '\n';
     ASSERT_EQ(read_map.size(), 1);
     ASSERT_EQ(counter.c["TotalReadsInput"], 4);
