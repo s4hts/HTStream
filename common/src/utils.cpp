@@ -1,8 +1,22 @@
 #include "utils.h"
 
+bool threshold_mismatches(std::string::const_iterator r1, std::string::const_iterator r2, size_t length, size_t max) {
+    for (size_t i = 0; i < length; ++i) {
+        if (*r1 != *r2) {
+            --max;
+        }
+        if (!max) {
+            return false;
+        }
+        ++r1;
+        ++r2;
+    }
+    return true;
+}
+
 void outputWriters(std::shared_ptr<OutputWriter> &pe, std::shared_ptr<OutputWriter> &se, bool fastq_out, bool tab_out, bool interleaved_out, bool unmapped_out,  bool force, bool gzip_out, bool std_out, std::string &prefix) {
 
-    std::vector<std::string> default_outfiles = {"PE1", "PE2", "SE"};
+    std::vector<std::string> default_outfiles = {"_R1", "_R2", "_SE"};
 
     std::shared_ptr<HtsOfstream> out_1 = nullptr;
     std::shared_ptr<HtsOfstream> out_2 = nullptr;

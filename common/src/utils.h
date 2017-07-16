@@ -26,4 +26,7 @@ void setDefaultParamsTrim(po::options_description &desc);
 
 
 char rc(const char bp);
+
+bool threshold_mismatches(std::string::const_iterator r1, std::string::const_iterator r2, size_t length, size_t max); 
+
 #endif

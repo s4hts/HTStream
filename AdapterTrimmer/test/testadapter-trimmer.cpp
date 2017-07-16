@@ -20,7 +20,7 @@ class Adapter : public ::testing::Test {
         const std::string readData_engulf_r2_R1 = "@R1_\nGGTAAACCATTAACCAAATTGGACATATCTCATCTATCCTTATACTTA\n+\n111111111111111111111111111111111111111111111111\n";
         const std::string readData_engulf_r2_R2 = "@R2_\nAGATGAGATATGTCCAATTTGGTTAATGGTT\n+\n1111111111111111111111111111111";
         
-        const std::string readData_engulf_r1_R1 = "@R1_\nAACCATTAACCAAATTGGACATATCTCATCT\n+\n1111111111111111111111111111111\n";
+        const std::string readData_engulf_r1_R1 = "@R1_\nCATTAACCAAATTGGACATATCTCATCT\n+\n1111111111111111111111111111\n";
         const std::string readData_engulf_r1_R2 = "@R2_\nTAAGTATAAGGATAGATGAGATATGTCCAATTTGGTTAATGGTTTACC\n+\n111111111111111111111111111111111111111111111111\n";
 };
 
@@ -36,8 +36,8 @@ TEST_F(Adapter, engulfR1) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
         rb = check_read(*per, misDensity, 10, 10, kmer, kmerOffset, 10);
-        const std::string s1 =  "TAAGTATAAGGATAGATGAGATATGTCCAATTTGGTTAATGGTTTACC";
-        const std::string s2 =  "AACCATTAACCAAATTGGACATATCTCATCT";
+        const std::string s1 =  "CATTAACCAAATTGGACATATCTCATCT";
+        const std::string s2 =  "CATTAACCAAATTGGACATATCTCATCTATCCTTATACTTA";
         ASSERT_EQ( (per->non_const_read_one()).get_sub_seq(), s1);
         ASSERT_EQ( (per->non_const_read_two()).get_sub_seq(), s2);
     }
@@ -54,7 +54,7 @@ TEST_F(Adapter, engulfR2) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
         rb = check_read(*per, misDensity, 10, 10, kmer, kmerOffset, 10);
-        const std::string s1 =  "GGTAAACCATTAACCAAATTGGACATATCTCATCTATCCTTATACTTA";
+        const std::string s1 =  "GGTAAACCATTAACCAAATTGGACATATCTCATCT";
         const std::string s2 =  "AGATGAGATATGTCCAATTTGGTTAATGGTT";
         ASSERT_EQ( (per->non_const_read_one()).get_sub_seq(), s1);
         ASSERT_EQ( (per->non_const_read_two()).get_sub_seq(), s2);
@@ -74,7 +74,7 @@ TEST_F(Adapter, trim) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
         rb = check_read(*per, misDensity, 10, 10, kmer, kmerOffset, 10);
-        ASSERT_EQ( (per->non_const_read_one()).get_sub_seq(), "ACCATAACATAAACCATTAACCAAATTGGACATATCTCATCTATCCTTATACTTA");
+        ASSERT_EQ( (per->non_const_read_one()).get_sub_seq(), "ACCATAACATAAACC");
         ASSERT_EQ( (per->non_const_read_two()).get_sub_seq(), "GGTTTATGTTATGGT");
 
     }

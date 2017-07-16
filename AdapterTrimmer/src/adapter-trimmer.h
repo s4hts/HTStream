@@ -100,25 +100,31 @@ seqLookup readOneMap(std::string seq1, const size_t kmer, const size_t kmerOffse
  * If they are different bp, subtract q scores and take the larger quality bp*/ 
 unsigned int checkIfOverlap(Read &r1, Read &r2, size_t loc1, size_t loc2, const double misDensity, size_t minOverlap) {
     size_t minLoc = std::min(loc1, loc2);
-    size_t loc1_t = loc1 - minLoc;
-    size_t loc2_t = loc2 - minLoc;
+    int loc1_t = loc1 - minLoc;
+    int loc2_t = loc2 - minLoc;
+    int r1_len = r1.getLength() - 1;
+    int r2_len = r2.getLength() - 1;
+
     size_t maxLoop = std::min(r1.getLength() - loc1_t, r2.getLength() - loc2_t);
     size_t maxMis = static_cast<size_t>(maxLoop * misDensity);
+    
+    const std::string &seq1 = r1.get_seq();
+    const std::string &seq2 = r2.get_seq_rc();
 
-    if (maxLoop <= minOverlap) {
+    auto i1 = seq1.begin();
+    std::advance(i1, loc1_t);
+    auto i2 = seq2.begin();
+    std::advance(i2, loc2_t);
+    if (maxLoop <= minOverlap || !threshold_mismatches(i1, i2, maxLoop, maxMis) ) {
         return 0;
     }
 
     size_t read1_bp;
     size_t read2_bp;
 
-    const std::string &seq1 = r1.get_seq();
-    const std::string &seq2 = r2.get_seq();
     const std::string &qual1 = r1.get_qual();
-    const std::string &qual2 = r2.get_qual();
+    const std::string &qual2 = r2.get_qual_rc();
 
-    const size_t seq2_length =  seq2.length() - 1;
-    
     std::string finalSeq;
     std::string finalQual;
     size_t misMatches = 0;
@@ -129,38 +135,37 @@ unsigned int checkIfOverlap(Read &r1, Read &r2, size_t loc1, size_t loc2, const 
     unsigned int insert_length = maxLoop;
     for (size_t i = 0; i < maxLoop; ++i) {
         read1_bp = loc1_t + i;
-        read2_bp = seq2_length - (loc2_t + i);
-        
-        if (seq1[read1_bp] != rc(seq2[read2_bp]) )  {
-            bp = qual1[read1_bp] > qual2[read2_bp] ? seq1[read1_bp] : rc(seq2[read2_bp]);
+        read2_bp = loc2_t + i;
+        if (seq1[read1_bp] != seq2[read2_bp] )  {
+            bp = qual1[read1_bp] > qual2[read2_bp] ? seq1[read1_bp] : seq2[read2_bp];
             qual = static_cast<char>(std::max(qual1[read1_bp] - qual2[read2_bp] + 33, 1 + 33));
             
             r1.changeSeq(read1_bp, bp);
             r1.changeQual(read1_bp, qual);
             //Something clever with RC
-            r2.changeSeq( read2_bp, rc(bp) );
-            r2.changeQual(read2_bp, qual);
-            
-            if (++misMatches > maxMis) {
-                /*Not valid match*/
-                return 0;
-            }
+            r2.changeSeq( r2_len - read2_bp , rc(bp) );
+            r2.changeQual(r2_len -  read2_bp , qual);
+        } else {
+            qual = static_cast<char>(std::min(qual1[read1_bp] + qual2[read2_bp] + 33, 40 + 33));
+            r1.changeQual(read1_bp, qual);
+            r2.changeQual(r2_len -  read2_bp, qual);
+
+        }
+    }
+    if (loc1_t >= loc2_t) {
+        insert_length += loc1_t;
+    }
+
+    if (r1_len - loc1_t <= r2_len - loc2_t) {
+        insert_length += (r2_len - maxLoop);
+    } else {
+        r1.setRCut( ( (r2_len - loc2_t) + loc1_t) + 1) ;
+        if (loc2_t + r2_len + loc1_t > r1_len) { //special engulf check
+            r2.setRCut(r2_len - loc2_t + 1); 
         }
     }
 
-    if ( loc1_t >= loc2_t ) { //no adapter but need to figure out sides
-        insert_length += loc1_t; 
-    } else {
-        r1.setLCut(loc1_t); //sin
-    }
-    
-    if (r1.getLength() - loc1_t < r2.getLength()) {
-        insert_length += r2.getLength() - maxLoop; // lin
-    } else {
-        r2.setRCut(maxLoop); //sin
-    }
-
-    return insert_length;
+   return insert_length;
 }
 
 /*Because of the way overlapping works, you only need to check the ends of the shorter read*/
@@ -210,6 +215,10 @@ unsigned int check_read(PairedEndRead &pe , const double misDensity, const size_
     /*returns null if no much
      * r1 and r2 and passed by ref in case only adapter trimming is on*/
     unsigned int overlapped = getOverlappedReads(r1, r2, mOne, misDensity, minOver, checkLengths, kmer) ;
+    if (swapped) {
+        std::swap(r1, r2);
+        r2.set_read_rc();
+    }
     //we need to check it overlapper is greater than min length;
 
     return overlapped;

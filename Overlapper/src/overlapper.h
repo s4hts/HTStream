@@ -116,20 +116,27 @@ seqLookup readOneMap(std::string seq1, const size_t kmer, const size_t kmerOffse
  * If they are different bp, subtract q scores and take the larger quality bp*/ 
 spReadBase checkIfOverlap(Read &r1, Read &r2, size_t loc1, size_t loc2, const double misDensity, size_t minOverlap) {
     size_t minLoc = std::min(loc1, loc2);
-    size_t loc1_t = loc1 - minLoc;
-    size_t loc2_t = loc2 - minLoc;
-    size_t maxLoop = std::min(r1.getLength() - loc1_t, r2.getLength() - loc2_t);
+    int  loc1_t = loc1 - minLoc;
+    int loc2_t = loc2 - minLoc;
+    int r1_len = r1.getLength();
+    int r2_len = r2.getLength();
+    size_t maxLoop = std::min(r1_len - loc1_t, r2_len - loc2_t);
     size_t maxMis = static_cast<size_t>(maxLoop * misDensity);
+    
+    const std::string &seq1 = r1.get_seq();
+    const std::string &seq2 = r2.get_seq_rc();
 
-    if (maxLoop <= minOverlap) {
+    auto i1 = seq1.begin();
+    std::advance(i1, loc1_t);
+    auto i2 = seq2.begin();
+    std::advance(i2, loc2_t);
+    if (maxLoop <= minOverlap || !threshold_mismatches( i1, i2 , maxLoop, maxMis ) ) {
         return nullptr;
     }
 
     size_t read1_bp;
     size_t read2_bp;
 
-    const std::string &seq1 = r1.get_seq();
-    const std::string &seq2 = r2.get_seq_rc();
     const std::string &qual1 = r1.get_qual();
     const std::string &qual2 = r2.get_qual_rc();
 
@@ -150,25 +157,22 @@ spReadBase checkIfOverlap(Read &r1, Read &r2, size_t loc1, size_t loc2, const do
         } else {
             bp = qual1[read1_bp] > qual2[read2_bp] ? seq1[read1_bp] : seq2[read2_bp];
             qual = static_cast<char>(std::max(qual1[read1_bp] - qual2[read2_bp] + 33, 1 + 33));
-            
-            if (++misMatches > maxMis) {
-                /*Not valid match*/
-                return nullptr;
-            }
-        }
+       }
         finalSeq += bp;
         finalQual += qual;
     }
 
-    if ( loc1_t >= loc2_t ) {
+    /*R2 is always shorter or equal to R1*/
+
+    if ( loc1_t > loc2_t ) { //We are going to snag the start if it is a lin (notice, if they are both zero then we dont' want to snag anything
         finalSeq = seq1.substr(0, loc1_t) + finalSeq;
         finalQual = qual1.substr(0, loc1_t) + finalQual;
     }
-    
-    if (r1.getLength() - loc1_t < r2.getLength()) {
-        finalSeq += seq2.substr(maxLoop, r2.getLength() - maxLoop);
-        finalQual += qual2.substr(maxLoop, r2.getLength() - maxLoop);
-    }
+  
+    if (r1_len - loc1_t < r2_len - loc2_t) {
+        finalSeq += seq2.substr(maxLoop, r2_len - maxLoop);
+        finalQual += qual2.substr(maxLoop, r2_len - maxLoop);
+    } 
 
     spReadBase overlap(new SingleEndRead(Read(finalSeq, finalQual, r1.get_id())));
     return overlap;

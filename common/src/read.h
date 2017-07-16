@@ -44,6 +44,7 @@ public:
     static std::string bit_to_str(const BitSet &bits);
     static boost::optional<BitSet> reverse_complement(const std::string& str, int start, int length);
     virtual double avg_q_score() = 0;
+    bool rc; 
 };
 
 class Read {
@@ -83,6 +84,21 @@ public:
                                             std::string q = qual.substr(cut_L, cut_R - cut_L); 
                                             std::reverse(begin(q), end(q)); 
                                             return q;  }
+
+
+    void set_read_rc() {
+        if (cut_R < cut_L) {
+            return;
+        }
+        std::string s = seq.substr(cut_L, cut_R - cut_L) ;  
+        std::transform(begin(s), end(s), begin(s), complement); 
+        std::reverse(begin(s), end(s)); 
+        std::string q = qual.substr(cut_L, cut_R - cut_L); 
+        std::reverse(begin(q), end(q)); 
+        seq = s;
+        qual = q;
+    }
+
     void changeSeq( size_t loc, char bp ) { seq[loc] = bp; }
     void changeQual( size_t loc, char score ) {qual[loc] = score; }
 
