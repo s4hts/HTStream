@@ -135,6 +135,7 @@ public:
         if (ser.non_const_read_one().getDiscard()) {
             ++c["SE_Discard"];
         } else {
+            ++c["TotalReadsOutput"];
             ++c["SE_Out"];
         }
 
@@ -219,14 +220,17 @@ public:
         Read &one = per.non_const_read_one();
         Read &two = per.non_const_read_one();
         if (!one.getDiscard() && !two.getDiscard()) {
+            ++c["TotalReadsOutput"];
             ++c["PE_Out"];
             R1_stats(one);
             R2_stats(two);
         } else if (!one.getDiscard() && !no_orphans) { //if stranded RC
+            ++c["TotalReadsOutput"];
             ++c["SE_Out"];
             ++c["R2_Discarded"];
             R1_stats(one);
         } else if (!two.getDiscard() && !no_orphans) { // Will never be RC
+            ++c["TotalReadsOutput"];
             ++c["SE_Out"];
             ++c["R1_Discarded"];
             R2_stats(two);
