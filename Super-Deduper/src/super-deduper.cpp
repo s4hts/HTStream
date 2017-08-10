@@ -41,7 +41,7 @@ int main(int argc, char** argv)
         desc.add_options()
             ("start,s", po::value<size_t>()->default_value(10),  "Start location for unique ID <int>")
             ("length,l", po::value<size_t>()->default_value(10), "Length of unique ID <int>")
-            ("avg-qual-score,q", po::value<double>()->default_value(20), "Avg quality score to have the read written automatically <int>")
+            ("avg-qual-score,q", po::value<double>()->default_value(30), "Avg quality score to have the read written automatically <int>")
             ("inform-avg-qual-score,a", po::value<double>()->default_value(5), "Avg quality score to considered a read informative <int> "); //I know this says user input is a int, but is actually a double
                    po::variables_map vm;
         try
@@ -118,6 +118,7 @@ int main(int argc, char** argv)
             
             for(auto const &i : read_map) {
                 if (i.second.get() != nullptr) {
+                    counters.output(*i.second.get()); 
                     writer_helper(i.second.get(), pe, se, false);
                 }
             }
