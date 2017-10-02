@@ -172,7 +172,18 @@ unsigned int checkIfOverlap(Read &r1, Read &r2, size_t loc1, size_t loc2, const 
 unsigned int getOverlappedReads(Read &r1, Read &r2, const seqLookup &seq1Map,  const double misDensity, const size_t &minOver, const size_t &checkLengths, const size_t kmer) {
 
     std::string seq2 = r2.get_seq_rc();
-    for (size_t bp = 0; bp < checkLengths; ++bp) {
+    for (size_t bp = seq2.length() - (checkLengths + kmer); bp < seq2.length() - kmer ; ++bp) {
+        /*Do a quick check if the shorter read kmer shows up in longer read (read 2)
+         * If it does, then try the brute force approach*/
+        auto test = seq1Map.equal_range(seq2.substr(bp, kmer));
+        for (auto it = test.first; it != test.second; ++it) {
+            unsigned int overlapped = checkIfOverlap(r1, r2, it->second, bp, misDensity, minOver);
+            if (overlapped) {
+                return overlapped;
+            }
+        }
+     }
+     for (size_t bp = 0; bp < checkLengths; ++bp) {
         /*Do a quick check if the shorter read kmer shows up in longer read (read 2)
          * If it does, then try the brute force approach*/
         auto test = seq1Map.equal_range(seq2.substr(bp, kmer));
@@ -184,18 +195,7 @@ unsigned int getOverlappedReads(Read &r1, Read &r2, const seqLookup &seq1Map,  c
         }
     } 
 
-    for (size_t bp = seq2.length() - (checkLengths + kmer); bp < seq2.length() - kmer ; ++bp) {
-        /*Do a quick check if the shorter read kmer shows up in longer read (read 2)
-         * If it does, then try the brute force approach*/
-        auto test = seq1Map.equal_range(seq2.substr(bp, kmer));
-        for (auto it = test.first; it != test.second; ++it) {
-            unsigned int overlapped = checkIfOverlap(r1, r2, it->second, bp, misDensity, minOver);
-            if (overlapped) {
-                return overlapped;
-            }
-        }
-    }
-    return 0;
+   return 0;
 
 }
 
