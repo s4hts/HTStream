@@ -97,14 +97,14 @@ public:
             outStats.open(statsFile, std::ios::out | std::ios::trunc); //overwritt
             outStats << "{\n \"" << program_name << "_" << getpid() <<  "\": {\n";
         }
-        outStats << "\"Notes\" : \"" << notes << "\",\n";
+        outStats << "    \"Notes\" : \"" << notes << "\",\n";
         for (const auto &name : c) {
             if (first) {
                 first = false;
             } else {
                 outStats << ",\n"; //make sure json format is kept
             }
-            outStats << "\"" << name.first << "\" : " << name.second; //it will get the comma in conditionals tatement about
+            outStats << "    \"" << name.first << "\" : " << name.second; //it will get the comma in conditionals tatement about
         }
         outStats << "\n}";
         outStats << "\n}";
