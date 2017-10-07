@@ -174,7 +174,7 @@ public:
 
         for (size_t i = 2; i < insertLength.size(); ++i) {
             outStats << ",\n"; //make sure json format is kept
-            outStats << '        "' << i << '"' << " : "  << insertLength[i];
+            outStats << "        \"" << i << "\"" << " : "  << insertLength[i];
         }
         outStats << "\n}";
         outStats << "\n}";
