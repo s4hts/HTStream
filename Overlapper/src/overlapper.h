@@ -44,8 +44,8 @@ public:
  
     void SE_stats(Read &se, Read &one, Read &two) {
         c["SE_Length"] += se.getLengthTrue();
-        c["R1_Adapter_Trim"] += one.getLTrim();
-        c["R2_Adapter_Trim"] += two.getLTrim();
+        c["R1_Adapter_Trim"] += one.getRTrim();
+        c["R2_Adapter_Trim"] += two.getRTrim();
     }
 
     void output(PairedEndRead &per, spReadBase &overlapped) {

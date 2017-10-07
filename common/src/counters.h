@@ -158,19 +158,25 @@ public:
             outStats.open(statsFile, std::ios::out | std::ios::trunc); //overwritt
             outStats << "{\n \"" << program_name << "_" << getpid() <<  "\": {\n";
         }
-        outStats << "\"Notes\" : \"" << notes << "\",\n";
+        outStats << "    \"Notes\" : \"" << notes << "\",\n";
         for (const auto &name : c) {
             if (first) {
                 first = false;
             } else {
                 outStats << ",\n"; //make sure json format is kept
             }
-            outStats << "\"" << name.first << "\" : " << name.second; //it will get the comma in conditionals tatement about
+            outStats << "    \"" << name.first << "\" : " << name.second; //it will get the comma in conditionals tatement about
         }
-        for (size_t i = 1; i < insertLength.size(); ++i) {
+        // embed instertLength (histogram) in sub json 
+        outStats << ",\n"; //make sure json format is kept
+        outStats << "    "\"histogram\": {\n";
+        outStats << '"' << 1 << '"' << " : "  << insertLength[1];  // so as to keep the json comma convention
+
+        for (size_t i = 2; i < insertLength.size(); ++i) {
             outStats << ",\n"; //make sure json format is kept
-            outStats << '"' << i << '"' << " : "  << insertLength[i];
+            outStats << '        "' << i << '"' << " : "  << insertLength[i];
         }
+        outStats << "\n}";
         outStats << "\n}";
         outStats << "\n}";
         outStats.flush();
