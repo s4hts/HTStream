@@ -26,8 +26,6 @@ typedef std::unordered_multimap<std::string, std::size_t> seqLookup;
 class AdapterTrimmerCounters : public OverlappingCounters {
 
 public:
-    std::vector<unsigned long long int> insertLength;
-
     void output(SingleEndRead &ser)  {
         if (ser.non_const_read_one().getDiscard()) {
             ++c["SE_Discard"];
@@ -43,7 +41,6 @@ public:
         Read &two = per.non_const_read_two();
 
         if (overlapped) {
-            size_t insertSize = (overlapped->non_const_read_one()).getLengthTrue();
 
             if (one.getLengthTrue() > overlapped || two.getLengthTrue() > overlapped ) {
                 ++c["sins"]; //adapters must be had (short insert)
