@@ -44,8 +44,8 @@ public:
 
             if (one.getLengthTrue() > overlapped || two.getLengthTrue() > overlapped ) {
                 ++c["sins"]; //adapters must be had (short insert)
-                c["R1_Adapter_Trim"] += one.getLTrim();
-                c["R2_Adapter_Trim"] += two.getLTrim();
+                c["R1_Adapter_Trim"] += one.getRTrim();
+                c["R2_Adapter_Trim"] += two.getRTrim();
 
             } else {
                 ++c["lins"]; //must be a long insert
