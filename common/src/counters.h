@@ -169,7 +169,7 @@ public:
         }
         // embed instertLength (histogram) in sub json 
         outStats << ",\n"; //make sure json format is kept
-        outStats << "    "\"histogram\": {\n";
+        outStats << "    \"histogram\": {\n";
         outStats << '"' << 1 << '"' << " : "  << insertLength[1];  // so as to keep the json comma convention
 
         for (size_t i = 2; i < insertLength.size(); ++i) {
