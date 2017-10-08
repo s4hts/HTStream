@@ -66,7 +66,7 @@ public:
             }
             ++insertLength[insertSize];
         } else {
-            ++c["Nolins"]; //lin
+            ++c["nins"]; //lin
         }
 
         if (overlapped) {

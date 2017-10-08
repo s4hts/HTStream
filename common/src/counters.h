@@ -15,10 +15,10 @@ public:
     Counter c;
    
     void Common() {
-        c["TotalReadsInput"] = 0;
+        c["TotalFragmentsInput"] = 0;
         c["PE_In"] = 0;
         c["SE_In"] = 0;
-        c["TotalReadsOutput"] = 0;
+        c["TotalFragmentOutput"] = 0;
         c["PE_Out"] = 0;
         c["SE_Out"] = 0;
     }
@@ -28,14 +28,14 @@ public:
     }
     
     virtual void input(const PairedEndRead &read) {
-        ++c["TotalReadsInput"];
+        ++c["TotalFragmentsInput"];
         ++c["PE_In"]; 
     }
 
 
 
     virtual void input(const SingleEndRead &read) {
-        ++c["TotalReadsInput"];
+        ++c["TotalFragmentsInput"];
         ++c["SE_In"]; 
     }
 
@@ -54,13 +54,13 @@ public:
     }
 
     virtual void output(PairedEndRead &read, bool no_orhpans = false) {
-        ++c["TotalReadsOutput"];
+        ++c["TotalFragmentsOutput"];
         ++c["PE_Out"];
     }
 
 
     virtual void output(SingleEndRead &read) {
-        ++c["TotalReadsOutput"];
+        ++c["TotalFragmentsOutput"];
         ++c["SE_Out"];
     }
 
@@ -119,8 +119,9 @@ public:
         Common();
         c["lins"] = 0;
         c["sins"] = 0;
-        c["Nolins"] = 0;
+        c["nins"] = 0;
         c["SE_Discard"] = 0;
+        c["PE_Discard"] = 0;
         c["R1_Discard"] = 0;
         c["R2_Discard"] = 0;
         c["R1_Adapter_Trim"] = 0;
@@ -132,7 +133,7 @@ public:
         if (ser.non_const_read_one().getDiscard()) {
             ++c["SE_Discard"];
         } else {
-            ++c["TotalReadsOutput"];
+            ++c["TotalFragmentsOutput"];
             ++c["SE_Out"];
         }
 
@@ -218,17 +219,17 @@ public:
         Read &one = per.non_const_read_one();
         Read &two = per.non_const_read_one();
         if (!one.getDiscard() && !two.getDiscard()) {
-            ++c["TotalReadsOutput"];
+            ++c["TotalFragmentsOutput"];
             ++c["PE_Out"];
             R1_stats(one);
             R2_stats(two);
         } else if (!one.getDiscard() && !no_orphans) { //if stranded RC
-            ++c["TotalReadsOutput"];
+            ++c["TotalFragmentsOutput"];
             ++c["SE_Out"];
             ++c["R2_Discarded"];
             R1_stats(one);
         } else if (!two.getDiscard() && !no_orphans) { // Will never be RC
-            ++c["TotalReadsOutput"];
+            ++c["TotalFragmentsOutput"];
             ++c["SE_Out"];
             ++c["R1_Discarded"];
             R2_stats(two);

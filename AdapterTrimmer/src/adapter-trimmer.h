@@ -40,30 +40,28 @@ public:
         Read &one = per.non_const_read_one();
         Read &two = per.non_const_read_two();
 
-        if (overlapped) {
-
-            if (one.getLengthTrue() > overlapped || two.getLengthTrue() > overlapped ) {
-                ++c["sins"]; //adapters must be had (short insert)
-                c["R1_Adapter_Trim"] += one.getRTrim();
-                c["R2_Adapter_Trim"] += two.getRTrim();
-
-            } else {
-                ++c["lins"]; //must be a long insert
-            }
-            if ( overlapped + 1 > insertLength.size() ) {
-                insertLength.resize(overlapped + 1);
-            }
-            ++insertLength[overlapped];
-            
-        } else {
-            ++c["Nolins"]; //lin
-        }
-
         if (!one.getDiscard() && !two.getDiscard() ) {
+            if (overlapped) {
+                if (one.getLengthTrue() > overlapped || two.getLengthTrue() > overlapped ) {
+                    ++c["sins"]; //adapters must be had (short insert)
+                    c["R1_Adapter_BpTrim"] += one.getLengthTrue() - overlapped;
+                    c["R2_Adapter_BpTrim"] += two.getLengthTrue() - overlapped;
+
+                } else {
+                    ++c["lins"]; //must be a long insert
+                }
+                if ( overlapped + 1 > insertLength.size() ) {
+                    insertLength.resize(overlapped + 1);
+                }
+                ++insertLength[overlapped];
+                
+            } else {
+                ++c["Nolins"]; //lin
+            }
+
             ++c["PE_Out"];
         } else if (one.getDiscard() && two.getDiscard()) {
-            ++c["R1_Discard"];
-            ++c["R2_Discard"];
+            ++c["PE_Discard"];
         } else if (one.getDiscard()) {
             ++c["R1_Discard"];
         } else if (two.getDiscard()) {
