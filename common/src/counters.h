@@ -85,31 +85,28 @@ public:
         testEnd.close();
         
         std::fstream outStats;
-        bool first = true;
         
         if (appendStats && end != -1) {
             //outStats.open(statsFile, std::ofstream::out | std::ofstream::app); //overwritte
             outStats.open(statsFile, std::ios::in | std::ios::out); //overwritte
-            outStats.seekp(-1, std::ios::end );
-            outStats << "\n,\"" << program_name << "_" << getpid()  << "\": {\n";
+            outStats.seekp(-2, std::ios::end );
+            outStats << "  },\n";
+            outStats << "  \"" << program_name << "_" << getpid()  << "\": {\n";
         } else {
             //outStats.open(statsFile, std::ofstream::out); //overwritte
             outStats.open(statsFile, std::ios::out | std::ios::trunc); //overwritt
-            outStats << "{\n \"" << program_name << "_" << getpid() <<  "\": {\n";
+            outStats << "{ \"" << program_name << "_" << getpid() <<  "\": {\n";
         }
-        outStats << "    \"Notes\" : \"" << notes << "\",\n";
+        outStats << "    \"Notes\": \"" << notes << "\"";
+
         for (const auto &name : c) {
-            if (first) {
-                first = false;
-            } else {
-                outStats << ",\n"; //make sure json format is kept
-            }
-            outStats << "    \"" << name.first << "\" : " << name.second; //it will get the comma in conditionals tatement about
+            outStats << ",\n"; //make sure json format is kept
+            outStats << "    \"" << name.first << "\": " << name.second;
         }
-        outStats << "\n}";
-        outStats << "\n}";
+
+        outStats << "\n  }\n";
+        outStats << "}\n";
         outStats.flush();
-         
     }
 };
 
@@ -141,50 +138,45 @@ public:
 
     }
 
-    void write_out(const std::string &statsFile, bool appendStats, std::string program_name, std::string notes) {
+    virtual void write_out(const std::string &statsFile, bool appendStats, std::string program_name, std::string notes) {
 
         std::ifstream testEnd(statsFile);
         int end = testEnd.peek();
         testEnd.close();
 
         std::fstream outStats;
-        bool first = true;
 
         if (appendStats && end != -1) {
-            outStats.open(statsFile, std::ios::in | std::ios::out ); //overwritte
-            outStats.seekp(-1, std::ios::end );
-            outStats << "\n,\"" << program_name << "_" << getpid()  << "\": {\n";
+            outStats.open(statsFile, std::ios::in | std::ios::out); //overwritte
+            outStats.seekp(-2, std::ios::end );
+            outStats << "  },\n";
+            outStats << "  \"" << program_name << "_" << getpid()  << "\": {\n";
         } else {
             outStats.open(statsFile, std::ios::out | std::ios::trunc); //overwritt
-            outStats << "{\n \"" << program_name << "_" << getpid() <<  "\": {\n";
+            outStats << "{ \"" << program_name << "_" << getpid() <<  "\": {\n";
         }
-        outStats << "    \"Notes\" : \"" << notes << "\",\n";
+
+        outStats << "    \"Notes\": \"" << notes << "\"";
+
         for (const auto &name : c) {
-            if (first) {
-                first = false;
-            } else {
-                outStats << ",\n"; //make sure json format is kept
-            }
-            outStats << "    \"" << name.first << "\" : " << name.second; //it will get the comma in conditionals tatement about
+            outStats << ",\n"; //make sure json format is kept
+            outStats << "    \"" << name.first << "\": " << name.second;
         }
-        // embed instertLength (histogram) in sub json 
+
+        // embed instertLength (histogram) in sub json vector
         outStats << ",\n"; //make sure json format is kept
-        outStats << "    \"histogram\": {\n";
-        outStats << '"' << 1 << '"' << " : "  << insertLength[1];  // so as to keep the json comma convention
+        outStats << "    \"histogram\": [";
+        outStats << "[" << 1 << "," << insertLength[1] << "]";  // first, so as to keep the json comma convention
 
         for (size_t i = 2; i < insertLength.size(); ++i) {
-            outStats << ",\n"; //make sure json format is kept
-            outStats << "        \"" << i << "\"" << " : "  << insertLength[i];
+            outStats << ", [" << i << "," << insertLength[i] << "]"; //make sure json format is kept
         }
-        outStats << "\n}";
-        outStats << "\n}";
-        outStats << "\n}";
+        outStats << "]"; // finish off histogram
+        outStats << "\n  }\n";
+        outStats << "}\n";
         outStats.flush();
-
     }
 };
-
-
 
 class TrimmingCounters : public Counters {
 
