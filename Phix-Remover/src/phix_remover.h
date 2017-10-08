@@ -33,6 +33,8 @@ class PhixCounters : public Counters {
 public:
     PhixCounters() {
         Common();
+        c["PE_hits"] = 0;
+        c["SE_hits"] = 0;
     }
     //just a place holder incase sam or matt want some features in here
 };
@@ -170,11 +172,11 @@ void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> 
                 val = std::max(val, val2);
             }
 
+            c.output(*per);
             if (val <= hits && !inverse) {
-                c.output(*per);
+                ++c["PE_hits"];
                 writer_helper(per, pe, se, false);
-            } else if (val >= hits && inverse) {
-                c.output(*per);
+            } else if (val > hits && inverse) {
                 writer_helper(per, pe, se, false);
             }
 
@@ -185,11 +187,12 @@ void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> 
                 c.input(*ser);
                 double val = check_read(lookup, ser->get_read(), bitKmer, lookup_loc, lookup_loc_rc, forwardLookup, reverseLookup );
                 val = val / ( ser->get_read().getLength() - kmerSize);
+
+                c.output(*ser);
                 if (val <= hits && !inverse) {
-                    c.output(*ser);
+                    ++c["SE_hits"];
                     writer_helper(ser, pe, se, false);
-                } else if (val >= hits && inverse) {
-                    c.output(*ser);
+                } else if (val > hits && inverse) {
                     writer_helper(ser, pe, se, false);
                 }
             } else {
@@ -199,7 +202,7 @@ void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> 
     }
 }
 
-    /*The flow of base paires will be
+    /*The flow of base pairs will be
      * Forward add to 0 and 1 location then << 2
      * Once the ForwardLookup is full and start filling ForwardRest
      * ForwardRest will take the highest location of ForwardLookup and put it

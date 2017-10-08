@@ -18,7 +18,7 @@ public:
         c["TotalFragmentsInput"] = 0;
         c["PE_In"] = 0;
         c["SE_In"] = 0;
-        c["TotalFragmentOutput"] = 0;
+        c["TotalFragmentsOutput"] = 0;
         c["PE_Out"] = 0;
         c["SE_Out"] = 0;
     }
@@ -90,8 +90,7 @@ public:
             //outStats.open(statsFile, std::ofstream::out | std::ofstream::app); //overwritte
             outStats.open(statsFile, std::ios::in | std::ios::out); //overwritte
             outStats.seekp(-2, std::ios::end );
-            outStats << "  },\n";
-            outStats << "  \"" << program_name << "_" << getpid()  << "\": {\n";
+            outStats << "  }, \"" << program_name << "_" << getpid()  << "\": {\n";
         } else {
             //outStats.open(statsFile, std::ofstream::out); //overwritte
             outStats.open(statsFile, std::ios::out | std::ios::trunc); //overwritt
@@ -187,8 +186,7 @@ public:
         if (appendStats && end != -1) {
             outStats.open(statsFile, std::ios::in | std::ios::out); //overwritte
             outStats.seekp(-2, std::ios::end );
-            outStats << "  },\n";
-            outStats << "  \"" << program_name << "_" << getpid()  << "\": {\n";
+            outStats << "  }, \"" << program_name << "_" << getpid()  << "\": {\n";
         } else {
             outStats.open(statsFile, std::ios::out | std::ios::trunc); //overwritt
             outStats << "{ \"" << program_name << "_" << getpid() <<  "\": {\n";

@@ -23,12 +23,15 @@ public:
         c["C"] = 0;
         c["G"] = 0;
         c["N"] = 0;
-        c["R1_Len"] = 0;
-        c["R2_Len"] = 0;
-        c["SE_Len"] = 0;
-        c["R1_Q_Sum"] = 0;
-        c["R2_Q_Sum"] = 0;
-        c["SE_Q_Sum"] = 0;
+        c["R1_BpLen"] = 0;
+        c["R2_BpLen"] = 0;
+        c["SE_BpLen"] = 0;
+        c["R1_BpAvg"] = 0;
+        c["R2_BpAvg"] = 0;
+        c["SE_BpAvg"] = 0;
+        c["R1_pQ30"] = 0;
+        c["R2_pQ30"] = 0;
+        c["SE_pQ30"] = 0;
     }
    
     void read_stats(Read &r) {
@@ -64,24 +67,33 @@ public:
         Read &two = per.non_const_read_two();
         read_stats(one);
         read_stats(two);
+        int r1_q30bases=0
         for (auto q : one.get_qual()) {
-            c["R1_Q_Sum"] += q - 33;
+            r1_q30bases += (q - 33) >= 30;
         }
+        int r2_q30bases=0
         for (auto q : two.get_qual()) {
-            c["R2_Q_Sum"] += q - 33;
+            r2_q30bases += (q - 33) >= 30;
         }
-        c["R1_Len"] += one.getLength();
-        c["R2_Len"] += two.getLength();
+        c["R1_pQ30"] += ((c["R1_pQ30"] * ["R1_BpLen"]) + r1_q30bases)/( c["R1_BpLen"] + one.getLength())
+        c["R2_pQ30"] += ((c["R2_pQ30"] * ["R2_BpLen"]) + r2_q30bases)/( c["R2_BpLen"] + two.getLength())
+        c["R1_BpLen"] += one.getLength();
+        c["R1_BpAvg"] = c["R1_BpLen"]/c["PE_Out"]
+        c["R2_BpLen"] += two.getLength();
+        c["R2_BpAvg"] = c["R2_BpLen"]/c["PE_Out"]
     }
     
     void output(SingleEndRead &ser) {
         Counters::output(ser);
         Read &one = ser.non_const_read_one();
         read_stats(one);
+        int q30bases=0
         for (auto q : one.get_qual()) {
-            c["SE_Q_Sum"] += q - 33;
+            q30bases += (q - 33) >= 30;
         }
-        c["SE_Len"] += one.getLength();
+        c["SE_pQ30"] += ((c["SE_pQ30"] * ["SE_BpLen"]) + q30bases)/( c["SE_BpLen"] + one.getLength())
+        c["SE_BpLen"] += one.getLength();
+        c["SE_BpAvg"] = c["SE_BpLen"]/c["SE_Out"]
     }
  
 };
