@@ -37,10 +37,10 @@ public:
         c["SE_hits"] = 0;
     }
     void inc_SE_hits() {
-        ++c["SE_hits"]
+        ++c["SE_hits"];
     }
     void inc_PE_hits() {
-        ++c["PE_hits"]
+        ++c["PE_hits"];
     }
 };
 
