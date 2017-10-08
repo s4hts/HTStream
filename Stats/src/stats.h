@@ -78,9 +78,9 @@ public:
         c["R1_pQ30"] += ((c["R1_pQ30"] * c["R1_BpLen"]) + r1_q30bases)/( c["R1_BpLen"] + one.getLength());
         c["R2_pQ30"] += ((c["R2_pQ30"] * c["R2_BpLen"]) + r2_q30bases)/( c["R2_BpLen"] + two.getLength());
         c["R1_BpLen"] += one.getLength();
-        c["R1_BpAvg"] = c["R1_BpLen"]/c["PE_Out"]
+        c["R1_BpAvg"] = c["R1_BpLen"]/c["PE_Out"];
         c["R2_BpLen"] += two.getLength();
-        c["R2_BpAvg"] = c["R2_BpLen"]/c["PE_Out"]
+        c["R2_BpAvg"] = c["R2_BpLen"]/c["PE_Out"];
     }
     
     void output(SingleEndRead &ser) {
@@ -93,7 +93,7 @@ public:
         }
         c["SE_pQ30"] += ((c["SE_pQ30"] * c["SE_BpLen"]) + q30bases)/( c["SE_BpLen"] + one.getLength());
         c["SE_BpLen"] += one.getLength();
-        c["SE_BpAvg"] = c["SE_BpLen"]/c["SE_Out"]
+        c["SE_BpAvg"] = c["SE_BpLen"]/c["SE_Out"];
     }
  
 };
