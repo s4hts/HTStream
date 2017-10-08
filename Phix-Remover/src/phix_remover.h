@@ -36,7 +36,12 @@ public:
         c["PE_hits"] = 0;
         c["SE_hits"] = 0;
     }
-    //just a place holder incase sam or matt want some features in here
+    void inc_SE_hits() {
+        ++c["SE_hits"]
+    }
+    void inc_PE_hits() {
+        ++c["PE_hits"]
+    }
 };
 
 
@@ -174,7 +179,7 @@ void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> 
 
             c.output(*per);
             if (val <= hits && !inverse) {
-                ++c["PE_hits"];
+                c.inc_PE_hits();
                 writer_helper(per, pe, se, false);
             } else if (val > hits && inverse) {
                 writer_helper(per, pe, se, false);
@@ -190,7 +195,7 @@ void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> 
 
                 c.output(*ser);
                 if (val <= hits && !inverse) {
-                    ++c["SE_hits"];
+                    c.inc_SE_hits();
                     writer_helper(ser, pe, se, false);
                 } else if (val > hits && inverse) {
                     writer_helper(ser, pe, se, false);

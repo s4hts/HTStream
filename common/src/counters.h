@@ -93,7 +93,7 @@ public:
             outStats << "  }, \"" << program_name << "_" << getpid()  << "\": {\n";
         } else {
             //outStats.open(statsFile, std::ofstream::out); //overwritte
-            outStats.open(statsFile, std::ios::out | std::ios::trunc); //overwritt
+            outStats.open(statsFile, std::ios::out | std::ios::trunc); //overwrite
             outStats << "{ \"" << program_name << "_" << getpid() <<  "\": {\n";
         }
         outStats << "    \"Notes\": \"" << notes << "\"";
