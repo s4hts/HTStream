@@ -35,6 +35,10 @@ public:
         Common();
         c["PE_hits"] = 0;
         c["SE_hits"] = 0;
+        c["Inverse"] = 0;
+    }
+    void set_inverse() {
+        c["Inverse"] = 1;
     }
     void inc_SE_hits() {
         ++c["SE_hits"];
@@ -162,6 +166,8 @@ void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> 
     boost::dynamic_bitset <> forwardLookup(bitKmer);
     boost::dynamic_bitset <> reverseLookup(bitKmer);
 
+    if (inverse) c.set_inverse();
+
     while(reader.has_next()) {
         auto i = reader.next();
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
@@ -177,11 +183,14 @@ void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> 
                 val = std::max(val, val2);
             }
 
-            c.output(*per);
-            if (val <= hits && !inverse) {
+            if (val > hits) {
                 c.inc_PE_hits();
+            }
+            if (val <= hits && !inverse) {
+                c.output(*per);
                 writer_helper(per, pe, se, false);
             } else if (val > hits && inverse) {
+                c.output(*per);
                 writer_helper(per, pe, se, false);
             }
 
@@ -193,11 +202,14 @@ void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> 
                 double val = check_read(lookup, ser->get_read(), bitKmer, lookup_loc, lookup_loc_rc, forwardLookup, reverseLookup );
                 val = val / ( ser->get_read().getLength() - kmerSize);
 
-                c.output(*ser);
-                if (val <= hits && !inverse) {
+                if (val > hits) {
                     c.inc_SE_hits();
+                }
+                if (val <= hits && !inverse) {
+                    c.output(*ser);
                     writer_helper(ser, pe, se, false);
                 } else if (val > hits && inverse) {
+                    c.output(*ser);
                     writer_helper(ser, pe, se, false);
                 }
             } else {

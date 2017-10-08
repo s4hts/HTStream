@@ -89,7 +89,7 @@ public:
         if (appendStats && end != -1) {
             //outStats.open(statsFile, std::ofstream::out | std::ofstream::app); //overwritte
             outStats.open(statsFile, std::ios::in | std::ios::out); //overwritte
-            outStats.seekp(-2, std::ios::end );
+            outStats.seekp(-6, std::ios::end );
             outStats << "  }, \"" << program_name << "_" << getpid()  << "\": {\n";
         } else {
             //outStats.open(statsFile, std::ofstream::out); //overwritte
@@ -102,9 +102,7 @@ public:
             outStats << ",\n"; //make sure json format is kept
             outStats << "    \"" << name.first << "\": " << name.second;
         }
-
-        outStats << "\n  }\n";
-        outStats << "}\n";
+        outStats << "\n  }\n}\n";
         outStats.flush();
     }
 };
@@ -145,10 +143,10 @@ public:
 
         if (!one.getDiscard() && !two.getDiscard() ) {
             if (overlapped) {
-                if (one.getLengthTrue() > overlapped || two.getLengthTrue() > overlapped ) {
+                if (one.getLength() > overlapped || two.getLength() > overlapped ) {
                     ++c["sins"]; //adapters must be had (short insert)
-                    c["R1_Adapter_BpTrim"] += one.getLengthTrue() - overlapped;
-                    c["R2_Adapter_BpTrim"] += two.getLengthTrue() - overlapped;
+                    c["R1_Adapter_BpTrim"] += (one.getLength() - one.getLengthTrue());
+                    c["R2_Adapter_BpTrim"] += (two.getLength() - two.getLengthTrue());
 
                 } else {
                     ++c["lins"]; //must be a long insert
@@ -185,7 +183,7 @@ public:
 
         if (appendStats && end != -1) {
             outStats.open(statsFile, std::ios::in | std::ios::out); //overwritte
-            outStats.seekp(-2, std::ios::end );
+            outStats.seekp(-6, std::ios::end );
             outStats << "  }, \"" << program_name << "_" << getpid()  << "\": {\n";
         } else {
             outStats.open(statsFile, std::ios::out | std::ios::trunc); //overwritt
@@ -208,8 +206,7 @@ public:
             outStats << ", [" << i << "," << insertLength[i] << "]"; //make sure json format is kept
         }
         outStats << "]"; // finish off histogram
-        outStats << "\n  }\n";
-        outStats << "}\n";
+        outStats << "\n  }\n}\n";
         outStats.flush();
     }
 };

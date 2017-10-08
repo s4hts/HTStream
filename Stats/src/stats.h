@@ -26,12 +26,9 @@ public:
         c["R1_BpLen"] = 0;
         c["R2_BpLen"] = 0;
         c["SE_BpLen"] = 0;
-        c["R1_BpAvg"] = 0;
-        c["R2_BpAvg"] = 0;
-        c["SE_BpAvg"] = 0;
-        c["R1_pQ30"] = 0;
-        c["R2_pQ30"] = 0;
-        c["SE_pQ30"] = 0;
+        c["R1_bQ30"] = 0;
+        c["R2_bQ30"] = 0;
+        c["SE_bQ30"] = 0;
     }
    
     void read_stats(Read &r) {
@@ -75,12 +72,10 @@ public:
         for (auto q : two.get_qual()) {
             r2_q30bases += (q - 33) >= 30;
         }
-        c["R1_pQ30"] += ((c["R1_pQ30"] * c["R1_BpLen"]) + r1_q30bases)/( c["R1_BpLen"] + one.getLength());
-        c["R2_pQ30"] += ((c["R2_pQ30"] * c["R2_BpLen"]) + r2_q30bases)/( c["R2_BpLen"] + two.getLength());
+        c["R1_bQ30"] += r1_q30bases;
+        c["R2_bQ30"] += r2_q30bases;
         c["R1_BpLen"] += one.getLength();
-        c["R1_BpAvg"] = c["R1_BpLen"]/c["PE_Out"];
         c["R2_BpLen"] += two.getLength();
-        c["R2_BpAvg"] = c["R2_BpLen"]/c["PE_Out"];
     }
     
     void output(SingleEndRead &ser) {
@@ -91,15 +86,14 @@ public:
         for (auto q : one.get_qual()) {
             q30bases += (q - 33) >= 30;
         }
-        c["SE_pQ30"] += ((c["SE_pQ30"] * c["SE_BpLen"]) + q30bases)/( c["SE_BpLen"] + one.getLength());
+        c["SE_bQ30"] += q30bases;
         c["SE_BpLen"] += one.getLength();
-        c["SE_BpAvg"] = c["SE_BpLen"]/c["SE_Out"];
     }
  
 };
 
 template <class T, class Impl>
-void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, StatsCounters& counters) {
+void helper_stats(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, StatsCounters& counters) {
     while(reader.has_next()) {
         auto i = reader.next();
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());        

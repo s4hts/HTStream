@@ -78,7 +78,7 @@ int main(int argc, char** argv)
                     bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
                    
                     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
-                    helper_trim(ifp, pe, se, counters );
+                    helper_stats(ifp, pe, se, counters );
                 }
             }
 
@@ -87,7 +87,7 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> sef{ check_open_r(file), bi::close_handle};
                     InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(sef);
-                    helper_trim(ifs, pe, se,counters);
+                    helper_stats(ifs, pe, se,counters);
                 }
             }
             
@@ -96,7 +96,7 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> tabin{ check_open_r(file), bi::close_handle};
                     InputReader<ReadBase, TabReadImpl> ift(tabin);
-                    helper_trim(ift, pe, se,counters);
+                    helper_stats(ift, pe, se,counters);
                 }
             }
             
@@ -105,14 +105,14 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> inter{ check_open_r(file), bi::close_handle};
                     InputReader<PairedEndRead, InterReadImpl> ifp(inter);
-                    helper_trim(ifp, pe, se,counters);
+                    helper_stats(ifp, pe, se,counters);
                 }
             }
            
             if (vm.count("std-input")) {
                 bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
-                helper_trim(ift, pe, se,counters);
+                helper_stats(ift, pe, se,counters);
             }  
             counters.write_out(statsFile, vm["append-stats-file"].as<bool>() , program_name, vm["notes"].as<std::string>());
         }
