@@ -124,8 +124,8 @@ public:
         c["PE_Discard"] = 0;
         c["R1_Discard"] = 0;
         c["R2_Discard"] = 0;
-        c["R1_Adapter_Trim"] = 0;
-        c["R2_Adapter_Trim"] = 0;
+        c["R1_Adapter_BpTrim"] = 0;
+        c["R2_Adapter_BpTrim"] = 0;
         insertLength.resize(1);
     }
 
@@ -135,6 +135,43 @@ public:
         } else {
             ++c["TotalFragmentsOutput"];
             ++c["SE_Out"];
+        }
+
+    }
+
+    virtual void output(PairedEndRead &per, unsigned int overlapped) {
+        //test lin or sin
+        Read &one = per.non_const_read_one();
+        Read &two = per.non_const_read_two();
+
+        if (!one.getDiscard() && !two.getDiscard() ) {
+            if (overlapped) {
+                if (one.getLengthTrue() > overlapped || two.getLengthTrue() > overlapped ) {
+                    ++c["sins"]; //adapters must be had (short insert)
+                    c["R1_Adapter_BpTrim"] += one.getLengthTrue() - overlapped;
+                    c["R2_Adapter_BpTrim"] += two.getLengthTrue() - overlapped;
+
+                } else {
+                    ++c["lins"]; //must be a long insert
+                }
+                if ( overlapped + 1 > insertLength.size() ) {
+                    insertLength.resize(overlapped + 1);
+                }
+                ++insertLength[overlapped];
+                
+            } else {
+                ++c["nins"]; //lin
+            }
+            ++c["PE_Out"];
+            ++c["TotalFragmentsOutput"];
+        } else if (one.getDiscard() && two.getDiscard()) {
+            ++c["PE_Discard"];
+        } else if (one.getDiscard()) {
+            ++c["R1_Discard"];
+            ++c["TotalFragmentsOutput"];
+        } else if (two.getDiscard()) {
+            ++c["R2_Discard"];
+            ++c["TotalFragmentsOutput"];
         }
 
     }

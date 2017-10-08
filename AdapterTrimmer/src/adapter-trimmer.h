@@ -23,55 +23,6 @@
 
 typedef std::unordered_multimap<std::string, std::size_t> seqLookup;
 
-class AdapterTrimmerCounters : public OverlappingCounters {
-
-public:
-    void output(SingleEndRead &ser)  {
-        if (ser.non_const_read_one().getDiscard()) {
-            ++c["SE_Discard"];
-        } else {
-            ++c["SE_Out"];
-        }
-
-    }
-
-    void output(PairedEndRead &per, unsigned int overlapped) {
-        //test lin or sin
-        Read &one = per.non_const_read_one();
-        Read &two = per.non_const_read_two();
-
-        if (!one.getDiscard() && !two.getDiscard() ) {
-            if (overlapped) {
-                if (one.getLengthTrue() > overlapped || two.getLengthTrue() > overlapped ) {
-                    ++c["sins"]; //adapters must be had (short insert)
-                    c["R1_Adapter_BpTrim"] += one.getLengthTrue() - overlapped;
-                    c["R2_Adapter_BpTrim"] += two.getLengthTrue() - overlapped;
-
-                } else {
-                    ++c["lins"]; //must be a long insert
-                }
-                if ( overlapped + 1 > insertLength.size() ) {
-                    insertLength.resize(overlapped + 1);
-                }
-                ++insertLength[overlapped];
-                
-            } else {
-                ++c["Nolins"]; //lin
-            }
-
-            ++c["PE_Out"];
-        } else if (one.getDiscard() && two.getDiscard()) {
-            ++c["PE_Discard"];
-        } else if (one.getDiscard()) {
-            ++c["R1_Discard"];
-        } else if (two.getDiscard()) {
-            ++c["R2_Discard"];
-        }
-
-    }
-
-};
-
 /*Create the quick lookup table
  * Multi map because a single kemr could appear multiple places*/
 seqLookup readOneMap(std::string seq1, const size_t kmer, const size_t kmerOffset) {
@@ -232,7 +183,7 @@ unsigned int check_read(PairedEndRead &pe , const double misDensity, const size_
  * With a lin it is useful to have a higher confidence in the bases in the overlap and longer read
  * With a sin it is useful to have the higher confidence as well as removing the adapters*/
 template <class T, class Impl>
-void helper_overlapper(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, AdapterTrimmerCounters &counter, const double misDensity, const size_t minOver, const bool stranded, const size_t min_length, const size_t checkLengths, const size_t kmer, const size_t kmerOffset, bool no_orphan = false ) {
+void helper_overlapper(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, OverlappingCounters &counter, const double misDensity, const size_t minOver, const bool stranded, const size_t min_length, const size_t checkLengths, const size_t kmer, const size_t kmerOffset, bool no_orphan = false ) {
     
     while(reader.has_next()) {
         auto i = reader.next();

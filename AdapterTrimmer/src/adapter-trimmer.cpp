@@ -34,7 +34,7 @@ int main(int argc, char** argv)
 {
     const std::string program_name = "adapter_trimmer";
 
-    AdapterTrimmerCounters counters;
+    OverlappingCounters counters;
 
     try
     {
