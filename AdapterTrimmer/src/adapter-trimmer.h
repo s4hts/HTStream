@@ -115,6 +115,7 @@ unsigned int checkIfOverlap(Read &r1, Read &r2, size_t loc1, size_t loc2, const 
     std::advance(i1, loc1_t);
     auto i2 = seq2.begin();
     std::advance(i2, loc2_t);
+    
     if (maxLoop <= minOverlap || !threshold_mismatches(i1, i2, maxLoop, maxMis) ) {
         return 0;
     }
@@ -133,6 +134,7 @@ unsigned int checkIfOverlap(Read &r1, Read &r2, size_t loc1, size_t loc2, const 
     char qual;
 
     unsigned int insert_length = maxLoop;
+    std::cerr << "WOOP " << loc1_t << " LOC2 " <<  loc2_t << " MAX " << maxLoop << std::endl;
     for (size_t i = 0; i < maxLoop; ++i) {
         read1_bp = loc1_t + i;
         read2_bp = loc2_t + i;
@@ -187,6 +189,7 @@ unsigned int getOverlappedReads(Read &r1, Read &r2, const seqLookup &seq1Map,  c
         /*Do a quick check if the shorter read kmer shows up in longer read (read 2)
          * If it does, then try the brute force approach*/
         auto test = seq1Map.equal_range(seq2.substr(bp, kmer));
+        std::cerr << "WUP " << seq2.substr(bp, kmer).length() << std::endl;
         for (auto it = test.first; it != test.second; ++it) {
             unsigned int overlapped = checkIfOverlap(r1, r2, it->second, bp, misDensity, minOver);
             if (overlapped) {

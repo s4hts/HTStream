@@ -1,14 +1,15 @@
 #include "utils.h"
 
 bool threshold_mismatches(std::string::const_iterator r1, std::string::const_iterator r2, size_t length, size_t max) {
+
     for (size_t i = 0; i < length; ++i) {
-        if (*r1 != *r2) {
-            --max;
-        }
         if (!max) {
             return false;
         }
-        ++r1;
+         if (*r1 != *r2) {
+            --max;
+        }
+       ++r1;
         ++r2;
     }
     return true;
