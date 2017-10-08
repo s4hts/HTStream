@@ -67,16 +67,16 @@ public:
         Read &two = per.non_const_read_two();
         read_stats(one);
         read_stats(two);
-        int r1_q30bases=0
+        int r1_q30bases=0;
         for (auto q : one.get_qual()) {
             r1_q30bases += (q - 33) >= 30;
         }
-        int r2_q30bases=0
+        int r2_q30bases=0;
         for (auto q : two.get_qual()) {
             r2_q30bases += (q - 33) >= 30;
         }
-        c["R1_pQ30"] += ((c["R1_pQ30"] * c["R1_BpLen"]) + r1_q30bases)/( c["R1_BpLen"] + one.getLength())
-        c["R2_pQ30"] += ((c["R2_pQ30"] * c["R2_BpLen"]) + r2_q30bases)/( c["R2_BpLen"] + two.getLength())
+        c["R1_pQ30"] += ((c["R1_pQ30"] * c["R1_BpLen"]) + r1_q30bases)/( c["R1_BpLen"] + one.getLength());
+        c["R2_pQ30"] += ((c["R2_pQ30"] * c["R2_BpLen"]) + r2_q30bases)/( c["R2_BpLen"] + two.getLength());
         c["R1_BpLen"] += one.getLength();
         c["R1_BpAvg"] = c["R1_BpLen"]/c["PE_Out"]
         c["R2_BpLen"] += two.getLength();
@@ -87,19 +87,16 @@ public:
         Counters::output(ser);
         Read &one = ser.non_const_read_one();
         read_stats(one);
-        int q30bases=0
+        int q30bases=0;
         for (auto q : one.get_qual()) {
             q30bases += (q - 33) >= 30;
         }
-        c["SE_pQ30"] += ((c["SE_pQ30"] * c["SE_BpLen"]) + q30bases)/( c["SE_BpLen"] + one.getLength())
+        c["SE_pQ30"] += ((c["SE_pQ30"] * c["SE_BpLen"]) + q30bases)/( c["SE_BpLen"] + one.getLength());
         c["SE_BpLen"] += one.getLength();
         c["SE_BpAvg"] = c["SE_BpLen"]/c["SE_Out"]
     }
  
 };
-
-
-
 
 template <class T, class Impl>
 void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, StatsCounters& counters) {
