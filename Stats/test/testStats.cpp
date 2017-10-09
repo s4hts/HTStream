@@ -5,8 +5,8 @@
 
 class Stats : public ::testing::Test {
     public:
-        const std::string readData_1 = "@Read1\nACTG\n+\n####\n";
-        const std::string readData_2 = "@Read2\nACTG\n+\n####\n";
+        const std::string readData_1 = "@Read1\nACTG\n+\nI#I#\n";
+        const std::string readData_2 = "@Read2\nACTG\n+\nI#II\n";
 };
 
 TEST_F(Stats, BasicTrim) {
@@ -25,7 +25,7 @@ TEST_F(Stats, BasicTrim) {
     ASSERT_EQ(2, counters.c["T"]);
     ASSERT_EQ(2, counters.c["C"]);
     ASSERT_EQ(2, counters.c["G"]);
-    ASSERT_EQ(8, counters.c["R1_Q_Sum"]);
-    ASSERT_EQ(8, counters.c["R2_Q_Sum"]);
+    ASSERT_EQ(2, counters.c["R1_bQ30"]);
+    ASSERT_EQ(3, counters.c["R2_bQ30"]);
 };
 

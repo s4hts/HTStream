@@ -51,8 +51,8 @@ unsigned int checkIfOverlap(Read &r1, Read &r2, size_t loc1, size_t loc2, const 
     size_t minLoc = std::min(loc1, loc2);
     int loc1_t = loc1 - minLoc;
     int loc2_t = loc2 - minLoc;
-    int r1_len = r1.getLength();
-    int r2_len = r2.getLength();
+    int r1_len = r1.getLength() -1;
+    int r2_len = r2.getLength() -1;
 
     size_t maxLoop = std::min(r1.getLength() - loc1_t, r2.getLength() - loc2_t);
     size_t maxMis = static_cast<size_t>(maxLoop * misDensity);
@@ -82,7 +82,7 @@ unsigned int checkIfOverlap(Read &r1, Read &r2, size_t loc1, size_t loc2, const 
     char bp;
     char qual;
 
-    unsigned int insert_length = maxLoop + 1;
+    unsigned int insert_length = maxLoop;
     for (size_t i = 0; i < maxLoop; ++i) {
         read1_bp = loc1_t + i;
         read2_bp = loc2_t + i;
