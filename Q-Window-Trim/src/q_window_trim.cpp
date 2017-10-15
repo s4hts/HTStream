@@ -31,7 +31,12 @@ namespace bi = boost::iostreams;
 
 int main(int argc, char** argv)
 {
-    const std::string program_name = "Q-Trim";
+    const std::string program_name = "q-window-trim";
+    std::string app_description = 
+                       "Quality window trimmer uses a sliding window approach to remove low quality\n";
+    app_description += "  ends (5' or 3') of the reads. A window will slide across the reads starting\n";
+    app_description += "  from the ends and move inwards, once the window reaches an average quality\n";
+    app_description += "  it will stop trimming.";
 
     TrimmingCounters counters;
 
@@ -40,9 +45,12 @@ int main(int argc, char** argv)
         /** Define and parse the program options
          */
         namespace po = boost::program_options;
-        po::options_description desc("Options");
+        po::options_description standard = setStandardOptions();
+        po::options_description input = setInputOptions();
+        po::options_description output = setOutputOptions(program_name);
 
-        setDefaultParams(desc, program_name);
+        po::options_description desc("Application Specific Options");
+
         setDefaultParamsCutting(desc);
         setDefaultParamsTrim(desc);
 
@@ -50,14 +58,17 @@ int main(int argc, char** argv)
             ("window-size,w", po::value<size_t>()->default_value(10),    "Min base pairs trim for AT tail")
             ("avg-qual,q", po::value<size_t>()->default_value(20),    "Threshold for quality score average in the window")
             ("qual-offset,o", po::value<size_t>()->default_value(33), "Quality offset for ascii q-score (default is 33)");
-        po::variables_map vm;
 
+        po::options_description cmdline_options;
+        cmdline_options.add(standard).add(input).add(output).add(desc);
+
+        po::variables_map vm;
         try
         {
-            po::store(po::parse_command_line(argc, argv, desc),
+            po::store(po::parse_command_line(argc, argv, cmdline_options),
                       vm); // can throw
            
-            version_or_help(program_name, desc, vm); 
+            version_or_help(program_name, app_description, cmdline_options, vm); 
 
             po::notify(vm); // throws on error, so do after help in case
            
@@ -117,7 +128,7 @@ int main(int argc, char** argv)
                 }
             }
            
-            if (vm.count("std-input")) {
+            if (vm.count("from-stdin")) {
                 bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
                 helper_trim(ift, pe, se, counters, vm["min-length"].as<size_t>() , qual_threshold, vm["window-size"].as<size_t>(), vm["stranded"].as<bool>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>(), vm["no-orphans"].as<bool>() );
@@ -127,7 +138,7 @@ int main(int argc, char** argv)
         catch(po::error& e)
         {
             std::cerr << "ERROR: " << e.what() << std::endl << std::endl;
-            std::cerr << desc << std::endl;
+            std::cerr << cmdline_options << std::endl;
             return ERROR_IN_COMMAND_LINE;
         }
 

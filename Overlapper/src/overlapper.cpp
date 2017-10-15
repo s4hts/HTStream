@@ -32,7 +32,13 @@ namespace bi = boost::iostreams;
 
 int main(int argc, char** argv)
 {
-    const std::string program_name = "Overlapper";
+    const std::string program_name = "overlapper";
+    std::string app_description = 
+                       "The overlapper application overlaps paired end reads producing\n";
+
+    app_description += "  a longer overlapped single-end read (lins), or in the case of\n";
+    app_description += "  complete short overlapping (sins) also removes adapters.\n";
+    app_description += "  Reads left not overlapped are lables as 'nins'.\n";
 
     OverlappingCounters counters;
 
@@ -41,9 +47,12 @@ int main(int argc, char** argv)
         /** Define and parse the program options
          */
         namespace po = boost::program_options;
-        po::options_description desc("Options");
+        po::options_description standard = setStandardOptions();
+        po::options_description input = setInputOptions();
+        po::options_description output = setOutputOptions(program_name);
 
-        setDefaultParams(desc, program_name);
+        po::options_description desc("Application Specific Options");
+
         setDefaultParamsCutting(desc);
 
         desc.add_options()
@@ -52,14 +61,17 @@ int main(int argc, char** argv)
             ("max-mismatch-errorDensity,x", po::value<double>()->default_value(.25), "Max percent of mismatches allowed in overlapped section")
             ("check-lengths,c", po::value<size_t>()->default_value(20), "Check lengths on the ends")
             ("min-overlap,o", po::value<size_t>()->default_value(8), "Min overlap required to merge two reads");
-            //("adapter-trimming,a", po::bool_switch()->default_value(false), "Trims adapters based on overlap, only returns PE reads, will correct quality scores and BP in the PE reads");
-            po::variables_map vm;
+        
+        po::options_description cmdline_options;
+        cmdline_options.add(standard).add(input).add(output).add(desc);
+
+        po::variables_map vm;
         try
         {
-            po::store(po::parse_command_line(argc, argv, desc),
+            po::store(po::parse_command_line(argc, argv, cmdline_options),
                       vm); // can throw
             
-            version_or_help(program_name, desc, vm);
+            version_or_help(program_name, app_description, cmdline_options, vm);
 
             po::notify(vm); // throws on error, so do after help in case
          
@@ -122,7 +134,7 @@ int main(int argc, char** argv)
                 }
             }
            
-            if (vm.count("std-input")) {
+            if (vm.count("from-stdin")) {
                 bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
                 helper_overlapper(ift, pe, se, counters, vm["max-mismatch-errorDensity"].as<double>(),  vm["min-overlap"].as<size_t>(), vm["stranded"].as<bool>(), vm["min-length"].as<size_t>(), vm["check-lengths"].as<size_t>(),   vm["kmer"].as<size_t>(), vm["kmer-offset"].as<size_t>(), vm["no-orphans"].as<bool>() );
@@ -132,7 +144,7 @@ int main(int argc, char** argv)
         catch(po::error& e)
         {
             std::cerr << "ERROR: " << e.what() << std::endl << std::endl;
-            std::cerr << desc << std::endl;
+            std::cerr << cmdline_options << std::endl;
             return ERROR_IN_COMMAND_LINE;
         }
 

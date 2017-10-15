@@ -63,68 +63,91 @@ void outputWriters(std::shared_ptr<OutputWriter> &pe, std::shared_ptr<OutputWrit
     }
 }
 
-void setDefaultParams(po::options_description &desc, std::string program_name) {
+po::options_description setInputOptions(){
 
-    desc.add_options()
-            ("version,v", "Version print")
+    po::options_description input("Input Options");
+    input.add_options()
+            //input options
             ("read1-input,1", po::value< std::vector<std::string> >(),
-                                           "Read 1 input <comma sep for multiple files>")
+                                           "Read 1 paired end fastq input <comma sep for multiple files>")
             ("read2-input,2", po::value< std::vector<std::string> >(),
-                                           "Read 2 input <comma sep for multiple files>")
+                                           "Read 2 paired end fastq input <comma sep for multiple files>")
             ("singleend-input,U", po::value< std::vector<std::string> >(),
-                                           "Single end read input <comma sep for multiple files>")
+                                           "Single end read fastq input <comma sep for multiple files>")
             ("tab-input,T", po::value< std::vector<std::string> >(),
                                            "Tab input <comma sep for multiple files>")
             ("interleaved-input,I", po::value< std::vector<std::string> >(),
-                                           "Interleaved input I <comma sep for multiple files>")
-            ("std-input,S", "STDIN input <MUST BE TAB DELIMITED INPUT>")
-            ("gzip-output,g", po::bool_switch()->default_value(false),  "Output gzipped")
-            ("interleaved-output,i", po::bool_switch()->default_value(false),     "Output to interleaved")
-            ("fastq-output,f", po::bool_switch()->default_value(true), "Fastq format output")
+                                           "Interleaved fastq input <comma sep for multiple files>")
+            ("from-stdin,S", "STDIN input <MUST BE TAB DELIMITED INPUT>");
+    return input;
+}
+
+po::options_description setOutputOptions(std::string program_name){
+    po::options_description output("Output Options");
+    output.add_options()
+            //output options
             ("force,F", po::bool_switch()->default_value(false),         "Forces overwrite of files")
-            ("tab-output,t", po::bool_switch()->default_value(false),   "Tab-delimited output")
-            ("unmapped-output,u", po::bool_switch()->default_value(false),   "Unmapped sam output")
-            ("to-stdout,O", po::bool_switch()->default_value(false),    "Prints to STDOUT in Tab Delimited")
-            ("stats-file,L", po::value<std::string>()->default_value("stats.log") , "String for output stats file name")
-            ("append-stats-file,A", po::bool_switch()->default_value(false),  "Append Stats file.")
-            ("notes,N", po::value<std::string>()->default_value(""),  "Notes for the JSON.")
             ("prefix,p", po::value<std::string>()->default_value(program_name),
-                                           "Prefix for outputted files") 
+                                           "Prefix for output files")
+            ("gzip-output,g", po::bool_switch()->default_value(false),  "Output gzipped files")
+            ("fastq-output,f", po::bool_switch()->default_value(true), "Output to Fastq format <PE AND/OR SE files>")
+            ("tab-output,t", po::bool_switch()->default_value(false),   "Output to tab-delimited file format")
+            ("interleaved-output,i", po::bool_switch()->default_value(false),     "Output to interleaved fastq file <PE ONLY>")
+            ("unmapped-output,u", po::bool_switch()->default_value(false),   "Output to unmapped sam file format")
+            ("to-stdout,O", po::bool_switch()->default_value(false),    "Output to STDOUT in tab-delimited file format");
+    return output;
+}
 
-
-            ("help,h",                     "Prints help.");
-
+po::options_description setStandardOptions(){
+    po::options_description standard("Standard Options");
+    standard.add_options()
+            // version, help, notes
+            ("version,v", "Version print")
+            ("help,h",  "Prints help documentation")
+            ("notes,N", po::value<std::string>()->default_value(""),  "Notes for the stats JSON")
+            //stats file
+            ("stats-file,L", po::value<std::string>()->default_value("stats.log") , "String for output stats file name")
+            ("append-stats-file,A", po::bool_switch()->default_value(false),  "Append to stats file");
+    return standard;
 }
 
 void setDefaultParamsTrim(po::options_description &desc) {
     desc.add_options()
-        ("no-left,l", po::bool_switch()->default_value(false),    "Turns of trimming of the left side of the read")
-        ("no-right,r", po::bool_switch()->default_value(false),    "Turns of trimming of the right side of the read");
+        ("no-left,l", po::bool_switch()->default_value(false),    "Turns off trimming of the left side of the read")
+        ("no-right,r", po::bool_switch()->default_value(false),    "Turns off trimming of the right side of the read");
  
 }
 
 void setDefaultParamsCutting(po::options_description &desc) {
 
     desc.add_options()
-            ("no-orphans,n", po::bool_switch()->default_value(false), "SE reads will be NOT be written out")
-            ("stranded,s", po::bool_switch()->default_value(false),    "If R1 is orphaned, R2 is RC (for stranded RNA)")
-            ("min-length,m", po::value<size_t>()->default_value(50),    "Min length for acceptable outputted read");
+            ("no-orphans,n", po::bool_switch()->default_value(false), "Orphaned SE reads will NOT be written out")
+            ("stranded,s", po::bool_switch()->default_value(false),    "If R1 is orphaned, R2 is output in RC (for stranded RNA)")
+            ("min-length,m", po::value<size_t>()->default_value(50),    "Min length for acceptable output read");
 
 }
 
-void version_or_help(std::string program_name, po::options_description &desc, po::variables_map vm) {
+void version_or_help(std::string program_name, std::string app_description, po::options_description &desc, po::variables_map vm, bool error) {
 
+    std::string epilog="Please report any issues, request for enhancement, or comments to https://github.com/ibest/HTStream/issues";
     int SUCCESS = 0;
     if (vm.count("version")) {
         std::cout << program_name << std::endl;
         std::cout << "Version " << VERSION << std::endl;
         exit(SUCCESS); //success
-    } else if ( vm.count("help")  || vm.size() == 0) {
-        std::cout << program_name << std::endl
-                  << "Version " << VERSION << std::endl
-                  << desc << std::endl;
+    } else if ( vm.count("help")  || error || vm.size() == 0) {
+        std::cout << program_name << std::endl << app_description << std::endl;
+        std::cout << "Version " << VERSION << std::endl;
+        std::cout << desc << std::endl;
+        std::cout << std::endl << epilog << std::endl;
         exit(SUCCESS); //success
-    } 
+    } else if ( !vm.count("read1-input") & !vm.count("singleend-input") & !vm.count("tab-input") & !vm.count("interleaved-input") & !vm.count("from-stdin") ){
+        std::cout << program_name << std::endl << app_description << std::endl;
+        std::cout << "Version " << VERSION << std::endl;
+        std::cout << desc << std::endl;
+        std::cout << std::endl << epilog << std::endl;
+        exit(SUCCESS); //success
+    }
 }
 
 char rc (const char bp) {

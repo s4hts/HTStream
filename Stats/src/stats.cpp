@@ -31,7 +31,11 @@ namespace bi = boost::iostreams;
 
 int main(int argc, char** argv)
 {
-    const std::string program_name = "Stats";
+    const std::string program_name = "stats";
+    std::string app_description = 
+                       "The Stats app produce basic statistics about the reads in a dataset.\n";
+    app_description += "  Including the basepair composition and number of bases Q30.";
+
 
     StatsCounters counters;
 
@@ -40,19 +44,23 @@ int main(int argc, char** argv)
         /** Define and parse the program options
          */
         namespace po = boost::program_options;
-        po::options_description desc("Options");
-        setDefaultParams(desc, program_name);
+        po::options_description standard = setStandardOptions();
+        po::options_description input = setInputOptions();
+        po::options_description output = setOutputOptions(program_name);
+
+        po::options_description cmdline_options;
+        cmdline_options.add(standard).add(input).add(output);
 
         po::variables_map vm;
 
         try
         {
-            po::store(po::parse_command_line(argc, argv, desc),
+            po::store(po::parse_command_line(argc, argv, cmdline_options),
                       vm); // can throw
 
             /** --help option
              */
-            version_or_help(program_name, desc, vm);
+            version_or_help(program_name, app_description, cmdline_options, vm);
             
             po::notify(vm); // throws on error, so do after help in case
 
@@ -109,7 +117,7 @@ int main(int argc, char** argv)
                 }
             }
            
-            if (vm.count("std-input")) {
+            if (vm.count("from-stdin")) {
                 bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
                 helper_stats(ift, pe, se,counters);
@@ -119,7 +127,7 @@ int main(int argc, char** argv)
         catch(po::error& e)
         {
             std::cerr << "ERROR: " << e.what() << std::endl << std::endl;
-            std::cerr << desc << std::endl;
+            std::cerr << cmdline_options << std::endl;
             return ERROR_IN_COMMAND_LINE;
         }
 

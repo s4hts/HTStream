@@ -25,7 +25,12 @@ namespace bi = boost::iostreams;
 
 int main(int argc, char** argv)
 {
-    const std::string program_name = "Super-Deduper";
+    const std::string program_name = "super-deduper";
+    std::string app_description =
+                       "Super Deduper is a PCR duplicate remover from sequence data. It uses a\n";
+    app_description += "  subsequence within each read to detect duplicates.\n";
+    app_description += "  Not recommended for single-end reads.";
+
 
     BitMap read_map;
     
@@ -35,18 +40,26 @@ int main(int argc, char** argv)
     {
         /** Define and parse the program options
          */
-        po::options_description desc("Options");
-        setDefaultParams(desc, program_name);
+        namespace po = boost::program_options;
+        po::options_description standard = setStandardOptions();
+        po::options_description input = setInputOptions();
+        po::options_description output = setOutputOptions(program_name);
+
+        po::options_description desc("Application Specific Options");
 
         desc.add_options()
             ("start,s", po::value<size_t>()->default_value(10),  "Start location for unique ID <int>")
             ("length,l", po::value<size_t>()->default_value(10), "Length of unique ID <int>")
             ("avg-qual-score,q", po::value<double>()->default_value(30), "Avg quality score to have the read written automatically <int>")
             ("inform-avg-qual-score,a", po::value<double>()->default_value(5), "Avg quality score to considered a read informative <int> "); //I know this says user input is a int, but is actually a double
-                   po::variables_map vm;
+
+        po::options_description cmdline_options;
+        cmdline_options.add(standard).add(input).add(output).add(desc);
+
+        po::variables_map vm;
         try
         {
-            po::store(po::parse_command_line(argc, argv, desc),
+            po::store(po::parse_command_line(argc, argv, cmdline_options),
                       vm); // can throw
 
             /** --help option
@@ -54,7 +67,7 @@ int main(int argc, char** argv)
 
             po::notify(vm); // throws on error, so do after help in case
 
-            version_or_help( program_name, desc, vm);
+            version_or_help( program_name, app_description, cmdline_options, vm);
             
             std::string statsFile(vm["stats-file"].as<std::string>());
             std::string prefix(vm["prefix"].as<std::string>());
@@ -110,7 +123,7 @@ int main(int argc, char** argv)
                 }
             }
             
-            if (vm.count("std-input")) {
+            if (vm.count("from-stdin")) {
                 bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
                 load_map(ift, counters, read_map, pe, se,vm["avg-qual-score"].as<double>(),  vm["inform-avg-qual-score"].as<double>(),  vm["start"].as<size_t>() - 1, vm["length"].as<size_t>());

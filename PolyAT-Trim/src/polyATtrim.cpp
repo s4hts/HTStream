@@ -30,7 +30,11 @@ namespace bi = boost::iostreams;
 int main(int argc, char** argv)
 {
 
-    const std::string program_name = "AT_Trim";
+    const std::string program_name = "polyATtrim";
+    std::string app_description = 
+                       "PolyAT Trimmer will start on at the end of the reads and works inwards and\n";
+    app_description += "  trim reads when a minimum number <min-trim> of A's or T's with a certain\n";
+    app_description += "  number of mismatches <max_mismatches> is achieved.";
 
     TrimmingCounters counters;
 
@@ -39,8 +43,12 @@ int main(int argc, char** argv)
         /** Define and parse the program options
          */
         namespace po = boost::program_options;
-        po::options_description desc("Options");
-        setDefaultParams(desc, program_name);
+        po::options_description standard = setStandardOptions();
+        po::options_description input = setInputOptions();
+        po::options_description output = setOutputOptions(program_name);
+
+        po::options_description desc("Application Specific Options");
+
         setDefaultParamsCutting(desc);
         setDefaultParamsTrim(desc);
 
@@ -48,13 +56,16 @@ int main(int argc, char** argv)
             ("max-mismatch,x", po::value<size_t>()->default_value(3),    "Max amount of mismatches allowed in trimmed area")
             ("min-trim,M", po::value<size_t>()->default_value(5),    "Min base pairs trim for AT tail");
 
+        po::options_description cmdline_options;
+        cmdline_options.add(standard).add(input).add(output).add(desc);
+
         po::variables_map vm;
         try
         {
-            po::store(po::parse_command_line(argc, argv, desc),
+            po::store(po::parse_command_line(argc, argv, cmdline_options),
                       vm); // can throw
 
-            version_or_help( program_name, desc, vm);
+            version_or_help( program_name, app_description, cmdline_options, vm);
             
             /** --help option
              */
@@ -114,7 +125,7 @@ int main(int argc, char** argv)
                 }
             }
            
-            if (vm.count("std-input")) {
+            if (vm.count("from-stdin")) {
                 bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
                 helper_trim(ift, pe, se, counters, vm["min-length"].as<std::size_t>(), vm["min-trim"].as<std::size_t>(), vm["max-mismatch"].as<std::size_t>(), vm["stranded"].as<bool>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>(), vm["no-orphans"].as<bool>() );
@@ -124,7 +135,7 @@ int main(int argc, char** argv)
         catch(po::error& e)
         {
             std::cerr << "ERROR: " << e.what() << std::endl << std::endl;
-            std::cerr << desc << std::endl;
+            std::cerr << cmdline_options << std::endl;
             return ERROR_IN_COMMAND_LINE;
         }
 

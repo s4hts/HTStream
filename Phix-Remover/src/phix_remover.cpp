@@ -33,18 +33,27 @@ namespace bi = boost::iostreams;
 
 int main(int argc, char** argv)
 {
-    const std::string program_name = "Phix-Remover";
+    const std::string program_name = "phix-remover";
+    std::string app_description = 
+                       "Phix remover application identifies and removes any reads which contain phiX\n";
+    app_description += "  sequence (default), or the sequence provided by the option 'seq'";
+
+
+    PhixCounters counters;
 
     try
     {
         /** Define and parse the program options
          */
         namespace po = boost::program_options;
-        po::options_description desc("Options");
-        setDefaultParams(desc, program_name);
+        po::options_description standard = setStandardOptions();
+        po::options_description input = setInputOptions();
+        po::options_description output = setOutputOptions(program_name);
+
+        po::options_description desc("Application Specific Options");
+
         setDefaultParamsCutting(desc);
         setDefaultParamsTrim(desc);
-        PhixCounters counters;
 
         desc.add_options()
             ("seq,s", po::value<std::string>()->default_value(""), "Please supply a fasta file - default - Phix Sequence - default https://www.ncbi.nlm.nih.gov/nuccore/9626372")
@@ -53,15 +62,17 @@ int main(int argc, char** argv)
             ("hits,x", po::value<double>()->default_value(.25), "How many K-mer hits to phix needs to happen to discard")
             ("inverse,i", po::bool_switch()->default_value(false), "Output reads that are ABOVE the kmer hit threshold");
 
+        po::options_description cmdline_options;
+        cmdline_options.add(standard).add(input).add(output).add(desc);
+
         po::variables_map vm;
         try
         {
-            po::store(po::parse_command_line(argc, argv, desc),
-                      vm); // can throw
+            po::store(po::parse_command_line(argc, argv, cmdline_options), vm); // can throw
 
             /** --help option
              */
-            version_or_help(program_name, desc, vm);
+            version_or_help(program_name, app_description, cmdline_options, vm);
             po::notify(vm); // throws on error, so do after help in case
 
             std::string statsFile(vm["stats-file"].as<std::string>());
@@ -133,7 +144,7 @@ int main(int argc, char** argv)
                 }
             }
 
-            if (vm.count("std-input")) {
+            if (vm.count("from-stdin")) {
                 bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
                 helper_discard(ift, pe, se, counters, lookup, vm["hits"].as<double>(), vm["check-read-2"].as<bool>(),kmerSize,  inverse);
@@ -143,7 +154,7 @@ int main(int argc, char** argv)
         catch(po::error& e)
         {
             std::cerr << "ERROR: " << e.what() << std::endl << std::endl;
-            std::cerr << desc << std::endl;
+            std::cerr << cmdline_options << std::endl;
             return ERROR_IN_COMMAND_LINE;
         }
 

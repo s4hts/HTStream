@@ -32,7 +32,11 @@ namespace bi = boost::iostreams;
 
 int main(int argc, char** argv)
 {
-    const std::string program_name = "adapter_trimmer";
+    const std::string program_name = "adapter-trimmer";
+    std::string app_description = 
+                       "Adapter Trimmer, trims off adapters by first overlapping paired-end reads and\n";
+    app_description += "  trimming off overhangs which by definition are adapter sequence in standard\n";
+    app_description += "  libraries. [SE Reads are currently not supported for adapter trimming].";
 
     OverlappingCounters counters;
 
@@ -41,25 +45,31 @@ int main(int argc, char** argv)
         /** Define and parse the program options
          */
         namespace po = boost::program_options;
-        po::options_description desc("Options");
+        po::options_description standard = setStandardOptions();
+        po::options_description input = setInputOptions();
+        po::options_description output = setOutputOptions(program_name);
 
-        setDefaultParams(desc, program_name);
+        po::options_description desc("Application Specific Options");
+
         setDefaultParamsCutting(desc);
 
         desc.add_options()
             ("kmer,k", po::value<size_t>()->default_value(8), "Kmer size of the lookup table for the longer read")
             ("kmer-offset,r", po::value<size_t>()->default_value(1), "Offset of kmers. Offset of 1, would be perfect overlapping kmers. An offset of kmer would be non-overlapping kmers that are right next to each other. Must be greater than 0.")
             ("max-mismatch-errorDensity,x", po::value<double>()->default_value(.25), "Max percent of mismatches allowed in overlapped section")
-            ("check-lengths,c", po::value<size_t>()->default_value(20), "Check lengths on the ends")
+            ("check-lengths,c", po::value<size_t>()->default_value(20), "Check lengths of the ends")
             ("min-overlap,o", po::value<size_t>()->default_value(8), "Min overlap required to merge two reads");
+            ("no-fixbases,f", po::bool_switch()->default_value(false), "after trimming adapter, DO NOT use consensus sequence of paired reads, only trims adapter sequence");
 
-                   po::variables_map vm;
+        po::options_description cmdline_options;
+        cmdline_options.add(standard).add(input).add(output).add(desc);
+
+        po::variables_map vm;
         try
         {
-            po::store(po::parse_command_line(argc, argv, desc),
-                      vm); // can throw
+            po::store(po::parse_command_line(argc, argv, cmdline_options), vm); // can throw
             
-            version_or_help(program_name, desc, vm);
+            version_or_help(program_name, app_description, cmdline_options, vm);
 
             po::notify(vm); // throws on error, so do after help in case
          
@@ -92,7 +102,7 @@ int main(int argc, char** argv)
                     bi::stream<bi::file_descriptor_source> is1{check_open_r(read1_files[i]), bi::close_handle};
                     bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
                     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
-                    helper_overlapper(ifp, pe, se, counters, vm["max-mismatch-errorDensity"].as<double>(),  vm["min-overlap"].as<size_t>(), vm["stranded"].as<bool>(), vm["min-length"].as<size_t>(), vm["check-lengths"].as<size_t>(), vm["kmer"].as<size_t>(), vm["kmer-offset"].as<size_t>(), vm["no-orphans"].as<bool>() ); }
+                    helper_adapterTrimmer(ifp, pe, se, counters, vm["max-mismatch-errorDensity"].as<double>(),  vm["min-overlap"].as<size_t>(), vm["stranded"].as<bool>(), vm["min-length"].as<size_t>(), vm["check-lengths"].as<size_t>(), vm["kmer"].as<size_t>(), vm["kmer-offset"].as<size_t>(), vm["no-orphans"].as<bool>(), vm["no-fixbases"].as<bool>() ); }
             }
 
             if(vm.count("singleend-input")) {
@@ -101,7 +111,7 @@ int main(int argc, char** argv)
                     bi::stream<bi::file_descriptor_source> sef{ check_open_r(file), bi::close_handle};
                     InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(sef);
                     //JUST WRITE se read out - no way to overlap
-                    helper_overlapper(ifs, pe, se, counters, vm["max-mismatch-errorDensity"].as<double>(),  vm["min-overlap"].as<size_t>(), vm["stranded"].as<bool>(), vm["min-length"].as<size_t>(), vm["check-lengths"].as<size_t>(), vm["kmer"].as<size_t>(), vm["kmer-offset"].as<size_t>(), vm["no-orphans"].as<bool>() );
+                    helper_adapterTrimmer(ifs, pe, se, counters, vm["max-mismatch-errorDensity"].as<double>(),  vm["min-overlap"].as<size_t>(), vm["stranded"].as<bool>(), vm["min-length"].as<size_t>(), vm["check-lengths"].as<size_t>(), vm["kmer"].as<size_t>(), vm["kmer-offset"].as<size_t>(), vm["no-orphans"].as<bool>(), vm["no-fixbases"].as<bool>() );
                 }
             }
             
@@ -110,7 +120,7 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> tabin{ check_open_r(file), bi::close_handle};
                     InputReader<ReadBase, TabReadImpl> ift(tabin);
-                    helper_overlapper(ift, pe, se, counters, vm["max-mismatch-errorDensity"].as<double>(),  vm["min-overlap"].as<size_t>(), vm["stranded"].as<bool>(), vm["min-length"].as<size_t>(), vm["check-lengths"].as<size_t>(), vm["kmer"].as<size_t>(), vm["kmer-offset"].as<size_t>(), vm["no-orphans"].as<bool>() );
+                    helper_adapterTrimmer(ift, pe, se, counters, vm["max-mismatch-errorDensity"].as<double>(),  vm["min-overlap"].as<size_t>(), vm["stranded"].as<bool>(), vm["min-length"].as<size_t>(), vm["check-lengths"].as<size_t>(), vm["kmer"].as<size_t>(), vm["kmer-offset"].as<size_t>(), vm["no-orphans"].as<bool>(), vm["no-fixbases"].as<bool>() );
                 }
             }
             
@@ -119,14 +129,14 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> inter{ check_open_r(file), bi::close_handle};
                     InputReader<PairedEndRead, InterReadImpl> ifp(inter);
-                    helper_overlapper(ifp, pe, se, counters, vm["max-mismatch-errorDensity"].as<double>(),  vm["min-overlap"].as<size_t>(), vm["stranded"].as<bool>(), vm["min-length"].as<size_t>(), vm["check-lengths"].as<size_t>(), vm["kmer"].as<size_t>(), vm["kmer-offset"].as<size_t>(), vm["no-orphans"].as<bool>() );
+                    helper_adapterTrimmer(ifp, pe, se, counters, vm["max-mismatch-errorDensity"].as<double>(),  vm["min-overlap"].as<size_t>(), vm["stranded"].as<bool>(), vm["min-length"].as<size_t>(), vm["check-lengths"].as<size_t>(), vm["kmer"].as<size_t>(), vm["kmer-offset"].as<size_t>(), vm["no-orphans"].as<bool>(), vm["no-fixbases"].as<bool>() );
                 }
             }
            
-            if (vm.count("std-input")) {
+            if (vm.count("from-stdin")) {
                 bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
-                helper_overlapper(ift, pe, se, counters, vm["max-mismatch-errorDensity"].as<double>(),  vm["min-overlap"].as<size_t>(), vm["stranded"].as<bool>(), vm["min-length"].as<size_t>(), vm["check-lengths"].as<size_t>(), vm["kmer"].as<size_t>(), vm["kmer-offset"].as<size_t>(), vm["no-orphans"].as<bool>() );
+                helper_adapterTrimmer(ift, pe, se, counters, vm["max-mismatch-errorDensity"].as<double>(),  vm["min-overlap"].as<size_t>(), vm["stranded"].as<bool>(), vm["min-length"].as<size_t>(), vm["check-lengths"].as<size_t>(), vm["kmer"].as<size_t>(), vm["kmer-offset"].as<size_t>(), vm["no-orphans"].as<bool>(), vm["no-fixbases"].as<bool>() );
             }  
             counters.write_out(statsFile, vm["append-stats-file"].as<bool>(), program_name, vm["notes"].as<std::string>());
 
@@ -134,7 +144,7 @@ int main(int argc, char** argv)
         catch(po::error& e)
         {
             std::cerr << "ERROR: " << e.what() << std::endl << std::endl;
-            std::cerr << desc << std::endl;
+            version_or_help(program_name, app_description, cmdline_options, vm, true);
             return ERROR_IN_COMMAND_LINE;
         }
 
