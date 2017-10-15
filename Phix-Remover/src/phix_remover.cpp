@@ -52,9 +52,6 @@ int main(int argc, char** argv)
 
         po::options_description desc("Application Specific Options");
 
-        setDefaultParamsCutting(desc);
-        setDefaultParamsTrim(desc);
-
         desc.add_options()
             ("seq,s", po::value<std::string>()->default_value(""), "Please supply a fasta file - default - Phix Sequence - default https://www.ncbi.nlm.nih.gov/nuccore/9626372")
             ("check-read-2,C", po::bool_switch()->default_value(false),    "Check R2 as well as R1 (pe)")

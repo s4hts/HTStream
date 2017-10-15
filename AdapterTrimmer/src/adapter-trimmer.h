@@ -165,7 +165,7 @@ unsigned int check_read(PairedEndRead &pe , const double misDensity, const size_
     unsigned int overlapped = getOverlappedReads(r1, r2, mOne, misDensity, minOver, checkLengths, kmer, noFixBases) ;
     if (swapped) {
         std::swap(r1, r2);
-        r2.set_read_rc();   // MATT: WHY IS THIS DONE? I assume your reswapping, because you swapped above, but why now RC???
+        r2.set_read_rc();
     }
     //we need to check if overlapper is greater than min length;
 
