@@ -29,6 +29,7 @@ int main(int argc, char** argv)
     std::string app_description =
                        "Super Deduper is a PCR duplicate remover from sequence data. It uses a\n";
     app_description += "  subsequence within each read to detect duplicates.\n";
+    app_description += "  Reads with 'N' character(s) isn the key sequence are ignored.\n";    
     app_description += "  Not recommended for single-end reads.";
 
 

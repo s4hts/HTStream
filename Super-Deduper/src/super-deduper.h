@@ -19,24 +19,6 @@ public:
 
 typedef std::unordered_map <boost::dynamic_bitset<>, std::unique_ptr<ReadBase>, dbhash> BitMap;
 
-
-class SuperDeduperCounters : public Counters {
-public:
-    SuperDeduperCounters() {
-        Common();
-        c["Replaced"] = 0;
-        c["Ignored"] = 0;
-    }
-
-    void increment_replace() {
-        ++c["Replaced"];
-    }
-
-    void increment_ignored() {
-        ++c["Ignored"];
-    }
-};
-
 template <class T, class Impl>
 void load_map(InputReader<T, Impl> &reader, SuperDeduperCounters& counters, BitMap& read_map, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, double avg_automatic_write, double discard_qual, size_t start, size_t length) {
     double tmpAvg;
@@ -46,28 +28,33 @@ void load_map(InputReader<T, Impl> &reader, SuperDeduperCounters& counters, BitM
         counters.input(*i);
         //check for existance, store or compare quality and replace:
         if (auto key=i->get_key(start, length)) {
-            // find faster than count on some compilers
-            if(read_map.find(*key) == read_map.end()) {
-                if ((tmpAvg = i->avg_q_score()) > avg_automatic_write) {
+            // find faster than count on some compilers, new key
+            tmpAvg = i->avg_q_score();
+            if ( tmpAvg < discard_qual ){ // averge qual must be less than discard_qual, ignored
+                counters.increment_ignored();
+            } else if(read_map.find(*key) == read_map.end()) { // first time the key is seen
+                if ( tmpAvg >= avg_automatic_write ) { // if its greater than avg_automatic_write then write out
+                    writer_helper(i.get(), pe, se, false);
+                    counters.output(*i);
+                    read_map[*key] = nullptr;
+                } else {
+                    read_map[*key] = std::move(i);
+                }
+            } else if (read_map[*key] == nullptr) { //key already seen and written out, PCR dup
+                counters.increment_replace();
+            } else if( tmpAvg > read_map[*key]->avg_q_score()){ // new read is 'better' than old, key not yet read out
+                if (tmpAvg >= avg_automatic_write) { // read qualifies, write out
                     writer_helper(i.get(), pe, se, false);
                     counters.output(*i);
                     read_map[*key] = nullptr;
                 } else if (tmpAvg > discard_qual) {
                     read_map[*key] = std::move(i);
                 }
-            } else if (read_map[*key] == nullptr) { //key had a q-score of 20 or higher (it was all ready written out)
                 counters.increment_replace();
-            } else if((tmpAvg = i->avg_q_score()) > read_map[*key]->avg_q_score()){
-                if (tmpAvg > avg_automatic_write) {
-                    writer_helper(i.get(), pe, se, false);
-                    counters.output(*i);
-                    read_map[*key] = nullptr;
-                } else if (tmpAvg > discard_qual) {
-                    read_map[*key] = std::move(i);
-                }
-                counters.increment_replace();
+            } else {
+                counters.increment_replace(); // new read has been seen but is not better then last seen read with same key
             }
-        } else {  // key had N 
+        } else {  // key had N, no key obtained
             counters.increment_ignored();
         }
     }

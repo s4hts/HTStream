@@ -28,27 +28,6 @@ public:
     }
 };
 
-class PhixCounters : public Counters {
-
-public:
-    PhixCounters() {
-        Common();
-        c["PE_hits"] = 0;
-        c["SE_hits"] = 0;
-        c["Inverse"] = 0;
-    }
-    void set_inverse() {
-        c["Inverse"] = 1;
-    }
-    void inc_SE_hits() {
-        ++c["SE_hits"];
-    }
-    void inc_PE_hits() {
-        ++c["PE_hits"];
-    }
-};
-
-
 typedef std::unordered_set < boost::dynamic_bitset<>, dbhash> kmerSet;
 
 void setBitsBools(boost::dynamic_bitset<> &bs, size_t loc, bool set1, bool set2) {

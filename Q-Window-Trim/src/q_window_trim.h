@@ -99,8 +99,8 @@ void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe,
                 trim_right(per->non_const_read_two(), qual_threshold, window_size);
             }
             per->checkDiscarded(min_length);
-            counters.output(*per);
             writer_helper(per, pe, se, stranded, no_orphans);
+            counters.output(*per);
         } else {
             SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
             
@@ -112,9 +112,9 @@ void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe,
                 if (!no_right) {
                     trim_right(ser->non_const_read_one(), qual_threshold, window_size);            
                 }
-                counters.output(*ser);
                 ser->checkDiscarded(min_length);
                 writer_helper(ser, pe, se, stranded);
+                counters.output(*ser);
             } else {
                 throw std::runtime_error("Unknow read type");
             }

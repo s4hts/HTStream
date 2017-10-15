@@ -122,8 +122,6 @@ public:
         c["nins"] = 0;
         c["SE_Discard"] = 0;
         c["PE_Discard"] = 0;
-        c["R1_Discard"] = 0;
-        c["R2_Discard"] = 0;
         c["Adapter_BpTrim"] = 0;
         insertLength.resize(1);
     }
@@ -191,14 +189,8 @@ public:
             }
             ++c["PE_Out"];
             ++c["TotalFragmentsOutput"];
-        } else if (one.getDiscard() && two.getDiscard()) {
+        } else {
             ++c["PE_Discard"];
-        } else if (one.getDiscard()) {
-            ++c["R1_Discard"];
-            ++c["TotalFragmentsOutput"];
-        } else if (two.getDiscard()) {
-            ++c["R2_Discard"];
-            ++c["TotalFragmentsOutput"];
         }
     }
 
@@ -240,6 +232,26 @@ public:
     }
 };
 
+class PhixCounters : public Counters {
+
+public:
+    PhixCounters() {
+        Common();
+        c["PE_hits"] = 0;
+        c["SE_hits"] = 0;
+        c["Inverse"] = 0;
+    }
+    void set_inverse() {
+        c["Inverse"] = 1;
+    }
+    void inc_SE_hits() {
+        ++c["SE_hits"];
+    }
+    void inc_PE_hits() {
+        ++c["PE_hits"];
+    }
+};
+
 class TrimmingCounters : public Counters {
 
 public: 
@@ -255,30 +267,28 @@ public:
         c["R1_Discarded"] = 0;
         c["R2_Discarded"] = 0;
         c["SE_Discarded"] = 0;
+        c["PE_Discarded"] = 0;
 
     }
 
     void R1_stats(Read &one) {
-        c["R1_Length"] += one.getLengthTrue();
         c["R1_Left_Trim"] += one.getLTrim();
         c["R1_Right_Trim"] += one.getRTrim();
     }
 
     void R2_stats(Read &two) {
-        c["R2_Length"] += two.getLengthTrue();
         c["R2_Left_Trim"] += two.getLTrim();
         c["R2_Right_Trim"] += two.getRTrim();
     }
 
     void SE_stats(Read &se) {
-        c["SE_Length"] += se.getLengthTrue();
         c["SE_Left_Trim"] += se.getLTrim();
         c["SE_Right_Trim"] += se.getRTrim();
     }
 
     void output(PairedEndRead &per, bool no_orphans = false) {
         Read &one = per.non_const_read_one();
-        Read &two = per.non_const_read_one();
+        Read &two = per.non_const_read_two();
         if (!one.getDiscard() && !two.getDiscard()) {
             ++c["TotalFragmentsOutput"];
             ++c["PE_Out"];
@@ -288,21 +298,21 @@ public:
             ++c["TotalFragmentsOutput"];
             ++c["SE_Out"];
             ++c["R2_Discarded"];
-            R1_stats(one);
+            SE_stats(one);
         } else if (!two.getDiscard() && !no_orphans) { // Will never be RC
             ++c["TotalFragmentsOutput"];
             ++c["SE_Out"];
             ++c["R1_Discarded"];
-            R2_stats(two);
+            SE_stats(two);
         } else {
-            ++c["R1_Discarded"];
-            ++c["R2_Discarded"];
+            ++c["PE_Discarded"];
         }
     }
 
     void output(SingleEndRead &ser) {
         Read &one = ser.non_const_read_one();
         if (!one.getDiscard()) {
+            ++c["TotalFragmentsOutput"];
             ++c["SE_Out"];
             SE_stats(one);
         } else {
@@ -429,5 +439,23 @@ public:
     }
  
 };
+
+class SuperDeduperCounters : public Counters {
+public:
+    SuperDeduperCounters() {
+        Common();
+        c["Duplicate"] = 0;
+        c["Ignored"] = 0;
+    }
+
+    void increment_replace() {
+        ++c["Duplicate"];
+    }
+
+    void increment_ignored() {
+        ++c["Ignored"];
+    }
+};
+
 
 #endif

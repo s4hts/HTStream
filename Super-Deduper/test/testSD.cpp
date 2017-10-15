@@ -29,7 +29,7 @@ TEST_F(SDTest, HashMapLoadTest) {
     std::cout << read_map.size() << '\n';
     ASSERT_EQ(read_map.size(), 1);
     ASSERT_EQ(counter.c["TotalFragmentsInput"], 4);
-    ASSERT_EQ(counter.c["Replaced"], 2);
+    ASSERT_EQ(counter.c["Duplicate"], 2);
     ASSERT_EQ(counter.c["Ignored"], 1);
 
     
