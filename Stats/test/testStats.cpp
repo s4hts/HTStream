@@ -21,10 +21,10 @@ TEST_F(Stats, BasicTrim) {
         counters.input(*per);
         counters.output(*per);
     }
-    ASSERT_EQ(2, counters.c["A"]);
-    ASSERT_EQ(2, counters.c["T"]);
-    ASSERT_EQ(2, counters.c["C"]);
-    ASSERT_EQ(2, counters.c["G"]);
+    ASSERT_EQ(2, counters.b["A"]);
+    ASSERT_EQ(2, counters.b["T"]);
+    ASSERT_EQ(2, counters.b["C"]);
+    ASSERT_EQ(2, counters.b["G"]);
     ASSERT_EQ(2, counters.c["R1_bQ30"]);
     ASSERT_EQ(3, counters.c["R2_bQ30"]);
 };

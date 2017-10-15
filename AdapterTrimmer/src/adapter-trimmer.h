@@ -51,10 +51,10 @@ unsigned int checkIfOverlap(Read &r1, Read &r2, size_t loc1, size_t loc2, const 
     size_t minLoc = std::min(loc1, loc2);
     int loc1_t = loc1 - minLoc;
     int loc2_t = loc2 - minLoc;
-    int r1_len = r1.getLength() -1;
-    int r2_len = r2.getLength() -1;
+    int r1_len = r1.getLength();
+    int r2_len = r2.getLength();
 
-    size_t maxLoop = std::min(r1.getLength() - loc1_t, r2.getLength() - loc2_t);
+    size_t maxLoop = std::min(r1_len - loc1_t, r2_len - loc2_t);
     size_t maxMis = static_cast<size_t>(maxLoop * misDensity);
     
     const std::string &seq1 = r1.get_seq();
@@ -75,18 +75,22 @@ unsigned int checkIfOverlap(Read &r1, Read &r2, size_t loc1, size_t loc2, const 
     const std::string &qual1 = r1.get_qual();
     const std::string &qual2 = r2.get_qual_rc();
 
-    std::string finalSeq;  // not used
-    std::string finalQual;  // not used
     size_t misMatches = 0;  // not used
 
     char bp;
     char qual;
 
     unsigned int insert_length = maxLoop;
+
     for (size_t i = 0; i < maxLoop; ++i) {
         read1_bp = loc1_t + i;
         read2_bp = loc2_t + i;
-        if (seq1[read1_bp] != seq2[read2_bp] )  {
+
+        if (seq1[read1_bp] == seq2[read2_bp] )  {
+            qual = static_cast<char>(std::min(qual1[read1_bp] + qual2[read2_bp] - 33, 40 + 33));  // MATT: I still don't agree with this, so 38 [confident] and 2 [not so confident] return a 40 [very confident]??
+            r1.changeQual(read1_bp, qual);
+            r2.changeQual(r2_len -  read2_bp, qual);
+        } else {
             bp = qual1[read1_bp] >= qual2[read2_bp] ? seq1[read1_bp] : seq2[read2_bp];
             qual = static_cast<char>(std::max(qual1[read1_bp] - qual2[read2_bp] + 33, 1 + 33));
             
@@ -96,22 +100,18 @@ unsigned int checkIfOverlap(Read &r1, Read &r2, size_t loc1, size_t loc2, const 
             r2.changeSeq(r2_len - read2_bp , rc(bp) );
             r2.changeQual(r2_len -  read2_bp , qual);
             ++misMatches;
-        } else {
-            qual = static_cast<char>(std::min(qual1[read1_bp] + qual2[read2_bp] + 33, 40 + 33));  // MATT: I still don't agree with this, so 38 [confident] and 2 [not so confident] return a 40 [very confident]??
-            r1.changeQual(read1_bp, qual);
-            r2.changeQual(r2_len -  read2_bp, qual);
-
         }
     }
+
     if (loc1_t >= loc2_t) {
         insert_length += loc1_t;
     }
     if (r1_len - loc1_t <= r2_len - loc2_t) {
         insert_length += (r2_len - maxLoop);
     } else {
-        r1.setRCut( ( (r2_len - loc2_t) + loc1_t) + 1);  // sins??
+        r1.setRCut( ( (r2_len - loc2_t) + loc1_t));  // sins??
         if (loc2_t + r2_len + loc1_t > r1_len) { //special engulf check
-            r2.setRCut(r2_len - loc2_t + 1); 
+            r2.setRCut(r2_len - loc2_t); 
         }
     }
 

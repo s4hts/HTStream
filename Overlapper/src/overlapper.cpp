@@ -34,7 +34,7 @@ int main(int argc, char** argv)
 {
     const std::string program_name = "Overlapper";
 
-    OverlapperCounters counters;
+    OverlappingCounters counters;
 
     try
     {
@@ -51,8 +51,8 @@ int main(int argc, char** argv)
             ("kmer-offset,r", po::value<size_t>()->default_value(1), "Offset of kmers. Offset of 1, would be perfect overlapping kmers. An offset of kmer would be non-overlapping kmers that are right next to each other. Must be greater than 0.")
             ("max-mismatch-errorDensity,x", po::value<double>()->default_value(.25), "Max percent of mismatches allowed in overlapped section")
             ("check-lengths,c", po::value<size_t>()->default_value(20), "Check lengths on the ends")
-            ("min-overlap,o", po::value<size_t>()->default_value(8), "Min overlap required to merge two reads")
-            ("adapter-trimming,a", po::bool_switch()->default_value(false), "Trims adapters based on overlap, only returns PE reads, will correct quality scores and BP in the PE reads");
+            ("min-overlap,o", po::value<size_t>()->default_value(8), "Min overlap required to merge two reads");
+            //("adapter-trimming,a", po::bool_switch()->default_value(false), "Trims adapters based on overlap, only returns PE reads, will correct quality scores and BP in the PE reads");
             po::variables_map vm;
         try
         {

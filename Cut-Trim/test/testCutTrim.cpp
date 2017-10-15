@@ -32,7 +32,6 @@ TEST_F(CutTrim, Stranded) {
 
     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(in1, in2);
     std::shared_ptr<std::ostringstream> out1(new std::ostringstream);
-    Counter c;
     {
         std::shared_ptr<HtsOfstream> hts_of(new HtsOfstream(out1));
         std::shared_ptr<OutputWriter> tab(new ReadBaseOutTab(hts_of));
@@ -42,7 +41,7 @@ TEST_F(CutTrim, Stranded) {
             per->checkDiscarded(min_length);
             cut_trim(per->non_const_read_one(), false, false, cut_size);
             cut_trim(per->non_const_read_two(), false, false, cut_size);
-            writer_helper(per, tab, tab, true, c);
+            writer_helper(per, tab, tab, true);
         }
     }
     ASSERT_EQ("Read1\tGTTTTTTTTG\t##########\n", out1->str());

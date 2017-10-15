@@ -31,45 +31,6 @@ void writer_helper(ReadBase *r, std::shared_ptr<OutputWriter> pe, std::shared_pt
     }
 }
 
-void writer_helper(ReadBase *r, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, bool stranded, Counter &c, bool no_orphans ) {
-    PairedEndRead *per = dynamic_cast<PairedEndRead*>(r);
-    if (per) {
-        if (!(per->non_const_read_one()).getDiscard() && !(per->non_const_read_two()).getDiscard()) {
-            ++c["PE_Out"];
-            per->setStats(c);
-            pe->write(*per);
-        } else if (!(per->non_const_read_one()).getDiscard() && !no_orphans) { //if stranded RC
-            ++c["SE_Out"];
-            ++c["R2_Discarded"];
-            per->setStats(c);
-            se->write_read((per->get_read_one()), false);
-        } else if (!(per->non_const_read_two()).getDiscard() && !no_orphans) { // Will never be RC
-            ++c["SE_Out"];
-            ++c["R1_Discarded"];
-            per->setStats(c);
-            se->write_read((per->get_read_two()), stranded);
-        } else {
-            ++c["R1_Discarded"];
-            ++c["R2_Discarded"];
-            per->setStats(c);
-        }
-    } else {
-        SingleEndRead *ser = dynamic_cast<SingleEndRead*>(r);
-        if (!ser) {
-            throw std::runtime_error("Unknow read found");
-        }
-        if (! (ser->non_const_read_one()).getDiscard() ) {
-            ++c["SE_Out"];
-            ser->setStats(c);
-            se->write(*ser);
-        } else {
-            ++c["SE_Discarded"];
-            ser->setStats(c);
-        }
-            
-    }
-}
-
 void skip_lr(std::istream *input) {
     while(input and input->good() and (input->peek() == '\n' || input->peek() == '\r')) {
         input->get();
