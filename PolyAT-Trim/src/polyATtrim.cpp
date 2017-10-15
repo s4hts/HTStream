@@ -135,7 +135,7 @@ int main(int argc, char** argv)
         catch(po::error& e)
         {
             std::cerr << "ERROR: " << e.what() << std::endl << std::endl;
-            std::cerr << cmdline_options << std::endl;
+            version_or_help(program_name, app_description, cmdline_options, vm, true);
             return ERROR_IN_COMMAND_LINE;
         }
 

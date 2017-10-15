@@ -18,8 +18,6 @@
 
 #include "adapter-trimmer.h"
 
-#define AST_COUNT 4096 //number of reads per one *
-
 namespace
 {
     const size_t SUCCESS = 0;
@@ -58,8 +56,8 @@ int main(int argc, char** argv)
             ("kmer-offset,r", po::value<size_t>()->default_value(1), "Offset of kmers. Offset of 1, would be perfect overlapping kmers. An offset of kmer would be non-overlapping kmers that are right next to each other. Must be greater than 0.")
             ("max-mismatch-errorDensity,x", po::value<double>()->default_value(.25), "Max percent of mismatches allowed in overlapped section")
             ("check-lengths,c", po::value<size_t>()->default_value(20), "Check lengths of the ends")
-            ("min-overlap,o", po::value<size_t>()->default_value(8), "Min overlap required to merge two reads");
-            ("no-fixbases,f", po::bool_switch()->default_value(false), "after trimming adapter, DO NOT use consensus sequence of paired reads, only trims adapter sequence");
+            ("min-overlap,o", po::value<size_t>()->default_value(8), "Min overlap required to merge two reads")
+            ("no-fixbases,X", po::bool_switch()->default_value(false), "after trimming adapter, DO NOT use consensus sequence of paired reads, only trims adapter sequence");
 
         po::options_description cmdline_options;
         cmdline_options.add(standard).add(input).add(output).add(desc);
@@ -102,7 +100,8 @@ int main(int argc, char** argv)
                     bi::stream<bi::file_descriptor_source> is1{check_open_r(read1_files[i]), bi::close_handle};
                     bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
                     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
-                    helper_adapterTrimmer(ifp, pe, se, counters, vm["max-mismatch-errorDensity"].as<double>(),  vm["min-overlap"].as<size_t>(), vm["stranded"].as<bool>(), vm["min-length"].as<size_t>(), vm["check-lengths"].as<size_t>(), vm["kmer"].as<size_t>(), vm["kmer-offset"].as<size_t>(), vm["no-orphans"].as<bool>(), vm["no-fixbases"].as<bool>() ); }
+                    helper_adapterTrimmer(ifp, pe, se, counters, vm["max-mismatch-errorDensity"].as<double>(),  vm["min-overlap"].as<size_t>(), vm["stranded"].as<bool>(), vm["min-length"].as<size_t>(), vm["check-lengths"].as<size_t>(), vm["kmer"].as<size_t>(), vm["kmer-offset"].as<size_t>(), vm["no-orphans"].as<bool>(), vm["no-fixbases"].as<bool>() );
+                }
             }
 
             if(vm.count("singleend-input")) {
