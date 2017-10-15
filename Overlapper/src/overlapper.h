@@ -76,7 +76,6 @@ spReadBase checkIfOverlap(Read &r1, Read &r2, size_t loc1, size_t loc2, const do
 
     std::string finalSeq;
     std::string finalQual;
-    size_t misMatches = 0;
 
     char bp;
     char qual;
@@ -91,7 +90,6 @@ spReadBase checkIfOverlap(Read &r1, Read &r2, size_t loc1, size_t loc2, const do
         } else {
             bp = qual1[read1_bp] >= qual2[read2_bp] ? seq1[read1_bp] : seq2[read2_bp];
             qual = static_cast<char>(std::max(qual1[read1_bp] - qual2[read2_bp] + 33, 1 + 33));
-            ++misMatches;
        }
         finalSeq += bp;
         finalQual += qual;
@@ -182,7 +180,6 @@ void helper_overlapper(InputReader<T, Impl> &reader, std::shared_ptr<OutputWrite
     
     while(reader.has_next()) {
         auto i = reader.next();
-        unsigned int overlapped_length = 0;
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());        
         if (per) {
             counters.input(*per);

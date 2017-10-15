@@ -174,7 +174,7 @@ public:
             if (overlapped) {
                 if (one.getLength() > overlapped || two.getLength() > overlapped ) {
                     ++c["sins"]; //adapters must be had (short insert)
-                    c["Adapter_BpTrim"] += (one.getLength() - one.getLengthTrue());
+                    c["Adapter_BpTrim"] += std::max((one.getLength() - one.getLengthTrue()),(two.getLength() - two.getLengthTrue()));
 
                 } else {
                     ++c["lins"]; //must be a long insert

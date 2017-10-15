@@ -75,32 +75,29 @@ unsigned int checkIfOverlap(Read &r1, Read &r2, size_t loc1, size_t loc2, const 
     const std::string &qual1 = r1.get_qual();
     const std::string &qual2 = r2.get_qual_rc();
 
-    size_t misMatches = 0;  // not used
-
     char bp;
     char qual;
 
     unsigned int insert_length = maxLoop;
 
-    for (size_t i = 0; i < maxLoop; ++i) {
-        read1_bp = loc1_t + i;
-        read2_bp = loc2_t + i;
-        if (!noFixBases){
-            if (seq1[read1_bp] == seq2[read2_bp] )  {
-                qual = static_cast<char>(std::min(qual1[read1_bp] + qual2[read2_bp] - 33, 40 + 33));  // MATT: I still don't agree with this, so 38 [confident] and 2 [not so confident] return a 40 [very confident]??
-                r1.changeQual(read1_bp, qual);
-                r2.changeQual(r2_len -  read2_bp, qual);
-            } else {
-                bp = qual1[read1_bp] >= qual2[read2_bp] ? seq1[read1_bp] : seq2[read2_bp];
-                qual = static_cast<char>(std::max(qual1[read1_bp] - qual2[read2_bp] + 33, 1 + 33));
-                
-                r1.changeSeq(read1_bp, bp);
-                r1.changeQual(read1_bp, qual);
-                //Something clever with RC
-                r2.changeSeq(r2_len - read2_bp , rc(bp) );
-                r2.changeQual(r2_len -  read2_bp , qual);
-                ++misMatches;
-            }
+    if (!noFixBases){
+        for (size_t i = 0; i < maxLoop; ++i) {
+            read1_bp = loc1_t + i;
+            read2_bp = loc2_t + i;
+                if (seq1[read1_bp] == seq2[read2_bp] )  {
+                    qual = static_cast<char>(std::min(qual1[read1_bp] + qual2[read2_bp] - 33, 40 + 33));  // MATT: I still don't agree with this, so 38 [confident] and 2 [not so confident] return a 40 [very confident]??
+                    r1.changeQual(read1_bp, qual);
+                    r2.changeQual(r2_len -  read2_bp, qual);
+                } else {
+                    bp = qual1[read1_bp] >= qual2[read2_bp] ? seq1[read1_bp] : seq2[read2_bp];
+                    qual = static_cast<char>(std::max(qual1[read1_bp] - qual2[read2_bp] + 33, 1 + 33));
+                    
+                    r1.changeSeq(read1_bp, bp);
+                    r1.changeQual(read1_bp, qual);
+                    //Something clever with RC
+                    r2.changeSeq(r2_len - read2_bp , rc(bp) );
+                    r2.changeQual(r2_len -  read2_bp , qual);
+                }
         }
     }
 
