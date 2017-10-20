@@ -129,21 +129,23 @@ void setDefaultParamsCutting(po::options_description &desc) {
 
 void version_or_help(std::string program_name, std::string app_description, po::options_description &desc, po::variables_map vm, bool error) {
 
-    std::string epilog="Please report any issues, request for enhancement, or comments to https://github.com/ibest/HTStream/issues";
+    std::string prolog="HTStream <https://github.com/ibest/HTStream> application: " + program_name;
+    std::string epilog="Please report any issues, request for enhancement, or comments to <https://github.com/ibest/HTStream/issues>";
     int SUCCESS = 0;
     if (vm.count("version")) {
-        std::cout << program_name << std::endl;
-        std::cout << "Version " << VERSION << std::endl;
+        std::cout << VERSION << std::endl;
         exit(SUCCESS); //success
     } else if ( vm.count("help")  || error || vm.size() == 0) {
-        std::cout << program_name << std::endl << app_description << std::endl;
-        std::cout << "Version " << VERSION << std::endl;
+        std::cout << prolog << std::endl;
+        std::cout << "Version: " << VERSION << std::endl;
+        std::cout << app_description << std::endl;
         std::cout << desc << std::endl;
         std::cout << std::endl << epilog << std::endl;
         exit(SUCCESS); //success
     } else if ( !vm.count("read1-input") & !vm.count("singleend-input") & !vm.count("tab-input") & !vm.count("interleaved-input") & !vm.count("from-stdin") ){
-        std::cout << program_name << std::endl << app_description << std::endl;
-        std::cout << "Version " << VERSION << std::endl;
+        std::cout << prolog << std::endl;
+        std::cout << "Version: " << VERSION << std::endl;
+        std::cout << app_description << std::endl;
         std::cout << desc << std::endl;
         std::cout << std::endl << epilog << std::endl;
         exit(SUCCESS); //success
