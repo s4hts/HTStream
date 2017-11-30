@@ -144,6 +144,7 @@ public:
     double avg_q_score();
     std::shared_ptr<ReadBase> convert(bool stranded);
     void setStats(Counter &c);
+    void set_read_rc() { one.set_read_rc();}
 };
 
 #endif
