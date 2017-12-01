@@ -141,7 +141,7 @@ spReadBase getOverlappedReads(Read &r1, Read &r2, const seqLookup &seq1Map,  con
 
 }
 
-spReadBase check_read(PairedEndRead &pe, const double misDensity, const size_t &minOver, const size_t &checkLengths, const size_t kmer, const size_t kmerOffset, const size_t minLength) {
+spReadBase check_read(PairedEndRead &pe, const double misDensity, const size_t &minOver, const size_t &checkLengths, const size_t kmer, const size_t kmerOffset) {
     
     Read &r1 = pe.non_const_read_one();
     Read &r2 = pe.non_const_read_two();
@@ -183,9 +183,9 @@ void helper_overlapper(InputReader<T, Impl> &reader, std::shared_ptr<OutputWrite
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());        
         if (per) {
             counters.input(*per);
-            spReadBase overlapped = check_read(*per, misDensity, minOver, checkLengths, kmer, kmerOffset, min_length);
+            spReadBase overlapped = check_read(*per, misDensity, minOver, checkLengths, kmer, kmerOffset);
             if (!overlapped) {
-                writer_helper(per, pe, se, stranded); //write out as is
+                writer_helper(per, pe, se, stranded, no_orphan); //write out as is
                 counters.output(*per);
             } else if (overlapped) { //if there is an overlap
                 overlapped->checkDiscarded(min_length);

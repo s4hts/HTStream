@@ -43,8 +43,13 @@ int main(int argc, char** argv)
          */
         namespace po = boost::program_options;
         po::options_description standard = setStandardOptions();
+            // version|v ; help|h ; notes|N ; stats-file|L ; append-stats-file|A
         po::options_description input = setInputOptions();
+            // read1-input|1 ; read2-input|2 ; singleend-input|U
+            // tab-input|T ; interleaved-input|I ; from-stdin|S
         po::options_description output = setOutputOptions(program_name);
+            // force|F ; prefix|p ; gzip-output,g ; fastq-output|f
+            // tab-output|t ; interleaved-output|i ; unmapped-output|u ; to-stdout,O
 
         po::options_description desc("Application Specific Options");
 
@@ -82,11 +87,13 @@ int main(int argc, char** argv)
             if(vm.count("read1-input")) {
                 if (!vm.count("read2-input")) {
                     throw std::runtime_error("must specify both read1 and read2 input files.");
-                } else if (vm.count("read2-input") != vm.count("read1-input")) {
-                    throw std::runtime_error("must have same number of input files for read1 and read2");
                 }
                 auto read1_files = vm["read1-input"].as<std::vector<std::string> >();
                 auto read2_files = vm["read2-input"].as<std::vector<std::string> >();
+                
+                if (read1_files.size() != read2_files.size()) {
+                    throw std::runtime_error("must have same number of input files for read1 and read2");
+                }
 
                 for(size_t i = 0; i < read1_files.size(); ++i) {
                     bi::stream<bi::file_descriptor_source> is1{check_open_r(read1_files[i]), bi::close_handle};

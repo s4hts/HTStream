@@ -44,19 +44,24 @@ int main(int argc, char** argv)
          */
         namespace po = boost::program_options;
         po::options_description standard = setStandardOptions();
+            // version|v ; help|h ; notes|N ; stats-file|L ; append-stats-file|A
         po::options_description input = setInputOptions();
+            // read1-input|1 ; read2-input|2 ; singleend-input|U
+            // tab-input|T ; interleaved-input|I ; from-stdin|S
         po::options_description output = setOutputOptions(program_name);
+            // force|F ; prefix|p ; gzip-output,g ; fastq-output|f
+            // tab-output|t ; interleaved-output|i ; unmapped-output|u ; to-stdout,O
 
         po::options_description desc("Application Specific Options");
 
         setDefaultParamsCutting(desc);
+            // no-orphans|n ; stranded|s ; min-length|m
+
+        setDefaultParamsOverlapping(desc);
+            // kmer|k ; kmer-offset|r ; max-mismatch-errorDensity|x
+            // check-lengths|c ; min-overlap|o
 
         desc.add_options()
-            ("kmer,k", po::value<size_t>()->default_value(8), "Kmer size of the lookup table for the longer read")
-            ("kmer-offset,r", po::value<size_t>()->default_value(1), "Offset of kmers. Offset of 1, would be perfect overlapping kmers. An offset of kmer would be non-overlapping kmers that are right next to each other. Must be greater than 0.")
-            ("max-mismatch-errorDensity,x", po::value<double>()->default_value(.25), "Max percent of mismatches allowed in overlapped section")
-            ("check-lengths,c", po::value<size_t>()->default_value(20), "Check lengths of the ends")
-            ("min-overlap,o", po::value<size_t>()->default_value(8), "Min overlap required to merge two reads")
             ("no-fixbases,X", po::bool_switch()->default_value(false), "after trimming adapter, DO NOT use consensus sequence of paired reads, only trims adapter sequence");
 
         po::options_description cmdline_options;
@@ -90,15 +95,20 @@ int main(int argc, char** argv)
             if(vm.count("read1-input")) {
                 if (!vm.count("read2-input")) {
                     throw std::runtime_error("must specify both read1 and read2 input files.");
-                } else if (vm.count("read2-input") != vm.count("read1-input")) {
-                    throw std::runtime_error("must have same number of input files for read1 and read2");
                 }
                 auto read1_files = vm["read1-input"].as<std::vector<std::string> >();
                 auto read2_files = vm["read2-input"].as<std::vector<std::string> >();
+                std::cout << "read1:" << read1_files.size() << "\n";
+                std::cout << "read2:" << read2_files.size() << "\n";
+
+                if (read1_files.size() != read2_files.size()) {
+                    throw std::runtime_error("must have same number of input files for read1 and read2");
+                }
 
                 for(size_t i = 0; i < read1_files.size(); ++i) {
                     bi::stream<bi::file_descriptor_source> is1{check_open_r(read1_files[i]), bi::close_handle};
                     bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
+
                     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
                     helper_adapterTrimmer(ifp, pe, se, counters, vm["max-mismatch-errorDensity"].as<double>(),  vm["min-overlap"].as<size_t>(), vm["stranded"].as<bool>(), vm["min-length"].as<size_t>(), vm["check-lengths"].as<size_t>(), vm["kmer"].as<size_t>(), vm["kmer-offset"].as<size_t>(), vm["no-orphans"].as<bool>(), vm["no-fixbases"].as<bool>() );
                 }

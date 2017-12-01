@@ -26,6 +26,7 @@ po::options_description setOutputOptions(std::string program_name);
 
 void setDefaultParamsCutting(po::options_description &desc);
 void setDefaultParamsTrim(po::options_description &desc);
+void setDefaultParamsOverlapping(po::options_description &desc);
 
 
 char rc(const char bp);

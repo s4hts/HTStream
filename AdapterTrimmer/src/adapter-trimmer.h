@@ -147,7 +147,7 @@ unsigned int getOverlappedReads(Read &r1, Read &r2, const seqLookup &seq1Map,  c
 
 }
 
-unsigned int check_read(PairedEndRead &pe , const double misDensity, const size_t &minOver, const size_t &checkLengths, const size_t kmer, const size_t kmerOffset, const size_t minLength, bool noFixBases = false ) {
+unsigned int check_read(PairedEndRead &pe , const double misDensity, const size_t &minOver, const size_t &checkLengths, const size_t kmer, const size_t kmerOffset, bool noFixBases = false ) {
     
     Read &r1 = pe.non_const_read_one();
     Read &r2 = pe.non_const_read_two();
@@ -188,7 +188,7 @@ void helper_adapterTrimmer(InputReader<T, Impl> &reader, std::shared_ptr<OutputW
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());        
         if (per) {
             counter.input(*per);
-            unsigned int overlapped = check_read(*per, misDensity, minOver, checkLengths, kmer, kmerOffset, min_length, noFixBases);
+            unsigned int overlapped = check_read(*per, misDensity, minOver, checkLengths, kmer, kmerOffset, noFixBases);
             per->checkDiscarded(min_length);    
             counter.output(*per, overlapped);
             writer_helper(per, pe, se, stranded, no_orphan); 

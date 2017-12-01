@@ -29,14 +29,12 @@ public:
         Common();
     }
     
-    virtual void input(const PairedEndRead &read) {
+    virtual void input(SingleEndRead &read) {
         ++c["TotalFragmentsInput"];
         ++c["PE_In"]; 
     }
 
-
-
-    virtual void input(const SingleEndRead &read) {
+    virtual void input(PairedEndRead &read) {
         ++c["TotalFragmentsInput"];
         ++c["SE_In"]; 
     }
@@ -55,7 +53,7 @@ public:
         } 
     }
 
-    virtual void output(PairedEndRead &read, bool no_orhpans = false) {
+    virtual void output(PairedEndRead &read, bool no_orphans = false) {
         ++c["TotalFragmentsOutput"];
         ++c["PE_Out"];
     }
