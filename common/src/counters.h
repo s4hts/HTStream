@@ -115,9 +115,9 @@ public:
 
     OverlappingCounters() {
         Common();
-        c["lins"] = 0;
         c["sins"] = 0;
-        c["nins"] = 0;
+        c["mins"] = 0;
+        c["lins"] = 0;
         c["SE_Discard"] = 0;
         c["PE_Discard"] = 0;
         c["Adapter_BpTrim"] = 0;
@@ -137,7 +137,7 @@ public:
         if (per.non_const_read_one().getDiscard()) {
             ++c["PE_Discard"];
         } else {
-            ++c["nins"];
+            ++c["lins"];
             ++c["TotalFragmentsOutput"];
             ++c["PE_Out"];
         }
@@ -150,7 +150,7 @@ public:
                 ++c["sins"]; //adapters must be had (short insert)
                 c["Adapter_BpTrim"] += (origLength - one.getLength());
             } else {
-                ++c["lins"]; //must be a long insert
+                ++c["mins"]; //must be a long insert
             }
             if ( one.getLength() + 1 > insertLength.size() ) {
                 insertLength.resize(one.getLength() + 1);
@@ -175,7 +175,7 @@ public:
                     c["Adapter_BpTrim"] += std::max((one.getLength() - one.getLengthTrue()),(two.getLength() - two.getLengthTrue()));
 
                 } else {
-                    ++c["lins"]; //must be a long insert
+                    ++c["mins"]; //must be a long insert
                 }
                 if ( overlapped + 1 > insertLength.size() ) {
                     insertLength.resize(overlapped + 1);
@@ -183,7 +183,7 @@ public:
                 ++insertLength[overlapped];
                 
             } else {
-                ++c["nins"]; //lin
+                ++c["lins"]; //lin
             }
             ++c["PE_Out"];
             ++c["TotalFragmentsOutput"];
