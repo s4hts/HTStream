@@ -12,15 +12,6 @@
 #include "utils.h"
 
 void cut_trim(Read &r, size_t cut_left, size_t cut_right, size_t max_length) {
-    if (max_length > 0) {
-        if (r.getLength() > max_length) {
-            // set left cut site to new cut_left
-            r.setRCut(max_length);
-        } else {
-            // read is shorter than cut, so set new cut_right to cut_left, effectively 0 length
-            r.setRCut(0);
-        }
-    }
     if (cut_right > 0) {
         if (r.getLength() > cut_right) {
             // set left cut site to new cut_left
@@ -39,6 +30,16 @@ void cut_trim(Read &r, size_t cut_left, size_t cut_right, size_t max_length) {
             r.setLCut(r.getLengthTrue() + r.getLTrim());
         }
     }
+    if (max_length > 0) {
+        if (r.getLengthTrue() > max_length) {
+            // set left cut site to new cut_left
+            r.setRCut(r.getLTrim() + max_length);
+        } else {
+            // read is shorter than cut, so set new cut_right to cut_left, effectively 0 length
+            r.setRCut(0);
+        }
+    }
+
 }
 
 
