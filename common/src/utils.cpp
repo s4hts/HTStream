@@ -123,7 +123,7 @@ void setDefaultParamsCutting(po::options_description &desc) {
     desc.add_options()
             ("no-orphans,n", po::bool_switch()->default_value(false), "Orphaned SE reads will NOT be written out")
             ("stranded,s", po::bool_switch()->default_value(false),    "If R1 is orphaned, R2 is output in RC (for stranded RNA)")
-            ("min-length,m", po::value<size_t>()->default_value(50),    "Min length for acceptable output read");
+            ("min-length,m", po::value<size_t>()->default_value(1),    "Min length for acceptable output read");
 
 }
 
