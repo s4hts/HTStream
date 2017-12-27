@@ -93,7 +93,6 @@ int main(int argc, char** argv)
                     bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
                    
                     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
-                    // std::cout << "read file: " << read1_files[i] << ":" << ifp.has_next() << "\n";
                     helper_stats(ifp, pe, se, counters);
                 }
             }
