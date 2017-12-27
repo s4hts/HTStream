@@ -11,36 +11,28 @@
 #include <algorithm>
 #include "utils.h"
 
-void cut_trim(Read &r, size_t cut_left, size_t cut_right, size_t max_length) {
-    if (cut_right > 0) {
-        if (r.getLength() > cut_right) {
-            // set left cut site to new cut_left
-            r.setRCut(r.getLength() - cut_right);
-        } else {
-            // read is shorter than cut, so set new cut_right to cut_left, effectively 0 length
-            r.setRCut(0);
-        }
-    }
-    if (cut_left > 0) {
-        if (r.getLengthTrue() > cut_left) {
-            // set left cut site to new cut_left
-            r.setLCut(cut_left);
-        } else {
-            // read is shorter than cut, so set new cut_left to cut_right, effectively 0 length
-            r.setLCut(r.getLengthTrue() + r.getLTrim());
-        }
-    }
-    if (max_length > 0) {
-        if (r.getLengthTrue() > max_length) {
-            // set left cut site to new cut_left
-            r.setRCut(r.getLTrim() + max_length);
-        } else {
-            // read is shorter than cut, so set new cut_right to cut_left, effectively 0 length
-            r.setRCut(0);
-        }
-    }
+/*
+cut_trim expected behavior:
+cut_trim is expected to be one of the first apps used in a preprocessing pipeline
+such as when you want to statically trim off X bases from the end of a read (cut_right), due to 
+quality, and/or to trim off primer sequence from the beginning of a read (cut_left). As such both
+cut_left and cut_right should act on the original length of the read.
 
-}
+max_length then prevents the final cut length from being greater than max_length applying an
+additional cut to end of the read if applicable. If one wished to simulate smaller sized reads
+can run cut_trim with max_length (no cut to left or right) to effectively reduce the size of reads. 
+ */
+void cut_trim(Read &r, size_t cut_left, size_t cut_right, size_t max_length) {
+    if (cut_left) {
+        r.setLCut(cut_left);
+    }
+    if (cut_right) { 
+        r.setRCut(r.getLength() - cut_right);
+    }
+    if (max_length && max_length < r.getLengthTrue()) {
+        r.setRCut(max_length + r.getLTrim());
+    }
+ }
 
 
 template <class T, class Impl>
