@@ -98,9 +98,9 @@ int main(int argc, char** argv)
                 }
                 auto read1_files = vm["read1-input"].as<std::vector<std::string> >();
                 auto read2_files = vm["read2-input"].as<std::vector<std::string> >();
-                std::cout << "read1:" << read1_files.size() << "\n";
-                std::cout << "read2:" << read2_files.size() << "\n";
 
+                
+                
                 if (read1_files.size() != read2_files.size()) {
                     throw std::runtime_error("must have same number of input files for read1 and read2");
                 }
