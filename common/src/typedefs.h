@@ -3,8 +3,8 @@
 
 #include <map>
 
-typedef std::map <std::string, unsigned long long int> Counter;
-class Counters;
+//typedef std::map <std::string, unsigned long long int> Counter;
+//class Counters;
 
 #endif
 
