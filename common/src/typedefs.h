@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <map>
 
-typedef std::tuple <const char*, uint64_t&> Label;
+typedef std::tuple <const std::string, uint64_t&> Label;
 
 #endif
 
