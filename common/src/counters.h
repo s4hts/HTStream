@@ -433,7 +433,7 @@ public:
 class SuperDeduperCounters : public Counters {
 
 public:
-    std::vector<std::tuple<int, int>> duplicateProportion;
+    std::vector<std::tuple<uint_fast64_t, uint_fast64_t>> duplicateProportion;
 
     SuperDeduperCounters() {
         Common();
@@ -446,20 +446,7 @@ public:
         if (dup_freq > 0 & (c["TotalFragmentsInput"] - c["Ignored"]) % dup_freq == 0){
             duplicateProportion.push_back(std::make_tuple(c["TotalFragmentsInput"],c["Duplicate"]));
         }
-
-        const PairedEndRead *per = dynamic_cast<const PairedEndRead *>(&read);
-        if (per) {
-            ++c["PE_In"];
-        } else {
-            const SingleEndRead *ser = dynamic_cast<const SingleEndRead *>(&read);
-            if (ser) {
-                ++c["SE_In"]; 
-            } else {
-                throw std::runtime_error("In utils.h output: read type not valid");
-            }
-        }
-
-        ++c["TotalFragmentsInput"];
+        Counters::input(read);
     }
 
     void increment_replace() {
