@@ -226,6 +226,8 @@ public:
 
         outStats << "    \"Notes\": \"" << notes << "\"";
 
+        write_labels(outStats);
+
         // embed instertLength (histogram) in sub json vector
         outStats << ",\n"; //make sure json format is kept
         outStats << "    \"histogram\": [";
