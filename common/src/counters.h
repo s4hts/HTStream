@@ -473,7 +473,8 @@ public:
     uint64_t Ignored = 0;
 
     SuperDeduperCounters() {
-        labels.push_back(std::forward_as_tuple("Dupilcate", Ignored));
+        labels.push_back(std::forward_as_tuple("Dupilcate", Dupilcate));
+        labels.push_back(std::forward_as_tuple("Ignored", Ignored));
     }
 
     void increment_replace() {
