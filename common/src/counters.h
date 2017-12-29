@@ -444,7 +444,7 @@ public:
     virtual void input(const ReadBase &read, size_t dup_freq) {
 
         if (dup_freq > 0 & (c["TotalFragmentsInput"] - c["Ignored"]) % dup_freq == 0){
-            duplicateProportion.push_back(std::make_tuple(c["TotalFragmentsInput"],c["Duplicate"]));
+            duplicateProportion.push_back(std::forward_as_tuple((c["TotalFragmentsInput"] - c["Ignored"]),c["Duplicate"]));
         }
         Counters::input(read);
     }
@@ -482,7 +482,7 @@ public:
         }
 
         // record final input/dup
-        duplicateProportion.push_back(std::make_tuple(c["TotalFragmentsInput"],c["Duplicate"]));
+        duplicateProportion.push_back(std::forward_as_tuple((c["TotalFragmentsInput"] - c["Ignored"]),c["Duplicate"]));
 
         // embed duplicate saturation in sub json vector
         outStats << ",\n"; //make sure json format is kept
