@@ -12,33 +12,34 @@
 #include <unistd.h>
 
 class Counters {
-    
 public:
-    Counter c;
-   
-    void Common() {
-        c["TotalFragmentsInput"] = 0;
-        c["PE_In"] = 0;
-        c["SE_In"] = 0;
-        c["TotalFragmentsOutput"] = 0;
-        c["PE_Out"] = 0;
-        c["SE_Out"] = 0;
-    }
+    uint64_t TotalFragmentsInput = 0;
+    uint64_t PE_In = 0;
+    uint64_t SE_In = 0;
+    uint64_t TotalFragmentsOutput = 0;
+    uint64_t PE_Out = 0;
+    uint64_t SE_Out = 0;
 
+    std::vector<Label> labels;
     Counters() {
-        Common();
+        labels.push_back(std::forward_as_tuple("TotalFragmentsInput", TotalFragmentsInput));
+        labels.push_back(std::forward_as_tuple("PE_In", PE_In));
+        labels.push_back(std::forward_as_tuple("SE_In", SE_In));
+        labels.push_back(std::forward_as_tuple("TotalFragmentsOutput", TotalFragmentsOutput));
+        labels.push_back(std::forward_as_tuple("PE_Out", PE_Out));
+        labels.push_back(std::forward_as_tuple("SE_Out", SE_Out));
     }
     
     virtual void input(const PairedEndRead &read) {
-        ++c["TotalFragmentsInput"];
-        ++c["PE_In"]; 
+        ++TotalFragmentsInput;
+        ++PE_In; 
     }
 
 
 
     virtual void input(const SingleEndRead &read) {
-        ++c["TotalFragmentsInput"];
-        ++c["SE_In"]; 
+        ++TotalFragmentsInput;
+        ++SE_In; 
     }
 
     virtual void input(const ReadBase &read) {
@@ -56,14 +57,14 @@ public:
     }
 
     virtual void output(PairedEndRead &read, bool no_orhpans = false) {
-        ++c["TotalFragmentsOutput"];
-        ++c["PE_Out"];
+        ++TotalFragmentsOutput;
+        ++PE_Out;
     }
 
 
     virtual void output(SingleEndRead &read) {
-        ++c["TotalFragmentsOutput"];
-        ++c["SE_Out"];
+        ++TotalFragmentsOutput;
+        ++SE_Out;
     }
 
     virtual void output(ReadBase &read) {
@@ -100,13 +101,19 @@ public:
         }
         outStats << "    \"Notes\": \"" << notes << "\"";
 
-        for (const auto &name : c) {
-            outStats << ",\n"; //make sure json format is kept
-            outStats << "    \"" << name.first << "\": " << name.second;
-        }
+        write_labels(outStats);
+        
         outStats << "\n  }\n}\n";
         outStats.flush();
     }
+
+    virtual const void write_labels(std::fstream& outStats) {
+        for (const auto &label : labels) {
+            outStats << ",\n"; //make sure json format is kept
+            outStats << "    \"" << std::get<0>(label) << "\": " << std::get<1>(label);
+        }
+    }
+
 };
 
 
@@ -114,34 +121,40 @@ class OverlappingCounters : public Counters {
 
 public:
     std::vector<unsigned long long int> insertLength;
+    uint64_t lins = 0;
+    uint64_t sins = 0;
+    uint64_t nins = 0;
+    uint64_t SE_Discard = 0;
+    uint64_t PE_Discard = 0;
+    uint64_t Adapter_BpTrim = 0;
 
     OverlappingCounters() {
-        Common();
-        c["lins"] = 0;
-        c["sins"] = 0;
-        c["nins"] = 0;
-        c["SE_Discard"] = 0;
-        c["PE_Discard"] = 0;
-        c["Adapter_BpTrim"] = 0;
+        labels.push_back(std::forward_as_tuple("lins", lins));
+        labels.push_back(std::forward_as_tuple("sins", sins));
+        labels.push_back(std::forward_as_tuple("nins", nins));
+        labels.push_back(std::forward_as_tuple("SE_Discard", SE_Discard));
+        labels.push_back(std::forward_as_tuple("PE_Discard", PE_Discard));
+        labels.push_back(std::forward_as_tuple("Adapter_BpTrim", Adapter_BpTrim));
+
         insertLength.resize(1);
     }
 
     virtual void output(SingleEndRead &ser)  {
         if (ser.non_const_read_one().getDiscard()) {
-            ++c["SE_Discard"];
+            ++SE_Discard;
         } else {
-            ++c["TotalFragmentsOutput"];
-            ++c["SE_Out"];
+            ++TotalFragmentsOutput;
+            ++SE_Out;
         }
     }
 
     virtual void output(PairedEndRead &per)  {
         if (per.non_const_read_one().getDiscard()) {
-            ++c["PE_Discard"];
+            ++PE_Discard;
         } else {
-            ++c["nins"];
-            ++c["TotalFragmentsOutput"];
-            ++c["PE_Out"];
+            ++nins;
+            ++TotalFragmentsOutput;
+            ++PE_Out;
         }
     }
 
@@ -149,19 +162,19 @@ public:
         Read &one = ser.non_const_read_one();
         if (!one.getDiscard()) {
             if (one.getLength() < origLength) {
-                ++c["sins"]; //adapters must be had (short insert)
-                c["Adapter_BpTrim"] += (origLength - one.getLength());
+                ++sins; //adapters must be had (short insert)
+                Adapter_BpTrim += (origLength - one.getLength());
             } else {
-                ++c["lins"]; //must be a long insert
+                ++lins; //must be a long insert
             }
             if ( one.getLength() + 1 > insertLength.size() ) {
                 insertLength.resize(one.getLength() + 1);
             }
             ++insertLength[one.getLength()];
-            ++c["SE_Out"];            
-            ++c["TotalFragmentsOutput"];
+            ++SE_Out;            
+            ++TotalFragmentsOutput;
         } else {
-            ++c["PE_Discard"]; // originated as a PE read
+            ++PE_Discard; // originated as a PE read
         }
     }
 
@@ -173,11 +186,11 @@ public:
         if (!one.getDiscard() && !two.getDiscard() ) {
             if (overlapped) {
                 if (one.getLength() > overlapped || two.getLength() > overlapped ) {
-                    ++c["sins"]; //adapters must be had (short insert)
-                    c["Adapter_BpTrim"] += std::max((one.getLength() - one.getLengthTrue()),(two.getLength() - two.getLengthTrue()));
+                    ++sins; //adapters must be had (short insert)
+                    Adapter_BpTrim += std::max((one.getLength() - one.getLengthTrue()),(two.getLength() - two.getLengthTrue()));
 
                 } else {
-                    ++c["lins"]; //must be a long insert
+                    ++lins; //must be a long insert
                 }
                 if ( overlapped + 1 > insertLength.size() ) {
                     insertLength.resize(overlapped + 1);
@@ -185,12 +198,12 @@ public:
                 ++insertLength[overlapped];
                 
             } else {
-                ++c["nins"]; //lin
+                ++nins; //lin
             }
-            ++c["PE_Out"];
-            ++c["TotalFragmentsOutput"];
+            ++PE_Out;
+            ++TotalFragmentsOutput;
         } else {
-            ++c["PE_Discard"];
+            ++PE_Discard;
         }
     }
 
@@ -213,10 +226,7 @@ public:
 
         outStats << "    \"Notes\": \"" << notes << "\"";
 
-        for (const auto &name : c) {
-            outStats << ",\n"; //make sure json format is kept
-            outStats << "    \"" << name.first << "\": " << name.second;
-        }
+        write_labels(outStats);
 
         // embed instertLength (histogram) in sub json vector
         outStats << ",\n"; //make sure json format is kept
@@ -235,88 +245,102 @@ public:
 class PhixCounters : public Counters {
 
 public:
+    uint64_t PE_hits = 0;
+    uint64_t SE_hits = 0;
+    uint64_t Inverse = 0;
+
     PhixCounters() {
-        Common();
-        c["PE_hits"] = 0;
-        c["SE_hits"] = 0;
-        c["Inverse"] = 0;
+        labels.push_back(std::forward_as_tuple("PE_hits", PE_hits));
+        labels.push_back(std::forward_as_tuple("SE_hits", SE_hits));
+        labels.push_back(std::forward_as_tuple("Inverse", Inverse));
     }
+
     void set_inverse() {
-        c["Inverse"] = 1;
+        Inverse = 1;
     }
     void inc_SE_hits() {
-        ++c["SE_hits"];
+        ++SE_hits;
     }
     void inc_PE_hits() {
-        ++c["PE_hits"];
+        ++PE_hits;
     }
 };
 
 class TrimmingCounters : public Counters {
 
 public: 
-    TrimmingCounters() {
-        Common();
-        c["R1_Left_Trim"] = 0;
-        c["R1_Right_Trim"] = 0;
-        c["R2_Left_Trim"] = 0;
-        c["R2_Right_Trim"] = 0;
-        c["SE_Right_Trim"] = 0;
-        c["SE_Left_Trim"] = 0;
+    uint64_t R1_Left_Trim = 0;
+    uint64_t R1_Right_Trim = 0;
+    uint64_t R2_Left_Trim = 0;
+    uint64_t R2_Right_Trim = 0;
+    uint64_t SE_Right_Trim = 0;
+    uint64_t SE_Left_Trim = 0;
+    
+    uint64_t R1_Discarded = 0;
+    uint64_t R2_Discarded = 0;
+    uint64_t SE_Discarded = 0;
+    uint64_t PE_Discarded = 0;
 
-        c["R1_Discarded"] = 0;
-        c["R2_Discarded"] = 0;
-        c["SE_Discarded"] = 0;
-        c["PE_Discarded"] = 0;
+    TrimmingCounters() {
+        labels.push_back(std::forward_as_tuple("R1_Left_Trim", R1_Left_Trim));
+        labels.push_back(std::forward_as_tuple("R1_Right_Trim", R1_Right_Trim));
+        labels.push_back(std::forward_as_tuple("R2_Left_Trim", R2_Left_Trim));
+        labels.push_back(std::forward_as_tuple("R2_Right_Trim", R2_Right_Trim));
+        labels.push_back(std::forward_as_tuple("SE_Right_Trimm", SE_Right_Trim));
+        labels.push_back(std::forward_as_tuple("SE_Left_Trimm", SE_Left_Trim));
+        labels.push_back(std::forward_as_tuple("R1_Discarded", R1_Discarded));
+        labels.push_back(std::forward_as_tuple("R2_Discarded", R2_Discarded));
+        labels.push_back(std::forward_as_tuple("SE_Discarded", SE_Discarded));
+        labels.push_back(std::forward_as_tuple("PE_Discarded", PE_Discarded));
 
     }
 
     void R1_stats(Read &one) {
-        c["R1_Left_Trim"] += one.getLTrim();
-        c["R1_Right_Trim"] += one.getRTrim();
+        R1_Left_Trim += one.getLTrim();
+        R1_Right_Trim += one.getRTrim();
     }
 
     void R2_stats(Read &two) {
-        c["R2_Left_Trim"] += two.getLTrim();
-        c["R2_Right_Trim"] += two.getRTrim();
+        R2_Left_Trim += two.getLTrim();
+        R2_Right_Trim += two.getRTrim();
     }
 
     void SE_stats(Read &se) {
-        c["SE_Left_Trim"] += se.getLTrim();
-        c["SE_Right_Trim"] += se.getRTrim();
+        SE_Left_Trim += se.getLTrim();
+        SE_Right_Trim += se.getRTrim();
     }
 
     void output(PairedEndRead &per, bool no_orphans = false) {
         Read &one = per.non_const_read_one();
         Read &two = per.non_const_read_two();
         if (!one.getDiscard() && !two.getDiscard()) {
-            ++c["TotalFragmentsOutput"];
-            ++c["PE_Out"];
+            ++TotalFragmentsOutput;
+            ++PE_Out;
             R1_stats(one);
             R2_stats(two);
         } else if (!one.getDiscard() && !no_orphans) { //if stranded RC
-            ++c["TotalFragmentsOutput"];
-            ++c["SE_Out"];
-            ++c["R2_Discarded"];
+            ++TotalFragmentsOutput;
+            ++SE_Out;
+            ++R2_Discarded;
             SE_stats(one);
         } else if (!two.getDiscard() && !no_orphans) { // Will never be RC
-            ++c["TotalFragmentsOutput"];
-            ++c["SE_Out"];
-            ++c["R1_Discarded"];
+            ++TotalFragmentsOutput;
+            ++SE_Out;
+            ++R1_Discarded;
             SE_stats(two);
         } else {
-            ++c["PE_Discarded"];
+            ++PE_Discarded;
         }
     }
 
     void output(SingleEndRead &ser) {
         Read &one = ser.non_const_read_one();
         if (!one.getDiscard()) {
-            ++c["TotalFragmentsOutput"];
-            ++c["SE_Out"];
+            ++TotalFragmentsOutput;
+            ++SE_Out;
             SE_stats(one);
         } else {
-            ++c["SE_Discarded"];
+            ++SE_Discarded;
         }
     }
     
@@ -325,40 +349,45 @@ public:
 class StatsCounters : public Counters {
 
 public:
-    Counter b;
+    uint64_t A = 0;
+    uint64_t T = 0;
+    uint64_t C = 0;
+    uint64_t G = 0;
+    uint64_t N = 0;
+    uint64_t R1_BpLen = 0;
+    uint64_t R2_BpLen = 0;
+    uint64_t SE_BpLen = 0;
+    uint64_t R1_bQ30 = 0;
+    uint64_t R2_bQ30 = 0;
+    uint64_t SE_bQ30 = 0;
 
-    StatsCounters() {
-        Common();
-        b["A"] = 0;
-        b["T"] = 0;
-        b["C"] = 0;
-        b["G"] = 0;
-        b["N"] = 0;
-        c["R1_BpLen"] = 0;
-        c["R2_BpLen"] = 0;
-        c["SE_BpLen"] = 0;
-        c["R1_bQ30"] = 0;
-        c["R2_bQ30"] = 0;
-        c["SE_bQ30"] = 0;
-    }
-   
+    StatsCounters () {
+        labels.push_back(std::forward_as_tuple("R1_BpLen", R1_BpLen));
+        labels.push_back(std::forward_as_tuple("R2_BpLen", R2_BpLen));
+        labels.push_back(std::forward_as_tuple("SE_BpLen", SE_BpLen));
+        labels.push_back(std::forward_as_tuple("R1_bQ30", R1_bQ30));
+        labels.push_back(std::forward_as_tuple("R2_bQ30", R2_bQ30));
+        labels.push_back(std::forward_as_tuple("SE_bQ30", SE_bQ30));
+    };
+
+
     void read_stats(Read &r) {
         for (auto bp : r.get_seq()) {
             switch (bp) {
                 case 'A':
-                    ++b["A"];
+                    ++A;
                     break;
                 case 'T':
-                    ++b["T"];
+                    ++T;
                     break;
                 case 'C':
-                    ++b["C"];
+                    ++C;
                     break;
                 case 'G':
-                    ++b["G"];
+                    ++G;
                     break;
                 case 'N':
-                    ++b["N"];
+                    ++N;
                     break;
                 default:
                     throw std::runtime_error("Unknown bp in stats counter");
@@ -383,10 +412,10 @@ public:
         for (auto q : two.get_qual()) {
             r2_q30bases += (q - 33) >= 30;
         }
-        c["R1_bQ30"] += r1_q30bases;
-        c["R2_bQ30"] += r2_q30bases;
-        c["R1_BpLen"] += one.getLength();
-        c["R2_BpLen"] += two.getLength();
+        R1_bQ30 += r1_q30bases;
+        R2_bQ30 += r2_q30bases;
+        R1_BpLen += one.getLength();
+        R2_BpLen += two.getLength();
     }
     
     void output(SingleEndRead &ser) {
@@ -397,8 +426,8 @@ public:
         for (auto q : one.get_qual()) {
             q30bases += (q - 33) >= 30;
         }
-        c["SE_bQ30"] += q30bases;
-        c["SE_BpLen"] += one.getLength();
+        SE_bQ30 += q30bases;
+        SE_BpLen += one.getLength();
     }
 
     virtual void write_out(const std::string &statsFile, bool appendStats, std::string program_name, std::string notes) {
@@ -421,18 +450,16 @@ public:
         }
         outStats << "    \"Notes\": \"" << notes << "\"";
 
-        for (const auto &name : c) {
-            outStats << ",\n"; //make sure json format is kept
-            outStats << "    \"" << name.first << "\": " << name.second;
-        }
+        write_labels(outStats);
+        
         // embed base composition as sub json vector
         outStats << ",\n"; //make sure json format is kept
         outStats << "    \"Base_Composition\": {\n";
-        outStats << "        \"" << 'A' << "\": " << b["A"] << ",\n";
-        outStats << "        \"" << 'T' << "\": " << b["T"] << ",\n";
-        outStats << "        \"" << 'G' << "\": " << b["G"] << ",\n";
-        outStats << "        \"" << 'C' << "\": " << b["C"] << ",\n";
-        outStats << "        \"" << 'N' << "\": " << b["N"] << "\n";
+        outStats << "        \"" << 'A' << "\": " << A << ",\n";
+        outStats << "        \"" << 'T' << "\": " << T << ",\n";
+        outStats << "        \"" << 'G' << "\": " << G << ",\n";
+        outStats << "        \"" << 'C' << "\": " << C << ",\n";
+        outStats << "        \"" << 'N' << "\": " << N << "\n";
         outStats << "    }"; // finish off histogram
         outStats << "\n  }\n}\n";
         outStats.flush();
@@ -442,18 +469,20 @@ public:
 
 class SuperDeduperCounters : public Counters {
 public:
+    uint64_t Duplicate = 0;
+    uint64_t Ignored = 0;
+
     SuperDeduperCounters() {
-        Common();
-        c["Duplicate"] = 0;
-        c["Ignored"] = 0;
+        labels.push_back(std::forward_as_tuple("Duplicate", Duplicate));
+        labels.push_back(std::forward_as_tuple("Ignored", Ignored));
     }
 
     void increment_replace() {
-        ++c["Duplicate"];
+        ++Duplicate;
     }
 
     void increment_ignored() {
-        ++c["Ignored"];
+        ++Ignored;
     }
 };
 
