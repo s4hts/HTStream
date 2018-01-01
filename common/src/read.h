@@ -59,8 +59,8 @@ private:
     size_t minLength;
 public:
     Read(const std::string& seq_, const std::string& qual_, const std::string& id_) :
-        seq(seq_), qual(qual_), id(id_), length(seq.length()), cut_R(seq.length()), cut_L(0), discard(false), minLength(0) {  }
-    Read() : seq(""), qual(""), id(""), length(0), cut_R(seq.length()), cut_L(0), discard(false), minLength(0) { } 
+        seq(seq_), qual(qual_), id(id_), length(seq_.length()), cut_R(seq_.length()), cut_L(0), discard(false), minLength(1) { }
+    Read() : seq(""), qual(""), id(""), length(0), cut_R(seq.length()), cut_L(0), discard(false), minLength(1) { } 
     Read subread(size_t _start, size_t _length);
     std::string subseq(size_t _start, size_t _length);
     const std::string& get_seq() const  { return seq; }
@@ -107,7 +107,7 @@ public:
     bool getDiscard() { discard = int(minLength) > int(cut_R) - int(cut_L); return discard; }
     void setDiscard(size_t minLength_) { minLength = minLength_; }
     size_t getLength() const { return length; }
-    size_t getLengthTrue() { return cut_R - cut_L; }
+    size_t getLengthTrue() { return cut_R < cut_L ? 0 : cut_R - cut_L; }
     size_t getLTrim() { return cut_L; }
     size_t getRTrim() { return length - cut_R; }
 };
