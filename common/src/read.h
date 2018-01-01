@@ -126,7 +126,6 @@ public:
     const Read& get_read_one() const { return one; }
     const Read& get_read_two() const { return two; }
     double avg_q_score();
-    void setStats(Counter &c);
 
     std::shared_ptr<ReadBase> convert(bool stranded);
 };
@@ -143,7 +142,6 @@ public:
     void checkDiscarded(size_t minLength) {one.setDiscard(minLength);}
     double avg_q_score();
     std::shared_ptr<ReadBase> convert(bool stranded);
-    void setStats(Counter &c);
 };
 
 #endif

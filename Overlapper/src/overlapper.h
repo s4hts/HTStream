@@ -146,26 +146,15 @@ spReadBase check_read(PairedEndRead &pe, const double misDensity, const size_t &
     Read &r1 = pe.non_const_read_one();
     Read &r2 = pe.non_const_read_two();
 
-    bool swapped = false;
     /*Read1 is always longer than Read 2)*/
     if (r1.getLength() < r2.getLength()) {
         std::swap(r1, r2);
-        swapped = true;
     }
     /*Create a map with non-overlapping kmers*/
     seqLookup mOne = readOneMap(r1.get_seq(), kmer, kmerOffset);
     /*returns null if no much
      * r1 and r2 and passed by ref in case only adapter trimming is on*/
     spReadBase overlapped = getOverlappedReads(r1, r2, mOne, misDensity, minOver, checkLengths, kmer) ;
-    // if (swapped) {
-    //     overlapped.set_read_rc();
-    // } // if we swapped, shouldn't we then RC the overlapped read to keep the correct orientation???
-
-    //we need to check it overlapper is greater than min length;
-
-   // if (overlapped && overlapped->non_const_read_one().getLength() < minLength) {
-    //    return nullptr;
-    //}
 
     return overlapped;
 }
