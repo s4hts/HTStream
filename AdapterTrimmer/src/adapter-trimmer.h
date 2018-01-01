@@ -158,11 +158,15 @@ unsigned int check_read(PairedEndRead &pe , const double misDensity, const size_
         std::swap(r1, r2);
         swapped = true;
     }
-    /*Create a map with non-overlapping kmers*/
-    seqLookup mOne = readOneMap(r1.get_seq(), kmer, kmerOffset);
-    /*returns null if no much
-     * r1 and r2 and passed by ref in case only adapter trimming is on*/
-    unsigned int overlapped = getOverlappedReads(r1, r2, mOne, misDensity, minOver, checkLengths, kmer, noFixBases) ;
+    /* checkL needs to be as long as or longer than the shortest read */
+    size_t checkL = std::min(r2.getLength(), checkLengths);
+    /* kmer needs to be as long as or longer than the shortest read */
+    size_t kkmer = std::min(r2.getLength(), kmer);
+    /* Create a map with non-overlapping kmers*/
+    seqLookup mOne = readOneMap(r1.get_seq(), kkmer, kmerOffset);
+    /* returns null if no much
+     * r1 and r2 and passed by ref in case only adapter trimming is on */
+    unsigned int overlapped = getOverlappedReads(r1, r2, mOne, misDensity, minOver, checkL, kkmer, noFixBases) ;
     if (swapped) {
         std::swap(r1, r2);
     }
