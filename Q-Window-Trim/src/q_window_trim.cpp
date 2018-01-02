@@ -62,9 +62,9 @@ int main(int argc, char** argv)
             // no-left|l ; no-right|r
 
         desc.add_options()
-            ("window-size,w", po::value<size_t>()->default_value(10),    "Min base pairs trim for AT tail")
-            ("avg-qual,q", po::value<size_t>()->default_value(20),    "Threshold for quality score average in the window")
-            ("qual-offset,o", po::value<size_t>()->default_value(33), "Quality offset for ascii q-score (default is 33)");
+            ("window-size,w", po::value<size_t>()->default_value(10)->notifier(boost::bind(&check_range<size_t>, "window-size", _1, 1, 10000)),    "Window size in which to trim (min 1, max 10000)")
+            ("avg-qual,q", po::value<size_t>()->default_value(20)->notifier(boost::bind(&check_range<size_t>, "avg-qual", _1, 1, 10000)),    "Threshold for quality score average in the window (min 1, max 10000)")
+            ("qual-offset,o", po::value<size_t>()->default_value(33)->notifier(boost::bind(&check_range<size_t>, "qual-offset", _1, 1, 10000)), "Quality offset for ascii q-score (default is 33) (min 1, max 10000)");
 
         po::options_description cmdline_options;
         cmdline_options.add(standard).add(input).add(output).add(desc);

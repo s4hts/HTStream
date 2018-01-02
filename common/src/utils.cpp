@@ -63,6 +63,26 @@ void outputWriters(std::shared_ptr<OutputWriter> &pe, std::shared_ptr<OutputWrit
     }
 }
 
+template<typename T>
+void check_range(const std::string& name, const T& value, const T& min, const T& max)
+{
+   if (value < min || value > max)
+   {
+        throw po::validation_error(po::validation_error::invalid_option_value, name);
+      // throw exception
+   }
+}
+
+void check_range_double(const std::string& name, double value, double min, double max)
+{
+   if (value < min || value > max)
+   {
+        throw po::validation_error(po::validation_error::invalid_option_value, name);
+      // throw exception
+   }
+}
+
+
 po::options_description setInputOptions(){
 
     po::options_description input("Input Options");
@@ -123,17 +143,17 @@ void setDefaultParamsCutting(po::options_description &desc) {
     desc.add_options()
             ("no-orphans,n", po::bool_switch()->default_value(false), "Orphaned SE reads will NOT be written out")
             ("stranded,s", po::bool_switch()->default_value(false),    "If R1 is orphaned, R2 is output in RC (for stranded RNA)")
-            ("min-length,m", po::value<size_t>()->default_value(1),    "Min length for acceptable output read");
+            ("min-length,m", po::value<size_t>()->default_value(1)->notifier(boost::bind(&check_range<size_t>, "min-length", _1, 1, 10000)), "Min length for acceptable output read (min 1, max 10000)");
 
 }
 
 void setDefaultParamsOverlapping(po::options_description &desc) {
     desc.add_options()
-            ("kmer,k", po::value<size_t>()->default_value(8), "Kmer size of the lookup table for the longer read")
-            ("kmer-offset,r", po::value<size_t>()->default_value(1), "Offset of kmers. Offset of 1, would be perfect overlapping kmers. An offset of kmer would be non-overlapping kmers that are right next to each other. Must be greater than 0.")
-            ("max-mismatch-errorDensity,x", po::value<double>()->default_value(.25), "Max percent of mismatches allowed in overlapped section")
-            ("check-lengths,c", po::value<size_t>()->default_value(20), "Check lengths of the ends")
-            ("min-overlap,o", po::value<size_t>()->default_value(8), "Min overlap required to merge two reads");
+            ("kmer,k", po::value<size_t>()->default_value(8)->notifier(boost::bind(&check_range<size_t>, "kmer", _1, 5, 64)), "Kmer size of the lookup table for the longer read (min 5, max 64)")
+            ("kmer-offset,r", po::value<size_t>()->default_value(1)->notifier(boost::bind(&check_range<size_t>, "kmer-offset", _1, 1, 10000)), "Offset of kmers. Offset of 1, would be perfect overlapping kmers. An offset of kmer would be non-overlapping kmers that are right next to each other. Must be greater than 0.")
+            ("max-mismatch-errorDensity,x", po::value<double>()->default_value(.25)->notifier(boost::bind(&check_range_double, "max-mismatch-errorDensity", _1, 0.0, 1.0)), "Max percent of mismatches allowed in overlapped section (min 0.0, max 1.0)")
+            ("check-lengths,c", po::value<size_t>()->default_value(20)->notifier(boost::bind(&check_range<size_t>, "check-lengths", _1, 5, 10000)), "Check lengths of the ends (min 5, max 10000)")
+            ("min-overlap,o", po::value<size_t>()->default_value(8)->notifier(boost::bind(&check_range<size_t>, "min-length", _1, 5, 10000)), "Min overlap required to merge two reads (min 5, max 10000)");
 }
 
 void version_or_help(std::string program_name, std::string app_description, po::options_description &desc, po::variables_map vm, bool error) {
