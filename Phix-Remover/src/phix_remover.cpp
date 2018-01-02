@@ -47,8 +47,13 @@ int main(int argc, char** argv)
          */
         namespace po = boost::program_options;
         po::options_description standard = setStandardOptions();
+            // version|v ; help|h ; notes|N ; stats-file|L ; append-stats-file|A
         po::options_description input = setInputOptions();
+            // read1-input|1 ; read2-input|2 ; singleend-input|U
+            // tab-input|T ; interleaved-input|I ; from-stdin|S
         po::options_description output = setOutputOptions(program_name);
+            // force|F ; prefix|p ; gzip-output,g ; fastq-output|f
+            // tab-output|t ; interleaved-output|i ; unmapped-output|u ; to-stdout,O
 
         po::options_description desc("Application Specific Options");
 
@@ -57,7 +62,7 @@ int main(int argc, char** argv)
             ("check-read-2,C", po::bool_switch()->default_value(false),    "Check R2 as well as R1 (pe)")
             ("kmerSize,k", po::value<size_t>()->default_value(8), "Size of the kmer lookup")
             ("hits,x", po::value<double>()->default_value(.25), "How many K-mer hits to phix needs to happen to discard")
-            ("inverse,i", po::bool_switch()->default_value(false), "Output reads that are ABOVE the kmer hit threshold");
+            ("inverse,n", po::bool_switch()->default_value(false), "Output reads that are ABOVE the kmer hit threshold");
 
         po::options_description cmdline_options;
         cmdline_options.add(standard).add(input).add(output).add(desc);
@@ -99,17 +104,19 @@ int main(int argc, char** argv)
             if(vm.count("read1-input")) {
                 if (!vm.count("read2-input")) {
                     throw std::runtime_error("must specify both read1 and read2 input files.");
-                } else if (vm.count("read2-input") != vm.count("read1-input")) {
-                    throw std::runtime_error("must have same number of input files for read1 and read2");
                 }
                 auto read1_files = vm["read1-input"].as<std::vector<std::string> >();
                 auto read2_files = vm["read2-input"].as<std::vector<std::string> >();
+                
+                if (read1_files.size() != read2_files.size()) {
+                    throw std::runtime_error("must have same number of input files for read1 and read2");
+                }
 
                 for(size_t i = 0; i < read1_files.size(); ++i) {
                     bi::stream<bi::file_descriptor_source> is1{check_open_r(read1_files[i]), bi::close_handle};
                     bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
-                    InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
 
+                    InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
                     helper_discard(ifp, pe, se, counters, lookup, vm["hits"].as<double>(), vm["check-read-2"].as<bool>(),kmerSize,  inverse);
                 }
             }
