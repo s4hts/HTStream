@@ -30,7 +30,7 @@ public:
         labels.push_back(std::forward_as_tuple("PE_Out", PE_Out));
         labels.push_back(std::forward_as_tuple("SE_Out", SE_Out));
     }
-    
+
     virtual void input(const ReadBase &read) {
         const PairedEndRead *per = dynamic_cast<const PairedEndRead *>(&read);
         if (per) {
@@ -111,17 +111,17 @@ class OverlappingCounters : public Counters {
 
 public:
     std::vector<unsigned long long int> insertLength;
-    uint64_t lins = 0;
     uint64_t sins = 0;
-    uint64_t nins = 0;
+    uint64_t mins = 0;
+    uint64_t lins = 0;
     uint64_t SE_Discard = 0;
     uint64_t PE_Discard = 0;
     uint64_t Adapter_BpTrim = 0;
 
     OverlappingCounters() {
-        labels.push_back(std::forward_as_tuple("lins", lins));
         labels.push_back(std::forward_as_tuple("sins", sins));
-        labels.push_back(std::forward_as_tuple("nins", nins));
+        labels.push_back(std::forward_as_tuple("mins", mins));
+        labels.push_back(std::forward_as_tuple("lins", lins));
         labels.push_back(std::forward_as_tuple("SE_Discard", SE_Discard));
         labels.push_back(std::forward_as_tuple("PE_Discard", PE_Discard));
         labels.push_back(std::forward_as_tuple("Adapter_BpTrim", Adapter_BpTrim));
@@ -142,7 +142,7 @@ public:
         if (per.non_const_read_one().getDiscard()) {
             ++PE_Discard;
         } else {
-            ++nins;
+            ++lins;
             ++TotalFragmentsOutput;
             ++PE_Out;
         }
@@ -155,7 +155,7 @@ public:
                 ++sins; //adapters must be had (short insert)
                 Adapter_BpTrim += (origLength - one.getLength());
             } else {
-                ++lins; //must be a long insert
+                ++mins; //must be a long insert
             }
             if ( one.getLength() + 1 > insertLength.size() ) {
                 insertLength.resize(one.getLength() + 1);
@@ -180,7 +180,7 @@ public:
                     Adapter_BpTrim += std::max((one.getLength() - one.getLengthTrue()),(two.getLength() - two.getLengthTrue()));
 
                 } else {
-                    ++lins; //must be a long insert
+                    ++mins; //must be a long insert
                 }
                 if ( overlapped + 1 > insertLength.size() ) {
                     insertLength.resize(overlapped + 1);
@@ -188,7 +188,7 @@ public:
                 ++insertLength[overlapped];
                 
             } else {
-                ++nins; //lin
+                ++lins; //lin
             }
             ++PE_Out;
             ++TotalFragmentsOutput;

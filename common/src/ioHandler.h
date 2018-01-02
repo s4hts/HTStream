@@ -343,6 +343,6 @@ protected:
     } 
 };
 
-void writer_helper(ReadBase *r, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, bool stranded, bool no_orphans = false);
+void writer_helper(ReadBase *r, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, bool stranded = false, bool no_orphans = false);
 
 #endif

@@ -125,7 +125,6 @@ spReadBase getOverlappedReads(Read &r1, Read &r2, const seqLookup &seq1Map,  con
             }
         }
     } 
-
     for (size_t bp = seq2.length() - (checkLengths + kmer); bp < seq2.length() - kmer ; ++bp) {
         /*Do a quick check if the shorter read kmer shows up in longer read (read 2)
          * If it does, then try the brute force approach*/
@@ -138,23 +137,33 @@ spReadBase getOverlappedReads(Read &r1, Read &r2, const seqLookup &seq1Map,  con
         }
     }
     return nullptr;
-
 }
 
-spReadBase check_read(PairedEndRead &pe, const double misDensity, const size_t &minOver, const size_t &checkLengths, const size_t kmer, const size_t kmerOffset, const size_t minLength) {
+spReadBase check_read(PairedEndRead &pe, const double misDensity, const size_t &minOver, const size_t &checkLengths, const size_t kmer, const size_t kmerOffset) {
     
     Read &r1 = pe.non_const_read_one();
     Read &r2 = pe.non_const_read_two();
 
-    /*Read1 is always longer than Read 2)*/
+    bool swapped = false;
+    /* Read1 needs to always be longer than Read 2 */
     if (r1.getLength() < r2.getLength()) {
         std::swap(r1, r2);
+        swapped = true;
     }
-    /*Create a map with non-overlapping kmers*/
-    seqLookup mOne = readOneMap(r1.get_seq(), kmer, kmerOffset);
-    /*returns null if no much
-     * r1 and r2 and passed by ref in case only adapter trimming is on*/
-    spReadBase overlapped = getOverlappedReads(r1, r2, mOne, misDensity, minOver, checkLengths, kmer) ;
+    /* checkL needs to be as long as or longer than the shortest read */
+    size_t checkL = std::min(r2.getLength(), checkLengths);
+    /* checkL needs to be as long as or longer than the shortest read */
+    size_t kkmer = std::min(r2.getLength(), kmer);
+    /* Create a map with non-overlapping kmers */
+    seqLookup mOne = readOneMap(r1.get_seq(), kkmer, kmerOffset);
+    /* returns null if no much
+     * r1 and r2 and passed by ref in case only adapter trimming is on */
+    spReadBase overlapped = getOverlappedReads(r1, r2, mOne, misDensity, minOver, checkL, kkmer) ;
+    if (!overlapped && swapped){
+        std::swap(r1, r2);
+    } else if (swapped){
+       overlapped->set_read_rc();
+    }
 
     return overlapped;
 }
@@ -170,15 +179,14 @@ spReadBase check_read(PairedEndRead &pe, const double misDensity, const size_t &
  * With a sin it is useful to have the higher confidence as well as removing the adapters*/
 template <class T, class Impl>
 void helper_overlapper(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, OverlappingCounters &counters, const double misDensity, const size_t minOver, const bool stranded, const size_t min_length, const size_t checkLengths, const size_t kmer, const size_t kmerOffset, bool no_orphan = false ) {
-    
     while(reader.has_next()) {
         auto i = reader.next();
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());        
         if (per) {
             counters.input(*per);
-            spReadBase overlapped = check_read(*per, misDensity, minOver, checkLengths, kmer, kmerOffset, min_length);
+            spReadBase overlapped = check_read(*per, misDensity, minOver, checkLengths, kmer, kmerOffset);
             if (!overlapped) {
-                writer_helper(per, pe, se, stranded); //write out as is
+                writer_helper(per, pe, se, stranded, no_orphan); //write out as is
                 counters.output(*per);
             } else if (overlapped) { //if there is an overlap
                 overlapped->checkDiscarded(min_length);
