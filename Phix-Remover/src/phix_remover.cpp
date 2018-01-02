@@ -96,10 +96,8 @@ int main(int argc, char** argv)
                 readSeq = Read(phixSeq_True, "", "");
             }
             //sets kmer lookup arrays
-            size_t kmer = vm["kmer"].as<size_t>();
-            bool inverse = vm["inverse"].as<bool>();
             kmerSet lookup;
-            setLookup(lookup, readSeq, kmer);
+            setLookup(lookup, readSeq, vm["kmer"].as<size_t>());
 
             if(vm.count("read1-input")) {
                 if (!vm.count("read2-input")) {
@@ -117,7 +115,7 @@ int main(int argc, char** argv)
                     bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
 
                     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
-                    helper_discard(ifp, pe, se, counters, lookup, vm["percentage-hits"].as<double>(), vm["check-read-2"].as<bool>(),kmer,  inverse);
+                    helper_discard(ifp, pe, se, counters, lookup, vm["percentage-hits"].as<double>(), vm["check-read-2"].as<bool>(),vm["kmer"].as<size_t>(), vm["inverse"].as<bool>());
                 }
             }
 
@@ -126,7 +124,7 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> sef{ check_open_r(file), bi::close_handle};
                     InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(sef);
-                    helper_discard(ifs, pe, se, counters, lookup, vm["percentage-hits"].as<double>(), vm["check-read-2"].as<bool>(),kmer,  inverse);
+                    helper_discard(ifs, pe, se, counters, lookup, vm["percentage-hits"].as<double>(), vm["check-read-2"].as<bool>(),vm["kmer"].as<size_t>(), vm["inverse"].as<bool>());
                 }
             }
 
@@ -135,7 +133,7 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> tabin{ check_open_r(file), bi::close_handle};
                     InputReader<ReadBase, TabReadImpl> ift(tabin);
-                    helper_discard(ift, pe, se, counters, lookup, vm["percentage-hits"].as<double>(), vm["check-read-2"].as<bool>(),kmer,  inverse);
+                    helper_discard(ift, pe, se, counters, lookup, vm["percentage-hits"].as<double>(), vm["check-read-2"].as<bool>(),vm["kmer"].as<size_t>(), vm["inverse"].as<bool>());
                 }
             }
 
@@ -144,14 +142,14 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> inter{ check_open_r(file), bi::close_handle};
                     InputReader<PairedEndRead, InterReadImpl> ifp(inter);
-                    helper_discard(ifp, pe, se, counters, lookup, vm["percentage-hits"].as<double>(), vm["check-read-2"].as<bool>(),kmer,  inverse);
+                    helper_discard(ifp, pe, se, counters, lookup, vm["percentage-hits"].as<double>(), vm["check-read-2"].as<bool>(),vm["kmer"].as<size_t>(), vm["inverse"].as<bool>());
                 }
             }
 
             if (vm.count("from-stdin")) {
                 bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
-                helper_discard(ift, pe, se, counters, lookup, vm["percentage-hits"].as<double>(), vm["check-read-2"].as<bool>(),kmer,  inverse);
+                helper_discard(ift, pe, se, counters, lookup, vm["percentage-hits"].as<double>(), vm["check-read-2"].as<bool>(),vm["kmer"].as<size_t>(), vm["inverse"].as<bool>());
             }
             counters.write_out(statsFile, vm["append-stats-file"].as<bool>() , program_name, vm["notes"].as<std::string>());
         }
