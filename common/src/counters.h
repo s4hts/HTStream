@@ -218,19 +218,18 @@ public:
 
     virtual void write_out(const std::string &statsFile, bool appendStats, std::string program_name, std::string notes) {
 
+        std::vector<std::tuple<uint_fast64_t, uint_fast64_t>> iLength;
+
         initialize_json(statsFile, appendStats, program_name, notes);
 
         write_labels();
 
-        // embed instertLength (histogram) in sub json vector
-        outStats << ",\n"; //make sure json format is kept
-        outStats << "    \"histogram\": [";
-        outStats << "[" << 1 << "," << insertLength[1] << "]";  // first, so as to keep the json comma convention
-
-        for (size_t i = 2; i < insertLength.size(); ++i) {
-            outStats << ", [" << i << "," << insertLength[i] << "]"; //make sure json format is kept
+        for (size_t i = 1; i < insertLength.size(); ++i) {
+            if (insertLength[i] > 0) {
+                iLength.push_back(std::forward_as_tuple(i, insertLength[i]));
+            }
         }
-        outStats << "]"; // finish off histogram
+        write_vector("readlength_histogram",iLength);
 
         finalize_json();        
     }
