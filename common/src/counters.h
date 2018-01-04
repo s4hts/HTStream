@@ -14,6 +14,8 @@
 
 class Counters {
 public:
+    std::fstream outStats;
+
     uint64_t TotalFragmentsInput = 0;
     uint64_t PE_In = 0;
     uint64_t SE_In = 0;
@@ -73,35 +75,52 @@ public:
 
     virtual void write_out(const std::string &statsFile, bool appendStats, std::string program_name, std::string notes) {
         
+        initialize_json(statsFile, appendStats, program_name, notes);
+
+        write_labels();
+
+        finalize_json();        
+    }
+
+    virtual const void initialize_json(const std::string &statsFile, bool appendStats, std::string program_name, std::string notes) {
         std::ifstream testEnd(statsFile);
         int end = testEnd.peek();
         testEnd.close();
         
-        std::fstream outStats;
-        
         if (appendStats && end != -1) {
-            //outStats.open(statsFile, std::ofstream::out | std::ofstream::app); //overwritte
             outStats.open(statsFile, std::ios::in | std::ios::out); //overwritte
             outStats.seekp(-6, std::ios::end );
             outStats << "  }, \"" << program_name << "_" << getpid()  << "\": {\n";
         } else {
-            //outStats.open(statsFile, std::ofstream::out); //overwritte
             outStats.open(statsFile, std::ios::out | std::ios::trunc); //overwrite
             outStats << "{ \"" << program_name << "_" << getpid() <<  "\": {\n";
         }
-        outStats << "    \"Notes\": \"" << notes << "\"";
 
-        write_labels(outStats);
-        
-        outStats << "\n  }\n}\n";
-        outStats.flush();
+        outStats << "    \"Notes\": \"" << notes << "\"";
     }
 
-    virtual const void write_labels(std::fstream& outStats) {
+    virtual const void write_labels() {
         for (const auto &label : labels) {
             outStats << ",\n"; //make sure json format is kept
             outStats << "    \"" << std::get<0>(label) << "\": " << std::get<1>(label);
         }
+    }
+
+    virtual const void write_vector(std::string vector_name, std::vector<std::tuple<uint_fast64_t, uint_fast64_t>> vectortuple) {
+        // embed duplicate saturation in sub json vector
+        outStats << ",\n"; //make sure json format is kept
+        outStats << "    \""<< vector_name << "\": [";
+        outStats << "[" << std::get<0>(vectortuple[1]) << "," << std::get<1>(vectortuple[1]) << "]";  // first, so as to keep the json comma convention
+
+        for (size_t i = 2; i < vectortuple.size(); ++i) {
+            outStats << ", [" << std::get<0>(vectortuple[i]) << "," << std::get<1>(vectortuple[i]) << "]"; //make sure json format is kept
+        }
+        outStats << "]"; // finish off histogram
+    }
+
+    virtual const void finalize_json() {
+        outStats << "\n  }\n}\n";
+        outStats.flush();
     }
 
 };
@@ -199,24 +218,9 @@ public:
 
     virtual void write_out(const std::string &statsFile, bool appendStats, std::string program_name, std::string notes) {
 
-        std::ifstream testEnd(statsFile);
-        int end = testEnd.peek();
-        testEnd.close();
+        initialize_json(statsFile, appendStats, program_name, notes);
 
-        std::fstream outStats;
-
-        if (appendStats && end != -1) {
-            outStats.open(statsFile, std::ios::in | std::ios::out); //overwritte
-            outStats.seekp(-6, std::ios::end );
-            outStats << "  }, \"" << program_name << "_" << getpid()  << "\": {\n";
-        } else {
-            outStats.open(statsFile, std::ios::out | std::ios::trunc); //overwritt
-            outStats << "{ \"" << program_name << "_" << getpid() <<  "\": {\n";
-        }
-
-        outStats << "    \"Notes\": \"" << notes << "\"";
-
-        write_labels(outStats);
+        write_labels();
 
         // embed instertLength (histogram) in sub json vector
         outStats << ",\n"; //make sure json format is kept
@@ -227,8 +231,8 @@ public:
             outStats << ", [" << i << "," << insertLength[i] << "]"; //make sure json format is kept
         }
         outStats << "]"; // finish off histogram
-        outStats << "\n  }\n}\n";
-        outStats.flush();
+
+        finalize_json();        
     }
 };
 
@@ -340,8 +344,8 @@ class StatsCounters : public Counters {
 
 public:
     uint64_t A = 0;
-    uint64_t T = 0;
     uint64_t C = 0;
+    uint64_t T = 0;
     uint64_t G = 0;
     uint64_t N = 0;
     uint64_t R1_BpLen = 0;
@@ -422,26 +426,10 @@ public:
 
     virtual void write_out(const std::string &statsFile, bool appendStats, std::string program_name, std::string notes) {
         
-        std::ifstream testEnd(statsFile);
-        int end = testEnd.peek();
-        testEnd.close();
-        
-        std::fstream outStats;
-        
-        if (appendStats && end != -1) {
-            //outStats.open(statsFile, std::ofstream::out | std::ofstream::app); //overwritte
-            outStats.open(statsFile, std::ios::in | std::ios::out); //overwritte
-            outStats.seekp(-6, std::ios::end );
-            outStats << "  }, \"" << program_name << "_" << getpid()  << "\": {\n";
-        } else {
-            //outStats.open(statsFile, std::ofstream::out); //overwritte
-            outStats.open(statsFile, std::ios::out | std::ios::trunc); //overwrite
-            outStats << "{ \"" << program_name << "_" << getpid() <<  "\": {\n";
-        }
-        outStats << "    \"Notes\": \"" << notes << "\"";
+        initialize_json(statsFile, appendStats, program_name, notes);
 
-        write_labels(outStats);
-        
+        write_labels();
+
         // embed base composition as sub json vector
         outStats << ",\n"; //make sure json format is kept
         outStats << "    \"Base_Composition\": {\n";
@@ -451,8 +439,8 @@ public:
         outStats << "        \"" << 'C' << "\": " << C << ",\n";
         outStats << "        \"" << 'N' << "\": " << N << "\n";
         outStats << "    }"; // finish off histogram
-        outStats << "\n  }\n}\n";
-        outStats.flush();
+
+        finalize_json();        
     }
  
 };
@@ -487,40 +475,16 @@ public:
 
     virtual void write_out(const std::string &statsFile, bool appendStats, std::string program_name, std::string notes) {
 
-        std::ifstream testEnd(statsFile);
-        int end = testEnd.peek();
-        testEnd.close();
+        initialize_json(statsFile, appendStats, program_name, notes);
 
-        std::fstream outStats;
-
-        if (appendStats && end != -1) {
-            outStats.open(statsFile, std::ios::in | std::ios::out); //overwrite
-            outStats.seekp(-6, std::ios::end );
-            outStats << "  }, \"" << program_name << "_" << getpid()  << "\": {\n";
-        } else {
-            outStats.open(statsFile, std::ios::out | std::ios::trunc); //overwrite
-            outStats << "{ \"" << program_name << "_" << getpid() <<  "\": {\n";
-        }
-
-        outStats << "    \"Notes\": \"" << notes << "\"";
-
-        write_labels(outStats);
+        write_labels();
 
         // record final input/dup
         duplicateProportion.push_back(std::forward_as_tuple((TotalFragmentsInput - Ignored), Duplicate));
 
-        // embed duplicate saturation in sub json vector
-        outStats << ",\n"; //make sure json format is kept
-        outStats << "    \"duplicate_saturation\": [";
-        outStats << "[" << std::get<0>(duplicateProportion[1]) << "," << std::get<1>(duplicateProportion[1]) << "]";  // first, so as to keep the json comma convention
+        write_vector("duplicate_saturation",duplicateProportion);
 
-        for (size_t i = 2; i < duplicateProportion.size(); ++i) {
-            outStats << ", [" << std::get<0>(duplicateProportion[i]) << "," << std::get<1>(duplicateProportion[i]) << "]"; //make sure json format is kept
-        }
-        outStats << "]"; // finish off histogram
-
-        outStats << "\n  }\n}\n";
-        outStats.flush();
+        finalize_json();        
     }
 };
 
