@@ -17,20 +17,24 @@ public:
     std::fstream outStats;
 
     uint64_t TotalFragmentsInput = 0;
-    uint64_t PE_In = 0;
-    uint64_t SE_In = 0;
     uint64_t TotalFragmentsOutput = 0;
-    uint64_t PE_Out = 0;
+
+    uint64_t SE_In = 0;
     uint64_t SE_Out = 0;
+
+    uint64_t PE_In = 0;
+    uint64_t PE_Out = 0;
 
     std::vector<Label> labels;
     Counters() {
         labels.push_back(std::forward_as_tuple("TotalFragmentsInput", TotalFragmentsInput));
-        labels.push_back(std::forward_as_tuple("PE_In", PE_In));
-        labels.push_back(std::forward_as_tuple("SE_In", SE_In));
         labels.push_back(std::forward_as_tuple("TotalFragmentsOutput", TotalFragmentsOutput));
-        labels.push_back(std::forward_as_tuple("PE_Out", PE_Out));
+
+        labels.push_back(std::forward_as_tuple("SE_In", SE_In));
         labels.push_back(std::forward_as_tuple("SE_Out", SE_Out));
+
+        labels.push_back(std::forward_as_tuple("PE_In", PE_In));
+        labels.push_back(std::forward_as_tuple("PE_Out", PE_Out));
     }
 
     virtual void input(const ReadBase &read) {
@@ -99,17 +103,19 @@ public:
         outStats << "    \"Notes\": \"" << notes << "\"";
     }
 
-    virtual const void write_labels() {
+    virtual const void write_labels(const unsigned int indent = 1) {
         for (const auto &label : labels) {
+            std::string pad(4 * indent, ' ');
             outStats << ",\n"; //make sure json format is kept
-            outStats << "    \"" << std::get<0>(label) << "\": " << std::get<1>(label);
+            outStats << pad << "\"" << std::get<0>(label) << "\": " << std::get<1>(label);
         }
     }
 
-    virtual const void write_vector(std::string vector_name, std::vector<std::tuple<uint_fast64_t, uint_fast64_t>> vectortuple) {
+    virtual const void write_vector(std::string vector_name, std::vector<std::tuple<uint_fast64_t, uint_fast64_t>> vectortuple, const unsigned int indent = 1) {
         // embed duplicate saturation in sub json vector
+        std::string pad(4 * indent, ' ');
         outStats << ",\n"; //make sure json format is kept
-        outStats << "    \""<< vector_name << "\": [";
+        outStats << pad << "\""<< vector_name << "\": [";
         outStats << "[" << std::get<0>(vectortuple[1]) << "," << std::get<1>(vectortuple[1]) << "]";  // first, so as to keep the json comma convention
 
         for (size_t i = 2; i < vectortuple.size(); ++i) {
@@ -130,22 +136,27 @@ class OverlappingCounters : public Counters {
 
 public:
     std::vector<unsigned long long int> insertLength;
+
     uint64_t sins = 0;
     uint64_t mins = 0;
     uint64_t lins = 0;
-    uint64_t SE_Discard = 0;
-    uint64_t PE_Discard = 0;
     uint64_t Adapter_BpTrim = 0;
 
+    uint64_t SE_Discard = 0;
+
+    uint64_t PE_Discard = 0;
+
     OverlappingCounters() {
+        insertLength.resize(1);
+
         labels.push_back(std::forward_as_tuple("sins", sins));
         labels.push_back(std::forward_as_tuple("mins", mins));
         labels.push_back(std::forward_as_tuple("lins", lins));
-        labels.push_back(std::forward_as_tuple("SE_Discard", SE_Discard));
-        labels.push_back(std::forward_as_tuple("PE_Discard", PE_Discard));
         labels.push_back(std::forward_as_tuple("Adapter_BpTrim", Adapter_BpTrim));
 
-        insertLength.resize(1);
+        labels.push_back(std::forward_as_tuple("SE_Discard", SE_Discard));
+
+        labels.push_back(std::forward_as_tuple("PE_Discard", PE_Discard));
     }
 
     virtual void output(SingleEndRead &ser)  {
@@ -238,14 +249,18 @@ public:
 class PhixCounters : public Counters {
 
 public:
-    uint64_t PE_hits = 0;
-    uint64_t SE_hits = 0;
     uint64_t Inverse = 0;
 
+    uint64_t SE_hits = 0;
+
+    uint64_t PE_hits = 0;
+
     PhixCounters() {
-        labels.push_back(std::forward_as_tuple("PE_hits", PE_hits));
-        labels.push_back(std::forward_as_tuple("SE_hits", SE_hits));
         labels.push_back(std::forward_as_tuple("Inverse", Inverse));
+
+        labels.push_back(std::forward_as_tuple("SE_hits", SE_hits));
+
+        labels.push_back(std::forward_as_tuple("PE_hits", PE_hits));
     }
 
     void set_inverse() {
@@ -347,20 +362,24 @@ public:
     uint64_t T = 0;
     uint64_t G = 0;
     uint64_t N = 0;
-    uint64_t R1_BpLen = 0;
-    uint64_t R2_BpLen = 0;
+
     uint64_t SE_BpLen = 0;
-    uint64_t R1_bQ30 = 0;
-    uint64_t R2_bQ30 = 0;
     uint64_t SE_bQ30 = 0;
 
+    uint64_t R1_BpLen = 0;
+    uint64_t R1_bQ30 = 0;
+    uint64_t R2_BpLen = 0;
+    uint64_t R2_bQ30 = 0;
+
     StatsCounters () {
-        labels.push_back(std::forward_as_tuple("R1_BpLen", R1_BpLen));
-        labels.push_back(std::forward_as_tuple("R2_BpLen", R2_BpLen));
+
         labels.push_back(std::forward_as_tuple("SE_BpLen", SE_BpLen));
-        labels.push_back(std::forward_as_tuple("R1_bQ30", R1_bQ30));
-        labels.push_back(std::forward_as_tuple("R2_bQ30", R2_bQ30));
         labels.push_back(std::forward_as_tuple("SE_bQ30", SE_bQ30));
+
+        labels.push_back(std::forward_as_tuple("R1_BpLen", R1_BpLen));
+        labels.push_back(std::forward_as_tuple("R1_bQ30", R1_bQ30));
+        labels.push_back(std::forward_as_tuple("R2_BpLen", R2_BpLen));
+        labels.push_back(std::forward_as_tuple("R2_bQ30", R2_bQ30));
     };
 
 
@@ -448,12 +467,13 @@ class SuperDeduperCounters : public Counters {
 
 public:
     std::vector<std::tuple<uint_fast64_t, uint_fast64_t>> duplicateProportion;
-    uint64_t Duplicate = 0;
+
     uint64_t Ignored = 0;
+    uint64_t Duplicate = 0;
 
     SuperDeduperCounters() {
-        labels.push_back(std::forward_as_tuple("Duplicate", Duplicate));
         labels.push_back(std::forward_as_tuple("Ignored", Ignored));
+        labels.push_back(std::forward_as_tuple("Duplicate", Duplicate));
     }
 
     virtual void input(const ReadBase &read, size_t dup_freq) {
