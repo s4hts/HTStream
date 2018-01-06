@@ -10,6 +10,52 @@
 #include <boost/dynamic_bitset.hpp>
 #include <boost/functional/hash.hpp>
 
+class SuperDeduperCounters : public Counters {
+
+public:
+    std::vector<std::tuple<uint_fast64_t, uint_fast64_t>> duplicateProportion;
+
+    uint64_t Ignored = 0;
+    uint64_t Duplicate = 0;
+
+    SuperDeduperCounters(const std::string &statsFile, bool appendStats, std::string program_name, std::string notes) : Counters::Counters(statsFile, appendStats, program_name, notes) {
+        generic.push_back(std::forward_as_tuple("ignored", Ignored));
+        generic.push_back(std::forward_as_tuple("duplicate", Duplicate));
+    }
+
+    using Counters::input;
+    virtual void input(const ReadBase &read, size_t dup_freq) {
+
+        if (dup_freq > 0 & (TotalFragmentsInput - Ignored) % dup_freq == 0 & (TotalFragmentsInput - Ignored) != 0){
+            duplicateProportion.push_back(std::forward_as_tuple((TotalFragmentsInput - Ignored), Duplicate));
+        }
+        Counters::input(read);
+    }
+
+    void increment_replace() {
+        ++Duplicate;
+    }
+
+    void increment_ignored() {
+        ++Ignored;
+    }
+
+    virtual void write_out() {
+
+        // record final input/dup
+        duplicateProportion.push_back(std::forward_as_tuple((TotalFragmentsInput - Ignored), TotalFragmentsOutput));
+
+        initialize_json();
+
+        write_labels(generic);
+        write_vector("duplicate_saturation",duplicateProportion);
+        write_sublabels("Single_end", se);
+        write_sublabels("Paired_end", pe);
+
+        finalize_json();        
+    }
+};
+
 class dbhash {
 public:
     std::size_t operator() (const boost::dynamic_bitset<>& bs) const {
