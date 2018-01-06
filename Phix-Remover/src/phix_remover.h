@@ -34,7 +34,7 @@ public:
 
     uint64_t PE_hits = 0;
 
-    PhixCounters(const std::string &statsFile, bool appendStats, std::string program_name, std::string notes) : Counters::Counters(statsFile, appendStats, program_name, notes) {
+    PhixCounters(const std::string &statsFile, bool appendStats, const std::string &program_name, const std::string &notes) : Counters::Counters(statsFile, appendStats, program_name, notes) {
         generic.push_back(std::forward_as_tuple("inverse", Inverse));
 
         se.push_back(std::forward_as_tuple("SE_hits", SE_hits));

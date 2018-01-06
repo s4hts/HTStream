@@ -35,12 +35,13 @@ public:
     uint64_t PE_In = 0;
     uint64_t PE_Out = 0;
 
-    Counters(const std::string &statsFile, bool appendStats, std::string program_name, std::string notes) {
-        fStats.assign(statsFile);
+    Counters(const std::string &statsFile, bool appendStats, const std::string &program_name, const std::string &notes):
+            fStats(statsFile),
+            aStats(appendStats),
+            pName(program_name),
+            pNotes(notes) {
+
         check_write();
-        aStats = appendStats;
-        pName = program_name;
-        pNotes = notes;
 
         generic.push_back(std::forward_as_tuple("totalFragmentsInput", TotalFragmentsInput));
         generic.push_back(std::forward_as_tuple("totalFragmentsOutput", TotalFragmentsOutput));
@@ -113,15 +114,14 @@ public:
         // initialize should always be followed by finalize_json()
     }
 
-    virtual void write_labels(std::vector<Label> &labels, const unsigned int indent = 1) {
+    virtual void write_labels(const std::vector<Label> &labels, const unsigned int indent = 1) {
         std::string pad(4 * indent, ' ');
-        size_t i;
-        for (i=0; i < labels.size(); ++i) {
-            outStats << pad << "\"" << std::get<0>(labels[i]) << "\": " << std::get<1>(labels[i]) << ",\n";
+        for (auto& label : labels) {
+            outStats << pad << "\"" << std::get<0>(label) << "\": " << std::get<1>(label) << ",\n";
         }
     }
 
-    virtual void write_sublabels(std::string labelStr, std::vector<Label> &labels, const unsigned int indent = 1) {
+    virtual void write_sublabels(const std::string &labelStr, const std::vector<Label> &labels, const unsigned int indent = 1) {
         std::string pad(4 * indent, ' ');
         outStats << pad << "\"" << labelStr << "\": {\n";
         write_labels(labels, indent+1);
@@ -129,7 +129,7 @@ public:
         outStats << "\n" << pad << "},\n"; // finish off histogram
     }
 
-    virtual void write_vector(std::string vector_name, std::vector<std::tuple<uint_fast64_t, uint_fast64_t>> vectortuple, const unsigned int indent = 1) {
+    virtual void write_vector(const std::string &vector_name, const std::vector<std::tuple<uint_fast64_t, uint_fast64_t>> &vectortuple, const unsigned int indent = 1) {
         size_t i;
         std::string pad(4 * indent, ' ');
         outStats << pad << "\""<< vector_name << "\": [";
@@ -151,7 +151,7 @@ private:
     virtual void check_write() {
         FILE* f = NULL;
         
-        f = fopen(fStats.c_str(), "w");
+        f = fopen(fStats.c_str(), "a");
         if (!f) {
             throw std::runtime_error("cannot write to " + fStats + ": " +  std::strerror( errno ));
         }
@@ -175,7 +175,7 @@ public:
     uint64_t R2_Discarded = 0;
     uint64_t PE_Discarded = 0;
 
-    TrimmingCounters(const std::string &statsFile, bool appendStats, std::string program_name, std::string notes) : Counters::Counters(statsFile, appendStats, program_name, notes) {
+    TrimmingCounters(const std::string &statsFile, bool appendStats, const std::string &program_name, const std::string &notes) : Counters::Counters(statsFile, appendStats, program_name, notes) {
         se.push_back(std::forward_as_tuple("SE_rightTrimm", SE_Right_Trim));
         se.push_back(std::forward_as_tuple("SE_leftTrim", SE_Left_Trim));
         se.push_back(std::forward_as_tuple("SE_discarded", SE_Discarded));
@@ -255,7 +255,7 @@ public:
 
     uint64_t PE_Discard = 0;
 
-    OverlappingCounters(const std::string &statsFile, bool appendStats, std::string program_name, std::string notes) : Counters::Counters(statsFile, appendStats, program_name, notes) {
+    OverlappingCounters(const std::string &statsFile, bool appendStats, const std::string &program_name, const std::string &notes) : Counters::Counters(statsFile, appendStats, program_name, notes) {
 
         insertLength.resize(1);
 

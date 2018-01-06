@@ -35,7 +35,7 @@ public:
     uint64_t R2_BpLen = 0;
     uint64_t R2_bQ30 = 0;
 
-    StatsCounters(const std::string &statsFile, bool appendStats, std::string program_name, std::string notes) : Counters::Counters(statsFile, appendStats, program_name, notes) {
+    StatsCounters(const std::string &statsFile, bool appendStats, const std::string &program_name, const std::string &notes) : Counters::Counters(statsFile, appendStats, program_name, notes) {
 
         se.push_back(std::forward_as_tuple("SE_bpLen", SE_BpLen));
         se.push_back(std::forward_as_tuple("SE_bQ30", SE_bQ30));
