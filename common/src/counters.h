@@ -1,6 +1,8 @@
 #ifndef COUNTERS_H
 #define COUNTERS_H
 
+
+#include <unistd.h>
 #include <map>
 #include <unordered_map>
 #include <string>
@@ -10,7 +12,7 @@
 #include <tuple>
 #include "read.h"
 #include "typedefs.h"
-#include <unistd.h>
+#include <boost/filesystem/path.hpp>
 
 class Counters {
 public:
@@ -33,34 +35,24 @@ public:
     uint64_t PE_In = 0;
     uint64_t PE_Out = 0;
 
-    Counters() {
-        generic.push_back(std::forward_as_tuple("totalFragmentsInput", TotalFragmentsInput, "int"));
-        generic.push_back(std::forward_as_tuple("totalFragmentsOutput", TotalFragmentsOutput, "int"));
-
-        se.push_back(std::forward_as_tuple("SE_In", SE_In, "int"));
-        se.push_back(std::forward_as_tuple("SE_Out", SE_Out, "int"));
-
-        pe.push_back(std::forward_as_tuple("PE_In", PE_In, "int"));
-        pe.push_back(std::forward_as_tuple("PE_Out", PE_Out, "int"));
-    }
-
     Counters(const std::string &statsFile, bool appendStats, std::string program_name, std::string notes) {
         fStats.assign(statsFile);
+        check_write();
         aStats = appendStats;
         pName = program_name;
         pNotes = notes;
 
-        generic.push_back(std::forward_as_tuple("totalFragmentsInput", TotalFragmentsInput, "int"));
-        generic.push_back(std::forward_as_tuple("totalFragmentsOutput", TotalFragmentsOutput, "int"));
+        generic.push_back(std::forward_as_tuple("totalFragmentsInput", TotalFragmentsInput));
+        generic.push_back(std::forward_as_tuple("totalFragmentsOutput", TotalFragmentsOutput));
 
-        se.push_back(std::forward_as_tuple("SE_In", SE_In, "int"));
-        se.push_back(std::forward_as_tuple("SE_Out", SE_Out, "int"));
+        se.push_back(std::forward_as_tuple("SE_In", SE_In));
+        se.push_back(std::forward_as_tuple("SE_Out", SE_Out));
 
-        pe.push_back(std::forward_as_tuple("PE_In", PE_In, "int"));
-        pe.push_back(std::forward_as_tuple("PE_Out", PE_Out, "int"));
+        pe.push_back(std::forward_as_tuple("PE_In", PE_In));
+        pe.push_back(std::forward_as_tuple("PE_Out", PE_Out));
     }
 
-    virtual ~Counters() = 0;
+    virtual ~Counters() {}
 
     virtual void input(const ReadBase &read) {
         const PairedEndRead *per = dynamic_cast<const PairedEndRead *>(&read);
@@ -109,7 +101,7 @@ public:
         testEnd.close();
         
         if (aStats && end != -1) {
-            outStats.open(fStats, std::ios::in | std::ios::out); //overwritte
+            outStats.open(fStats, std::ios::in | std::ios::out); //append
             outStats.seekp(-6, std::ios::end );
             outStats << "  }, \"" << pName << "_" << getpid()  << "\": {\n";
         } else {
@@ -118,7 +110,7 @@ public:
         }
 
         outStats << "    \"Notes\": \"" << pNotes << "\",\n";
-        // must always have more
+        // initialize should always be followed by finalize_json()
     }
 
     virtual void write_labels(std::vector<Label> &labels, const unsigned int indent = 1) {
@@ -145,17 +137,28 @@ public:
             outStats << " [" << std::get<0>(vectortuple[i]) << "," << std::get<1>(vectortuple[i]) << "],"; //make sure json format is kept
         }
         outStats << " [" << std::get<0>(vectortuple[i]) << "," << std::get<1>(vectortuple[i]) << "]";  // first, so as to keep the json comma convention
-        outStats << "],\n"; // finish off histogram
+        outStats << " ],\n"; // finish off histogram
     }
 
     virtual void finalize_json() {
         outStats.seekp(-2, std::ios::end );
         outStats << "\n  }\n}\n";
         outStats.flush();
+        outStats.close();
+    }
+
+private:
+    virtual void check_write() {
+        FILE* f = NULL;
+        
+        f = fopen(fStats.c_str(), "w");
+        if (!f) {
+            throw std::runtime_error("cannot write to " + fStats + ": " +  std::strerror( errno ));
+        }
+        fclose (f);
     }
 
 };
-
 
 class OverlappingCounters : public Counters {
 
@@ -175,14 +178,14 @@ public:
 
         insertLength.resize(1);
 
-        generic.push_back(std::forward_as_tuple("sins", sins, "int"));
-        generic.push_back(std::forward_as_tuple("mins", mins, "int"));
-        generic.push_back(std::forward_as_tuple("lins", lins, "int"));
-        generic.push_back(std::forward_as_tuple("adapterBpTrim", Adapter_BpTrim, "int"));
+        generic.push_back(std::forward_as_tuple("sins", sins));
+        generic.push_back(std::forward_as_tuple("mins", mins));
+        generic.push_back(std::forward_as_tuple("lins", lins));
+        generic.push_back(std::forward_as_tuple("adapterBpTrim", Adapter_BpTrim));
 
-        se.push_back(std::forward_as_tuple("SE_Discard", SE_Discard, "int"));
+        se.push_back(std::forward_as_tuple("SE_Discard", SE_Discard));
 
-        pe.push_back(std::forward_as_tuple("PE_Discard", PE_Discard, "int"));
+        pe.push_back(std::forward_as_tuple("PE_Discard", PE_Discard));
     }
 
     using Counters::output;
@@ -284,11 +287,11 @@ public:
     uint64_t PE_hits = 0;
 
     PhixCounters(const std::string &statsFile, bool appendStats, std::string program_name, std::string notes) : Counters::Counters(statsFile, appendStats, program_name, notes) {
-        generic.push_back(std::forward_as_tuple("inverse", Inverse, "bool"));
+        generic.push_back(std::forward_as_tuple("inverse", Inverse));
 
-        se.push_back(std::forward_as_tuple("SE_hits", SE_hits, "int"));
+        se.push_back(std::forward_as_tuple("SE_hits", SE_hits));
 
-        pe.push_back(std::forward_as_tuple("PE_hits", PE_hits, "int"));
+        pe.push_back(std::forward_as_tuple("PE_hits", PE_hits));
     }
 
     void set_inverse() {
@@ -318,17 +321,17 @@ public:
     uint64_t PE_Discarded = 0;
 
     TrimmingCounters(const std::string &statsFile, bool appendStats, std::string program_name, std::string notes) : Counters::Counters(statsFile, appendStats, program_name, notes) {
-        se.push_back(std::forward_as_tuple("SE_rightTrimm", SE_Right_Trim, "int"));
-        se.push_back(std::forward_as_tuple("SE_leftTrim", SE_Left_Trim, "int"));
-        se.push_back(std::forward_as_tuple("SE_discarded", SE_Discarded, "int"));
+        se.push_back(std::forward_as_tuple("SE_rightTrimm", SE_Right_Trim));
+        se.push_back(std::forward_as_tuple("SE_leftTrim", SE_Left_Trim));
+        se.push_back(std::forward_as_tuple("SE_discarded", SE_Discarded));
 
-        pe.push_back(std::forward_as_tuple("R1_leftTrim", R1_Left_Trim, "int"));
-        pe.push_back(std::forward_as_tuple("R1_rightTrim", R1_Right_Trim, "int"));
-        pe.push_back(std::forward_as_tuple("R2_leftTrim", R2_Left_Trim, "int"));
-        pe.push_back(std::forward_as_tuple("R2_rightTrim", R2_Right_Trim, "int"));
-        pe.push_back(std::forward_as_tuple("R1_discarded", R1_Discarded, "int"));
-        pe.push_back(std::forward_as_tuple("R2_discarded", R2_Discarded, "int"));
-        pe.push_back(std::forward_as_tuple("PE_discarded", PE_Discarded, "int"));
+        pe.push_back(std::forward_as_tuple("R1_leftTrim", R1_Left_Trim));
+        pe.push_back(std::forward_as_tuple("R1_rightTrim", R1_Right_Trim));
+        pe.push_back(std::forward_as_tuple("R2_leftTrim", R2_Left_Trim));
+        pe.push_back(std::forward_as_tuple("R2_rightTrim", R2_Right_Trim));
+        pe.push_back(std::forward_as_tuple("R1_discarded", R1_Discarded));
+        pe.push_back(std::forward_as_tuple("R2_discarded", R2_Discarded));
+        pe.push_back(std::forward_as_tuple("PE_discarded", PE_Discarded));
     }
 
     void R1_stats(Read &one) {
@@ -404,19 +407,19 @@ public:
 
     StatsCounters(const std::string &statsFile, bool appendStats, std::string program_name, std::string notes) : Counters::Counters(statsFile, appendStats, program_name, notes) {
 
-        se.push_back(std::forward_as_tuple("SE_bpLen", SE_BpLen, "int"));
-        se.push_back(std::forward_as_tuple("SE_bQ30", SE_bQ30, "int"));
+        se.push_back(std::forward_as_tuple("SE_bpLen", SE_BpLen));
+        se.push_back(std::forward_as_tuple("SE_bQ30", SE_bQ30));
 
-        pe.push_back(std::forward_as_tuple("R1_bpLen", R1_BpLen, "int"));
-        pe.push_back(std::forward_as_tuple("R1_bQ30", R1_bQ30, "int"));
-        pe.push_back(std::forward_as_tuple("R2_bpLen", R2_BpLen, "int"));
-        pe.push_back(std::forward_as_tuple("R2_bQ30", R2_bQ30, "int"));
+        pe.push_back(std::forward_as_tuple("R1_bpLen", R1_BpLen));
+        pe.push_back(std::forward_as_tuple("R1_bQ30", R1_bQ30));
+        pe.push_back(std::forward_as_tuple("R2_bpLen", R2_BpLen));
+        pe.push_back(std::forward_as_tuple("R2_bQ30", R2_bQ30));
 
-        bases.push_back(std::forward_as_tuple("A", A, "int"));
-        bases.push_back(std::forward_as_tuple("C", C, "int"));
-        bases.push_back(std::forward_as_tuple("G", G, "int"));
-        bases.push_back(std::forward_as_tuple("T", T, "int"));
-        bases.push_back(std::forward_as_tuple("N", N, "int"));
+        bases.push_back(std::forward_as_tuple("A", A));
+        bases.push_back(std::forward_as_tuple("C", C));
+        bases.push_back(std::forward_as_tuple("G", G));
+        bases.push_back(std::forward_as_tuple("T", T));
+        bases.push_back(std::forward_as_tuple("N", N));
     }
 
 
@@ -500,8 +503,8 @@ public:
     uint64_t Duplicate = 0;
 
     SuperDeduperCounters(const std::string &statsFile, bool appendStats, std::string program_name, std::string notes) : Counters::Counters(statsFile, appendStats, program_name, notes) {
-        generic.push_back(std::forward_as_tuple("ignored", Ignored, "int"));
-        generic.push_back(std::forward_as_tuple("duplicate", Duplicate, "int"));
+        generic.push_back(std::forward_as_tuple("ignored", Ignored));
+        generic.push_back(std::forward_as_tuple("duplicate", Duplicate));
     }
 
     using Counters::input;

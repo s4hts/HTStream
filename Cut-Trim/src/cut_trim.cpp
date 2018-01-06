@@ -36,8 +36,6 @@ int main(int argc, char** argv)
                        "The Cut and Trim application trims a set number of bases from the 5'\n";
     app_description += "  and/or 3' end of each read\n";
 
-    TrimmingCounters counters;
-
     try
     {
         /** Define and parse the program options
@@ -84,14 +82,14 @@ int main(int argc, char** argv)
             
             po::notify(vm); // throws on error, so do after help in case
 
-
-
             std::string statsFile(vm["stats-file"].as<std::string>());
             std::string prefix(vm["prefix"].as<std::string>());
             
             std::shared_ptr<OutputWriter> pe = nullptr;
             std::shared_ptr<OutputWriter> se = nullptr;
             
+            TrimmingCounters counters(statsFile, vm["append-stats-file"].as<bool>() , program_name, vm["notes"].as<std::string>());
+
             outputWriters(pe, se, vm["fastq-output"].as<bool>(), vm["tab-output"].as<bool>(), vm["interleaved-output"].as<bool>(), vm["unmapped-output"].as<bool>(), vm["force"].as<bool>(), vm["gzip-output"].as<bool>(), vm["to-stdout"].as<bool>(), prefix );           
 
             if(vm.count("read1-input")) {
@@ -146,7 +144,7 @@ int main(int argc, char** argv)
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
                     helper_trim(ift, pe, se, counters, vm["min-length"].as<size_t>() , vm["stranded"].as<bool>(), vm["no-orphans"].as<bool>(), vm["r1-cut-left"].as<size_t>(), vm["r1-cut-right"].as<size_t>(), vm["r2-cut-left"].as<size_t>(), vm["r2-cut-right"].as<size_t>(), vm["max-length"].as<size_t>() );
             }  
-            counters.write_out(statsFile, vm["append-stats-file"].as<bool>() , program_name, vm["notes"].as<std::string>());
+            counters.write_out();
         }
         catch(po::error& e)
         {
