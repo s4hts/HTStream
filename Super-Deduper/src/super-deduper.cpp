@@ -29,7 +29,7 @@ int main(int argc, char** argv)
     std::string app_description =
                        "Super Deduper is a PCR duplicate remover from sequence data. It uses a\n";
     app_description += "  subsequence within each read to detect duplicates.\n";
-    app_description += "  Reads with 'N' character(s) isn the key sequence are ignored.\n";    
+    app_description += "  Reads with 'N' character(s) in the key sequence are ignored.\n";    
     app_description += "  Not recommended for single-end reads.";
 
 
@@ -54,19 +54,20 @@ int main(int argc, char** argv)
         po::options_description desc("Application Specific Options");
 
         desc.add_options()
-            ("start,s", po::value<size_t>()->default_value(10)->notifier(boost::bind(&check_range<size_t>, "start", _1, 1, 10000)),  "Start location for unique ID (min 1, max 10000)")
-            ("length,l", po::value<size_t>()->default_value(10)->notifier(boost::bind(&check_range<size_t>, "length", _1, 1, 10000)), "Length of unique ID (min 1, max 10000)")
-            ("avg-qual-score,q", po::value<double>()->default_value(30)->notifier(boost::bind(&check_range<size_t>, "avg-qual-score", _1, 1, 10000)), "Avg quality score to have the read written automatically (min 1, max 10000)")
-            ("inform-avg-qual-score,a", po::value<double>()->default_value(5)->notifier(boost::bind(&check_range<size_t>, "inform-avg-qual-score", _1, 1, 10000)), "Avg quality score to considered a read informative (min 1, max 10000)");
+            ("start,s", po::value<size_t>()->default_value(10),  "Start location for unique ID <int>")
+            ("length,l", po::value<size_t>()->default_value(10), "Length of unique ID <int>")
+            ("avg-qual-score,q", po::value<double>()->default_value(30), "Avg quality score to have the read written automatically <int>")
+            ("inform-avg-qual-score,a", po::value<double>()->default_value(5), "Avg quality score to consider a read informative <int> ") //I know this says user input is a int, but is actually a double
+            ("log_freq,e", po::value<size_t>()->default_value(1000000), "Frequency in which to log duplicates in reads, can be used to create a saturation plot (0 turns off). <int> "); 
 
         po::options_description cmdline_options;
         cmdline_options.add(standard).add(input).add(output).add(desc);
 
         po::variables_map vm;
+
         try
         {
-            po::store(po::parse_command_line(argc, argv, cmdline_options),
-                      vm); // can throw
+            po::store(po::parse_command_line(argc, argv, cmdline_options),vm); // can throw
 
             /** --help option
              */
@@ -100,7 +101,7 @@ int main(int argc, char** argv)
                     bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
                     
                     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
-                    load_map(ifp, counters, read_map, pe, se,vm["avg-qual-score"].as<double>(), vm["inform-avg-qual-score"].as<double>(), vm["start"].as<size_t>() - 1, vm["length"].as<size_t>());
+                    load_map(ifp, counters, read_map, pe, se,vm["avg-qual-score"].as<double>(), vm["inform-avg-qual-score"].as<double>(), vm["start"].as<size_t>() - 1, vm["length"].as<size_t>(), vm["log_freq"].as<size_t>() );
                 }
             }
 
@@ -109,7 +110,7 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> ser{ check_open_r(file), bi::close_handle};
                     InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(ser);
-                    load_map(ifs, counters, read_map, pe, se,vm["avg-qual-score"].as<double>(), vm["inform-avg-qual-score"].as<double>(), vm["start"].as<size_t>() - 1, vm["length"].as<size_t>());
+                    load_map(ifs, counters, read_map, pe, se,vm["avg-qual-score"].as<double>(), vm["inform-avg-qual-score"].as<double>(), vm["start"].as<size_t>() - 1, vm["length"].as<size_t>(), vm["log_freq"].as<size_t>() );
                 }
             }
             
@@ -118,7 +119,7 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> tabin{ check_open_r(file), bi::close_handle};
                     InputReader<ReadBase, TabReadImpl> ift(tabin);
-                    load_map(ift, counters, read_map, pe, se,vm["avg-qual-score"].as<double>(),  vm["inform-avg-qual-score"].as<double>(),  vm["start"].as<size_t>() - 1, vm["length"].as<size_t>());
+                    load_map(ift, counters, read_map, pe, se,vm["avg-qual-score"].as<double>(),  vm["inform-avg-qual-score"].as<double>(),  vm["start"].as<size_t>() - 1, vm["length"].as<size_t>(), vm["log_freq"].as<size_t>() );
                 }
             }
             
@@ -127,14 +128,14 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> inter{ check_open_r(file), bi::close_handle};
                     InputReader<PairedEndRead, InterReadImpl> ifp(inter);
-                    load_map(ifp, counters, read_map, pe, se,vm["avg-qual-score"].as<double>(),  vm["inform-avg-qual-score"].as<double>(), vm["start"].as<size_t>() - 1, vm["length"].as<size_t>());
+                    load_map(ifp, counters, read_map, pe, se,vm["avg-qual-score"].as<double>(),  vm["inform-avg-qual-score"].as<double>(), vm["start"].as<size_t>() - 1, vm["length"].as<size_t>(), vm["log_freq"].as<size_t>() );
                 }
             }
             
             if (vm.count("from-stdin")) {
                 bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
-                load_map(ift, counters, read_map, pe, se,vm["avg-qual-score"].as<double>(),  vm["inform-avg-qual-score"].as<double>(),  vm["start"].as<size_t>() - 1, vm["length"].as<size_t>());
+                load_map(ift, counters, read_map, pe, se,vm["avg-qual-score"].as<double>(),  vm["inform-avg-qual-score"].as<double>(),  vm["start"].as<size_t>() - 1, vm["length"].as<size_t>(), vm["log_freq"].as<size_t>() );
             }
             
             for(auto const &i : read_map) {

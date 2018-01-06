@@ -20,12 +20,12 @@ public:
 typedef std::unordered_map <boost::dynamic_bitset<>, std::unique_ptr<ReadBase>, dbhash> BitMap;
 
 template <class T, class Impl>
-void load_map(InputReader<T, Impl> &reader, SuperDeduperCounters& counters, BitMap& read_map, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, double avg_automatic_write, double discard_qual, size_t start, size_t length) {
+void load_map(InputReader<T, Impl> &reader, SuperDeduperCounters& counters, BitMap& read_map, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, double avg_automatic_write, double discard_qual, size_t start, size_t length, size_t log_freq ){
     double tmpAvg;
 
     while(reader.has_next()) {
         auto i = reader.next();
-        counters.input(*i);
+        counters.input(*i, log_freq);        
         //check for existance, store or compare quality and replace:
         if (auto key=i->get_key(start, length)) {
             // find faster than count on some compilers, new key

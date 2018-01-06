@@ -25,7 +25,7 @@ TEST_F(SDTest, HashMapLoadTest) {
     std::shared_ptr<OutputWriter> tab(new ReadBaseOutTab(hts_of));  
    
     
-    load_map(ifp, counter, read_map, tab, tab, avg_auto_write, 3, start, length);
+    load_map(ifp, counter, read_map, tab, tab, avg_auto_write, 3, start, length, 100);
     std::cout << read_map.size() << '\n';
     ASSERT_EQ(read_map.size(), 1);
     ASSERT_EQ(counter.TotalFragmentsInput, 4);

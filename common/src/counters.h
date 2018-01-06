@@ -7,6 +7,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <tuple>
 #include "read.h"
 #include "typedefs.h"
 #include <unistd.h>
@@ -29,28 +30,20 @@ public:
         labels.push_back(std::forward_as_tuple("PE_Out", PE_Out));
         labels.push_back(std::forward_as_tuple("SE_Out", SE_Out));
     }
-    virtual void input(const PairedEndRead &read) {
-        ++TotalFragmentsInput;
-        ++PE_In; 
-    }
-
-    virtual void input(const SingleEndRead &read) {
-        ++TotalFragmentsInput;
-        ++SE_In; 
-    }
 
     virtual void input(const ReadBase &read) {
         const PairedEndRead *per = dynamic_cast<const PairedEndRead *>(&read);
         if (per) {
-            input(*per);
+            ++PE_In;
         } else {
             const SingleEndRead *ser = dynamic_cast<const SingleEndRead *>(&read);
             if (ser) {
-                input(*ser); 
+                ++SE_In; 
             } else {
                 throw std::runtime_error("In utils.h output: read type not valid");
             }
-        } 
+        }
+        ++TotalFragmentsInput;
     }
 
     virtual void output(PairedEndRead &read, bool no_orhpans = false) {
@@ -465,7 +458,9 @@ public:
 };
 
 class SuperDeduperCounters : public Counters {
+
 public:
+    std::vector<std::tuple<uint_fast64_t, uint_fast64_t>> duplicateProportion;
     uint64_t Duplicate = 0;
     uint64_t Ignored = 0;
 
@@ -474,12 +469,58 @@ public:
         labels.push_back(std::forward_as_tuple("Ignored", Ignored));
     }
 
+    virtual void input(const ReadBase &read, size_t dup_freq) {
+
+        if (dup_freq > 0 & (TotalFragmentsInput - Ignored) % dup_freq == 0){
+            duplicateProportion.push_back(std::forward_as_tuple((TotalFragmentsInput - Ignored), Duplicate));
+        }
+        Counters::input(read);
+    }
+
     void increment_replace() {
         ++Duplicate;
     }
 
     void increment_ignored() {
         ++Ignored;
+    }
+
+    virtual void write_out(const std::string &statsFile, bool appendStats, std::string program_name, std::string notes) {
+
+        std::ifstream testEnd(statsFile);
+        int end = testEnd.peek();
+        testEnd.close();
+
+        std::fstream outStats;
+
+        if (appendStats && end != -1) {
+            outStats.open(statsFile, std::ios::in | std::ios::out); //overwrite
+            outStats.seekp(-6, std::ios::end );
+            outStats << "  }, \"" << program_name << "_" << getpid()  << "\": {\n";
+        } else {
+            outStats.open(statsFile, std::ios::out | std::ios::trunc); //overwrite
+            outStats << "{ \"" << program_name << "_" << getpid() <<  "\": {\n";
+        }
+
+        outStats << "    \"Notes\": \"" << notes << "\"";
+
+        write_labels(outStats);
+
+        // record final input/dup
+        duplicateProportion.push_back(std::forward_as_tuple((TotalFragmentsInput - Ignored), Duplicate));
+
+        // embed duplicate saturation in sub json vector
+        outStats << ",\n"; //make sure json format is kept
+        outStats << "    \"duplicate_saturation\": [";
+        outStats << "[" << std::get<0>(duplicateProportion[1]) << "," << std::get<1>(duplicateProportion[1]) << "]";  // first, so as to keep the json comma convention
+
+        for (size_t i = 2; i < duplicateProportion.size(); ++i) {
+            outStats << ", [" << std::get<0>(duplicateProportion[i]) << "," << std::get<1>(duplicateProportion[i]) << "]"; //make sure json format is kept
+        }
+        outStats << "]"; // finish off histogram
+
+        outStats << "\n  }\n}\n";
+        outStats.flush();
     }
 };
 
