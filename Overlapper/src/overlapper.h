@@ -21,6 +21,8 @@
 #include <utility>
 #include "utils.h"
 
+extern template class InputReader<PairedEndRead, InterReadImpl>;
+
 typedef std::unordered_multimap<std::string, std::size_t> seqLookup;
 typedef std::shared_ptr<SingleEndRead> spReadBase;
 
