@@ -33,6 +33,17 @@ public:
     uint64_t PE_In = 0;
     uint64_t PE_Out = 0;
 
+    Counters() {
+        generic.push_back(std::forward_as_tuple("totalFragmentsInput", TotalFragmentsInput, "int"));
+        generic.push_back(std::forward_as_tuple("totalFragmentsOutput", TotalFragmentsOutput, "int"));
+
+        se.push_back(std::forward_as_tuple("SE_In", SE_In, "int"));
+        se.push_back(std::forward_as_tuple("SE_Out", SE_Out, "int"));
+
+        pe.push_back(std::forward_as_tuple("PE_In", PE_In, "int"));
+        pe.push_back(std::forward_as_tuple("PE_Out", PE_Out, "int"));
+    }
+
     Counters(const std::string &statsFile, bool appendStats, std::string program_name, std::string notes) {
         fStats.assign(statsFile);
         aStats = appendStats;
