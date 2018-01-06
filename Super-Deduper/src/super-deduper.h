@@ -10,6 +10,11 @@
 #include <boost/dynamic_bitset.hpp>
 #include <boost/functional/hash.hpp>
 
+extern template class InputReader<SingleEndRead, SingleEndReadFastqImpl>;
+extern template class InputReader<PairedEndRead, PairedEndReadFastqImpl>;
+extern template class InputReader<PairedEndRead, InterReadImpl>;
+extern template class InputReader<ReadBase, TabReadImpl>;
+
 class SuperDeduperCounters : public Counters {
 
 public:

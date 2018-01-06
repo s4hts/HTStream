@@ -11,6 +11,11 @@
 #include <algorithm>
 #include "utils.h"
 
+extern template class InputReader<SingleEndRead, SingleEndReadFastqImpl>;
+extern template class InputReader<PairedEndRead, PairedEndReadFastqImpl>;
+extern template class InputReader<PairedEndRead, InterReadImpl>;
+extern template class InputReader<ReadBase, TabReadImpl>;
+
 /*
 cut_trim expected behavior:
 cut_trim is expected to be one of the first apps used in a preprocessing pipeline

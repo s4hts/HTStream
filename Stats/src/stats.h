@@ -11,6 +11,11 @@
 #include <algorithm>
 #include "utils.h"
 
+extern template class InputReader<SingleEndRead, SingleEndReadFastqImpl>;
+extern template class InputReader<PairedEndRead, PairedEndReadFastqImpl>;
+extern template class InputReader<PairedEndRead, InterReadImpl>;
+extern template class InputReader<ReadBase, TabReadImpl>;
+
 class StatsCounters : public Counters {
 
 public:

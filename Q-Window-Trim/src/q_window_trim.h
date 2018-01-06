@@ -12,6 +12,11 @@
 #include "utils.h"
 #include "counters.h"
 
+extern template class InputReader<SingleEndRead, SingleEndReadFastqImpl>;
+extern template class InputReader<PairedEndRead, PairedEndReadFastqImpl>;
+extern template class InputReader<PairedEndRead, InterReadImpl>;
+extern template class InputReader<ReadBase, TabReadImpl>;
+
 void trim_left(Read &rb, size_t qual_threshold, size_t window_size) {
 
     std::string qual = rb.get_qual();

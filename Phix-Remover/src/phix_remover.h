@@ -20,6 +20,11 @@
 #include <boost/functional/hash.hpp>
 #include <tuple>
 
+extern template class InputReader<SingleEndRead, SingleEndReadFastqImpl>;
+extern template class InputReader<PairedEndRead, PairedEndReadFastqImpl>;
+extern template class InputReader<PairedEndRead, InterReadImpl>;
+extern template class InputReader<ReadBase, TabReadImpl>;
+
 class PhixCounters : public Counters {
 
 public:

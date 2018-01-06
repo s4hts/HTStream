@@ -160,6 +160,87 @@ private:
 
 };
 
+class TrimmingCounters : public Counters {
+
+public: 
+    uint64_t SE_Right_Trim = 0;
+    uint64_t SE_Left_Trim = 0;
+    uint64_t SE_Discarded = 0;
+
+    uint64_t R1_Left_Trim = 0;
+    uint64_t R1_Right_Trim = 0;
+    uint64_t R2_Left_Trim = 0;
+    uint64_t R2_Right_Trim = 0;    
+    uint64_t R1_Discarded = 0;
+    uint64_t R2_Discarded = 0;
+    uint64_t PE_Discarded = 0;
+
+    TrimmingCounters(const std::string &statsFile, bool appendStats, std::string program_name, std::string notes) : Counters::Counters(statsFile, appendStats, program_name, notes) {
+        se.push_back(std::forward_as_tuple("SE_rightTrimm", SE_Right_Trim));
+        se.push_back(std::forward_as_tuple("SE_leftTrim", SE_Left_Trim));
+        se.push_back(std::forward_as_tuple("SE_discarded", SE_Discarded));
+
+        pe.push_back(std::forward_as_tuple("R1_leftTrim", R1_Left_Trim));
+        pe.push_back(std::forward_as_tuple("R1_rightTrim", R1_Right_Trim));
+        pe.push_back(std::forward_as_tuple("R2_leftTrim", R2_Left_Trim));
+        pe.push_back(std::forward_as_tuple("R2_rightTrim", R2_Right_Trim));
+        pe.push_back(std::forward_as_tuple("R1_discarded", R1_Discarded));
+        pe.push_back(std::forward_as_tuple("R2_discarded", R2_Discarded));
+        pe.push_back(std::forward_as_tuple("PE_discarded", PE_Discarded));
+    }
+
+    void R1_stats(Read &one) {
+        R1_Left_Trim += one.getLTrim();
+        R1_Right_Trim += one.getRTrim();
+    }
+
+    void R2_stats(Read &two) {
+        R2_Left_Trim += two.getLTrim();
+        R2_Right_Trim += two.getRTrim();
+    }
+
+    void SE_stats(Read &se) {
+        SE_Left_Trim += se.getLTrim();
+        SE_Right_Trim += se.getRTrim();
+    }
+
+    using Counters::output;
+    void output(PairedEndRead &per, bool no_orphans = false) {
+        Read &one = per.non_const_read_one();
+        Read &two = per.non_const_read_two();
+        if (!one.getDiscard() && !two.getDiscard()) {
+            ++TotalFragmentsOutput;
+            ++PE_Out;
+            R1_stats(one);
+            R2_stats(two);
+        } else if (!one.getDiscard() && !no_orphans) { //if stranded RC
+            ++TotalFragmentsOutput;
+            ++SE_Out;
+            ++R2_Discarded;
+            SE_stats(one);
+        } else if (!two.getDiscard() && !no_orphans) { // Will never be RC
+            ++TotalFragmentsOutput;
+            ++SE_Out;
+            ++R1_Discarded;
+            SE_stats(two);
+        } else {
+            ++PE_Discarded;
+        }
+    }
+
+    void output(SingleEndRead &ser) {
+        Read &one = ser.non_const_read_one();
+        if (!one.getDiscard()) {
+            ++TotalFragmentsOutput;
+            ++SE_Out;
+            SE_stats(one);
+        } else {
+            ++SE_Discarded;
+        }
+    }
+    
+};
+
 class OverlappingCounters : public Counters {
 
 public:
@@ -277,85 +358,5 @@ public:
     }
 };
 
-class TrimmingCounters : public Counters {
-
-public: 
-    uint64_t SE_Right_Trim = 0;
-    uint64_t SE_Left_Trim = 0;
-    uint64_t SE_Discarded = 0;
-
-    uint64_t R1_Left_Trim = 0;
-    uint64_t R1_Right_Trim = 0;
-    uint64_t R2_Left_Trim = 0;
-    uint64_t R2_Right_Trim = 0;    
-    uint64_t R1_Discarded = 0;
-    uint64_t R2_Discarded = 0;
-    uint64_t PE_Discarded = 0;
-
-    TrimmingCounters(const std::string &statsFile, bool appendStats, std::string program_name, std::string notes) : Counters::Counters(statsFile, appendStats, program_name, notes) {
-        se.push_back(std::forward_as_tuple("SE_rightTrimm", SE_Right_Trim));
-        se.push_back(std::forward_as_tuple("SE_leftTrim", SE_Left_Trim));
-        se.push_back(std::forward_as_tuple("SE_discarded", SE_Discarded));
-
-        pe.push_back(std::forward_as_tuple("R1_leftTrim", R1_Left_Trim));
-        pe.push_back(std::forward_as_tuple("R1_rightTrim", R1_Right_Trim));
-        pe.push_back(std::forward_as_tuple("R2_leftTrim", R2_Left_Trim));
-        pe.push_back(std::forward_as_tuple("R2_rightTrim", R2_Right_Trim));
-        pe.push_back(std::forward_as_tuple("R1_discarded", R1_Discarded));
-        pe.push_back(std::forward_as_tuple("R2_discarded", R2_Discarded));
-        pe.push_back(std::forward_as_tuple("PE_discarded", PE_Discarded));
-    }
-
-    void R1_stats(Read &one) {
-        R1_Left_Trim += one.getLTrim();
-        R1_Right_Trim += one.getRTrim();
-    }
-
-    void R2_stats(Read &two) {
-        R2_Left_Trim += two.getLTrim();
-        R2_Right_Trim += two.getRTrim();
-    }
-
-    void SE_stats(Read &se) {
-        SE_Left_Trim += se.getLTrim();
-        SE_Right_Trim += se.getRTrim();
-    }
-
-    using Counters::output;
-    void output(PairedEndRead &per, bool no_orphans = false) {
-        Read &one = per.non_const_read_one();
-        Read &two = per.non_const_read_two();
-        if (!one.getDiscard() && !two.getDiscard()) {
-            ++TotalFragmentsOutput;
-            ++PE_Out;
-            R1_stats(one);
-            R2_stats(two);
-        } else if (!one.getDiscard() && !no_orphans) { //if stranded RC
-            ++TotalFragmentsOutput;
-            ++SE_Out;
-            ++R2_Discarded;
-            SE_stats(one);
-        } else if (!two.getDiscard() && !no_orphans) { // Will never be RC
-            ++TotalFragmentsOutput;
-            ++SE_Out;
-            ++R1_Discarded;
-            SE_stats(two);
-        } else {
-            ++PE_Discarded;
-        }
-    }
-
-    void output(SingleEndRead &ser) {
-        Read &one = ser.non_const_read_one();
-        if (!one.getDiscard()) {
-            ++TotalFragmentsOutput;
-            ++SE_Out;
-            SE_stats(one);
-        } else {
-            ++SE_Discarded;
-        }
-    }
-    
-};
 
 #endif
