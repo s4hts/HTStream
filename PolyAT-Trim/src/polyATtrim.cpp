@@ -58,8 +58,8 @@ int main(int argc, char** argv)
             // no-left|l ; no-right|r
 
         desc.add_options()
-            ("max-mismatch,x", po::value<size_t>()->default_value(3),    "Max amount of mismatches allowed in trimmed area")
-            ("min-trim,M", po::value<size_t>()->default_value(5),    "Min base pairs trim for AT tail");
+            ("max-mismatch,x", po::value<size_t>()->default_value(3)->notifier(boost::bind(&check_range<size_t>, "max-mismatch", _1, 0, 10000)), "Max amount of mismatches allowed in trimmed area (min 0, max 10000)")
+            ("min-trim,M", po::value<size_t>()->default_value(5)->notifier(boost::bind(&check_range<size_t>, "min-trim", _1, 1, 10000)), "Min base pairs trim for AT tail (min 1, max 10000)");
 
         po::options_description cmdline_options;
         cmdline_options.add(standard).add(input).add(output).add(desc);

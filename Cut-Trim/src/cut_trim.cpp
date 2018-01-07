@@ -56,16 +56,15 @@ int main(int argc, char** argv)
             // no-orphans|n ; stranded|s ; min-length|m
 
         desc.add_options()
-            ("r1-cut-left,a", po::value<size_t>()->default_value(0),    "Cut length of sequence from read 1 left (5') end");
+            ("r1-cut-left,a", po::value<size_t>()->default_value(0)->notifier(boost::bind(&check_range<size_t>, "r1-cut-left", _1, 0, 10000)), "Cut length of sequence from read 1 left (5') end (min 0, max 10000)");
         desc.add_options()
-            ("r1-cut-right,b", po::value<size_t>()->default_value(0),    "Cut length of sequence from read 1 right (3') end");
+            ("r1-cut-right,b", po::value<size_t>()->default_value(0)->notifier(boost::bind(&check_range<size_t>, "r1-cut-right", _1, 0, 10000)), "Cut length of sequence from read 1 right (3') end (min 0, max 10000)");
         desc.add_options()
-            ("r2-cut-left,c", po::value<size_t>()->default_value(0),    "Cut length of sequence from read 2 left (5') end");
+            ("r2-cut-left,c", po::value<size_t>()->default_value(0)->notifier(boost::bind(&check_range<size_t>, "r2-cut-left", _1, 0, 10000)), "Cut length of sequence from read 2 left (5') end (min 0, max 10000)");
         desc.add_options()
-            ("r2-cut-right,d", po::value<size_t>()->default_value(0),    "Cut length of sequence from read 2 right (3') end");
-
+            ("r2-cut-right,d", po::value<size_t>()->default_value(0)->notifier(boost::bind(&check_range<size_t>, "r2-cut-right", _1, 0, 10000)), "Cut length of sequence from read 2 right (3') end (min 0, max 10000)");
         desc.add_options()
-            ("max-length,M", po::value<size_t>()->default_value(0),    "Maximum allowed length of read, effectively right trims to max-length");
+            ("max-length,M", po::value<size_t>()->default_value(0)->notifier(boost::bind(&check_range<size_t>, "max-length", _1, 0, 10000)), "Maximum allowed length of read, effectively right trims to max-length (min 0, max 10000)");
 
         po::options_description cmdline_options;
         cmdline_options.add(standard).add(input).add(output).add(desc);

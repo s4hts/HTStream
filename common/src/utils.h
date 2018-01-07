@@ -9,6 +9,7 @@
 #include <memory>
 #include <vector>
 #include <boost/program_options.hpp>
+#include <boost/bind.hpp>
 #include "version.h"
 
 namespace po = boost::program_options;
@@ -24,6 +25,16 @@ po::options_description setOutputOptions(std::string program_name);
 void setDefaultParamsCutting(po::options_description &desc);
 void setDefaultParamsTrim(po::options_description &desc);
 void setDefaultParamsOverlapping(po::options_description &desc);
+
+template<typename T>
+void check_range(const std::string& name, const T& value, const T& min, const T& max)
+{
+   if (value < min || value > max)
+   {
+        throw po::validation_error(po::validation_error::invalid_option_value, name);
+      // throw exception
+   }
+}
 
 
 char rc(const char bp);

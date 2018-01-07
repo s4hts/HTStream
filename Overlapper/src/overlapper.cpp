@@ -74,14 +74,6 @@ int main(int argc, char** argv)
 
             po::notify(vm); // throws on error, so do after help in case
          
-            if (vm["max-mismatch-errorDensity"].as<double>() < 0.0 ||  vm["max-mismatch-errorDensity"].as<double>() > 1.0) {
-                throw std::runtime_error("Woah, there human. It seems you have entered a wacky, zany number that isn't between 0.0 and 1.0 for max mismatch errorDensity.\nThat is why there is this error message. (>^_^)>\n\n");
-            }
-
-            if (vm["kmer-offset"].as<size_t>() == 0) {
-                throw std::runtime_error("Human - you cannot have a kmer offset of zero! Madness would ensue. Please, try again, but this time make sure the kmer-offset,r flag is set to above 0.\n\n");
-            }
-        
             std::string statsFile(vm["stats-file"].as<std::string>());
             std::string prefix(vm["prefix"].as<std::string>());
    
