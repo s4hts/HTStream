@@ -54,11 +54,11 @@ int main(int argc, char** argv)
         po::options_description desc("Application Specific Options");
 
         desc.add_options()
-            ("start,s", po::value<size_t>()->default_value(10),  "Start location for unique ID <int>")
-            ("length,l", po::value<size_t>()->default_value(10), "Length of unique ID <int>")
-            ("avg-qual-score,q", po::value<double>()->default_value(30), "Avg quality score to have the read written automatically <int>")
-            ("inform-avg-qual-score,a", po::value<double>()->default_value(5), "Avg quality score to consider a read informative <int> ") //I know this says user input is a int, but is actually a double
-            ("log_freq,e", po::value<size_t>()->default_value(1000000), "Frequency in which to log duplicates in reads, can be used to create a saturation plot (0 turns off). <int> "); 
+            ("start,s", po::value<size_t>()->default_value(10)->notifier(boost::bind(&check_range<size_t>, "start", _1, 1, 10000)),  "Start location for unique ID (min 1, max 10000)")
+            ("length,l", po::value<size_t>()->default_value(10)->notifier(boost::bind(&check_range<size_t>, "length", _1, 1, 10000)), "Length of unique ID (min 1, max 10000)")
+            ("avg-qual-score,q", po::value<double>()->default_value(30)->notifier(boost::bind(&check_range_double, "avg-qual-score", _1, 1, 10000)), "Avg quality score to have the read written automatically (min 1, max 10000)")
+            ("inform-avg-qual-score,a", po::value<double>()->default_value(5)->notifier(boost::bind(&check_range_double, "inform-avg-qual-score", _1, 1, 10000)), "Avg quality score to consider a read informative (min 1, max 10000)") //I know this says user input is a int, but is actually a double
+            ("log_freq,e", po::value<size_t>()->default_value(1000000)->notifier(boost::bind(&check_range<size_t>, "log_freq", _1, 0, 1000000000)), "Frequency in which to log duplicates in reads, can be used to create a saturation plot (0 turns off)."); 
 
         po::options_description cmdline_options;
         cmdline_options.add(standard).add(input).add(output).add(desc);
