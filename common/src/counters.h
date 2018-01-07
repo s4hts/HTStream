@@ -129,7 +129,7 @@ public:
         outStats << "\n" << pad << "},\n"; // finish off histogram
     }
 
-    virtual void write_vector(const std::string &vector_name, const std::vector<std::tuple<uint_fast64_t, uint_fast64_t>> &vectortuple, const unsigned int indent = 1) {
+    virtual void write_vector(const std::string &vector_name, const std::vector<Vector> &vectortuple, const unsigned int indent = 1) {
         size_t i;
         std::string pad(4 * indent, ' ');
         outStats << pad << "\""<< vector_name << "\": [";
@@ -149,13 +149,24 @@ public:
 
 private:
     virtual void check_write() {
-        FILE* f = NULL;
-        
-        f = fopen(fStats.c_str(), "a");
-        if (!f) {
-            throw std::runtime_error("cannot write to " + fStats + ": " +  std::strerror( errno ));
+        outStats.open(fStats, std::ios::in | std::ios::out);
+
+        if(outStats.is_open())
+        {
+            outStats.close();
         }
-        fclose (f);
+        else
+        {
+            throw std::runtime_error("Error: Cannot write to " + fStats + ": " +  std::strerror( errno ));
+        }
+
+        // FILE* f = NULL;
+        
+        // f = fopen(fStats.c_str(), "a");
+        // if (!f) {
+        //     throw std::runtime_error("cannot write to " + fStats + ": " +  std::strerror( errno ));
+        // }
+        // fclose (f);
     }
 
 };
@@ -340,7 +351,7 @@ public:
 
     virtual void write_out() {
 
-        std::vector<std::tuple<uint_fast64_t, uint_fast64_t>> iLength;
+        std::vector<Vector> iLength;
         for (size_t i = 1; i < insertLength.size(); ++i) {
             if (insertLength[i] > 0) {
                 iLength.push_back(std::forward_as_tuple(i, insertLength[i]));

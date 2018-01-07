@@ -18,7 +18,7 @@ extern template class InputReader<ReadBase, TabReadImpl>;
 class SuperDeduperCounters : public Counters {
 
 public:
-    std::vector<std::tuple<uint_fast64_t, uint_fast64_t>> duplicateProportion;
+    std::vector<Vector> duplicateProportion;
 
     uint64_t Ignored = 0;
     uint64_t Duplicate = 0;
