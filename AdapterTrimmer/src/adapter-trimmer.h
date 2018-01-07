@@ -21,6 +21,11 @@
 #include <utility>
 #include "utils.h"
 
+extern template class InputReader<SingleEndRead, SingleEndReadFastqImpl>;
+extern template class InputReader<PairedEndRead, PairedEndReadFastqImpl>;
+extern template class InputReader<PairedEndRead, InterReadImpl>;
+extern template class InputReader<ReadBase, TabReadImpl>;
+
 typedef std::unordered_multimap<std::string, std::size_t> seqLookup;
 
 /*Create the quick lookup table

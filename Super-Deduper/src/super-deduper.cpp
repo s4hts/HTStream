@@ -34,9 +34,7 @@ int main(int argc, char** argv)
 
 
     BitMap read_map;
-    
-    SuperDeduperCounters counters;
-    
+        
     try
     {
         /** Define and parse the program options
@@ -81,6 +79,8 @@ int main(int argc, char** argv)
 
             std::shared_ptr<OutputWriter> pe = nullptr;
             std::shared_ptr<OutputWriter> se = nullptr;
+
+            SuperDeduperCounters counters(statsFile, vm["append-stats-file"].as<bool>() , program_name, vm["notes"].as<std::string>());
 
             outputWriters(pe, se, vm["fastq-output"].as<bool>(), vm["tab-output"].as<bool>(), vm["interleaved-output"].as<bool>(), vm["unmapped-output"].as<bool>(), vm["force"].as<bool>(), vm["gzip-output"].as<bool>(), vm["to-stdout"].as<bool>(), prefix );
 
@@ -144,7 +144,7 @@ int main(int argc, char** argv)
                     writer_helper(i.second.get(), pe, se, false);
                 }
             }
-            counters.write_out(statsFile, vm["append-stats-file"].as<bool>() , program_name, vm["notes"].as<std::string>());
+            counters.write_out();
         } catch(po::error& e) {
             std::cerr << "ERROR: " << e.what() << std::endl << std::endl;
             version_or_help(program_name, app_description, cmdline_options, vm, true);

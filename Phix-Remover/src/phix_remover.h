@@ -20,6 +20,38 @@
 #include <boost/functional/hash.hpp>
 #include <tuple>
 
+extern template class InputReader<SingleEndRead, SingleEndReadFastqImpl>;
+extern template class InputReader<PairedEndRead, PairedEndReadFastqImpl>;
+extern template class InputReader<PairedEndRead, InterReadImpl>;
+extern template class InputReader<ReadBase, TabReadImpl>;
+
+class PhixCounters : public Counters {
+
+public:
+    uint64_t Inverse = 0;
+
+    uint64_t SE_hits = 0;
+
+    uint64_t PE_hits = 0;
+
+    PhixCounters(const std::string &statsFile, bool appendStats, const std::string &program_name, const std::string &notes) : Counters::Counters(statsFile, appendStats, program_name, notes) {
+        generic.push_back(std::forward_as_tuple("inverse", Inverse));
+
+        se.push_back(std::forward_as_tuple("SE_hits", SE_hits));
+
+        pe.push_back(std::forward_as_tuple("PE_hits", PE_hits));
+    }
+
+    void set_inverse() {
+        Inverse = 1;
+    }
+    void inc_SE_hits() {
+        ++SE_hits;
+    }
+    void inc_PE_hits() {
+        ++PE_hits;
+    }
+};
 
 class dbhash {
 public:

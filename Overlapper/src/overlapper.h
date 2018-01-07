@@ -21,6 +21,11 @@
 #include <utility>
 #include "utils.h"
 
+extern template class InputReader<SingleEndRead, SingleEndReadFastqImpl>;
+extern template class InputReader<PairedEndRead, PairedEndReadFastqImpl>;
+extern template class InputReader<PairedEndRead, InterReadImpl>;
+extern template class InputReader<ReadBase, TabReadImpl>;
+
 typedef std::unordered_multimap<std::string, std::size_t> seqLookup;
 typedef std::shared_ptr<SingleEndRead> spReadBase;
 
@@ -49,10 +54,10 @@ seqLookup readOneMap(std::string seq1, const size_t kmer, const size_t kmerOffse
  * If they are different bp, subtract q scores and take the larger quality bp*/ 
 spReadBase checkIfOverlap(Read &r1, Read &r2, size_t loc1, size_t loc2, const double misDensity, size_t minOverlap) {
     size_t minLoc = std::min(loc1, loc2);
-    int  loc1_t = loc1 - minLoc;
-    int loc2_t = loc2 - minLoc;
-    int r1_len = r1.getLength();
-    int r2_len = r2.getLength();
+    size_t loc1_t = loc1 - minLoc;
+    size_t loc2_t = loc2 - minLoc;
+    size_t r1_len = r1.getLength();
+    size_t r2_len = r2.getLength();
 
     size_t maxLoop = std::min(r1_len - loc1_t, r2_len - loc2_t);
     size_t maxMis = static_cast<size_t>(maxLoop * misDensity);

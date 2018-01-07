@@ -37,7 +37,7 @@ void skip_lr(std::istream *input) {
     }
 }
 
-void throw_error(const std::string& filename) {
+void  __attribute__ ((noreturn)) throw_error(const std::string& filename) {
     throw std::runtime_error(filename + ": " +  std::strerror( errno ));
 }
 

@@ -5,6 +5,7 @@
 #include <map>
 
 typedef std::tuple <const std::string, uint64_t&> Label;
+typedef std::tuple<uint_fast64_t, uint_fast64_t> Vector;
 
 #endif
 

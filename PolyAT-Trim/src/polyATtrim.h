@@ -11,6 +11,11 @@
 #include <algorithm>
 #include "utils.h"
 
+extern template class InputReader<SingleEndRead, SingleEndReadFastqImpl>;
+extern template class InputReader<PairedEndRead, PairedEndReadFastqImpl>;
+extern template class InputReader<PairedEndRead, InterReadImpl>;
+extern template class InputReader<ReadBase, TabReadImpl>;
+
 void trim_left(Read &rb, size_t min_trim, size_t max_mismatch) {
     size_t a_mismatch = 0;
     size_t t_mismatch = 0;
