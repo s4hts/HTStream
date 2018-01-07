@@ -60,7 +60,7 @@ int main(int argc, char** argv)
             ("seq,s", po::value<std::string>()->default_value(""), "Please supply a fasta file - default - Phix Sequence - default https://www.ncbi.nlm.nih.gov/nuccore/9626372")
             ("check-read-2,C", po::bool_switch()->default_value(false), "Check R2 as well as R1 (pe)")
             ("kmer,k", po::value<size_t>()->default_value(8)->notifier(boost::bind(&check_range<size_t>, "kmer", _1, 5, 256)), "Kmer size of the lookup table (min 5, max 256)")
-            ("percentage-hits,x", po::value<double>()->default_value(.25)->notifier(boost::bind(&check_range_double, "percentage-hits", _1, 0.0, 1.0)), "Proportion of kmer percentage-hits to sequence need to happen to discard (min 0.0, max 1.0)")
+            ("percentage-hits,x", po::value<double>()->default_value(.25)->notifier(boost::bind(&check_range<double>, "percentage-hits", _1, 0.0, 1.0)), "Proportion of kmer percentage-hits to sequence need to happen to discard (min 0.0, max 1.0)")
             ("inverse,n", po::bool_switch()->default_value(false), "Output reads that are ABOVE the kmer hit threshold");
 
         po::options_description cmdline_options;
