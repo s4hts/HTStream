@@ -73,16 +73,6 @@ void check_range(const std::string& name, const T& value, const T& min, const T&
    }
 }
 
-/*void check_range_double(const std::string& name, double value, double min, double max)
-{
-   if (value < min || value > max)
-   {
-        throw po::validation_error(po::validation_error::invalid_option_value, name);
-      // throw exception
-   }
-}*/
-
-
 po::options_description setInputOptions(){
 
     po::options_description input("Input Options");
