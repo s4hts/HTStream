@@ -63,16 +63,6 @@ void outputWriters(std::shared_ptr<OutputWriter> &pe, std::shared_ptr<OutputWrit
     }
 }
 
-template<typename T>
-void check_range(const std::string& name, const T& value, const T& min, const T& max)
-{
-   if (value < min || value > max)
-   {
-        throw po::validation_error(po::validation_error::invalid_option_value, name);
-      // throw exception
-   }
-}
-
 po::options_description setInputOptions(){
 
     po::options_description input("Input Options");
