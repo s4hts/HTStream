@@ -39,7 +39,6 @@ int main(int argc, char** argv)
     app_description += "  sequence (default), or the sequence provided by the option 'seq'";
 
 
-    PhixCounters counters;
 
     try
     {
@@ -83,6 +82,8 @@ int main(int argc, char** argv)
             std::shared_ptr<OutputWriter> pe = nullptr;
             std::shared_ptr<OutputWriter> se = nullptr;
             
+            PhixCounters counters(statsFile, vm["append-stats-file"].as<bool>() , program_name, vm["notes"].as<std::string>());
+
             outputWriters(pe, se, vm["fastq-output"].as<bool>(), vm["tab-output"].as<bool>(), vm["interleaved-output"].as<bool>(), vm["unmapped-output"].as<bool>(), vm["force"].as<bool>(), vm["gzip-output"].as<bool>(), vm["to-stdout"].as<bool>(), prefix );
 
             //sets read information
@@ -151,7 +152,7 @@ int main(int argc, char** argv)
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
                 helper_discard(ift, pe, se, counters, lookup, vm["percentage-hits"].as<double>(), vm["check-read-2"].as<bool>(),vm["kmer"].as<size_t>(), vm["inverse"].as<bool>());
             }
-            counters.write_out(statsFile, vm["append-stats-file"].as<bool>() , program_name, vm["notes"].as<std::string>());
+            counters.write_out();
         }
         catch(po::error& e)
         {

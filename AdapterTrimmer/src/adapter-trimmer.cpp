@@ -36,8 +36,6 @@ int main(int argc, char** argv)
     app_description += "  trimming off overhangs which by definition are adapter sequence in standard\n";
     app_description += "  libraries. [SE Reads are currently not supported for adapter trimming].";
 
-    OverlappingCounters counters;
-
     try
     {
         /** Define and parse the program options
@@ -82,6 +80,8 @@ int main(int argc, char** argv)
             std::shared_ptr<OutputWriter> pe = nullptr;
             std::shared_ptr<OutputWriter> se = nullptr;
             
+            OverlappingCounters counters(statsFile, vm["append-stats-file"].as<bool>(), program_name, vm["notes"].as<std::string>());
+
             outputWriters(pe, se, vm["fastq-output"].as<bool>(), vm["tab-output"].as<bool>(), vm["interleaved-output"].as<bool>(), vm["unmapped-output"].as<bool>(), vm["force"].as<bool>(), vm["gzip-output"].as<bool>(), vm["to-stdout"].as<bool>(), prefix );
 
             if(vm.count("read1-input")) {
@@ -139,7 +139,7 @@ int main(int argc, char** argv)
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
                 helper_adapterTrimmer(ift, pe, se, counters, vm["max-mismatch-errorDensity"].as<double>(),  vm["min-overlap"].as<size_t>(), vm["stranded"].as<bool>(), vm["min-length"].as<size_t>(), vm["check-lengths"].as<size_t>(), vm["kmer"].as<size_t>(), vm["kmer-offset"].as<size_t>(), vm["no-orphans"].as<bool>(), vm["no-fixbases"].as<bool>() );
             }  
-            counters.write_out(statsFile, vm["append-stats-file"].as<bool>(), program_name, vm["notes"].as<std::string>());
+            counters.write_out();
 
         }
         catch(po::error& e)

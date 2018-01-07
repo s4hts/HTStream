@@ -36,8 +36,6 @@ int main(int argc, char** argv)
     app_description += "  trim reads when a minimum number <min-trim> of A's or T's with a certain\n";
     app_description += "  number of mismatches <max_mismatches> is achieved.";
 
-    TrimmingCounters counters;
-
     try
     {
         /** Define and parse the program options
@@ -84,6 +82,8 @@ int main(int argc, char** argv)
 
             std::shared_ptr<OutputWriter> pe = nullptr;
             std::shared_ptr<OutputWriter> se = nullptr;
+
+            TrimmingCounters counters(statsFile, vm["append-stats-file"].as<bool>() , program_name, vm["notes"].as<std::string>());
 
             outputWriters(pe, se, vm["fastq-output"].as<bool>(), vm["tab-output"].as<bool>(), vm["interleaved-output"].as<bool>(), vm["unmapped-output"].as<bool>(), vm["force"].as<bool>(), vm["gzip-output"].as<bool>(), vm["to-stdout"].as<bool>(), prefix );
 
@@ -139,7 +139,7 @@ int main(int argc, char** argv)
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
                 helper_trim(ift, pe, se, counters, vm["min-length"].as<std::size_t>(), vm["min-trim"].as<std::size_t>(), vm["max-mismatch"].as<std::size_t>(), vm["stranded"].as<bool>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>(), vm["no-orphans"].as<bool>() );
             }  
-            counters.write_out(statsFile, vm["append-stats-file"].as<bool>() , program_name, vm["notes"].as<std::string>());
+            counters.write_out();
         }
         catch(po::error& e)
         {

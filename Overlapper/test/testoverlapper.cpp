@@ -37,9 +37,7 @@ TEST_F(Overlapper, test_check_length) {
 
     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(in1, in2);
     spReadBase rb;
-    
-    OverlappingCounters counters;   
-    
+        
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
@@ -59,9 +57,7 @@ TEST_F(Overlapper, engulfR1) {
 
     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(in1, in2);
     spReadBase rb;
-    
-	OverlappingCounters counters;	
-    
+        
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
@@ -78,8 +74,6 @@ TEST_F(Overlapper, engulfR2) {
     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(in1, in2);
     spReadBase rb;
     
-	OverlappingCounters counters;	
-
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
@@ -97,8 +91,6 @@ TEST_F(Overlapper, trim) {
     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(in1, in2);
     spReadBase rb;
     
-	OverlappingCounters counters;	
-
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
@@ -115,8 +107,6 @@ TEST_F(Overlapper, trim_short_R1) {
     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(in1, in2);
     spReadBase rb;
     
-    OverlappingCounters counters;   
-
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
@@ -133,8 +123,6 @@ TEST_F(Overlapper, normal) {
     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(in1, in2);
     spReadBase rb;
     
-	OverlappingCounters counters;	
-
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
@@ -151,8 +139,6 @@ TEST_F(Overlapper, normal_short_R1) {
     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(in1, in2);
     spReadBase rb;
     
-    OverlappingCounters counters;   
-
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
@@ -169,8 +155,6 @@ TEST_F(Overlapper, perfectOverlap) {
     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(in1, in2);
     spReadBase rb;
     
-	OverlappingCounters counters;	
-
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
@@ -187,8 +171,6 @@ TEST_F(Overlapper, perfectOverlap_short_R1) {
     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(in1, in2);
     spReadBase rb;
     
-    OverlappingCounters counters;   
-
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
@@ -205,8 +187,6 @@ TEST_F(Overlapper, noOverlap) {
     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(in1, in2);
     spReadBase rb;
     
-    OverlappingCounters counters;   
-
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
@@ -226,8 +206,6 @@ TEST_F(Overlapper, noOverlap_short_R1) {
     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(in1, in2);
     spReadBase rb;
     
-    OverlappingCounters counters;   
-
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());

@@ -38,8 +38,6 @@ int main(int argc, char** argv)
     app_description += "  from the ends and move inwards, once the window reaches an average quality\n";
     app_description += "  it will stop trimming.";
 
-    TrimmingCounters counters;
-
     try
     {
         /** Define and parse the program options
@@ -70,6 +68,7 @@ int main(int argc, char** argv)
         cmdline_options.add(standard).add(input).add(output).add(desc);
 
         po::variables_map vm;
+
         try
         {
             po::store(po::parse_command_line(argc, argv, cmdline_options),
@@ -87,6 +86,8 @@ int main(int argc, char** argv)
     
             std::shared_ptr<OutputWriter> pe = nullptr;
             std::shared_ptr<OutputWriter> se = nullptr;
+
+            TrimmingCounters counters(statsFile, vm["append-stats-file"].as<bool>(), program_name, vm["notes"].as<std::string>());
 
             outputWriters(pe, se, vm["fastq-output"].as<bool>(), vm["tab-output"].as<bool>(), vm["interleaved-output"].as<bool>(), vm["unmapped-output"].as<bool>(), vm["force"].as<bool>(), vm["gzip-output"].as<bool>(), vm["to-stdout"].as<bool>(), prefix );
             // there are any problems
@@ -142,7 +143,7 @@ int main(int argc, char** argv)
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
                 helper_trim(ift, pe, se, counters, vm["min-length"].as<size_t>() , qual_threshold, vm["window-size"].as<size_t>(), vm["stranded"].as<bool>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>(), vm["no-orphans"].as<bool>() );
             }  
-            counters.write_out(statsFile, vm["append-stats-file"].as<bool>(), program_name, vm["notes"].as<std::string>());
+            counters.write_out();
         }
         catch(po::error& e)
         {

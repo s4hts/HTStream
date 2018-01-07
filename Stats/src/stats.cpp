@@ -36,9 +36,6 @@ int main(int argc, char** argv)
                        "The Stats app produce basic statistics about the reads in a dataset.\n";
     app_description += "  Including the basepair composition and number of bases Q30.";
 
-
-    StatsCounters counters;
-
     try
     {
         /** Define and parse the program options
@@ -75,6 +72,8 @@ int main(int argc, char** argv)
             std::shared_ptr<OutputWriter> pe = nullptr;
             std::shared_ptr<OutputWriter> se = nullptr;
             
+            StatsCounters counters(statsFile, vm["append-stats-file"].as<bool>() , program_name, vm["notes"].as<std::string>());
+
             outputWriters(pe, se, vm["fastq-output"].as<bool>(), vm["tab-output"].as<bool>(), vm["interleaved-output"].as<bool>(), vm["unmapped-output"].as<bool>(), vm["force"].as<bool>(), vm["gzip-output"].as<bool>(), vm["to-stdout"].as<bool>(), prefix );           
 
             if(vm.count("read1-input")) {
@@ -129,7 +128,7 @@ int main(int argc, char** argv)
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
                 helper_stats(ift, pe, se,counters);
             }  
-            counters.write_out(statsFile, vm["append-stats-file"].as<bool>() , program_name, vm["notes"].as<std::string>());
+            counters.write_out();
         }
         catch(po::error& e)
         {
