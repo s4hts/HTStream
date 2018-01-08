@@ -1,12 +1,5 @@
-/*The idea of this program is to create a quick kmer lookup table for phix.
- * It accomplishes this by making 2 arrays of 1<<16 size, because we represent
- * each possible kmer in the 2 bit format (A -> 00, T -> 11, C -> 01, G->10) and
- * need foward and Reverse strands. Each read is then parsed into 8mers (again
- * represented by their 2 bit format, and checked against these lookup tables
- * (simply the arrays)*/ 
-
-#ifndef AT_TRIM_H
-#define AT_TRIM_H
+#ifndef OVERLAPPER_H
+#define OVERLAPPER_H
 //  this is so we can implment hash function for dynamic_bitset
 #define BOOST_DYNAMIC_BITSET_DONT_USE_FRIENDS
 #define STARTS 4098
