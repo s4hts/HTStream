@@ -82,9 +82,8 @@ public:
         Read &two = per.non_const_read_two();
         if (!one.getDiscard() && !two.getDiscard()) {
             if ((one.getLengthTrue() < one.getLength()) | (two.getLengthTrue() < two.getLength())) {
-                uint64_t trim = std::min(one.getLength() - one.getLengthTrue(),two.getLength() - two.getLengthTrue());
                 ++PE_Adapter_Trim;
-                PE_Adapter_BpTrim += trim;
+                PE_Adapter_BpTrim += (one.getLength() - one.getLengthTrue()) + (two.getLength() - two.getLengthTrue());
             }
             ++PE_Out;
             ++TotalFragmentsOutput;
@@ -180,55 +179,47 @@ unsigned int checkIfOverlap(Read &r1, Read &r2, size_t loc1, size_t loc2, const 
         }
     }
 
-    unsigned int insert_length = maxLoop;
-
-    if (loc1_t >= loc2_t) {
-        insert_length += loc1_t;
-    }
-    if (r1_len - loc1_t <= r2_len - loc2_t) {
-        insert_length += (r2_len - maxLoop);
-    } else {
+    if (r1_len - loc1_t > r2_len - loc2_t) {
         r1.setRCut( ( (r2_len - loc2_t) + loc1_t));  // sins??
         if (loc2_t + r2_len + loc1_t > r1_len) { //special engulf check
             r2.setRCut(r2_len - loc2_t); 
         }
     }
 
-   return insert_length;
+   return 1;
 }
 
 /*Because of the way overlapping works, you only need to check the ends of the shorter read*/
-unsigned int getOverlappedReads(Read &r1, Read &r2, const seqLookup &seq1Map,  const double misDensity, const size_t &minOver, const size_t &checkLengths, const size_t kmer, bool noFixBases = false ) {
+void getOverlappedReads(Read &r1, Read &r2, const seqLookup &seq1Map,  const double misDensity, const size_t &minOver, const size_t &checkLengths, const size_t kmer, bool noFixBases = false ) {
 
+    // checkLengths should at most be 1/2 read length to check all kmers in read
     std::string seq2 = r2.get_seq_rc();
     //if all we are doing is trimming adapters, why look for long inserts at all? Skip the first loop? second loop still has product > read_length
+    /*Do a quick check if the shorter read kmer shows up in longer read (read 2)
+     * If it does, then try the brute force approach*/
     for (size_t bp = 0; bp < checkLengths; ++bp) {
-        /*Do a quick check if the shorter read kmer shows up in longer read (read 2)
-         * If it does, then try the brute force approach*/
+        // check first checkLength kmers at the beginning of read2 (sins)
         auto test = seq1Map.equal_range(seq2.substr(bp, kmer));
         for (auto it = test.first; it != test.second; ++it) {
             unsigned int overlapped = checkIfOverlap(r1, r2, it->second, bp, misDensity, minOver, noFixBases);
             if (overlapped) {
-                return overlapped;
+                return;
             }
         }
     } 
     for (size_t bp = seq2.length() - (checkLengths + kmer); bp < seq2.length() - kmer ; ++bp) {
-        /*Do a quick check if the shorter read kmer shows up in longer read (read 2)
-         * If it does, then try the brute force approach*/
+        // check last checkLengths kmers at the end of the read2 (mins)
         auto test = seq1Map.equal_range(seq2.substr(bp, kmer));
         for (auto it = test.first; it != test.second; ++it) {
             unsigned int overlapped = checkIfOverlap(r1, r2, it->second, bp, misDensity, minOver, noFixBases);
             if (overlapped) {
-                return overlapped;
+                return;
             }
         }
     }
-    return 0;
-
 }
 
-unsigned int check_read(PairedEndRead &pe , const double misDensity, const size_t &minOver, const size_t &checkLengths, const size_t kmer, const size_t kmerOffset, bool noFixBases = false ) {
+void check_read(PairedEndRead &pe , const double misDensity, const size_t &minOver, const size_t &checkLengths, const size_t kmer, const size_t kmerOffset, bool noFixBases = false ) {
     
     Read &r1 = pe.non_const_read_one();
     Read &r2 = pe.non_const_read_two();
@@ -247,13 +238,10 @@ unsigned int check_read(PairedEndRead &pe , const double misDensity, const size_
     seqLookup mOne = readOneMap(r1.get_seq(), kkmer, kmerOffset);
     /* returns null if no much
      * r1 and r2 and passed by ref in case only adapter trimming is on */
-    unsigned int overlapped = getOverlappedReads(r1, r2, mOne, misDensity, minOver, checkL, kkmer, noFixBases) ;
+    getOverlappedReads(r1, r2, mOne, misDensity, minOver, checkL, kkmer, noFixBases) ;
     if (swapped) {
         std::swap(r1, r2);
     }
-    //we need to check if overlapper is greater than min length;
-
-    return overlapped;
 }
 
 /*This is the helper class for overlap
@@ -275,7 +263,7 @@ void helper_adapterTrimmer(InputReader<T, Impl> &reader, std::shared_ptr<OutputW
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());        
         if (per) {
             counter.input(*per);
-            unsigned int overlapped = check_read(*per, misDensity, minOver, checkLengths, kmer, kmerOffset, noFixBases);
+            check_read(*per, misDensity, minOver, checkLengths, kmer, kmerOffset, noFixBases);
             per->checkDiscarded(min_length);    
             counter.output(*per, no_orphan);
             writer_helper(per, pe, se, stranded, no_orphan); 
