@@ -72,7 +72,6 @@ public:
                 SE_Adapter_BpTrim += (one.getLength() - one.getLengthTrue());
             }
             ++SE_Out;
-            ++R2_Discarded;
             ++TotalFragmentsOutput;
         }
     }
@@ -81,7 +80,7 @@ public:
         Read &one = per.non_const_read_one();
         Read &two = per.non_const_read_two();
         if (!one.getDiscard() && !two.getDiscard()) {
-            if ((one.getLengthTrue() < one.getLength()) | (two.getLengthTrue() < two.getLength())) {
+            if ((one.getLengthTrue() < one.getLength()) || (two.getLengthTrue() < two.getLength())) {
                 ++PE_Adapter_Trim;
                 PE_Adapter_BpTrim += (one.getLength() - one.getLengthTrue()) + (two.getLength() - two.getLengthTrue());
             }
