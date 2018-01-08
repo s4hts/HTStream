@@ -14,6 +14,25 @@ bool threshold_mismatches(std::string::const_iterator r1, std::string::const_ite
     return true;
 }
 
+
+/*Create the quick lookup table
+ * Multi map because a single kemr could appear multiple places*/
+seqLookup readOneMap(std::string seq1, const size_t kmer, const size_t kmerOffset) {
+
+    seqLookup baseReadMap;
+    std::string::iterator it;
+    for ( it = seq1.begin() ; it < seq1.end() - ( static_cast<long> ( kmerOffset + kmer ) ) ; it += static_cast<long> ( kmerOffset )   ) {
+        baseReadMap.insert(std::make_pair( std::string ( it, it+ static_cast<long> ( kmer )  ) , it - seq1.begin() ));
+    }
+
+    if ( seq1.begin() + static_cast<long> (kmer) > seq1.end() ) {
+        it = seq1.end() - static_cast<long> ( kmer );
+        baseReadMap.insert(std::make_pair(  std::string( it , it + static_cast<long> (kmer)), it - seq1.begin()   ) );
+    }
+
+    return baseReadMap;
+}
+
 void outputWriters(std::shared_ptr<OutputWriter> &pe, std::shared_ptr<OutputWriter> &se, bool fastq_out, bool tab_out, bool interleaved_out, bool unmapped_out,  bool force, bool gzip_out, bool std_out, std::string &prefix) {
 
     std::vector<std::string> default_outfiles = {"_R1", "_R2", "_SE"};
@@ -161,7 +180,7 @@ void version_or_help(std::string program_name, std::string app_description, po::
     }
 }
 
-char rc (const char bp) {
+char rc (const char &bp) {
     switch (bp) {
         case 'C':
             return 'G';
@@ -174,6 +193,6 @@ char rc (const char bp) {
         case 'N':
             return 'N';
         default:
-            throw std::runtime_error("Unknown base alled in rc");
+            throw std::runtime_error("Unknown base provided to rc");
     }
 }

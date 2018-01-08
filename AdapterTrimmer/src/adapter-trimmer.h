@@ -26,25 +26,101 @@ extern template class InputReader<PairedEndRead, PairedEndReadFastqImpl>;
 extern template class InputReader<PairedEndRead, InterReadImpl>;
 extern template class InputReader<ReadBase, TabReadImpl>;
 
-typedef std::unordered_multimap<std::string, std::size_t> seqLookup;
+class AdapterCounters : public Counters {
 
-/*Create the quick lookup table
- * Multi map because a single kemr could appear multiple places*/
-seqLookup readOneMap(std::string seq1, const size_t kmer, const size_t kmerOffset) {
+public:
+    uint64_t Fixbases = 1;
 
-    seqLookup baseReadMap;
-    std::string::iterator it;
-    for ( it = seq1.begin() ; it < seq1.end() - ( static_cast<long> ( kmerOffset + kmer ) ) ; it += static_cast<long> ( kmerOffset )   ) {
-        baseReadMap.insert(std::make_pair( std::string ( it, it+ static_cast<long> ( kmer )  ) , it - seq1.begin() ));
+    uint64_t SE_Discarded = 0;
+    uint64_t SE_Adapter_Trim = 0;
+    uint64_t SE_Adapter_BpTrim = 0;
+
+    uint64_t R1_Discarded = 0;
+    uint64_t R2_Discarded = 0;
+    uint64_t PE_Discarded = 0;
+    uint64_t PE_Adapter_Trim = 0;
+    uint64_t PE_Adapter_BpTrim = 0;
+
+    AdapterCounters(const std::string &statsFile, bool appendStats, const std::string &program_name, const std::string &notes) : Counters::Counters(statsFile, appendStats, program_name, notes) {
+
+        generic.push_back(std::forward_as_tuple("fixbases", Fixbases));
+
+        se.push_back(std::forward_as_tuple("SE_discarded", SE_Discarded));
+        se.push_back(std::forward_as_tuple("SE_adapterTrim", SE_Adapter_Trim));
+        se.push_back(std::forward_as_tuple("SE_adapterBpTrim", SE_Adapter_BpTrim));
+
+        pe.push_back(std::forward_as_tuple("R1_discarded", R1_Discarded));
+        pe.push_back(std::forward_as_tuple("R2_discarded", R2_Discarded));
+        pe.push_back(std::forward_as_tuple("PE_discarded", PE_Discarded));
+        pe.push_back(std::forward_as_tuple("PE_adapterTrim", PE_Adapter_Trim));
+        pe.push_back(std::forward_as_tuple("PE_adapterBpTrim", PE_Adapter_BpTrim));
     }
 
-    if ( seq1.begin() + static_cast<long> (kmer) > seq1.end() ) {
-        it = seq1.end() - static_cast<long> ( kmer );
-        baseReadMap.insert(std::make_pair(  std::string( it , it + static_cast<long> (kmer)), it - seq1.begin()   ) );
+    void set_fixbases() {
+        Fixbases = 0;
     }
 
-    return baseReadMap;
-}
+    using Counters::output;
+
+    virtual void output(SingleEndRead &ser)  {
+        if (ser.non_const_read_one().getDiscard()) {
+            ++SE_Discarded;
+        } else {
+            Read &one = ser.non_const_read_one();
+            if (one.getLengthTrue() < one.getLength()) {
+                ++SE_Adapter_Trim;
+                SE_Adapter_BpTrim += (one.getLength() - one.getLengthTrue());
+            }
+            ++SE_Out;
+            ++R2_Discarded;
+            ++TotalFragmentsOutput;
+        }
+    }
+
+    virtual void output(PairedEndRead &per, bool no_orphans = false)  {
+        Read &one = per.non_const_read_one();
+        Read &two = per.non_const_read_two();
+        if (!one.getDiscard() && !two.getDiscard()) {
+            if ((one.getLengthTrue() < one.getLength()) | (two.getLengthTrue() < two.getLength())) {
+                uint64_t trim = std::min(one.getLength() - one.getLengthTrue(),two.getLength() - two.getLengthTrue());
+                ++PE_Adapter_Trim;
+                PE_Adapter_BpTrim += trim;
+            }
+            ++PE_Out;
+            ++TotalFragmentsOutput;
+        } else if (!one.getDiscard() && !no_orphans) { //if stranded RC
+            if (one.getLengthTrue() < one.getLength()) {
+                ++SE_Adapter_Trim;
+                SE_Adapter_BpTrim += (one.getLength() - one.getLengthTrue());
+            }
+            ++SE_Out;
+            ++R2_Discarded;
+            ++TotalFragmentsOutput;
+        } else if (!two.getDiscard() && !no_orphans) { // Will never be RC
+            if (two.getLengthTrue() < two.getLength()) {
+                ++SE_Adapter_Trim;
+                SE_Adapter_BpTrim += (two.getLength() - two.getLengthTrue());
+            }
+            ++SE_Out;
+            ++R1_Discarded;
+            ++TotalFragmentsOutput;
+        } else {
+            ++PE_Discarded;
+        }
+    }
+
+    virtual void write_out() {
+
+        initialize_json();
+
+        write_labels(generic);
+        write_sublabels("Single_end", se);
+        write_sublabels("Paired_end", pe);
+
+        finalize_json();        
+    }
+};
+
 
 /*If adapater trimming is turned on that means adapter trimming and do not overlap
  * so trim adapter, but don't worry about the overlap.
@@ -83,28 +159,28 @@ unsigned int checkIfOverlap(Read &r1, Read &r2, size_t loc1, size_t loc2, const 
     char bp;
     char qual;
 
-    unsigned int insert_length = maxLoop;
-
     if (!noFixBases){
         for (size_t i = 0; i < maxLoop; ++i) {
             read1_bp = loc1_t + i;
             read2_bp = loc2_t + i;
-                if (seq1[read1_bp] == seq2[read2_bp] )  {
-                    qual = static_cast<char>(std::min(qual1[read1_bp] + qual2[read2_bp] - 33, 40 + 33));  // MATT: I still don't agree with this, so 38 [confident] and 2 [not so confident] return a 40 [very confident]??
-                    r1.changeQual(read1_bp, qual);
-                    r2.changeQual(r2_len -  read2_bp, qual);
-                } else {
-                    bp = qual1[read1_bp] >= qual2[read2_bp] ? seq1[read1_bp] : seq2[read2_bp];
-                    qual = static_cast<char>(std::max(qual1[read1_bp] - qual2[read2_bp] + 33, 1 + 33));
-                    
-                    r1.changeSeq(read1_bp, bp);
-                    r1.changeQual(read1_bp, qual);
-                    //Something clever with RC
-                    r2.changeSeq(r2_len - read2_bp , rc(bp) );
-                    r2.changeQual(r2_len -  read2_bp , qual);
-                }
+            if (seq1[read1_bp] == seq2[read2_bp] )  {
+                qual = static_cast<char>(std::min(qual1[read1_bp] + qual2[read2_bp] - 33, 40 + 33));  // MATT: I still don't agree with this, so 38 [confident] and 2 [not so confident] return a 40 [very confident]??
+                r1.changeQual(read1_bp, qual);
+                r2.changeQual(r2_len -  read2_bp, qual);
+            } else {
+                bp = qual1[read1_bp] >= qual2[read2_bp] ? seq1[read1_bp] : seq2[read2_bp];
+                qual = static_cast<char>(std::max(qual1[read1_bp] - qual2[read2_bp] + 33, 1 + 33));
+                
+                r1.changeSeq(read1_bp, bp);
+                r1.changeQual(read1_bp, qual);
+                //Something clever with RC
+                r2.changeSeq(r2_len - read2_bp , rc(bp) );
+                r2.changeQual(r2_len -  read2_bp , qual);
+            }
         }
     }
+
+    unsigned int insert_length = maxLoop;
 
     if (loc1_t >= loc2_t) {
         insert_length += loc1_t;
@@ -190,8 +266,10 @@ unsigned int check_read(PairedEndRead &pe , const double misDensity, const size_
  * With a lin it is useful to have a higher confidence in the bases in the overlap and longer read
  * With a sin it is useful to have the higher confidence as well as removing the adapters*/
 template <class T, class Impl>
-void helper_adapterTrimmer(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, OverlappingCounters &counter, const double misDensity, const size_t minOver, const bool stranded, const size_t min_length, const size_t checkLengths, const size_t kmer, const size_t kmerOffset, bool no_orphan = false, bool noFixBases = false) {
+void helper_adapterTrimmer(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, AdapterCounters &counter, const double misDensity, const size_t minOver, const bool stranded, const size_t min_length, const size_t checkLengths, const size_t kmer, const size_t kmerOffset, bool no_orphan = false, bool noFixBases = false) {
     
+    if (noFixBases) counter.set_fixbases();
+
     while(reader.has_next()) {
         auto i = reader.next();
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());        
@@ -199,7 +277,7 @@ void helper_adapterTrimmer(InputReader<T, Impl> &reader, std::shared_ptr<OutputW
             counter.input(*per);
             unsigned int overlapped = check_read(*per, misDensity, minOver, checkLengths, kmer, kmerOffset, noFixBases);
             per->checkDiscarded(min_length);    
-            counter.output(*per, overlapped);
+            counter.output(*per, no_orphan);
             writer_helper(per, pe, se, stranded, no_orphan); 
         } else {
             SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
@@ -208,7 +286,7 @@ void helper_adapterTrimmer(InputReader<T, Impl> &reader, std::shared_ptr<OutputW
                 counter.input(*ser);
                 ser->checkDiscarded(min_length);
                 counter.output(*ser);
-                writer_helper(ser, pe, se, stranded);
+                writer_helper(ser, pe, se);
             } else {
                 throw std::runtime_error("Unknown read type");
             }

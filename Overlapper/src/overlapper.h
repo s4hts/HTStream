@@ -29,23 +29,6 @@ extern template class InputReader<ReadBase, TabReadImpl>;
 typedef std::unordered_multimap<std::string, std::size_t> seqLookup;
 typedef std::shared_ptr<SingleEndRead> spReadBase;
 
-/*Create the quick lookup table
- * Multi map because a single kemr could appear multiple places*/
-seqLookup readOneMap(std::string seq1, const size_t kmer, const size_t kmerOffset) {
-
-    seqLookup baseReadMap;
-    std::string::iterator it;
-    for ( it = seq1.begin() ; it < seq1.end() - ( static_cast<long> ( kmerOffset + kmer ) ) ; it += static_cast<long> ( kmerOffset )   ) {
-        baseReadMap.insert(std::make_pair( std::string ( it, it+ static_cast<long> ( kmer )  ) , it - seq1.begin() ));
-    }
-
-    if ( seq1.begin() + static_cast<long> (kmer) > seq1.end() ) {
-        it = seq1.end() - static_cast<long> ( kmer );
-        baseReadMap.insert(std::make_pair(  std::string( it , it + static_cast<long> (kmer)), it - seq1.begin()   ) );
-    }
-
-    return baseReadMap;
-}
 /*If adapater trimming is turned on that means adapter trimming and do not overlap
  * so trim adapter, but don't worry about the overlap.
  * however we still need to change the overlap
