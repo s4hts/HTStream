@@ -1,5 +1,5 @@
-#ifndef AT_TRIM_H
-#define AT_TRIM_H
+#ifndef CUT_TRIM_H
+#define CUT_TRIM_H
 //  this is so we can implment hash function for dynamic_bitset
 #define BOOST_DYNAMIC_BITSET_DONT_USE_FRIENDS
 
