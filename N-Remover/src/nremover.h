@@ -35,7 +35,7 @@ void trim_n(Read &rb) {
         
         if (*it == 'N') {
             currentLeft = i + 1;
-        } else if (dist(bestLeft, bestRight) <= dist(currentLeft, i)) {
+        } else if (dist(bestLeft, bestRight) < dist(currentLeft, i)) {
             bestRight = i;
             bestLeft = currentLeft;
         }
