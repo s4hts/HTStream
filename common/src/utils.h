@@ -37,8 +37,12 @@ void check_range(const std::string& name, const T& value, const T& min, const T&
 }
 
 
-char rc(const char bp);
+char rc(const char &bp);
 
 bool threshold_mismatches(std::string::const_iterator r1, std::string::const_iterator r2, size_t length, size_t max); 
+
+typedef std::unordered_multimap<std::string, std::size_t> seqLookup;
+
+seqLookup readOneMap(std::string seq1, const size_t kmer, const size_t kmerOffset);
 
 #endif

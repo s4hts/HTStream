@@ -1,12 +1,5 @@
-/*The idea of this program is to create a quick kmer lookup table for phix.
- * It accomplishes this by making 2 arrays of 1<<16 size, because we represent
- * each possible kmer in the 2 bit format (A -> 00, T -> 11, C -> 01, G->10) and
- * need foward and Reverse strands. Each read is then parsed into 8mers (again
- * represented by their 2 bit format, and checked against these lookup tables
- * (simply the arrays)*/ 
-
-#ifndef AT_TRIM_H
-#define AT_TRIM_H
+#ifndef OVERLAPPER_H
+#define OVERLAPPER_H
 //  this is so we can implment hash function for dynamic_bitset
 #define BOOST_DYNAMIC_BITSET_DONT_USE_FRIENDS
 #define STARTS 4098
@@ -26,31 +19,121 @@ extern template class InputReader<PairedEndRead, PairedEndReadFastqImpl>;
 extern template class InputReader<PairedEndRead, InterReadImpl>;
 extern template class InputReader<ReadBase, TabReadImpl>;
 
-typedef std::unordered_multimap<std::string, std::size_t> seqLookup;
 typedef std::shared_ptr<SingleEndRead> spReadBase;
 
-/*Create the quick lookup table
- * Multi map because a single kemr could appear multiple places*/
-seqLookup readOneMap(std::string seq1, const size_t kmer, const size_t kmerOffset) {
+class OverlappingCounters : public Counters {
 
-    seqLookup baseReadMap;
-    std::string::iterator it;
-    for ( it = seq1.begin() ; it < seq1.end() - ( static_cast<long> ( kmerOffset + kmer ) ) ; it += static_cast<long> ( kmerOffset )   ) {
-        baseReadMap.insert(std::make_pair( std::string ( it, it+ static_cast<long> ( kmer )  ) , it - seq1.begin() ));
+public:
+    std::vector<uint_fast64_t> insertLength;
+
+    uint64_t sins = 0;
+    uint64_t mins = 0;
+    uint64_t lins = 0;
+    uint64_t Adapter_Trim = 0;
+    uint64_t Adapter_BpTrim = 0;
+
+    uint64_t SE_Discarded = 0;
+
+    uint64_t R1_Discarded = 0;
+    uint64_t R2_Discarded = 0;
+    uint64_t PE_Discarded = 0;
+
+    OverlappingCounters(const std::string &statsFile, bool appendStats, const std::string &program_name, const std::string &notes) : Counters::Counters(statsFile, appendStats, program_name, notes) {
+
+        insertLength.resize(1);
+
+        generic.push_back(std::forward_as_tuple("sins", sins));
+        generic.push_back(std::forward_as_tuple("mins", mins));
+        generic.push_back(std::forward_as_tuple("lins", lins));
+        generic.push_back(std::forward_as_tuple("adapterTrim", Adapter_Trim));
+        generic.push_back(std::forward_as_tuple("adapterBpTrim", Adapter_BpTrim));
+
+        se.push_back(std::forward_as_tuple("SE_discarded", SE_Discarded));
+
+        pe.push_back(std::forward_as_tuple("R1_discarded", R1_Discarded));
+        pe.push_back(std::forward_as_tuple("R2_discarded", R2_Discarded));
+        pe.push_back(std::forward_as_tuple("PE_discarded", PE_Discarded));
     }
 
-    if ( seq1.begin() + static_cast<long> (kmer) > seq1.end() ) {
-        it = seq1.end() - static_cast<long> ( kmer );
-        baseReadMap.insert(std::make_pair(  std::string( it , it + static_cast<long> (kmer)), it - seq1.begin()   ) );
+    using Counters::output;
+
+    void output(SingleEndRead &ser, uint_fast64_t origLength) {
+        Read &one = ser.non_const_read_one();
+        if (!one.getDiscard() && !origLength) { // original SE read, passed through
+            ++SE_Out;
+            ++TotalFragmentsOutput;
+        } else if (!one.getDiscard() && origLength) { // overlapped read
+            if (one.getLength() < origLength) {
+                ++sins; //adapters must be had (short insert)
+                ++Adapter_Trim;
+                Adapter_BpTrim += (origLength - one.getLength());
+            } else {
+                ++mins; //must be a long insert
+            }
+            if ( one.getLength() + 1 > insertLength.size() ) {
+                insertLength.resize(one.getLength() + 1);
+            }
+            ++insertLength[one.getLength()];
+            ++SE_Out;
+            ++TotalFragmentsOutput;
+        } else {
+            ++SE_Discarded;            
+        }
     }
 
-    return baseReadMap;
-}
-/*If adapater trimming is turned on that means adapter trimming and do not overlap
- * so trim adapter, but don't worry about the overlap.
- * however we still need to change the overlap
- * 
- * Within the overlap if they are the same bp, then add q scores
+    virtual void output(PairedEndRead &per, bool no_orphans = false)  {
+        Read &one = per.non_const_read_one();
+        Read &two = per.non_const_read_two();
+        if (!one.getDiscard() && !two.getDiscard()) {
+            if ((one.getLengthTrue() < one.getLength()) || (two.getLengthTrue() < two.getLength())) {
+                // this should never be the case
+                std::cerr << "Should never see this 1\n";
+            }
+            ++lins;
+            ++PE_Out;
+            ++TotalFragmentsOutput;
+        } else if (!one.getDiscard() && !no_orphans) { //if stranded RC
+            if (one.getLengthTrue() < one.getLength()) {
+                // this should never be the case
+                std::cerr << "Should never see this 2\n";
+            }
+            ++SE_Out;
+            ++R2_Discarded;
+            ++TotalFragmentsOutput;
+        } else if (!two.getDiscard() && !no_orphans) { // Will never be RC
+            if (two.getLengthTrue() < two.getLength()) {
+                // this should never be the case
+                std::cerr << "Should never see this 3\n";
+            }
+            ++SE_Out;
+            ++R1_Discarded;
+            ++TotalFragmentsOutput;
+        } else {
+            ++PE_Discarded;
+        }
+    }
+
+    virtual void write_out() {
+
+        std::vector<Vector> iLength;
+        for (size_t i = 1; i < insertLength.size(); ++i) {
+            if (insertLength[i] > 0) {
+                iLength.push_back(std::forward_as_tuple(i, insertLength[i]));
+            }
+        }
+
+        initialize_json();
+
+        write_labels(generic);
+        write_vector("readlength_histogram",iLength);
+        write_sublabels("Single_end", se);
+        write_sublabels("Paired_end", pe);
+
+        finalize_json();        
+    }
+};
+
+/* Within the overlap if they are the same bp, then add q scores
  * If they are different bp, subtract q scores and take the larger quality bp*/ 
 spReadBase checkIfOverlap(Read &r1, Read &r2, size_t loc1, size_t loc2, const double misDensity, size_t minOverlap) {
     size_t minLoc = std::min(loc1, loc2);
@@ -167,7 +250,7 @@ spReadBase check_read(PairedEndRead &pe, const double misDensity, const size_t &
     if (!overlapped && swapped){
         std::swap(r1, r2);
     } else if (swapped){
-       overlapped->set_read_rc();
+        overlapped->set_read_rc();
     }
 
     return overlapped;
@@ -177,10 +260,10 @@ spReadBase check_read(PairedEndRead &pe, const double misDensity, const size_t &
  * The idea is in the wet lab, they set up sequences to sequences toward each other
  * Sometimes, these squences can overlap
  * There are two cases in which they can overlap
- * They can either overlap just barely on the ends we call - these lins (long insert)
+ * They can either overlap just barely on the ends we call - these mins (medium insert)
  * They can also overlap way to much to the point they have adapters
- * in the read - or a sin (short insert)
- * With a lin it is useful to have a higher confidence in the bases in the overlap and longer read
+ * in the read - or a sin (short insert) [adapter are overhangs in an overlap]
+ * With a min it is useful to have a higher confidence in the bases in the overlap and longer read
  * With a sin it is useful to have the higher confidence as well as removing the adapters*/
 template <class T, class Impl>
 void helper_overlapper(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, OverlappingCounters &counters, const double misDensity, const size_t minOver, const bool stranded, const size_t min_length, const size_t checkLengths, const size_t kmer, const size_t kmerOffset, bool no_orphan = false ) {
@@ -191,13 +274,13 @@ void helper_overlapper(InputReader<T, Impl> &reader, std::shared_ptr<OutputWrite
             counters.input(*per);
             spReadBase overlapped = check_read(*per, misDensity, minOver, checkLengths, kmer, kmerOffset);
             if (!overlapped) {
+                counters.output(*per, no_orphan);
                 writer_helper(per, pe, se, stranded, no_orphan); //write out as is
-                counters.output(*per);
             } else if (overlapped) { //if there is an overlap
                 overlapped->checkDiscarded(min_length);
-                unsigned int origLength = unsigned(per->non_const_read_one().getLength());
-                writer_helper(overlapped.get(), pe, se, stranded);
+                unsigned int origLength = std::max(unsigned(per->non_const_read_one().getLength()),unsigned(per->non_const_read_two().getLength()));
                 counters.output(*overlapped, origLength);
+                writer_helper(overlapped.get(), pe, se, stranded);
             }
         } else {
             SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
@@ -205,7 +288,7 @@ void helper_overlapper(InputReader<T, Impl> &reader, std::shared_ptr<OutputWrite
             if (ser) {
                 counters.input(*ser);
                 ser->checkDiscarded(min_length);
-                counters.output(*ser);
+                counters.output(*ser, 0);
                 writer_helper(ser, pe, se, stranded);
             } else {
                 throw std::runtime_error("Unknown read type");
