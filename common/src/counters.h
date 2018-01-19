@@ -46,11 +46,11 @@ public:
         generic.push_back(std::forward_as_tuple("totalFragmentsInput", TotalFragmentsInput));
         generic.push_back(std::forward_as_tuple("totalFragmentsOutput", TotalFragmentsOutput));
 
-        se.push_back(std::forward_as_tuple("SE_In", SE_In));
-        se.push_back(std::forward_as_tuple("SE_Out", SE_Out));
+        se.push_back(std::forward_as_tuple("SE_in", SE_In));
+        se.push_back(std::forward_as_tuple("SE_out", SE_Out));
 
-        pe.push_back(std::forward_as_tuple("PE_In", PE_In));
-        pe.push_back(std::forward_as_tuple("PE_Out", PE_Out));
+        pe.push_back(std::forward_as_tuple("PE_in", PE_In));
+        pe.push_back(std::forward_as_tuple("PE_out", PE_Out));
     }
 
     virtual ~Counters() {}
@@ -130,8 +130,9 @@ public:
     }
 
     virtual void write_vector(const std::string &vector_name, const std::vector<Vector> &vectortuple, const unsigned int indent = 1) {
-        size_t i;
         std::string pad(4 * indent, ' ');
+        if (vectortuple.size() == 0) return;
+        size_t i;
         outStats << pad << "\""<< vector_name << "\": [";
         for (i=0 ; i < vectortuple.size()-1; ++i) {
             outStats << " [" << std::get<0>(vectortuple[i]) << "," << std::get<1>(vectortuple[i]) << "],"; //make sure json format is kept
@@ -187,7 +188,7 @@ public:
     uint64_t PE_Discarded = 0;
 
     TrimmingCounters(const std::string &statsFile, bool appendStats, const std::string &program_name, const std::string &notes) : Counters::Counters(statsFile, appendStats, program_name, notes) {
-        se.push_back(std::forward_as_tuple("SE_rightTrimm", SE_Right_Trim));
+        se.push_back(std::forward_as_tuple("SE_rightTrim", SE_Right_Trim));
         se.push_back(std::forward_as_tuple("SE_leftTrim", SE_Left_Trim));
         se.push_back(std::forward_as_tuple("SE_discarded", SE_Discarded));
 
@@ -251,123 +252,5 @@ public:
     }
     
 };
-
-class OverlappingCounters : public Counters {
-
-public:
-    std::vector<uint_fast64_t> insertLength;
-
-    uint64_t sins = 0;
-    uint64_t mins = 0;
-    uint64_t lins = 0;
-    uint64_t Adapter_BpTrim = 0;
-
-    uint64_t SE_Discard = 0;
-
-    uint64_t PE_Discard = 0;
-
-    OverlappingCounters(const std::string &statsFile, bool appendStats, const std::string &program_name, const std::string &notes) : Counters::Counters(statsFile, appendStats, program_name, notes) {
-
-        insertLength.resize(1);
-
-        generic.push_back(std::forward_as_tuple("sins", sins));
-        generic.push_back(std::forward_as_tuple("mins", mins));
-        generic.push_back(std::forward_as_tuple("lins", lins));
-        generic.push_back(std::forward_as_tuple("adapterBpTrim", Adapter_BpTrim));
-
-        se.push_back(std::forward_as_tuple("SE_Discard", SE_Discard));
-
-        pe.push_back(std::forward_as_tuple("PE_Discard", PE_Discard));
-    }
-
-    using Counters::output;
-    virtual void output(SingleEndRead &ser)  {
-        if (ser.non_const_read_one().getDiscard()) {
-            ++SE_Discard;
-        } else {
-            ++TotalFragmentsOutput;
-            ++SE_Out;
-        }
-    }
-
-    virtual void output(PairedEndRead &per)  {
-        if (per.non_const_read_one().getDiscard()) {
-            ++PE_Discard;
-        } else {
-            ++lins;
-            ++TotalFragmentsOutput;
-            ++PE_Out;
-        }
-    }
-
-    virtual void output(SingleEndRead &ser, uint_fast64_t origLength)  {
-        Read &one = ser.non_const_read_one();
-        if (!one.getDiscard()) {
-            if (one.getLength() < origLength) {
-                ++sins; //adapters must be had (short insert)
-                Adapter_BpTrim += (origLength - one.getLength());
-            } else {
-                ++mins; //must be a long insert
-            }
-            if ( one.getLength() + 1 > insertLength.size() ) {
-                insertLength.resize(one.getLength() + 1);
-            }
-            ++insertLength[one.getLength()];
-            ++SE_Out;            
-            ++TotalFragmentsOutput;
-        } else {
-            ++PE_Discard; // originated as a PE read
-        }
-    }
-
-    virtual void output(PairedEndRead &per, uint_fast64_t overlapped) {
-        //test lin or sin
-        Read &one = per.non_const_read_one();
-        Read &two = per.non_const_read_two();
-
-        if (!one.getDiscard() && !two.getDiscard() ) {
-            if (overlapped) {
-                if (one.getLength() > overlapped || two.getLength() > overlapped ) {
-                    ++sins; //adapters must be had (short insert)
-                    Adapter_BpTrim += std::max((one.getLength() - one.getLengthTrue()),(two.getLength() - two.getLengthTrue()));
-
-                } else {
-                    ++mins; //must be a long insert
-                }
-                if ( overlapped + 1 > insertLength.size() ) {
-                    insertLength.resize(overlapped + 1);
-                }
-                ++insertLength[overlapped];
-                
-            } else {
-                ++lins; //lin
-            }
-            ++PE_Out;
-            ++TotalFragmentsOutput;
-        } else {
-            ++PE_Discard;
-        }
-    }
-
-    virtual void write_out() {
-
-        std::vector<Vector> iLength;
-        for (size_t i = 1; i < insertLength.size(); ++i) {
-            if (insertLength[i] > 0) {
-                iLength.push_back(std::forward_as_tuple(i, insertLength[i]));
-            }
-        }
-
-        initialize_json();
-
-        write_labels(generic);
-        write_vector("readlength_histogram",iLength);
-        write_sublabels("Single_end", se);
-        write_sublabels("Paired_end", pe);
-
-        finalize_json();        
-    }
-};
-
 
 #endif

@@ -29,6 +29,7 @@ class PhixCounters : public Counters {
 
 public:
     uint64_t Inverse = 0;
+    uint64_t Record = 0;
 
     uint64_t SE_hits = 0;
 
@@ -36,6 +37,7 @@ public:
 
     PhixCounters(const std::string &statsFile, bool appendStats, const std::string &program_name, const std::string &notes) : Counters::Counters(statsFile, appendStats, program_name, notes) {
         generic.push_back(std::forward_as_tuple("inverse", Inverse));
+        generic.push_back(std::forward_as_tuple("record", Record));
 
         se.push_back(std::forward_as_tuple("SE_hits", SE_hits));
 
@@ -44,6 +46,9 @@ public:
 
     void set_inverse() {
         Inverse = 1;
+    }
+    void set_record() {
+        Record = 1;
     }
     void inc_SE_hits() {
         ++SE_hits;
@@ -164,7 +169,7 @@ unsigned int check_read( kmerSet &lookup, const Read &rb, const size_t bitKmer, 
 }
 
 template <class T, class Impl>
-void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, PhixCounters& c, kmerSet &lookup, double hits, bool checkR2, size_t kmerSize, bool inverse = false) {
+void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, PhixCounters& c, kmerSet &lookup, double hits, bool checkR2, size_t kmerSize, bool inverse = false, bool record = false) {
 
     /*These are set here so each read doesn't have to recalcuate these stats*/
 
@@ -177,7 +182,8 @@ void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> 
     boost::dynamic_bitset <> forwardLookup(bitKmer);
     boost::dynamic_bitset <> reverseLookup(bitKmer);
 
-    if (inverse) c.set_inverse();
+    if (inverse && !record) c.set_inverse();
+    if (record) c.set_record();
 
     while(reader.has_next()) {
         auto i = reader.next();
@@ -197,10 +203,13 @@ void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> 
             if (val > hits) {
                 c.inc_PE_hits();
             }
-            if (val <= hits && !inverse) {
+            if (val <= hits && !inverse && !record) {
                 c.output(*per);
                 writer_helper(per, pe, se, false);
-            } else if (val > hits && inverse) {
+            } else if (val > hits && inverse && !record) {
+                c.output(*per);
+                writer_helper(per, pe, se, false);
+            } else if (record) {                
                 c.output(*per);
                 writer_helper(per, pe, se, false);
             }
@@ -216,12 +225,15 @@ void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> 
                 if (val > hits) {
                     c.inc_SE_hits();
                 }
-                if (val <= hits && !inverse) {
+                if (val <= hits && !inverse && !record) {
                     c.output(*ser);
                     writer_helper(ser, pe, se, false);
-                } else if (val > hits && inverse) {
+                } else if (val > hits && inverse && !record) {
                     c.output(*ser);
                     writer_helper(ser, pe, se, false);
+                } else if (record) {
+                    c.output(*ser);
+                    writer_helper(ser, pe, se, false);                    
                 }
             } else {
                 throw std::runtime_error("Unknown read type");

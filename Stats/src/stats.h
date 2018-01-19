@@ -1,5 +1,5 @@
-#ifndef AT_TRIM_H
-#define AT_TRIM_H
+#ifndef STATS_H
+#define STATS_H
 //  this is so we can implment hash function for dynamic_bitset
 #define BOOST_DYNAMIC_BITSET_DONT_USE_FRIENDS
 
@@ -19,6 +19,10 @@ extern template class InputReader<ReadBase, TabReadImpl>;
 class StatsCounters : public Counters {
 
 public:
+    std::vector<uint_fast64_t> R1_Length;
+    std::vector<uint_fast64_t> R2_Length;
+    std::vector<uint_fast64_t> SE_Length;
+
     std::vector<Label> bases;
 
     uint64_t A = 0;
@@ -36,6 +40,9 @@ public:
     uint64_t R2_bQ30 = 0;
 
     StatsCounters(const std::string &statsFile, bool appendStats, const std::string &program_name, const std::string &notes) : Counters::Counters(statsFile, appendStats, program_name, notes) {
+        R1_Length.resize(1);
+        R2_Length.resize(1);
+        SE_Length.resize(1);
 
         se.push_back(std::forward_as_tuple("SE_bpLen", SE_BpLen));
         se.push_back(std::forward_as_tuple("SE_bQ30", SE_bQ30));
@@ -96,6 +103,14 @@ public:
         R2_bQ30 += r2_q30bases;
         R1_BpLen += one.getLength();
         R2_BpLen += two.getLength();
+        if ( one.getLength() + 1 > R1_Length.size() ) {
+            R1_Length.resize(one.getLength() + 1);
+        }
+        ++R1_Length[one.getLength()];
+        if ( two.getLength() + 1 > R2_Length.size() ) {
+            R2_Length.resize(two.getLength() + 1);
+        }
+        ++R2_Length[two.getLength()];
     }
     
     void output(SingleEndRead &ser) {
@@ -108,13 +123,40 @@ public:
         }
         SE_bQ30 += q30bases;
         SE_BpLen += one.getLength();
+        if ( one.getLength() + 1 > SE_Length.size() ) {
+            SE_Length.resize(one.getLength() + 1);
+        }
+        ++SE_Length[one.getLength()];
     }
 
     virtual void write_out() {
-        
+        std::vector<Vector> iSE_Length;
+        for (size_t i = 1; i < SE_Length.size(); ++i) {
+            if (SE_Length[i] > 0) {
+                iSE_Length.push_back(std::forward_as_tuple(i, SE_Length[i]));
+            }
+        }
+
+        std::vector<Vector> iR1_Length;
+        for (size_t i = 1; i < R1_Length.size(); ++i) {
+            if (R1_Length[i] > 0) {
+                iR1_Length.push_back(std::forward_as_tuple(i, R1_Length[i]));
+            }
+        }
+
+        std::vector<Vector> iR2_Length;
+        for (size_t i = 1; i < R2_Length.size(); ++i) {
+            if (R2_Length[i] > 0) {
+                iR2_Length.push_back(std::forward_as_tuple(i, R2_Length[i]));
+            }
+        }
+
         initialize_json();
 
         write_labels(generic);
+        write_vector("SE_readlength_histogram",iSE_Length);
+        write_vector("R1_readlength_histogram",iR1_Length);
+        write_vector("R2_readlength_histogram",iR2_Length);
         write_sublabels("Base_composition", bases);
         write_sublabels("Single_end", se);
         write_sublabels("Paired_end", pe);
