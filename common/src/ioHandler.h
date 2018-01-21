@@ -1,6 +1,8 @@
 #ifndef IOHANDLER_H
 #define IOHANDLER_H
 
+#define BOOST_DYNAMIC_BITSET_DONT_USE_FRIENDS
+
 #include <istream>
 #include <fstream>
 #include <memory>
