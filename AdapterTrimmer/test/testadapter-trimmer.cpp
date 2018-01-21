@@ -41,7 +41,7 @@ TEST_F(Adapter, failed_read) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
         ASSERT_EQ( (per->non_const_read_two()).getRTrim(), 0);
-        check_read(*per, misDensity, 8, 20, kmer, kmerOffset, true);
+        check_read_pe(*per, misDensity, 8, 20, kmer, kmerOffset, true);
         const std::string s1 =  "CTCTGTCTCAAAAAAAAAAAAAAAAAAAGTTCAATGAAAGTAGCAGCCAATACCTCCCACACCCACCCCCACCCCGCCCTGCACCTTGCCAGGGACCTT";
         const std::string s2 =  "AAGGACCCTGGCAATGTGCAGGGCGGGGTGGGGGTGTGTGTGAGATGTATTAGCTGCTACTTTCATCTAACTTTTTTTTTTTTTTTTTTTTAGACAGAA";
         ASSERT_EQ( (per->non_const_read_two()).getRTrim(), 1);
@@ -59,7 +59,7 @@ TEST_F(Adapter, engulfR1) {
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        check_read(*per, misDensity, 10, 10, kmer, kmerOffset, 10);
+        check_read_pe(*per, misDensity, 10, 10, kmer, kmerOffset, 10);
         const std::string s1 =  "CATTAACCAAATTGGACATATCTCATCT";
         const std::string s2 =  "TAAGTATAAGGATAGATGAGATATGTCCAATTTGGTTAATG";
         ASSERT_EQ( (per->non_const_read_one()).get_sub_seq(), s1);
@@ -76,7 +76,7 @@ TEST_F(Adapter, engulfR2) {
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        check_read(*per, misDensity, 10, 10, kmer, kmerOffset, 10);
+        check_read_pe(*per, misDensity, 10, 10, kmer, kmerOffset, 10);
         const std::string s1 =  "GGTAAACCATTAACCAAATTGGACATATCTCATCT";
         const std::string s2 =  "AGATGAGATATGTCCAATTTGGTTAATGGTT";
         ASSERT_EQ( (per->non_const_read_one()).get_sub_seq(), s1);
@@ -95,7 +95,7 @@ TEST_F(Adapter, trim) {
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        check_read(*per, misDensity, 10, 10, kmer, kmerOffset, 10);
+        check_read_pe(*per, misDensity, 10, 10, kmer, kmerOffset, 10);
         ASSERT_EQ( (per->non_const_read_one()).get_sub_seq(), "ACCATAACATAAACC");
         ASSERT_EQ( (per->non_const_read_two()).get_sub_seq(), "GGTTTATGTTATGGT");
 
@@ -113,7 +113,7 @@ TEST_F(Adapter, trim_short_R1) {
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        check_read(*per, misDensity, 10, 10, kmer, kmerOffset, 10);
+        check_read_pe(*per, misDensity, 10, 10, kmer, kmerOffset, 10);
         ASSERT_EQ( (per->non_const_read_one()).get_sub_seq(), "ACCATAACATAAACC");
         ASSERT_EQ( (per->non_const_read_two()).get_sub_seq(), "GGTTTATGTTATGGT");
 
@@ -130,7 +130,7 @@ TEST_F(Adapter, normal) {
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        check_read(*per, misDensity, 10, 10, kmer, kmerOffset, 10);
+        check_read_pe(*per, misDensity, 10, 10, kmer, kmerOffset, 10);
         ASSERT_EQ( (per->non_const_read_one()).get_sub_seq(), "GGTAAACCATTAACCAAATTGGACATATCTCATCTATCCTTATACTTA");
         ASSERT_EQ( (per->non_const_read_two()).get_sub_seq(), "CTCTCGGTCTCCTCTCGTTTCTCGTTCGCGCTAAGTATAAGGATAGA");
     }
@@ -146,7 +146,7 @@ TEST_F(Adapter, normal_short_R1) {
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        check_read(*per, misDensity, 10, 10, kmer, kmerOffset, 10);
+        check_read_pe(*per, misDensity, 10, 10, kmer, kmerOffset, 10);
         ASSERT_EQ( (per->non_const_read_one()).get_sub_seq(), "GGTAAACCATTAACCAAATTGGACATATCTCATCTATCCTTATA");
         ASSERT_EQ( (per->non_const_read_two()).get_sub_seq(), "CTCTCGGTCTCCTCTCGTTTCTCGTTCGCGCTAAGTATAAGGATAGA");
     }
@@ -162,7 +162,7 @@ TEST_F(Adapter, perfectOverlap) {
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        check_read(*per, misDensity, 10, 10, kmer, kmerOffset, 10);
+        check_read_pe(*per, misDensity, 10, 10, kmer, kmerOffset, 10);
         ASSERT_EQ( (per->non_const_read_one()).get_sub_seq(), "ACTTGACATTAAGCAAGTACCAGTACCGATACCATAGGACCCAAGGTA");
         ASSERT_EQ( (per->non_const_read_two()).get_sub_seq(), "TACCTTGGGTCCTATGGTATCGGTACTGGTACTTGCTTAATGTCAAGT");
     }
@@ -179,7 +179,7 @@ TEST_F(Adapter, perfectOverlap_short_R1) {
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        check_read(*per, misDensity, 10, 10, kmer, kmerOffset, 10);
+        check_read_pe(*per, misDensity, 10, 10, kmer, kmerOffset, 10);
         ASSERT_EQ( (per->non_const_read_one()).get_sub_seq(), "ACTTGACATTAAGCAAGTACCAGTACCGATACCATAGGACCCAA");
         ASSERT_EQ( (per->non_const_read_two()).get_sub_seq(), "TACCTTGGGTCCTATGGTATCGGTACTGGTACTTGCTTAATGTCAAGT");
     }
@@ -195,7 +195,7 @@ TEST_F(Adapter, noOverlap) {
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        check_read(*per, misDensity, 10, 10, kmer, kmerOffset, 10);
+        check_read_pe(*per, misDensity, 10, 10, kmer, kmerOffset, 10);
         const std::string s1 =  "GGTAAACCATTAACCAAATTGGACATATCTCATCTATCCTTATACTTA";
         const std::string s2 =  "TACCTTGGGTCCTATGGTATCGGTACTGGTACTTGCTTAATGTCAAGT";
         ASSERT_EQ( (per->non_const_read_one()).get_sub_seq(), s1);
@@ -214,7 +214,7 @@ TEST_F(Adapter, noOverlap_short_R1) {
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        check_read(*per, misDensity, 10, 10, kmer, kmerOffset, 10);
+        check_read_pe(*per, misDensity, 10, 10, kmer, kmerOffset, 10);
         const std::string s1 =  "GGTAAACCATTAACCAAATTGGACATATCTCATCTATCCTTATA";
         const std::string s2 =  "TACCTTGGGTCCTATGGTATCGGTACTGGTACTTGCTTAATGTCAAGT";
         ASSERT_EQ( (per->non_const_read_one()).get_sub_seq(), s1);
