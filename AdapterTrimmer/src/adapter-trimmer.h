@@ -136,21 +136,21 @@ unsigned int checkIfOverlap(Read &r1, Read &r2, size_t loc1, size_t loc2, const 
     std::advance(i1, loc1_t);
     auto i2 = seq2.begin();
     std::advance(i2, loc2_t);
-    if (maxLoop <= minOverlap || !threshold_mismatches(i1, i2, maxLoop, maxMis) ) {
+    if (maxLoop < minOverlap || !threshold_mismatches(i1, i2, maxLoop, maxMis) ) {
         // no overlap identified
         return 0;
     }
     // overlap exists thats meet maxMis criteria
-    size_t read1_bp;
-    size_t read2_bp;
-
-    const std::string &qual1 = r1.get_qual();
-    const std::string &qual2 = r2.get_qual_rc();
-
-    char bp;
-    char qual;
-
     if (!noFixBases){
+        size_t read1_bp;
+        size_t read2_bp;
+
+        const std::string &qual1 = r1.get_qual();
+        const std::string &qual2 = r2.get_qual_rc();
+
+        char bp;
+        char qual;
+
         for (size_t i = 0; i < maxLoop; ++i) {
             read1_bp = loc1_t + i;
             read2_bp = loc2_t + i;
@@ -189,8 +189,8 @@ void getOverlappedReads(Read &r1, Read &r2, const seqLookup &seq1Map,  const dou
     //if all we are doing is trimming adapters, why look for long inserts at all? Skip the first loop? second loop still has product > read_length
     /*Do a quick check if the shorter read kmer shows up in longer read (read 2)
      * If it does, then try the brute force approach*/
-    for (size_t bp = 0; bp < checkLengths; ++bp) {
-        // check first checkLength kmers at the beginning of read2 (sins)
+    for (size_t bp = 0; bp < (checkLengths - kmer); ++bp) {
+        // check first checkLength kmers at the beginning of read2 (mins)
         auto test = seq1Map.equal_range(seq2.substr(bp, kmer));
         for (auto it = test.first; it != test.second; ++it) {
             unsigned int overlapped = checkIfOverlap(r1, r2, it->second, bp, misDensity, minOver, noFixBases);
@@ -199,8 +199,8 @@ void getOverlappedReads(Read &r1, Read &r2, const seqLookup &seq1Map,  const dou
             }
         }
     } 
-    for (size_t bp = seq2.length() - (checkLengths + kmer); bp < seq2.length() - kmer ; ++bp) {
-        // check last checkLengths kmers at the end of the read2 (mins)
+    for (size_t bp = seq2.length() - (checkLengths + kmer); bp <= (seq2.length() - kmer) ; ++bp) {
+        // check last checkLengths kmers at the end of the read2 (sins)
         auto test = seq1Map.equal_range(seq2.substr(bp, kmer));
         for (auto it = test.first; it != test.second; ++it) {
             unsigned int overlapped = checkIfOverlap(r1, r2, it->second, bp, misDensity, minOver, noFixBases);
