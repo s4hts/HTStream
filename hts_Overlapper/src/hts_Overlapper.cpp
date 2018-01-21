@@ -36,14 +36,14 @@ int main(int argc, char** argv)
     app_description += "  to produce the original transcript, trim adapters, and in some\n";
     app_description += "  cases, correct sequencing errors.\n";
     app_description += "Reads come in three flavors:\n";
-    app_description += "  Sins: Reads produced from an insert shorter than the read length\n";
-    app_description += "  will result in a single read in the orientation of R1, and have the\n";
-    app_description += "  adapter bases trimmed to produce a SE read.\n";
-    app_description += "  Lins: Reads produced from a long-insert greater than read length, but\n";
-    app_description += "  somewhat shorter than 2x read length will produce a SE read in the\n";
-    app_description += "  orientation of R1.\n";
-    app_description += "  Nins: Reads produced from non-overlapping long-inserts will not\n";
-    app_description += "  overlap significantly, resulting in a PE read.\n";
+    app_description += "  sins: Reads produced from an insert shorter than the read length\n";
+    app_description += "        will result in a single read in the orientation of R1, and have the\n";
+    app_description += "        adapter bases trimmed to produce a SE read.\n";
+    app_description += "  mins: Reads produced from a medium-insert greater than read length, but\n";
+    app_description += "        somewhat shorter than 2x read length will produce a SE read in the\n";
+    app_description += "        orientation of R1.\n";
+    app_description += "  lins: Reads produced from long-inserts which do not overlap\n";
+    app_description += "        significantly, resulting in a PE read.\n";
 
     try
     {

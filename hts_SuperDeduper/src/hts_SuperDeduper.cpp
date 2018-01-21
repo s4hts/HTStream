@@ -30,8 +30,8 @@ int main(int argc, char** argv)
                        "hts_SuperDeduper is a reference-free PCR duplicate remover. It uses a subsequence\n";
     app_description += "  within each read as a unique key to detect duplicates in future reads.\n";
     app_description += "  Reads with 'N' character(s) in the key sequence are ignored.\n";    
-    app_description += "  hts_SuperDeduper is not recommended for single-end reads.";
-    app_description += "  WARNING: hts_SuperDeduper will only work correctly on untrimmed reads.";
+    app_description += "  hts_SuperDeduper is not recommended for single-end reads.\n";
+    app_description += "  WARNING: hts_SuperDeduper will only work correctly on untrimmed reads.\n";
 
 
     BitMap read_map;
