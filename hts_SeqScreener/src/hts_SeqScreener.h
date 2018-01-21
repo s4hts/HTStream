@@ -2,8 +2,8 @@
  * this is accomplised by making a lookup table (hash table) that uses kmer binaries as their hash, and if enough Kmers
  * "hit" this table, it is considered close enough, and is discarded
   */
-#ifndef PHIX_REMOVER_H
-#define PHIX_REMOVER_H
+#ifndef SEQSCREENER_H
+#define SEQSCREENER_H
 
 #define BOOST_DYNAMIC_BITSET_DONT_USE_FRIENDS
 
