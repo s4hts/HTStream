@@ -19,8 +19,6 @@ extern template class InputReader<PairedEndRead, PairedEndReadFastqImpl>;
 extern template class InputReader<PairedEndRead, InterReadImpl>;
 extern template class InputReader<ReadBase, TabReadImpl>;
 
-const std::string truSeq_HT    = "AGATCGGAAGAGCACACGTCTGAACTCCAGTCA";
-
 class AdapterCounters : public Counters {
 
 public:
@@ -121,7 +119,7 @@ public:
  * 
  * Within the overlap if they are the same bp, then add q scores
  * If they are different bp, subtract q scores and take the larger quality base*/ 
-unsigned int checkIfOverlap(Read &r1, Read &r2, size_t loc1, size_t loc2, const double misDensity, size_t minOverlap, bool noFixBases = false ) {
+unsigned int checkIfOverlap(Read &r1, Read &r2, size_t loc1, size_t loc2, const double misDensity, const size_t &mismatch, const size_t &minOverlap, bool noFixBases = false ) {
     size_t minLoc = std::min(loc1, loc2);
     int loc1_t = loc1 - minLoc;
     int loc2_t = loc2 - minLoc;
@@ -129,7 +127,7 @@ unsigned int checkIfOverlap(Read &r1, Read &r2, size_t loc1, size_t loc2, const 
     int r2_len = r2.getLength();
 
     size_t maxLoop = std::min(r1_len - loc1_t, r2_len - loc2_t);
-    size_t maxMis = static_cast<size_t>(maxLoop * misDensity);
+    size_t maxMis = std::min(mismatch, static_cast<size_t>(maxLoop * misDensity));
     
     const std::string &seq1 = r1.get_seq();
     const std::string &seq2 = r2.get_seq_rc();
@@ -184,7 +182,7 @@ unsigned int checkIfOverlap(Read &r1, Read &r2, size_t loc1, size_t loc2, const 
 }
 
 /*Because of the way overlapping works, you only need to check the ends of the shorter read*/
-void getOverlappedReads(Read &r1, Read &r2, const seqLookup &seq1Map,  const double misDensity, const size_t &minOver, const size_t &checkLengths, const size_t kmer, bool noFixBases = false ) {
+void getOverlappedReads(Read &r1, Read &r2, const seqLookup &seq1Map,  const double misDensity, const size_t &mismatch, const size_t &minOver, const size_t &checkLengths, const size_t kmer, bool noFixBases = false ) {
 
     // checkLengths should at most be 1/2 read length to check all kmers in read
     std::string seq2 = r2.get_seq_rc();
@@ -195,7 +193,7 @@ void getOverlappedReads(Read &r1, Read &r2, const seqLookup &seq1Map,  const dou
         // check first checkLength kmers at the beginning of read2 (sins)
         auto test = seq1Map.equal_range(seq2.substr(bp, kmer));
         for (auto it = test.first; it != test.second; ++it) {
-            unsigned int overlapped = checkIfOverlap(r1, r2, it->second, bp, misDensity, minOver, noFixBases);
+            unsigned int overlapped = checkIfOverlap(r1, r2, it->second, bp, misDensity, mismatch, minOver, noFixBases);
             if (overlapped) {
                 return;
             }
@@ -205,7 +203,7 @@ void getOverlappedReads(Read &r1, Read &r2, const seqLookup &seq1Map,  const dou
         // check last checkLengths kmers at the end of the read2 (mins)
         auto test = seq1Map.equal_range(seq2.substr(bp, kmer));
         for (auto it = test.first; it != test.second; ++it) {
-            unsigned int overlapped = checkIfOverlap(r1, r2, it->second, bp, misDensity, minOver, noFixBases);
+            unsigned int overlapped = checkIfOverlap(r1, r2, it->second, bp, misDensity, mismatch, minOver, noFixBases);
             if (overlapped) {
                 return;
             }
@@ -213,7 +211,7 @@ void getOverlappedReads(Read &r1, Read &r2, const seqLookup &seq1Map,  const dou
     }
 }
 
-void check_read_pe(PairedEndRead &pe , const double misDensity, const size_t &minOver, const size_t &checkLengths, const size_t kmer, const size_t kmerOffset, bool noFixBases = false ) {
+void check_read_pe(PairedEndRead &pe , const double misDensity, const size_t &mismatch, const size_t &minOver, const size_t &checkLengths, const size_t kmer, const size_t kmerOffset, bool noFixBases = false ) {
     
     Read &r1 = pe.non_const_read_one();
     Read &r2 = pe.non_const_read_two();
@@ -232,13 +230,13 @@ void check_read_pe(PairedEndRead &pe , const double misDensity, const size_t &mi
     seqLookup mOne = readOneMap(r1.get_seq(), kkmer, kmerOffset);
     /* returns null if no much
      * r1 and r2 and passed by ref in case only adapter trimming is on */
-    getOverlappedReads(r1, r2, mOne, misDensity, minOver, checkL, kkmer, noFixBases) ;
+    getOverlappedReads(r1, r2, mOne, misDensity, mismatch, minOver, checkL, kkmer, noFixBases) ;
     if (swapped) {
         std::swap(r1, r2);
     }
 }
 
-unsigned int checkIfAdapter(Read &r1, Read &adapter, size_t loc1, size_t loc2, const double misDensity, size_t minOverlap, bool noFixBases = false ) {
+unsigned int checkIfAdapter(Read &r1, Read &adapter, size_t loc1, size_t loc2, const double misDensity, const size_t &mismatch, const size_t &minOverlap ) {
     size_t minLoc = std::min(loc1, loc2);
     int loc1_t = loc1 - minLoc;
     int loc2_t = loc2 - minLoc;
@@ -246,7 +244,7 @@ unsigned int checkIfAdapter(Read &r1, Read &adapter, size_t loc1, size_t loc2, c
     int adapter_len = adapter.getLength();
 
     size_t maxLoop = std::min(r1_len - loc1_t, adapter_len - loc2_t);
-    size_t maxMis = static_cast<size_t>(maxLoop * misDensity);
+    size_t maxMis = std::min(mismatch, static_cast<size_t>(maxLoop * misDensity));
 
     const std::string &seq1 = r1.get_seq();
     const std::string &seq_adapter = adapter.get_seq();
@@ -265,12 +263,17 @@ unsigned int checkIfAdapter(Read &r1, Read &adapter, size_t loc1, size_t loc2, c
     return 1;
 }
 
-void check_read_se(SingleEndRead &se , const double misDensity, const size_t &minOver, const size_t &checkLengths, const size_t kmer, const size_t kmerOffset, bool noFixBases = false ) {
+void check_read_se(SingleEndRead &se , const double misDensity, const size_t &mismatch, const size_t &minOver, const size_t &checkLengths, const size_t kmer, const size_t kmerOffset, std::string adapter_seq = "" ) {
 
     Read &r1 = se.non_const_read_one();
-    Read adapter = Read(truSeq_HT, "", "");
+    /* if adapter is longer than sequence, set length to same as seq */
+    if (adapter_seq.length() < r1.getLength()){
+        adapter_seq = adapter_seq.substr(0, r1.getLength());
+    }
 
-    /* checkL needs to be as long as or longer than the shortest read */
+    Read adapter = Read(adapter_seq, "", "");
+
+   /* checkL needs to be as long as or longer than the shortest read */
     size_t checkL = std::min(adapter.getLength(), checkLengths);
     /* kmer needs to be as long as or longer than the shortest read */
     size_t kkmer = std::min(adapter.getLength(), kmer);
@@ -281,9 +284,9 @@ void check_read_se(SingleEndRead &se , const double misDensity, const size_t &mi
      * If it does, then try the brute force approach*/
     for (size_t bp = 0; bp < (checkLengths - kmer); ++bp) {
         // check first checkLength kmers at the beginning of read2 (sins)
-        auto test = mOne.equal_range(truSeq_HT.substr(bp, kmer));
+        auto test = mOne.equal_range(adapter_seq.substr(bp, kmer));
         for (auto it = test.first; it != test.second; ++it) {
-            unsigned int overlapped = checkIfAdapter(r1, adapter, it->second, bp, misDensity, minOver, noFixBases);
+            unsigned int overlapped = checkIfAdapter(r1, adapter, it->second, bp, misDensity, mismatch, minOver);
             if (overlapped) {
                 return;
             }
@@ -301,7 +304,7 @@ void check_read_se(SingleEndRead &se , const double misDensity, const size_t &mi
  * With a lin it is useful to have a higher confidence in the bases in the overlap and longer read
  * With a sin it is useful to have the higher confidence as well as removing the adapters*/
 template <class T, class Impl>
-void helper_adapterTrimmer(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, AdapterCounters &counter, const double misDensity, const size_t minOver, const bool stranded, const size_t min_length, const size_t checkLengths, const size_t kmer, const size_t kmerOffset, bool no_orphan = false, bool noFixBases = false) {
+void helper_adapterTrimmer(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, AdapterCounters &counter, const double misDensity, const size_t mismatch, const size_t minOver, const bool stranded, const size_t min_length, const size_t checkLengths, const size_t kmer, const size_t kmerOffset, bool no_orphan = false, bool noFixBases = false, std::string adapter = "") {
     
     if (noFixBases) counter.set_fixbases();
 
@@ -310,7 +313,7 @@ void helper_adapterTrimmer(InputReader<T, Impl> &reader, std::shared_ptr<OutputW
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());        
         if (per) {
             counter.input(*per);
-            check_read_pe(*per, misDensity, minOver, checkLengths, kmer, kmerOffset, noFixBases);
+            check_read_pe(*per, misDensity, mismatch, minOver, checkLengths, kmer, kmerOffset, noFixBases);
             per->checkDiscarded(min_length);    
             counter.output(*per, no_orphan);
             writer_helper(per, pe, se, stranded, no_orphan); 
@@ -319,7 +322,7 @@ void helper_adapterTrimmer(InputReader<T, Impl> &reader, std::shared_ptr<OutputW
             
             if (ser) {
                 counter.input(*ser);
-                check_read_se(*ser, misDensity, minOver, checkLengths, kmer, kmerOffset, noFixBases);
+                check_read_se(*ser, misDensity, mismatch, minOver, checkLengths, kmer, kmerOffset, adapter);
                 ser->checkDiscarded(min_length);
                 counter.output(*ser);
                 writer_helper(ser, pe, se);
