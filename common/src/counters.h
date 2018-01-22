@@ -150,7 +150,7 @@ public:
 
 private:
     virtual void check_write() {
-        outStats.open(fStats, std::ios::app);
+        outStats.open(fStats, std::ios::out | std::ios::app);
 
         if(outStats.is_open())
         {
