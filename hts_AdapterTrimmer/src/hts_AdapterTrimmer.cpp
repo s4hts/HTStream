@@ -34,7 +34,7 @@ int main(int argc, char** argv)
     std::string app_description = 
                        "Adapter Trimmer, trims off adapters by first overlapping paired-end reads and\n";
     app_description += "  trimming off overhangs which by definition are adapter sequence in standard\n";
-    app_description += "  libraries. [SE Reads are currently not supported for adapter trimming].";
+    app_description += "  libraries. SE Reads are trimmed by overlapping the adapter-sequence and trimming off the overlap.";
 
     try
     {
