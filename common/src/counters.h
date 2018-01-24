@@ -150,7 +150,7 @@ public:
 
 private:
     virtual void check_write() {
-        outStats.open(fStats, std::ios::in | std::ios::out);
+        outStats.open(fStats, std::ios::out | std::ios::app);
 
         if(outStats.is_open())
         {
@@ -158,16 +158,8 @@ private:
         }
         else
         {
-            throw std::runtime_error("Error: Cannot write to " + fStats + ": " +  std::strerror( errno ));
+            throw std::runtime_error("Error: Cannot write to " + fStats + ": " +  std::strerror( errno ) + '\n');
         }
-
-        // FILE* f = NULL;
-        
-        // f = fopen(fStats.c_str(), "a");
-        // if (!f) {
-        //     throw std::runtime_error("cannot write to " + fStats + ": " +  std::strerror( errno ));
-        // }
-        // fclose (f);
     }
 
 };
