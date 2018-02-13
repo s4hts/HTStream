@@ -165,8 +165,8 @@ unsigned int checkIfOverlap(Read &r1, Read &r2, size_t loc1, size_t loc2, const 
                 r1.changeSeq(read1_bp, bp);
                 r1.changeQual(read1_bp, qual);
                 //Something clever with RC
-                r2.changeSeq(r2_len - read2_bp , rc(bp) );
-                r2.changeQual(r2_len -  read2_bp , qual);
+                r2.changeSeq( (r2_len - 1) - read2_bp , rc(bp) );
+                r2.changeQual( (r2_len - 1) -  read2_bp , qual);
             }
         }
     }
