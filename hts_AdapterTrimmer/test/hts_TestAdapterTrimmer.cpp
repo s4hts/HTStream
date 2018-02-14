@@ -45,8 +45,7 @@ TEST_F(Adapter, issue_126) {
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        ASSERT_EQ( (per->non_const_read_two()).getRTrim(), 0);
-        check_read_pe(*per, misDensity, 8, 20, kmer, kmerOffset, false);
+        check_read_pe(*per, misDensity, 100, 8, 20, kmer, kmerOffset, false);
         const std::string s1 =  "CTTTGTAGGGCAGAAAAATTCTGCCTGACCTTTCCCATCTTCCTGATGATGTTAACAAACGACAGCCACTGAGGGCACAGGAGGGGGCTCTACACAGGCCAAGAGCTACAGGCTACAGTCTGAGCACAGAAAACCCTCCAGCTCCAGC";
         const std::string s2 =  "GCTGGAGCTGGAGGGTTTTCTGTGCTCAGACTGTAGCCTGTAGCTCTTGGCCTGTGTAGAGCCCCCTCCTGTGCCCTCAGTGGCTGTCGTTTGTTAACATCATCAGGAAGATGGGAAAGGTCAGGCAGAATTTTTCTGCCCTACAAAG";
         ASSERT_EQ( (per->non_const_read_one()).get_sub_seq(), s1);
