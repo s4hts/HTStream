@@ -157,7 +157,7 @@ unsigned int checkIfOverlap(Read &r1, Read &r2, size_t loc1, size_t loc2, const 
             if (seq1[read1_bp] == seq2[read2_bp] )  {
                 qual = static_cast<char>(std::min(qual1[read1_bp] + qual2[read2_bp] - 33, 40 + 33));  // MATT: I still don't agree with this, so 38 [confident] and 2 [not so confident] return a 40 [very confident]??
                 r1.changeQual(read1_bp, qual);
-                r2.changeQual(r2_len -  read2_bp, qual);
+                r2.changeQual( (r2_len - 1) -  read2_bp, qual);
             } else {
                 bp = qual1[read1_bp] >= qual2[read2_bp] ? seq1[read1_bp] : seq2[read2_bp];
                 qual = static_cast<char>(std::max(qual1[read1_bp] - qual2[read2_bp] + 33, 1 + 33));
