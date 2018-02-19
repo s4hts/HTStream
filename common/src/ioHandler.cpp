@@ -1,6 +1,7 @@
 #include "ioHandler.h"
 #include <exception>
 #include <cerrno>
+#include <cctype>
 
 void writer_helper(ReadBase *r, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, bool stranded, bool no_orphans ) { //class writer
     PairedEndRead *per = dynamic_cast<PairedEndRead*>(r);
@@ -32,7 +33,7 @@ void writer_helper(ReadBase *r, std::shared_ptr<OutputWriter> pe, std::shared_pt
 }
 
 void skip_lr(std::istream *input) {
-    while(input and input->good() and (input->peek() == '\n' || input->peek() == '\r')) {
+    while(input and input->good() and std::isspace(input->peek())) {
         input->get();
     }
 }
@@ -113,7 +114,7 @@ Read InputFastq::load_read(std::istream *input) {
     }
 
     // ignore extra lines at end of file
-    while(input->good() and (input->peek() == '\n' || input->peek() == '\r')) {
+    while(input->good() and (std::isspace(input->peek()))) {
         input->get();
     }
     return Read(seq, qual, id.substr(1));
@@ -138,7 +139,7 @@ Read InputFasta::load_read(std::istream *input) {
     if (seq.size() < 1) {
         throw std::runtime_error("no sequence");  
     }
-    while(input->good() and (input->peek() == '\n' || input->peek() == '\r')) {
+    while(input->good() and std::isspace(input->peek())) {
         input->get();
     }
     return Read(seq, "", id);
@@ -176,7 +177,7 @@ std::vector<Read> TabReadImpl::load_read(std::istream *input) {
     }
 
     // ignore extra lines at end of file
-    while(input->good() and (input->peek() == '\n' || input->peek() == '\r')) {
+    while(input->good() and std::isspace(input->peek())) {
         input->get();
     }
 
