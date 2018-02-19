@@ -54,12 +54,13 @@ int check_open_r(const std::string& filename) {
     if (p.extension() == ".gz") {
         f = popen(("gunzip -c " + filename).c_str(), "r");
     } else {
-        f = fopen(filename.c_str(), "r");
+        f = popen(("cat " + filename).c_str(), "r");
     }
 
     if (!f) {
         throw_error(filename);
     }
+    std::cerr << fileno(f) << std::endl;
     return fileno(f);
 }
 
