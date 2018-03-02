@@ -30,7 +30,7 @@ namespace bi = boost::iostreams;
 
 int main(int argc, char** argv)
 {
-    const std::string program_name = "adapter-trimmer";
+    const std::string program_name = "hts_AdapterTrimmer";
     std::string app_description = 
                        "Adapter Trimmer, trims off adapters by first overlapping paired-end reads and\n";
     app_description += "  trimming off overhangs which by definition are adapter sequence in standard\n";
