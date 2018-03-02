@@ -69,20 +69,22 @@ int check_exists(const std::string& filename, bool force, bool gzip, bool std_ou
     if (std_out) {
         return fileno(stdout);
     }
-    bf::path p(filename);
+    std::string fname = gzip ? filename + ".gz" : filename ;
+
+    bf::path p(fname);
 
     if (force || !bf::exists(p)) {
         if (gzip) {
-            f = popen(("gzip > " + filename + ".gz").c_str(), "w");
+            f = popen(("gzip > " + fname).c_str(), "w");
         } else {
-            f = fopen(filename.c_str(), "w");
+            f = fopen(fname.c_str(), "w");
         }
         if (!f) {
-            throw_error(filename);
+            throw_error(fname);
         }
         return fileno(f);
     } else {
-        throw std::runtime_error("File " + filename + " all ready exists. Please use -F or delete it\n");
+        throw std::runtime_error("File " + fname + " all ready exists. Please use -F or delete it\n");
     }
 }
 
