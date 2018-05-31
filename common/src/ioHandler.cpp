@@ -25,9 +25,9 @@ void writer_helper(ReadBase *r, std::shared_ptr<OutputWriter> pe, std::shared_pt
         if (! (ser->non_const_read_one()).getDiscard() ) {
             se->write(*ser);
         } else {
-            
+
         }
-            
+
     }
 }
 
@@ -65,7 +65,7 @@ int check_open_r(const std::string& filename) {
 
 int check_exists(const std::string& filename, bool force, bool gzip, bool std_out) {
     FILE* f = NULL;
-    
+
     if (std_out) {
         return fileno(stdout);
     }
@@ -138,7 +138,7 @@ Read InputFasta::load_read(std::istream *input) {
         }
     }
     if (seq.size() < 1) {
-        throw std::runtime_error("no sequence");  
+        throw std::runtime_error("no sequence");
     }
     while(input->good() and (input->peek() == '\n' || input->peek() == '\r')) {
         input->get();
@@ -157,24 +157,33 @@ std::vector<Read> TabReadImpl::load_read(std::istream *input) {
     std::vector <std::string> parsedRead;
     boost::split(parsedRead, tabLine, boost::is_any_of("\t"));
 
-    
-    if (parsedRead.size() != 3 && parsedRead.size() != 5) {
-        throw std::runtime_error("There are not either 3 or 5 elements within a tab delimited file line");
+
+    if (parsedRead.size() != 3 && parsedRead.size() != 5 && parsedRead.size() != 6) {
+        throw std::runtime_error("There are not either 3 (SE), 5 (PE, itab5), or 6 (PE, itab6) elements within a tab delimited file line");
     }
 
     if (parsedRead[1].size() != parsedRead[2].size()) {
         throw std::runtime_error("sequence and qualities are not the same length 1");
     }
-    
+
     reads[0] = Read(parsedRead[1], parsedRead[2], parsedRead[0]);
-   
-    if (parsedRead.size() != 3) {
-        
+
+    if (parsedRead.size() == 5) {
+
         if (parsedRead[3].size() != parsedRead[4].size()) {
             throw std::runtime_error("sequence and qualities are not the same length 2");
         }
-   
+
         reads.push_back(Read(parsedRead[3], parsedRead[4], parsedRead[0]));
+    }
+
+    if (parsedRead.size() == 6) {
+
+        if (parsedRead[4].size() != parsedRead[5].size()) {
+            throw std::runtime_error("sequence and qualities are not the same length 2");
+        }
+
+        reads.push_back(Read(parsedRead[4], parsedRead[5], parsedRead[3]));
     }
 
     // ignore extra lines at end of file
