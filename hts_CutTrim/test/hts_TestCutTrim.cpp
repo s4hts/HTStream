@@ -64,7 +64,7 @@ TEST_F(CutTrim, MaxLength) {
             writer_helper(per, tab, tab);
         }
     }
-    ASSERT_EQ("Read1\tTGACTTGACA\t##########\tGCTACCTTGG\t##########\n", out1->str());
+    ASSERT_EQ("Read1\tTGACTTGACA\t##########\tRead2\tGCTACCTTGG\t##########\n", out1->str());
 };
 
 TEST_F(CutTrim, Both) {
@@ -85,6 +85,5 @@ TEST_F(CutTrim, Both) {
             writer_helper(per, tab, tab);
         }
     }
-    ASSERT_EQ("Read1\tTGACATTAAG\t##########\tCTTGGGTCCT\t##########\n", out1->str());
+    ASSERT_EQ("Read1\tTGACATTAAG\t##########\tRead2\tCTTGGGTCCT\t##########\n", out1->str());
 };
-
