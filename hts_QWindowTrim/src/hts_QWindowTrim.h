@@ -88,7 +88,7 @@ void trim_right(Read &rb, size_t qual_threshold, size_t window_size) {
 }
 
 template <class T, class Impl>
-void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, TrimmingCounters &counters, size_t min_length, size_t qual_threshold, size_t window_size, bool stranded, bool no_left, bool no_right, bool no_orphans) {
+void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, TrimmingCounters &counters, size_t min_length, bool stranded, bool no_orphans, size_t qual_threshold, size_t window_size, bool no_left, bool no_right) {
 
     while(reader.has_next()) {
         auto i = reader.next();
@@ -105,7 +105,7 @@ void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe,
             }
             per->checkDiscarded(min_length);
             writer_helper(per, pe, se, stranded, no_orphans);
-            counters.output(*per);
+            counters.output(*per, no_orphans);
         } else {
             SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
 

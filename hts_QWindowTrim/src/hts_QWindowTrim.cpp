@@ -32,7 +32,7 @@ namespace bi = boost::iostreams;
 int main(int argc, char** argv)
 {
     const std::string program_name = "hts_QWindowTrim";
-    std::string app_description = 
+    std::string app_description =
                        "hts_QWindowTrim uses a sliding window approach to remove low quality\n";
     app_description += "  bases (5' or 3') from a read. A window will slide from each end of the\n";
     app_description += "  read, moving inwards. Once the window reaches an average quality <avg-qual>\n";
@@ -56,7 +56,7 @@ int main(int argc, char** argv)
 
         setDefaultParamsCutting(desc);
             // no-orphans|n ; stranded|s ; min-length|m
-        setDefaultParamsTrim(desc); 
+        setDefaultParamsTrim(desc);
             // no-left|l ; no-right|r
 
         desc.add_options()
@@ -73,17 +73,17 @@ int main(int argc, char** argv)
         {
             po::store(po::parse_command_line(argc, argv, cmdline_options),
                       vm); // can throw
-           
-            version_or_help(program_name, app_description, cmdline_options, vm); 
+
+            version_or_help(program_name, app_description, cmdline_options, vm);
 
             po::notify(vm); // throws on error, so do after help in case
-           
-             
+
+
             size_t qual_threshold = vm["avg-qual"].as<size_t>() + vm["qual-offset"].as<size_t>() ;
 
             std::string statsFile(vm["stats-file"].as<std::string>());
             std::string prefix(vm["prefix"].as<std::string>());
-    
+
             std::shared_ptr<OutputWriter> pe = nullptr;
             std::shared_ptr<OutputWriter> se = nullptr;
 
@@ -97,7 +97,7 @@ int main(int argc, char** argv)
                 }
                 auto read1_files = vm["read1-input"].as<std::vector<std::string> >();
                 auto read2_files = vm["read2-input"].as<std::vector<std::string> >();
-                
+
                 if (read1_files.size() != read2_files.size()) {
                     throw std::runtime_error("must have same number of input files for read1 and read2");
                 }
@@ -105,9 +105,9 @@ int main(int argc, char** argv)
                 for(size_t i = 0; i < read1_files.size(); ++i) {
                     bi::stream<bi::file_descriptor_source> is1{check_open_r(read1_files[i]), bi::close_handle};
                     bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
-                   
+
                     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
-                    helper_trim(ifp, pe, se, counters, vm["min-length"].as<size_t>() , qual_threshold, vm["window-size"].as<size_t>(), vm["stranded"].as<bool>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>(), vm["no-orphans"].as<bool>() );
+                    helper_trim(ifp, pe, se, counters, vm["min-length"].as<size_t>() , vm["stranded"].as<bool>(), vm["no-orphans"].as<bool>(), qual_threshold, vm["window-size"].as<size_t>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>() );
                 }
             }
 
@@ -116,33 +116,33 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> sef{ check_open_r(file), bi::close_handle};
                     InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(sef);
-                    helper_trim(ifs, pe, se, counters, vm["min-length"].as<size_t>() , qual_threshold, vm["window-size"].as<size_t>(), vm["stranded"].as<bool>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>(), vm["no-orphans"].as<bool>() );
+                    helper_trim(ifs, pe, se, counters, vm["min-length"].as<size_t>() , vm["stranded"].as<bool>(), vm["no-orphans"].as<bool>(), qual_threshold, vm["window-size"].as<size_t>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>() );
                 }
             }
-            
+
             if(vm.count("tab-input")) {
                 auto read_files = vm["tab-input"].as<std::vector<std::string> > ();
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> tabin{ check_open_r(file), bi::close_handle};
                     InputReader<ReadBase, TabReadImpl> ift(tabin);
-                    helper_trim(ift, pe, se, counters, vm["min-length"].as<size_t>() , qual_threshold, vm["window-size"].as<size_t>(), vm["stranded"].as<bool>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>(), vm["no-orphans"].as<bool>() );
+                    helper_trim(ift, pe, se, counters, vm["min-length"].as<size_t>() , vm["stranded"].as<bool>(), vm["no-orphans"].as<bool>(), qual_threshold, vm["window-size"].as<size_t>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>() );
                 }
             }
-            
+
             if (vm.count("interleaved-input")) {
                 auto read_files = vm["interleaved-input"].as<std::vector<std::string > >();
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> inter{ check_open_r(file), bi::close_handle};
                     InputReader<PairedEndRead, InterReadImpl> ifp(inter);
-                    helper_trim(ifp, pe, se, counters, vm["min-length"].as<size_t>() , qual_threshold, vm["window-size"].as<size_t>(), vm["stranded"].as<bool>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>(), vm["no-orphans"].as<bool>() );
+                    helper_trim(ifp, pe, se, counters, vm["min-length"].as<size_t>() , vm["stranded"].as<bool>(), vm["no-orphans"].as<bool>(), qual_threshold, vm["window-size"].as<size_t>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>() );
                 }
             }
-           
+
             if (vm.count("from-stdin")) {
                 bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
-                helper_trim(ift, pe, se, counters, vm["min-length"].as<size_t>() , qual_threshold, vm["window-size"].as<size_t>(), vm["stranded"].as<bool>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>(), vm["no-orphans"].as<bool>() );
-            }  
+                helper_trim(ift, pe, se, counters, vm["min-length"].as<size_t>() , vm["stranded"].as<bool>(), vm["no-orphans"].as<bool>(), qual_threshold, vm["window-size"].as<size_t>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>() );
+            }
             counters.write_out();
         }
         catch(po::error& e)
