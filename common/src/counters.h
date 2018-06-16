@@ -62,7 +62,7 @@ public:
         } else {
             const SingleEndRead *ser = dynamic_cast<const SingleEndRead *>(&read);
             if (ser) {
-                ++SE_In; 
+                ++SE_In;
             } else {
                 throw std::runtime_error("In utils.h output: read type not valid");
             }
@@ -86,21 +86,21 @@ public:
     }
 
     virtual void write_out() {
-        
+
         initialize_json();
 
         write_labels(generic);
         write_sublabels("Single_end", se);
         write_sublabels("Paired_end", pe);
 
-        finalize_json();        
+        finalize_json();
     }
 
     virtual void initialize_json() {
         std::ifstream testEnd(fStats);
         int end = testEnd.peek();
         testEnd.close();
-        
+
         if (aStats && end != -1) {
             outStats.open(fStats, std::ios::in | std::ios::out); //append
             outStats.seekp(-6, std::ios::end );
@@ -166,7 +166,7 @@ private:
 
 class TrimmingCounters : public Counters {
 
-public: 
+public:
     uint64_t SE_Right_Trim = 0;
     uint64_t SE_Left_Trim = 0;
     uint64_t SE_Discarded = 0;
@@ -174,7 +174,7 @@ public:
     uint64_t R1_Left_Trim = 0;
     uint64_t R1_Right_Trim = 0;
     uint64_t R2_Left_Trim = 0;
-    uint64_t R2_Right_Trim = 0;    
+    uint64_t R2_Right_Trim = 0;
     uint64_t R1_Discarded = 0;
     uint64_t R2_Discarded = 0;
     uint64_t PE_Discarded = 0;
@@ -217,12 +217,12 @@ public:
             ++PE_Out;
             R1_stats(one);
             R2_stats(two);
-        } else if (!one.getDiscard() && !no_orphans) { //if stranded RC
+        } else if (!one.getDiscard() && !no_orphans) {
             ++TotalFragmentsOutput;
             ++SE_Out;
             ++R2_Discarded;
             SE_stats(one);
-        } else if (!two.getDiscard() && !no_orphans) { // Will never be RC
+        } else if (!two.getDiscard() && !no_orphans) {
             ++TotalFragmentsOutput;
             ++SE_Out;
             ++R1_Discarded;
@@ -242,7 +242,7 @@ public:
             ++SE_Discarded;
         }
     }
-    
+
 };
 
 #endif
