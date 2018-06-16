@@ -30,9 +30,8 @@ public:
 
     using Counters::input;
     virtual void input(const ReadBase &read, size_t dup_freq) {
-
-        if (dup_freq > 0 && (TotalFragmentsInput - Ignored) % dup_freq == 0 && (TotalFragmentsInput - Ignored) != 0){
-            duplicateProportion.push_back(std::forward_as_tuple((TotalFragmentsInput - Ignored), TotalFragmentsOutput));
+        if (dup_freq > 0 && TotalFragmentsInput % dup_freq == 0 && TotalFragmentsInput != 0){
+            duplicateProportion.push_back(std::forward_as_tuple(TotalFragmentsInput, TotalFragmentsOutput));
         }
         Counters::input(read);
     }
@@ -48,7 +47,7 @@ public:
     virtual void write_out() {
 
         // record final input/dup
-        duplicateProportion.push_back(std::forward_as_tuple((TotalFragmentsInput - Ignored), TotalFragmentsOutput));
+        duplicateProportion.push_back(std::forward_as_tuple(TotalFragmentsInput, TotalFragmentsOutput));
 
         initialize_json();
 
@@ -57,7 +56,7 @@ public:
         write_sublabels("Single_end", se);
         write_sublabels("Paired_end", pe);
 
-        finalize_json();        
+        finalize_json();
     }
 };
 
@@ -76,14 +75,14 @@ void load_map(InputReader<T, Impl> &reader, SuperDeduperCounters& counters, BitM
 
     while(reader.has_next()) {
         auto i = reader.next();
-        counters.input(*i, log_freq);        
+        counters.input(*i, log_freq);
+        tmpAvg = i->avg_q_score();
         //check for existance, store or compare quality and replace:
-        if (auto key=i->get_key(start, length)) {
+        if ( tmpAvg < discard_qual ){ // averge qual must be less than discard_qual, ignored
+            counters.increment_ignored();
+        } else if (auto key=i->get_key(start, length)) { // check for duplicate
             // find faster than count on some compilers, new key
-            tmpAvg = i->avg_q_score();
-            if ( tmpAvg < discard_qual ){ // averge qual must be less than discard_qual, ignored
-                counters.increment_ignored();
-            } else if(read_map.find(*key) == read_map.end()) { // first time the key is seen
+            if(read_map.find(*key) == read_map.end()) { // first time the key is seen
                 if ( tmpAvg >= avg_automatic_write ) { // if its greater than avg_automatic_write then write out
                     writer_helper(i.get(), pe, se, false);
                     counters.output(*i);

@@ -42,7 +42,7 @@ void trim_left(Read &rb, size_t qual_threshold, size_t window_size) {
             cut = i ;
         }
     }
-    
+
     if (current_sum < sum_qual) {
         rb.setLCut(qual.length() - 1);
     } else {
@@ -70,7 +70,7 @@ void trim_right(Read &rb, size_t qual_threshold, size_t window_size) {
         } else {
             sum_qual = i * qual_threshold;
         }
-        
+
         if (current_sum >= sum_qual) {
             break;
         } else {
@@ -84,20 +84,20 @@ void trim_right(Read &rb, size_t qual_threshold, size_t window_size) {
     } else {
         rb.setRCut(len - cut);
     }
- 
+
 }
 
 template <class T, class Impl>
 void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, TrimmingCounters &counters, size_t min_length, size_t qual_threshold, size_t window_size, bool stranded, bool no_left, bool no_right, bool no_orphans) {
-    
+
     while(reader.has_next()) {
         auto i = reader.next();
-        PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());        
+        PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
         if (per) {
             counters.input(*per);
             if (!no_left) {
                 trim_left(per->non_const_read_one(), qual_threshold, window_size);
-                trim_left(per->non_const_read_two(), qual_threshold, window_size);            
+                trim_left(per->non_const_read_two(), qual_threshold, window_size);
             }
             if (!no_right) {
                 trim_right(per->non_const_read_one(), qual_threshold, window_size);
@@ -108,17 +108,17 @@ void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe,
             counters.output(*per);
         } else {
             SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
-            
+
             if (ser) {
                 counters.input(*ser);
                 if (!no_left) {
-                    trim_left(ser->non_const_read_one(), qual_threshold, window_size);            
-                } 
+                    trim_left(ser->non_const_read_one(), qual_threshold, window_size);
+                }
                 if (!no_right) {
-                    trim_right(ser->non_const_read_one(), qual_threshold, window_size);            
+                    trim_right(ser->non_const_read_one(), qual_threshold, window_size);
                 }
                 ser->checkDiscarded(min_length);
-                writer_helper(ser, pe, se, stranded);
+                writer_helper(ser, pe, se, false, false);
                 counters.output(*ser);
             } else {
                 throw std::runtime_error("Unknow read type");
