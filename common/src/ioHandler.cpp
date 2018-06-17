@@ -10,9 +10,9 @@ void writer_helper(ReadBase *r, std::shared_ptr<OutputWriter> pe, std::shared_pt
 
         if (!one.getDiscard() && !two.getDiscard()) {
             pe->write(*per);
-        } else if (!one.getDiscard() && !no_orphans) { //if stranded RC
+        } else if (!one.getDiscard() && !no_orphans) { // Will never be RC
             se->write_read(one, false);
-        } else if (!two.getDiscard() && !no_orphans) { // Will never be RC
+        } else if (!two.getDiscard() && !no_orphans) { // if stranded RC
             se->write_read((per->get_read_two()), stranded);
         } else {
 
@@ -20,7 +20,7 @@ void writer_helper(ReadBase *r, std::shared_ptr<OutputWriter> pe, std::shared_pt
     } else {
         SingleEndRead *ser = dynamic_cast<SingleEndRead*>(r);
         if (!ser) {
-            throw std::runtime_error("Unknow read found");
+            throw std::runtime_error("Unknown read found");
         }
         if (! (ser->non_const_read_one()).getDiscard() ) {
             se->write(*ser);

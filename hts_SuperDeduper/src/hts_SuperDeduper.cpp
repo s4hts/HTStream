@@ -29,13 +29,13 @@ int main(int argc, char** argv)
     std::string app_description =
                        "hts_SuperDeduper is a reference-free PCR duplicate remover. It uses a subsequence\n";
     app_description += "  within each read as a unique key to detect duplicates in future reads.\n";
-    app_description += "  Reads with 'N' character(s) in the key sequence are ignored.\n";    
+    app_description += "  Reads with 'N' character(s) in the key sequence are ignored.\n";
     app_description += "  hts_SuperDeduper is not recommended for single-end reads.\n";
     app_description += "  WARNING: hts_SuperDeduper will only work correctly on untrimmed reads.\n";
 
 
     BitMap read_map;
-        
+
     try
     {
         /** Define and parse the program options
@@ -57,7 +57,7 @@ int main(int argc, char** argv)
             ("length,l", po::value<size_t>()->default_value(10)->notifier(boost::bind(&check_range<size_t>, "length", _1, 1, 10000)), "Length of unique ID (min 1, max 10000)")
             ("avg-qual-score,q", po::value<double>()->default_value(30)->notifier(boost::bind(&check_range<double>, "avg-qual-score", _1, 1, 10000)), "Avg quality score to have the read written automatically (min 1, max 10000)")
             ("inform-avg-qual-score,a", po::value<double>()->default_value(5)->notifier(boost::bind(&check_range<double>, "inform-avg-qual-score", _1, 1, 10000)), "Avg quality score to consider a read informative (min 1, max 10000)") //I know this says user input is a int, but is actually a double
-            ("log_freq,e", po::value<size_t>()->default_value(1000000)->notifier(boost::bind(&check_range<size_t>, "log_freq", _1, 0, 1000000000)), "Frequency in which to log duplicates in reads, can be used to create a saturation plot (0 turns off)."); 
+            ("log_freq,e", po::value<size_t>()->default_value(1000000)->notifier(boost::bind(&check_range<size_t>, "log_freq", _1, 0, 1000000000)), "Frequency in which to log duplicates in reads, can be used to create a saturation plot (0 turns off).");
 
         po::options_description cmdline_options;
         cmdline_options.add(standard).add(input).add(output).add(desc);
@@ -74,7 +74,7 @@ int main(int argc, char** argv)
             po::notify(vm); // throws on error, so do after help in case
 
             version_or_help( program_name, app_description, cmdline_options, vm);
-            
+
             std::string statsFile(vm["stats-file"].as<std::string>());
             std::string prefix(vm["prefix"].as<std::string>());
 
@@ -92,7 +92,7 @@ int main(int argc, char** argv)
                 }
                 auto read1_files = vm["read1-input"].as<std::vector<std::string> >();
                 auto read2_files = vm["read2-input"].as<std::vector<std::string> >();
-                
+
                 if (read1_files.size() != read2_files.size()) {
                     throw std::runtime_error("must have same number of input files for read1 and read2");
                 }
@@ -100,7 +100,7 @@ int main(int argc, char** argv)
                 for(size_t i = 0; i < read1_files.size(); ++i) {
                     bi::stream<bi::file_descriptor_source> is1{check_open_r(read1_files[i]), bi::close_handle};
                     bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
-                    
+
                     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
                     load_map(ifp, counters, read_map, pe, se,vm["avg-qual-score"].as<double>(), vm["inform-avg-qual-score"].as<double>(), vm["start"].as<size_t>() - 1, vm["length"].as<size_t>(), vm["log_freq"].as<size_t>() );
                 }
@@ -114,7 +114,7 @@ int main(int argc, char** argv)
                     load_map(ifs, counters, read_map, pe, se,vm["avg-qual-score"].as<double>(), vm["inform-avg-qual-score"].as<double>(), vm["start"].as<size_t>() - 1, vm["length"].as<size_t>(), vm["log_freq"].as<size_t>() );
                 }
             }
-            
+
             if(vm.count("tab-input")) {
                 auto read_files = vm["tab-input"].as<std::vector<std::string> > ();
                 for (auto file : read_files) {
@@ -123,7 +123,7 @@ int main(int argc, char** argv)
                     load_map(ift, counters, read_map, pe, se,vm["avg-qual-score"].as<double>(),  vm["inform-avg-qual-score"].as<double>(),  vm["start"].as<size_t>() - 1, vm["length"].as<size_t>(), vm["log_freq"].as<size_t>() );
                 }
             }
-            
+
             if (vm.count("interleaved-input")) {
                 auto read_files = vm["interleaved-input"].as<std::vector<std::string > >();
                 for (auto file : read_files) {
@@ -132,17 +132,17 @@ int main(int argc, char** argv)
                     load_map(ifp, counters, read_map, pe, se,vm["avg-qual-score"].as<double>(),  vm["inform-avg-qual-score"].as<double>(), vm["start"].as<size_t>() - 1, vm["length"].as<size_t>(), vm["log_freq"].as<size_t>() );
                 }
             }
-            
+
             if (vm.count("from-stdin")) {
                 bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
                 load_map(ift, counters, read_map, pe, se,vm["avg-qual-score"].as<double>(),  vm["inform-avg-qual-score"].as<double>(),  vm["start"].as<size_t>() - 1, vm["length"].as<size_t>(), vm["log_freq"].as<size_t>() );
             }
-            
+
             for(auto const &i : read_map) {
                 if (i.second.get() != nullptr) {
-                    counters.output(*i.second.get()); 
-                    writer_helper(i.second.get(), pe, se, false);
+                    counters.output(*i.second.get());
+                    writer_helper(i.second.get(), pe, se, false, false);
                 }
             }
             counters.write_out();
