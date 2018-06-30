@@ -25,6 +25,7 @@ namespace
     const size_t SUCCESS = 0;
     const size_t ERROR_IN_COMMAND_LINE = 1;
     const size_t ERROR_UNHANDLED_EXCEPTION = 2;
+    const size_t ERROR_NOLOOKUP_EXCEPTION = 3;
 
 } // namespace
 
@@ -33,7 +34,7 @@ namespace bi = boost::iostreams;
 int main(int argc, char** argv)
 {
     const std::string program_name = "hts_SeqScreener";
-    std::string app_description = 
+    std::string app_description =
                        "hts_SeqScreener identifies and removes any reads which appear to have originated\n";
     app_description += "  from a contaminant DNA source. Because bacteriophage Phi-X is common spiked\n";
     app_description += "  into Illumina runs for QC purposes, sequences originating from Phi-X are removed\n";
@@ -83,24 +84,32 @@ int main(int argc, char** argv)
 
             std::shared_ptr<OutputWriter> pe = nullptr;
             std::shared_ptr<OutputWriter> se = nullptr;
-            
-            PhixCounters counters(statsFile, vm["append-stats-file"].as<bool>() , program_name, vm["notes"].as<std::string>());
+
+            SeqScreenerCounters counters(statsFile, vm["append-stats-file"].as<bool>() , program_name, vm["notes"].as<std::string>());
 
             outputWriters(pe, se, vm["fastq-output"].as<bool>(), vm["tab-output"].as<bool>(), vm["interleaved-output"].as<bool>(), vm["unmapped-output"].as<bool>(), vm["force"].as<bool>(), vm["gzip-output"].as<bool>(), vm["to-stdout"].as<bool>(), prefix );
 
             //sets read information
             //Phix isn't set to default since it makes help a PITA to read
             Read readSeq;
+            std::string lookup_file = vm["seq"].as<std::string>();
             if (vm["seq"].as<std::string>() != "") {
-                bi::stream <bi::file_descriptor_source> fa{check_open_r(vm["seq"].as<std::string>()), bi::close_handle};
+                bi::stream <bi::file_descriptor_source> fa{check_open_r(lookup_file), bi::close_handle};
                 InputReader<SingleEndRead, FastaReadImpl> faReader(fa);
                 readSeq = fasta_set_to_one_read(faReader);
             } else {
                 readSeq = Read(phixSeq_True, "", "");
+                lookup_file = "PhiX";
             }
             //sets kmer lookup arrays
             kmerSet lookup;
             setLookup(lookup, readSeq, vm["kmer"].as<size_t>());
+            if (lookup.size() == 0){
+                std::cerr << "\n\tException lookup table contains no kmers" << std::endl;
+                return ERROR_NOLOOKUP_EXCEPTION;
+            }
+
+            counters.set_screeninfo(lookup_file, readSeq.getLength(), lookup.size());
 
             if(vm.count("read1-input")) {
                 if (!vm.count("read2-input")) {
@@ -108,7 +117,7 @@ int main(int argc, char** argv)
                 }
                 auto read1_files = vm["read1-input"].as<std::vector<std::string> >();
                 auto read2_files = vm["read2-input"].as<std::vector<std::string> >();
-                
+
                 if (read1_files.size() != read2_files.size()) {
                     throw std::runtime_error("must have same number of input files for read1 and read2");
                 }
@@ -169,7 +178,6 @@ int main(int argc, char** argv)
         std::cerr << "\n\tUnhandled Exception: "
                   << e.what() << std::endl;
         return ERROR_UNHANDLED_EXCEPTION;
-
     }
 
     return SUCCESS;
