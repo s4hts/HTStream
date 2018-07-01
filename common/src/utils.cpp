@@ -35,35 +35,30 @@ void outputWriters(std::shared_ptr<OutputWriter> &pe, std::shared_ptr<OutputWrit
     std::shared_ptr<HtsOfstream> out_1 = nullptr;
     std::shared_ptr<HtsOfstream> out_2 = nullptr;
     std::shared_ptr<HtsOfstream> out_3 = nullptr;
-    
-    if (interleaved_out)  {
-        for (auto& outfile: default_outfiles) {
-            outfile = prefix + "INTER" + ".fastq";
-        }
+    const size_t ERROR_IN_COMMAND_LINE = 1;
 
+    if (interleaved_out)  {
+        default_outfiles[0] = prefix + "_interleaved" + ".fastq";
+        default_outfiles[2] = prefix + "_SE" + ".fastq";
         out_1= std::make_shared<HtsOfstream>(default_outfiles[0], force, gzip_out, false);
-        out_3= std::make_shared<HtsOfstream>(default_outfiles[1], force, gzip_out, false);
+        out_3= std::make_shared<HtsOfstream>(default_outfiles[2], force, gzip_out, false);
 
         pe= std::make_shared<PairedEndReadOutInter>(out_1);
         se= std::make_shared<SingleEndReadOutFastq>(out_3);
     } else if (unmapped_out) {
-        for (auto& outfile: default_outfiles) {
-            outfile = prefix + ".sam";
-        }
+        default_outfiles[0] = prefix + ".sam";
         out_1= std::make_shared<HtsOfstream>(default_outfiles[0], force, gzip_out, std_out);
 
         pe= std::make_shared<ReadBaseOutUnmapped>(out_1);
         se= std::make_shared<ReadBaseOutUnmapped>(out_1);
 
     } else if (tab_out || std_out) {
-        for (auto& outfile: default_outfiles) {
-            outfile = prefix + "tab" + ".tastq";
-        }
+        default_outfiles[0] = prefix + "_tab6" + ".fastq";
         out_1= std::make_shared<HtsOfstream>(default_outfiles[0], force, gzip_out, std_out);
 
         pe= std::make_shared<ReadBaseOutTab>(out_1);
         se= std::make_shared<ReadBaseOutTab>(out_1);
-    } else if (fastq_out || (! std_out && ! tab_out) ) {
+    } else if (fastq_out) {
         for (auto& outfile: default_outfiles) {
             outfile = prefix + outfile + ".fastq";
         }
@@ -74,6 +69,9 @@ void outputWriters(std::shared_ptr<OutputWriter> &pe, std::shared_ptr<OutputWrit
 
         pe= std::make_shared<PairedEndReadOutFastq>(out_1, out_2);
         se= std::make_shared<SingleEndReadOutFastq>(out_3);
+    } else {
+        std::cerr << "ERROR: " << "Output file type absent from command line" << std::endl << std::endl;
+        exit(ERROR_IN_COMMAND_LINE); //success
     }
 }
 
@@ -104,7 +102,7 @@ po::options_description setOutputOptions(std::string program_name){
             ("prefix,p", po::value<std::string>()->default_value(program_name),
                                            "Prefix for output files")
             ("gzip-output,g", po::bool_switch()->default_value(false),  "Output gzipped files")
-            ("fastq-output,f", po::bool_switch()->default_value(true), "Output to Fastq format <PE AND/OR SE files>")
+            ("fastq-output,f", po::bool_switch()->default_value(false), "Output to Fastq format <PE AND/OR SE files>")
             ("tab-output,t", po::bool_switch()->default_value(false),   "Output to tab-delimited file format")
             ("interleaved-output,i", po::bool_switch()->default_value(false),     "Output to interleaved fastq file <PE ONLY>")
             ("unmapped-output,u", po::bool_switch()->default_value(false),   "Output to unmapped sam file format")

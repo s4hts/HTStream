@@ -261,9 +261,9 @@ protected:
      * TLEN - SEQ.length
      * SEQ - seq
      * QUAL - qual */
-    const size_t se_bitwise = 68;
-    const size_t pe1_bitwise = 69;
-    const size_t pe2_bitwise = 133;
+    const size_t se_bitwise = 4;
+    const size_t pe1_bitwise = 77;
+    const size_t pe2_bitwise = 141;
 
     void samout(const Read &read, size_t bitwiseflag) {
         *output << read.get_id() << '\t'
