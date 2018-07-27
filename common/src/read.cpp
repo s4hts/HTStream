@@ -32,9 +32,13 @@ std::string Read::subseq(size_t _start, size_t _length){
 }
 
 //PairedEndRead
-boost::optional<BitSet> PairedEndRead::get_key(size_t start, size_t length){
-    return std::max(str_to_bit(one.subseq(start, length) + two.subseq(start, length)),
-                    str_to_bit(two.subseq(start, length) + one.subseq(start, length)));
+boost::optional<BitSet> PairedEndRead::get_key(size_t _start, size_t _length){
+    if (one.getLength() <= (_start+_length) | two.getLength() <= (_start+_length)){
+      return boost::none;
+    } else {
+      return std::max(str_to_bit(one.subseq(_start, _length) + two.subseq(_start, _length)),
+                      str_to_bit(two.subseq(_start, _length) + one.subseq(_start, _length)));
+    }
 }
 
 boost::optional<BitSet> ReadBase::reverse_complement(const std::string& str, int start, int length) {
@@ -50,8 +54,12 @@ boost::optional<BitSet> ReadBase::reverse_complement(const std::string& str, int
 
 //SingleEndRead
 boost::optional<BitSet> SingleEndRead::get_key(size_t _start, size_t _length){
-    //The C ensures no PE and SE are mapped to the same locaitn
-    return str_to_bit("C" + one.subseq(_start, _length*2));
+    //The C ensures no PE and SE are mapped to the same location
+    if (one.getLength() <= (_start+_length*2)){
+      return boost::none;
+    } else {
+      return str_to_bit("C" + one.subseq(_start, _length*2));
+    }
 }
 
 inline double qual_sum(double s, const char c) {
@@ -73,7 +81,7 @@ double PairedEndRead::avg_q_score()
 }
 
 char Read::complement(char bp) {
-    
+
     switch(bp) {
         case 'A':
             return 'T';
