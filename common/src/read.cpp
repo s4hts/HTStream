@@ -33,7 +33,7 @@ std::string Read::subseq(size_t _start, size_t _length){
 
 //PairedEndRead
 boost::optional<BitSet> PairedEndRead::get_key(size_t _start, size_t _length){
-    if (one.getLength() <= (_start+_length) | two.getLength() <= (_start+_length)){
+    if (one.getLength() <= (_start+_length) || two.getLength() <= (_start+_length)){
       return boost::none;
     } else {
       return std::max(str_to_bit(one.subseq(_start, _length) + two.subseq(_start, _length)),
