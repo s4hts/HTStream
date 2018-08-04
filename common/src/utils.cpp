@@ -28,6 +28,30 @@ seqLookup readOneMap(std::string seq1, const size_t kmer, const size_t kmerOffse
     return baseReadMap;
 }
 
+template <class T, class Impl>
+void inputReaders(std::vector<std::shared_ptr<InputReader<T, Impl>>> &ifr, std::vector<std::string> r1_input, std::vector<std::string> r2_input, std::vector<std::string> se_input, std::vector<std::string> interleaved_input, std::vector<std::string> tab_input, bool std_in) {
+
+    if(r1_input.size() > 0) { // paired-end reads
+        if (r2_input.size() != r1_input.size()) {
+            throw std::runtime_error("must have same number of input files for read1 and read2");
+        }
+        ifr.push_back(std::make_shared<InputReader<PairedEndRead, PairedEndReadFastqImpl>>(r1_input, r2_input));
+    }
+    if (interleaved_input.size() > 0) { // interleaved pairs
+        ifr.push_back(std::make_shared<InputReader<PairedEndRead, InterReadImpl>>(interleaved_input));
+    }
+    if(se_input.size() > 0) { // single-end reads
+        ifr.push_back(std::make_shared<InputReader<SingleEndRead, SingleEndReadFastqImpl>>(se_input));
+    }
+    if(tab_input.size() > 0) { // tab_input
+        ifr.push_back(std::make_shared<InputReader<ReadBase, TabReadImpl>>(tab_input));
+    }
+    if(std_in) {
+        bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
+        ifr = std::make_shared<InputReader<ReadBase, TabReadImpl>>(tabin);
+    }
+}
+
 void outputWriters(std::shared_ptr<OutputWriter> &pe, std::shared_ptr<OutputWriter> &se, bool fastq_out, bool tab_out, bool interleaved_out, bool unmapped_out,  bool force, bool gzip_out, bool std_out, std::string &prefix) {
 
     std::vector<std::string> default_outfiles = {"_R1", "_R2", "_SE"};
@@ -90,7 +114,7 @@ po::options_description setInputOptions(){
                                            "Tab input <space seperated for multiple files>")
             ("interleaved-input,I", po::value< std::vector<std::string> >()->multitoken(),
                                            "Interleaved fastq input <space seperated for multiple files>")
-            ("from-stdin,S", "STDIN input <MUST BE TAB DELIMITED INPUT>");
+            ("from-stdin,S", po::bool_switch()->default_value(false), "input from STDIN input <Must be tab-delimited file format>");
     return input;
 }
 

@@ -106,37 +106,43 @@ protected:
     std::istream* input = 0;
 };
 
-class SingleEndReadFastqImpl : public InputFastq{
-public:
-    SingleEndReadFastqImpl(std::istream& in) : input(&in) {}
-
-protected:
-    std::istream* input = 0;
-};
-
 class PairedEndReadFastqImpl : public InputFastq {
 public:
     PairedEndReadFastqImpl(std::istream& in1_, std::istream& in2_) : in1(&in1_), in2(&in2_) {}
-
+    PairedEndReadFastqImpl(std::vector<std::string> in1_, std::vector<std::string> in2_) : fin1(in1_), fin2(in2_) {}
 protected:
     std::istream* in1, * in2 = 0;
-};
-
-class TabReadImpl : public InputFastq {
-public:
-    TabReadImpl(std::istream& in1_) : in1(&in1_) {}
-    std::vector<Read> load_read(std::istream *input);
-protected:
-    std::istream* in1;
-    //to read the line
-    std::string tabLine;
+    std::vector<std::string> fin1, fin2;
 };
 
 class InterReadImpl : public InputFastq {
 public:
     InterReadImpl(std::istream& in1_) : in1(&in1_) {}
+    InterReadImpl(std::vector<std::string> in_) : fin(in_) {}
 protected:
     std::istream *in1;
+    std::vector<std::string> fin;
+};
+
+class SingleEndReadFastqImpl : public InputFastq {
+public:
+    SingleEndReadFastqImpl(std::istream& in_) : input(&in_) {}
+    SingleEndReadFastqImpl(std::vector<std::string> in_) : finput(in_) {}
+protected:
+    std::istream* input = 0;
+    std::vector<std::string> finput;
+};
+
+class TabReadImpl : public InputFastq {
+public:
+    TabReadImpl(std::istream& in1_) : in1(&in1_) {}
+    TabReadImpl(std::vector<std::string> in_) : fin(in_) {}
+    std::vector<Read> load_read(std::istream *input);
+protected:
+    std::istream* in1;
+    std::vector<std::string> fin;
+    //to read the line
+    std::string tabLine;
 };
 
 class OutputWriter {

@@ -79,12 +79,19 @@ int main(int argc, char** argv)
             std::string statsFile(vm["stats-file"].as<std::string>());
             std::string prefix(vm["prefix"].as<std::string>());
 
-            std::shared_ptr<OutputWriter> pe = nullptr;
-            std::shared_ptr<OutputWriter> se = nullptr;
-
             AdapterCounters counters(statsFile, vm["append-stats-file"].as<bool>(), program_name, vm["notes"].as<std::string>());
 
+            std::shared_ptr<OutputWriter> pe = nullptr;
+            std::shared_ptr<OutputWriter> se = nullptr;
             outputWriters(pe, se, vm["fastq-output"].as<bool>(), vm["tab-output"].as<bool>(), vm["interleaved-output"].as<bool>(), vm["unmapped-output"].as<bool>(), vm["force"].as<bool>(), vm["gzip-output"].as<bool>(), vm["to-stdout"].as<bool>(), prefix );
+
+            //template <class T, class Impl>;
+            //std::vector<std::shared_ptr<InputReader<T, Impl>>> inr = nullptr;
+            //inputReaders(inr, vm["read1-input"].as<std::vector<std::string>>(), vm["read2-input"].as<std::vector<std::string>>(), vm["singleend-input"].as<std::vector<std::string> >(), vm["interleaved-input"].as<std::vector<std::string >>(), vm["tab-input"].as<std::vector<std::string>>(), vm("from-stdin").as<bool>() );
+            //for (auto ini : inr) {
+            //    helper_adapterTrimmer(ini, pe, se, counters, vm["max-mismatch-errorDensity"].as<double>(), vm["max-mismatch"].as<size_t>(), vm["min-overlap"].as<size_t>(), vm["stranded"].as<bool>(), vm["min-length"].as<size_t>(), vm["check-lengths"].as<size_t>(), vm["kmer"].as<size_t>(), vm["kmer-offset"].as<size_t>(), vm["no-orphans"].as<bool>(), vm["no-fixbases"].as<bool>(), vm["adapter-sequence"].as<std::string>() );
+            //}
+            // New code above
 
             if(vm.count("read1-input")) {
                 if (!vm.count("read2-input")) {

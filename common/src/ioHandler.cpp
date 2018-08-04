@@ -27,7 +27,6 @@ void writer_helper(ReadBase *r, std::shared_ptr<OutputWriter> pe, std::shared_pt
         } else {
 
         }
-
     }
 }
 
@@ -195,22 +194,20 @@ std::vector<Read> TabReadImpl::load_read(std::istream *input) {
 }
 
 template <>
-bool InputReader<SingleEndRead, SingleEndReadFastqImpl>::has_next() {
-    // ignore extra lines at end of file
-    skip_lr(input);
-    return (input and input->good());
-};
-
-
-template <>
 InputReader<SingleEndRead, SingleEndReadFastqImpl>::value_type InputReader<SingleEndRead, SingleEndReadFastqImpl>::next() {
     return InputReader<SingleEndRead, SingleEndReadFastqImpl>::value_type(new SingleEndRead(load_read(input)));
 }
 
 template <>
-bool InputReader<SingleEndRead, FastaReadImpl>::has_next() {
+bool InputReader<SingleEndRead, SingleEndReadFastqImpl>::has_next() {
     // ignore extra lines at end of file
     skip_lr(input);
+    if (!(input and input->good()) and !finput.empty()){
+        bi::stream<bi::file_descriptor_source> fs{ check_open_r(finput.back()), bi::close_handle};
+        input = &fs;
+        finput.pop_back();
+        skip_lr(input);
+    }
     return (input and input->good());
 };
 
@@ -220,11 +217,17 @@ InputReader<SingleEndRead, FastaReadImpl>::value_type InputReader<SingleEndRead,
 }
 
 template <>
+bool InputReader<SingleEndRead, FastaReadImpl>::has_next() {
+    // ignore extra lines at end of file
+    skip_lr(input);
+    return (input and input->good());
+};
+
+template <>
 InputReader<PairedEndRead, PairedEndReadFastqImpl>::value_type InputReader<PairedEndRead, PairedEndReadFastqImpl>::next() {
     Read r1 = load_read(in1);
     Read r2 = load_read(in2);
     return InputReader<PairedEndRead, PairedEndReadFastqImpl>::value_type(new PairedEndRead(r1, r2));
-
 }
 
 template <>
@@ -232,6 +235,16 @@ bool InputReader<PairedEndRead, PairedEndReadFastqImpl>::has_next() {
     // ignore extra lines at end of file
     skip_lr(in1);
     skip_lr(in2);
+    if (!(in1 and in1->good() and in2 and in2->good()) and !fin1.empty()) {
+        bi::stream<bi::file_descriptor_source> fs1{ check_open_r(fin1.back()), bi::close_handle};
+        bi::stream<bi::file_descriptor_source> fs2{ check_open_r(fin2.back()), bi::close_handle};
+        in1 = &fs1;
+        in2 = &fs2;
+        fin1.pop_back();
+        fin2.pop_back();
+        skip_lr(in1);
+        skip_lr(in2);
+    }
     return (in1 and in1->good() and in2 and in2->good());
 };
 
@@ -244,13 +257,18 @@ InputReader<PairedEndRead, InterReadImpl>::value_type InputReader<PairedEndRead,
     } catch (const std::exception&) {
         throw std::runtime_error("odd number of sequences in interleaved file");
     }
-
     return InputReader<PairedEndRead, InterReadImpl>::value_type(new PairedEndRead(r1, r2));
 }
 
 template<>
 bool InputReader<PairedEndRead, InterReadImpl>::has_next() {
     skip_lr(in1);
+    if (!(in1 and in1->good()) and !fin.empty()){
+        bi::stream<bi::file_descriptor_source> inter{ check_open_r(fin.back()), bi::close_handle};
+        in1 = &inter;
+        fin.pop_back();
+        skip_lr(in1);
+    }
     return(in1 && in1->good());
 }
 
@@ -260,7 +278,6 @@ InputReader<ReadBase, TabReadImpl>::value_type InputReader<ReadBase, TabReadImpl
     if (rs.size() == 1) {
         return InputReader<SingleEndRead, TabReadImpl>::value_type(new SingleEndRead(rs[0]));
     }
-
     return InputReader<PairedEndRead, TabReadImpl>::value_type(new PairedEndRead(rs[0], rs[1]));
 }
 
@@ -268,5 +285,11 @@ template <>
 bool InputReader<ReadBase, TabReadImpl>::has_next() {
     // ignore extra lines at end of file
     skip_lr(in1);
+    if (!(in1 and in1->good()) and !fin.empty()){
+        bi::stream<bi::file_descriptor_source> tabin{ check_open_r(fin.back()), bi::close_handle};
+        in1 = &tabin;
+        fin.pop_back();
+        skip_lr(in1);
+    }
     return (in1 and in1->good());
 }
