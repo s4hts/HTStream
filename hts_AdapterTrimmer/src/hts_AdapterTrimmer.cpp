@@ -85,6 +85,7 @@ int main(int argc, char** argv)
             std::shared_ptr<OutputWriter> se = nullptr;
             outputWriters(pe, se, vm["fastq-output"].as<bool>(), vm["tab-output"].as<bool>(), vm["interleaved-output"].as<bool>(), vm["unmapped-output"].as<bool>(), vm["force"].as<bool>(), vm["gzip-output"].as<bool>(), vm["to-stdout"].as<bool>(), prefix );
 
+            // Attempt at new code below
             //template <class T, class Impl>;
             //std::vector<std::shared_ptr<InputReader<T, Impl>>> inr = nullptr;
             //inputReaders(inr, vm["read1-input"].as<std::vector<std::string>>(), vm["read2-input"].as<std::vector<std::string>>(), vm["singleend-input"].as<std::vector<std::string> >(), vm["interleaved-input"].as<std::vector<std::string >>(), vm["tab-input"].as<std::vector<std::string>>(), vm("from-stdin").as<bool>() );
@@ -93,6 +94,7 @@ int main(int argc, char** argv)
             //}
             // New code above
 
+            // would then remove, from here
             if(vm.count("read1-input")) {
                 if (!vm.count("read2-input")) {
                     throw std::runtime_error("must specify both read1 and read2 input files.");
@@ -158,7 +160,7 @@ int main(int argc, char** argv)
               exit(ERROR_IN_COMMAND_LINE); //success
             }
             counters.write_out();
-
+        // to here, but keep the final else if the inputReader vector is empty to start
         }
         catch(po::error& e)
         {
