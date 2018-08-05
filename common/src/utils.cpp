@@ -114,7 +114,7 @@ po::options_description setInputOptions(){
                                            "Tab input <space seperated for multiple files>")
             ("interleaved-input,I", po::value< std::vector<std::string> >()->multitoken(),
                                            "Interleaved fastq input <space seperated for multiple files>")
-            ("from-stdin,S", po::bool_switch()->default_value(false), "input from STDIN input <Must be tab-delimited file format>");
+            ("from-stdin,S", po::bool_switch(), "input from STDIN input <Must be tab-delimited file format>");
     return input;
 }
 

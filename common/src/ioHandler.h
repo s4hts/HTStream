@@ -113,6 +113,8 @@ public:
 protected:
     std::istream* in1, * in2 = 0;
     std::vector<std::string> fin1, fin2;
+    bi::stream<bi::file_descriptor_source> fs1;
+    bi::stream<bi::file_descriptor_source> fs2;
 };
 
 class InterReadImpl : public InputFastq {
@@ -122,6 +124,7 @@ public:
 protected:
     std::istream *in1;
     std::vector<std::string> fin;
+    bi::stream<bi::file_descriptor_source> inter;
 };
 
 class SingleEndReadFastqImpl : public InputFastq {
@@ -131,6 +134,7 @@ public:
 protected:
     std::istream* input = 0;
     std::vector<std::string> finput;
+    bi::stream<bi::file_descriptor_source> fs;
 };
 
 class TabReadImpl : public InputFastq {
@@ -141,6 +145,7 @@ public:
 protected:
     std::istream* in1;
     std::vector<std::string> fin;
+    bi::stream<bi::file_descriptor_source> tabin;
     //to read the line
     std::string tabLine;
 };

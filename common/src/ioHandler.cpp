@@ -201,13 +201,12 @@ InputReader<SingleEndRead, SingleEndReadFastqImpl>::value_type InputReader<Singl
 template <>
 bool InputReader<SingleEndRead, SingleEndReadFastqImpl>::has_next() {
     // ignore extra lines at end of file
-    skip_lr(input);
     if (!(input and input->good()) and !finput.empty()){
-        bi::stream<bi::file_descriptor_source> fs{ check_open_r(finput.back()), bi::close_handle};
+        fs.open(check_open_r(finput.back()), bi::close_handle);
         input = &fs;
         finput.pop_back();
-        skip_lr(input);
     }
+    skip_lr(input);
     return (input and input->good());
 };
 
@@ -233,18 +232,16 @@ InputReader<PairedEndRead, PairedEndReadFastqImpl>::value_type InputReader<Paire
 template <>
 bool InputReader<PairedEndRead, PairedEndReadFastqImpl>::has_next() {
     // ignore extra lines at end of file
-    skip_lr(in1);
-    skip_lr(in2);
     if (!(in1 and in1->good() and in2 and in2->good()) and !fin1.empty()) {
-        bi::stream<bi::file_descriptor_source> fs1{ check_open_r(fin1.back()), bi::close_handle};
-        bi::stream<bi::file_descriptor_source> fs2{ check_open_r(fin2.back()), bi::close_handle};
-        in1 = &fs1;
-        in2 = &fs2;
+        fs1.open(check_open_r(fin1.back()), bi::never_close_handle);
+        fs2.open(check_open_r(fin2.back()), bi::never_close_handle);
+        in1=&fs1;
+        in2=&fs2;
         fin1.pop_back();
         fin2.pop_back();
-        skip_lr(in1);
-        skip_lr(in2);
     }
+    skip_lr(in1);
+    skip_lr(in2);
     return (in1 and in1->good() and in2 and in2->good());
 };
 
@@ -262,13 +259,12 @@ InputReader<PairedEndRead, InterReadImpl>::value_type InputReader<PairedEndRead,
 
 template<>
 bool InputReader<PairedEndRead, InterReadImpl>::has_next() {
-    skip_lr(in1);
     if (!(in1 and in1->good()) and !fin.empty()){
-        bi::stream<bi::file_descriptor_source> inter{ check_open_r(fin.back()), bi::close_handle};
+        inter.open(check_open_r(fin.back()), bi::close_handle);
         in1 = &inter;
         fin.pop_back();
-        skip_lr(in1);
     }
+    skip_lr(in1);
     return(in1 && in1->good());
 }
 
@@ -284,12 +280,11 @@ InputReader<ReadBase, TabReadImpl>::value_type InputReader<ReadBase, TabReadImpl
 template <>
 bool InputReader<ReadBase, TabReadImpl>::has_next() {
     // ignore extra lines at end of file
-    skip_lr(in1);
     if (!(in1 and in1->good()) and !fin.empty()){
-        bi::stream<bi::file_descriptor_source> tabin{ check_open_r(fin.back()), bi::close_handle};
+        tabin.open(check_open_r(fin.back()), bi::close_handle);
         in1 = &tabin;
         fin.pop_back();
-        skip_lr(in1);
     }
+    skip_lr(in1);
     return (in1 and in1->good());
 }
