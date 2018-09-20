@@ -19,7 +19,7 @@ add_executable(${PROJECT_NAME} ${sources})
 set_target_properties(${PROJECT_NAME} PROPERTIES LINK_SEARCH_START_STATIC 1)
 set_target_properties(${PROJECT_NAME} PROPERTIES LINK_SEARCH_END_STATIC 1)
 
-target_link_libraries(${PROJECT_NAME} -static ${PROJECT_LINK_LIBS} ${Boost_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${EXTRA_BUILD_FLAGS} ${PROJECT_LINK_LIBS} ${Boost_LIBRARIES})
 
 add_custom_target(hts_pytest_${PROJECT_NAME}
   DEPENDS ${PROJECT_NAME}

@@ -2,9 +2,12 @@ cmake_minimum_required (VERSION 2.8)
 project (HTStream)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 ")
-set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+#set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
 set(BUILD_SHARED_LIBS OFF)
 set(Boost_USE_STATIC_LIBS   ON)
+if (UNIX)
+  set(EXTRA_BUILD_FLAGS "-static")
+endif()
 
 if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
