@@ -53,8 +53,9 @@ function Toggle(tt) {
           <p>HTStream is a fast, quality control pipeline for Hight Throughput Sequencing data. The difference between HTStream and other pipelines 
             is that HTStreams uses a tab delimited fastq format which allows for streaming from application to application. 
             This streaming creates some awesome efficiencies when processing HTS data.</p>
+            <h4>Benefits Include:</h4>
             <ul>
-                <li>No intermediate files (saves on files storage)</li>
+                <li>No intermediate files (reduces storage footprint)</li>
                 <li>Reduce I/O (files are only read in and written out once)</li>
                 <li>Handles both single end and paired end reads at the same time</li>
                 <li>Processes can work at the same time allowing for process parallelization</li>
@@ -87,10 +88,10 @@ function Toggle(tt) {
 
         <div id="Installation">
         <h3>Installation HTStream</h3>
-        <h4>1) The simplest way (with many thanks to the Bioconda team):</h4>
+        <h4>1) The simplest way (coming soon with many thanks to the Bioconda team):</h4>
         <pre><code>conda install -c bioconda htstream</code></pre>
 
-        <h4>2)Building on Linux</h4>
+        <h4>2) Building on Linux</h4>
         Linux Prerequisites:
        <ul>
          <li>Cmake 3.2 or greater.</li>
@@ -153,23 +154,20 @@ cmake -DBoost_NO_SYSTEM_PATHS=TRUE -DCMAKE_INCLUDE_PATH=$BOOST_INCLUDE -DCMAKE_L
     </div>
 
 
-<H2>HTStream Applications</H2>
-<br>
-<strong>For detailed usage instructions of each application see command-line output.</strong>
-<br><br>
+<H2>HTStream Applications Overview</H2>
 
 <div id="hts_AdapterTrimmer">
     <h3>hts_AdapterTrimmer</h3>
     Adapter trimmer trims adapters which are sequenced when the fragment insert length is shorter than the read length.
     In this case, the sequencer reads past the end of the insert and into the Illumina sequencing adapter. hts_AdapterTrimmer
     first overlaps the reads, then determins whether a 3' overhang exists. Typically a 3' overhang can only occur when adapter is present
-    in the reads, so hts_AdapterTrimmer trims these overhangs. The algorithm used is the same as in hts_Overlapper, except that the reads
+    in the reads, so hts_AdapterTrimmer trims these overhangs. The algorithm used is the hts_Overlapper algorithm, except that the reads
     are returned as a pair. This is useful for some programs that don't accept a combination of SE and PE reads.
     It is important to note that because hts_AdapterTrimmer does not rely on adapter pattern matching, it can effectively trim adapters
     as short as a single base pair.
     <h4>For detailed usage instructions please run:</h4>
     <pre><code>hts_AdapterTrimmer --help</code></pre>
-    <br><h7><a href="#TOC">Table of contents</a></h7>
+    <h7><a href="#TOC">Table of contents</a></h7>
     <br>
 </div>
 
@@ -179,33 +177,33 @@ cmake -DBoost_NO_SYSTEM_PATHS=TRUE -DCMAKE_INCLUDE_PATH=$BOOST_INCLUDE -DCMAKE_L
   The hts_CutTrim application trims a fixed number of bases from the 5' and/or 3' end of each read.
   <h4>For detailed usage instructions please run:</h4>
   <pre><code>hts_CutTrim --help</code></pre>
-  <br><h7><a href="#TOC">Table of contents</a></h7>
+  <h7><a href="#TOC">Table of contents</a></h7>
   <br>
 </div>
 
 <br>
 <div id="hts_Overlapper">
   <h3>hts_Overlapper</h3>
-  The hts_Overlapper application attempts to overlap paired end reads to produce the original fragment, trims adapters, and can, corrects sequencing errors.<br>
+  The hts_Overlapper application attempts to overlap paired end reads to produce the original fragment, trims adapters, and can correct sequencing errors.<br><br>
+  Overlaping pairs of bases are handled as follows:
+  <ul><li>match: q-scores added, with max q-score of 40 </li>
+  <li>do not match: base with highest q-score is kept, q-scores are subtracted</li>
+  <li>In the case where bases do not match and q-scores are equal, the base from read 1 is kept.</li></ul>
+
 Reads come in three flavors:<br>
-  <strong>sins</strong> Reads produced from an insert shorter than the read length
-        will result in a single read in the orientation of R1, and have the
-        adapter bases trimmed to produce a SE read where adapters have been trimmed.<br>
-        Overlaps are handeled as follows:
-        <ul><li>match: q-scores added, with max q-score of 40 </li>
-        <li>do not match: base with highest q-score is kept, q-scores are subtracted</li>
-        <li>In the case where bases do not match and q-scores are equal, the base from read 1 is kept.</li></ul>
+  <strong>1) sins</strong> Reads produced from an insert shorter than the read length
+        will result in a single read in the orientation of R1, where adapters have been trimmed.<br>
 <pre><code>R1:         --------------->
 R2:     <---------------
 Output:     ------------  </code></pre>
-  <strong>mins</strong> Reads produced from a medium-insert greater than read length, but
+  <strong>2) mins</strong> Reads produced from a medium-insert greater than read length, but
         somewhat shorter than 2x read length will produce a SE read in the
         orientation of R1.
 <pre><code>R1:     --------------->
 R2:           <---------------
 Output: ---------------------></code></pre>
 
-  <strong>lins</strong> Reads produced from long-inserts which do not overlap
+  <strong>3) lins</strong> Reads produced from long-inserts which do not overlap
         significantly, result in a PE read.
 <pre><code>R1:     --------------->
 R2:                        <---------------
@@ -213,10 +211,11 @@ Output: --------------->   <---------------</code></pre>
 
   <h4>For detailed usage instructions please run:</h4>
   <pre><code>hts_Overlapper --help</code></pre>
-  <br><h7><a href="#TOC">Table of contents</a></h7>
+  <h7><a href="#TOC">Table of contents</a></h7>
   <br>    
 </div>
 
+<br>
 <div id="hts_QWindowTrim">
   <h3>hts_QWindowTrim</h3>
   The quality trimmer uses a sliding window approach to remove the low quality ends of reads.
@@ -224,37 +223,40 @@ Output: --------------->   <---------------</code></pre>
   trimming stops.
   <h4>For detailed usage instructions please run:</h4>
   <pre><code>hts_QWindowTrim --help</code></pre>  
-  <br><h7><a href="#TOC">Table of contents</a></h7>
+  <h7><a href="#TOC">Table of contents</a></h7>
   <br
 </div>
 
+<br>
 <div id="hts_Stats">
   <h3>hts_Stats</h3>
   The hts_Stats program generates an JSON formatted file containing a set of statistical measures about the input read data. This output can be used for plotting or to develop a better understading of a dataset.
   <h4>For detailed usage instructions please run:</h4>
   <pre><code>hts_Stats --help</code></pre>  
-  <br><h7><a href="#TOC">Table of contents</a></h7>
+  <h7><a href="#TOC">Table of contents</a></h7>
   <br>
 </div>
 
+<br>
 <div id="hts_NTrimmer">
   <h3>hts_NTrimmer</h3>
   hts_NTrimmer trims reads to the longest subsequence that contains no Ns.
   <h4>For detailed usage instructions please run:</h4>
   <pre><code>hts_NTrimmer --help</code></pre>  
-  <br><h7><a href="#TOC">Table of contents</a></h7>
-  <br>    
+  <h7><a href="#TOC">Table of contents</a></h7>
 </div>
 
+<br>
 <div id="hts_PolyATTrim">
   <h3>hts_PolyATTrim</h3>
   hts_PolyATTrim attempts to trim poly-A and poly-T sequences from the end of reads. It starts at either end of a read, expanding a trimming window until the specified number of mistmaches (non-A/T bases) is reached.
   <h4>For detailed usage instructions please run:</h4>
   <pre><code>hts_PolyATTrim --help</code></pre>  
-  <br><h7><a href="#TOC">Table of contents</a></h7>
-  <br>
+  <h7><a href="#TOC">Table of contents</a></h7>
+
 </div>
 
+<br>
 <div id="hts_SeqScreener">
   <h3>hts_SeqScreener</h3>
   hts_SeqScreener is a simple sequence screening tool which uses a kmer lookup approach
@@ -265,10 +267,10 @@ Output: --------------->   <---------------</code></pre>
   For example, setting -k 15 -x .01 in combination with a collection of adapters in fasta format, has been found to work well for this purpose.
   <h4>For detailed usage instructions please run:</h4>
   <pre><code>hts_SeqScreener --help</code></pre>  
-  <br><h7><a href="#TOC">Table of contents</a></h7>
-  <br>
+  <h7><a href="#TOC">Table of contents</a></h7>
 </div>
 
+<br>
 <div id="hts_SuperDeduper">
   <h3>hts_SuperDeduper</h3>
   hts_SuperDeduper is a reference free duplicate read removal tool.
@@ -278,10 +280,10 @@ Output: --------------->   <---------------</code></pre>
   with those identified using picard mark-duplicates. 
   <h4>For detailed usage instructions please run:</h4>
   <pre><code>hts_SuperDeduper --help</code></pre>  
-  <br><h7><a href="#TOC">Table of contents</a></h7>
-  <br>  
+  <h7><a href="#TOC">Table of contents</a></h7> 
 </div>
 
+<br>
 <div id="Example Pipelines">
   <h3>Example Pipelines</h3>
   Building pipelines with HTStream will feel natural to Unix/Linux users. Simply string together a set of HTS tools using Linux pipes, and your pipeline is done.
@@ -291,7 +293,7 @@ Output: --------------->   <---------------</code></pre>
     <pre><code>hts_Overlapper -e 0.1 -L ./01-cleaned/Sample1_stats.log -1 ./00-RawData/Sample1_R1.fastq.gz -2 ./00-RawData/Sample1_R2.fastq.gz -O \
       | hts_SeqScreener -k 12 -S -A -L ./01-cleaned/Sample1_stats.log -f -p ./01-cleaned/Sample1 </code></pre>
   
-  <br><br><h4>Example 2 </h4>
+  <br><h4>Example 2 </h4>
       A more complex example which 1) deduplicates reads, 2) screens them for PhiX, 3)trims poly-A/T bases, 4) screens resulting reads against a collection of adapter sequences, and 5) collects detailed statistics
       before writing the reads out. Note that in this example, two statistics files will be created. One will contain program-specific statistics, while the second will contain 
       <pre>
@@ -303,7 +305,7 @@ Output: --------------->   <---------------</code></pre>
       </code>
       </pre>
 
-  <br><br><h4>Example 3 </h4>
+  <br><h4>Example 3 </h4>
   For most projects, the number of samples is simply too large to write HTS pipelines by hand. Additionally copy/paste errors can easily ruin your day (or a whole analysis). Instead, a better practice
     is to script the analysis. The following is an example Python script which will generate HTS cleaning pipelines for a set of PE read files. In its current form it creates a bash script, but could
     easily be modified to enable submission to a cluster. The script assumes that gzipped reads are stored in a 00-RawData folder, and that the file names end in "_L001_R1_001.fastq.gz". These assumptions
@@ -329,7 +331,7 @@ Output: --------------->   <---------------</code></pre>
 
 </code></pre>
 
-  <br><br><h4>Example 4 </h4>
+  <br><h4>Example 4 </h4>
   Please see the following link for an excellent HTStream tutorial from the <a href="http://bioinformatics.ucdavis.edu/">UC Davis Bioinformatics Core</a> where HTStream was used to pre-process RNA-Seq reads.<br>
   <a href="https://ucdavis-bioinformatics-training.github.io/2018-June-RNA-Seq-Workshop/tuesday/preproc.html">UC Davis Bioinformatics Core 2018 RNA-Seq Workshop</a>
 
