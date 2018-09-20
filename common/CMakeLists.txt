@@ -22,9 +22,7 @@ file(GLOB TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/test/*.cpp)
 link_directories(${GTEST_LIBS_DIR})
 
 add_executable(${PROJECT_TEST_NAME} ${TEST_SRC_FILES} ${sources})
-set_target_properties(${PROJECT_TEST_NAME} PROPERTIES LINK_SEARCH_START_STATIC 1)
-set_target_properties(${PROJECT_TEST_NAME} PROPERTIES LINK_SEARCH_END_STATIC 1)
 
 #add_dependencies(${PROJECT_TEST_NAME} googletest)
-target_link_libraries(${PROJECT_TEST_NAME} -static gtest gtest_main ${CMAKE_THREAD_LIBS_INIT} ${Boost_LIBRARIES} ${PROJECT_LINK_LIBS})
+target_link_libraries(${PROJECT_TEST_NAME} gtest gtest_main ${CMAKE_THREAD_LIBS_INIT} ${Boost_LIBRARIES} ${PROJECT_LINK_LIBS})
 add_test(test_common ${PROJECT_TEST_NAME})
