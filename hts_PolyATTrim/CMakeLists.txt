@@ -16,7 +16,9 @@ include_directories(${COMMON_INCLUDES} ${Boost_INCLUDE_DIR} )
 
 
 add_executable(${PROJECT_NAME} ${sources})
-target_link_libraries(${PROJECT_NAME} ${PROJECT_LINK_LIBS} ${Boost_LIBRARIES})
+set_target_properties(${PROJECT_NAME} PROPERTIES LINK_SEARCH_START_STATIC 1)
+set_target_properties(${PROJECT_NAME} PROPERTIES LINK_SEARCH_END_STATIC 1)
+target_link_libraries(${PROJECT_NAME} -static ${PROJECT_LINK_LIBS} ${Boost_LIBRARIES})
 
 add_custom_target(valgrind_${PROJECT_NAME}
   DEPENDS ${PROJECT_NAME}

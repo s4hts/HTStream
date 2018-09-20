@@ -16,7 +16,10 @@ include_directories(${COMMON_INCLUDES} ${Boost_INCLUDE_DIR} )
 
 
 add_executable(${PROJECT_NAME} ${sources})
-target_link_libraries(${PROJECT_NAME} ${PROJECT_LINK_LIBS} ${Boost_LIBRARIES})
+set_target_properties(${PROJECT_NAME} PROPERTIES LINK_SEARCH_START_STATIC 1)
+set_target_properties(${PROJECT_NAME} PROPERTIES LINK_SEARCH_END_STATIC 1)
+
+target_link_libraries(${PROJECT_NAME} -static ${PROJECT_LINK_LIBS} ${Boost_LIBRARIES})
 
 add_custom_target(hts_pytest_${PROJECT_NAME}
   DEPENDS ${PROJECT_NAME}
@@ -40,9 +43,8 @@ include_directories(${GTEST_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} ${COMMON_INCLUDES
 file(GLOB TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/test/*.cpp)
 link_directories(${GTEST_LIBS_DIR})
 list(REMOVE_ITEM sources ${CMAKE_CURRENT_SOURCE_DIR}/src/${PROJECT_NAME}.cpp)
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Dprivate=public -lboost_serialization -lboost_unit_test_framework-mt -lboost_program_options")
 
 add_executable(${PROJECT_TEST_NAME} ${TEST_SRC_FILES} ${sources})
-#add_dependencies(${PROJECT_TEST_NAME} googletest)
+
 target_link_libraries(${PROJECT_TEST_NAME} gtest gtest_main ${CMAKE_THREAD_LIBS_INIT} ${PROJECT_LINK_LIBS})
 add_test(${PROJECT_TEST_NAME} ${PROJECT_TEST_NAME})
