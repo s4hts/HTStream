@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <link href='https://fonts.googleapis.com/css?family=Chivo:900' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <title>HTStream by IBEST</title>
+  </head>
+<!--
+<script type="text/javascript">
+function Toggle(tt) {
+    var el = document.getElementById(tt);
+    if (el.style.display == "block") {
+        el.style.display = "none";
+    }
+    else {
+        el.style.display = "block";
+    }
+}
+</script>
+-->
+  <body>
+    <div id="container">
+      <div class="inner">
+
+        <header>
+          <!--
+        <img src="./images/HTStream.png", width="300", height='280', style="float:left; margin:0px 0px 0px 10px" />
+        -->
+        <center>
+        <img src="./images/HTStream.png", width="300", height='150'  />
+          <h2>Fast, streaming QA/QC for High Throughput Sequencing data</h2>
+        </header>
+
+
+        <section id="downloads" class="clearfix">
+          <a href="https://github.com/ibest/HTStream/zipball/master" id="download-zip" class="button"><span>Download .zip</span></a>
+          <a href="https://github.com/ibest/HTStream/tarball/master" id="download-tar-gz" class="button"><span>Download .tar.gz</span></a>
+          <a href="https://github.com/ibest/HTStream" id="view-on-github" class="button"><span>View on GitHub</span></a>
+        </section>
+
+        <hr>
+
+        <section id="main_content">
+          <h3>Welcome to the HTStream application page.</h3>
+
+          <p>HTStream is a fast, quality control pipeline for Hight Throughput Sequencing data. The difference between HTStream and other pipelines 
+            is that HTStreams uses a tab delimited fastq format which allows for streaming from application to application. 
+            This streaming creates some awesome efficiencies when processing HTS data.</p>
+            <ul>
+                <li>No intermediate files (saves on files storage)</li>
+                <li>Reduce I/O (files are only read in and written out once)</li>
+                <li>Handles both single end and paired end reads at the same time</li>
+                <li>Processes can work at the same time allowing for process parallelization</li>
+                <li>Built on top of mature C++ Boost libraries to reduce bugs and memory leaks</li>
+                <li>Designed following the philosophy of <a href="https://en.wikipedia.org/wiki/Unix_philosophy#Program_Design_in_the_UNIX_Environment">Program Design in the UNIX Environment</a></li>
+                <li>Works with native Unix/Linux applications such as grep/sed/awk etc</li>
+            </ul>
+
+          <h4>Important Links</h4>
+          <ul>
+          <li>Bug reports and suggested features <a href="https://github.com/ibest/HTStream/issues">GitHub Issues</a></li>
+          </ul>
+
+          <div id="TOC">
+          <h4>Table of Contents</h4>
+          <ul>
+            <li><a href="#Installation">Installing HTStream </a></li>
+            <li><a href="#hts_AdapterTrimmer">hts_AdapterTrimmer</a></li>  
+            <li><a href="#hts_CutTrim">hts_CutTrim</a></li>
+            <li><a href="#hts_Overlapper">hts_Overlapper</a></li>
+            <li><a href="#hts_QWindowTrim">hts_QWindowTrim</a></li>
+            <li><a href="#hts_Stats">hts_Stats</a></li>
+            <li><a href="#hts_NTrimmer">hts_NTrimmer</a></li>
+            <li><a href="#hts_PolyATTrim">hts_PolyATTrim</a></li>
+            <li><a href="#hts_SeqScreener">hts_SeqScreener</a></li>
+            <li><a href="#hts_SuperDeduper">hts_SuperDeduper</a></li>
+            <li><a href="#Example Pipelines">ExamplePipelines</a></li>
+          </ul>
+          </div>
+
+        <div id="Installation">
+        <h3>Installation HTStream</h3>
+        <h4>1) The simplest way (with many thanks to the Bioconda team):</h4>
+        <pre><code>conda install -c bioconda htstream</code></pre>
+
+        <h4>2)Building on Linux</h4>
+        Linux Prerequisites:
+       <ul>
+         <li>Cmake 3.2 or greater.</li>
+         <li>Boost 1.56 or greater
+         <ul>
+         <li>libboost-dev libboost-system-dev libboost-program-options-dev libboost-iostreams-dev libboost-filesystem-dev
+        </ul></li>
+       </ul>
+        
+        
+        
+        <h4>On Ubuntu and similar systems</h4>
+        Install Cmake
+        <pre><code>sudo apt-get install cmake # Cmake install - <a href='http://askubuntu.com/questions/610291/how-to-install-cmake-3-2-on-ubuntu-14-04'>Additional help here</a></code></pre>
+
+        Ubuntu: Install Boost (Boost 1.56 or greater is required)
+<pre><code>Ubuntu:
+    sudo apt install libboost-dev libboost-system-dev libboost-program-options-dev libboost-iostreams-dev libboost-filesystem-dev </code></pre>
+
+        Alternatively Boost can be installed from source:
+<pre><code>wget -O 1_60.tar.bz2 https://sourceforge.net/projects/boost/files/boost/1.60.0/boost_1_60_0.tar.bz2/download
+tar --bzip2 -xf 1_60.tar.bz2
+cd boost_1_60_0
+./bootstrap.sh 
+./b2 # This will take a while.
+BOOST_INCLUDE=$(pwd)
+BOOST_INCLUDE_LIB=$(pwd)/stage/lib</code></pre>
+
+        <h4>3) On Mac OSX</h4>
+        First, <a href="http://brew.sh/">Install Homebrew</a>
+<pre><code>brew upgrade
+brew install cmake
+brew install boost</code></pre>
+
+        <h4>Install HTStream</h4>
+<pre><code>git clone https://github.com/ibest/HTStream.git
+cd HTStream
+mkdir build
+cd build
+cmake ..
+#When using an alternative Boost install:
+#cmake -DCMAKE_INCLUDE_PATH=$BOOST_INCLUDE -DCMAKE_LIBRARY_PATH=$BOOST_INCLUDE_LIB .. 
+#To specify an install location use -DCMAKE_INSTALL_PREFIX=
+make 
+make install #install to /usr/local/bin with sudo access (or location specified with not sudo access)</code></pre>
+
+        <h4>Troubleshooting</h4>
+        Some users have experienced issues with the boost install. We think this arises from having other versions of boost on the system. Try the following:
+<pre><code>cmake -DBoost_NO_SYSTEM_PATHS=TRUE -DBOOST_INCLUDEDIR=/usr/local/include/ ..</code></pre>
+          Or
+
+<pre><code>export CC=`which gcc`
+export CXX=`which g++`
+mkdir -p build
+cd build
+cmake -DBoost_NO_SYSTEM_PATHS=TRUE -DCMAKE_INCLUDE_PATH=$BOOST_INCLUDE -DCMAKE_LIBRARY_PATH=$BOOST_INCLUDE_LIB ..</code></pre>
+
+
+      <h7><a href="#TOC">Table of contents</a></h7>
+    </div>
+
+
+<H2>HTStream Applications</H2>
+<br>
+<strong>For detailed usage instructions of each application see command-line output.</strong>
+<br><br>
+
+<div id="hts_AdapterTrimmer">
+    <h3>hts_AdapterTrimmer</h3>
+    Adapter trimmer trims adapters which are sequenced when the fragment insert length is shorter than the read length.
+    In this case, the sequencer reads past the end of the insert and into the Illumina sequencing adapter. hts_AdapterTrimmer
+    first overlaps the reads, then determins whether a 3' overhang exists. Typically a 3' overhang can only occur when adapter is present
+    in the reads, so hts_AdapterTrimmer trims these overhangs. The algorithm used is the same as in hts_Overlapper, except that the reads
+    are returned as a pair. This is useful for some programs that don't accept a combination of SE and PE reads.
+    It is important to note that because hts_AdapterTrimmer does not rely on adapter pattern matching, it can effectively trim adapters
+    as short as a single base pair.
+    <h4>For detailed usage instructions please run:</h4>
+    <pre><code>hts_AdapterTrimmer --help</code></pre>
+    <br><h7><a href="#TOC">Table of contents</a></h7>
+    <br>
+</div>
+
+<br>
+<div id="hts_CutTrim">
+  <h3>hts_CutTrim</h3>
+  The hts_CutTrim application trims a fixed number of bases from the 5' and/or 3' end of each read.
+  <h4>For detailed usage instructions please run:</h4>
+  <pre><code>hts_CutTrim --help</code></pre>
+  <br><h7><a href="#TOC">Table of contents</a></h7>
+  <br>
+</div>
+
+<br>
+<div id="hts_Overlapper">
+  <h3>hts_Overlapper</h3>
+  The hts_Overlapper application attempts to overlap paired end reads to produce the original fragment, trims adapters, and can, corrects sequencing errors.<br>
+Reads come in three flavors:<br>
+  <strong>sins</strong> Reads produced from an insert shorter than the read length
+        will result in a single read in the orientation of R1, and have the
+        adapter bases trimmed to produce a SE read where adapters have been trimmed.<br>
+        Overlaps are handeled as follows:
+        <ul><li>match: q-scores added, with max q-score of 40 </li>
+        <li>do not match: base with highest q-score is kept, q-scores are subtracted</li>
+        <li>In the case where bases do not match and q-scores are equal, the base from read 1 is kept.</li></ul>
+<pre><code>R1:         --------------->
+R2:     <---------------
+Output:     ------------  </code></pre>
+  <strong>mins</strong> Reads produced from a medium-insert greater than read length, but
+        somewhat shorter than 2x read length will produce a SE read in the
+        orientation of R1.
+<pre><code>R1:     --------------->
+R2:           <---------------
+Output: ---------------------></code></pre>
+
+  <strong>lins</strong> Reads produced from long-inserts which do not overlap
+        significantly, result in a PE read.
+<pre><code>R1:     --------------->
+R2:                        <---------------
+Output: --------------->   <---------------</code></pre>
+
+  <h4>For detailed usage instructions please run:</h4>
+  <pre><code>hts_Overlapper --help</code></pre>
+  <br><h7><a href="#TOC">Table of contents</a></h7>
+  <br>    
+</div>
+
+<div id="hts_QWindowTrim">
+  <h3>hts_QWindowTrim</h3>
+  The quality trimmer uses a sliding window approach to remove the low quality ends of reads.
+  It slides a window from each end of the read, moving inwards. When the average quality of the bases within the window is above the avg-qual threshold
+  trimming stops.
+  <h4>For detailed usage instructions please run:</h4>
+  <pre><code>hts_QWindowTrim --help</code></pre>  
+  <br><h7><a href="#TOC">Table of contents</a></h7>
+  <br
+</div>
+
+<div id="hts_Stats">
+  <h3>hts_Stats</h3>
+  The hts_Stats program generates an JSON formatted file containing a set of statistical measures about the input read data. This output can be used for plotting or to develop a better understading of a dataset.
+  <h4>For detailed usage instructions please run:</h4>
+  <pre><code>hts_Stats --help</code></pre>  
+  <br><h7><a href="#TOC">Table of contents</a></h7>
+  <br>
+</div>
+
+<div id="hts_NTrimmer">
+  <h3>hts_NTrimmer</h3>
+  hts_NTrimmer trims reads to the longest subsequence that contains no Ns.
+  <h4>For detailed usage instructions please run:</h4>
+  <pre><code>hts_NTrimmer --help</code></pre>  
+  <br><h7><a href="#TOC">Table of contents</a></h7>
+  <br>    
+</div>
+
+<div id="hts_PolyATTrim">
+  <h3>hts_PolyATTrim</h3>
+  hts_PolyATTrim attempts to trim poly-A and poly-T sequences from the end of reads. It starts at either end of a read, expanding a trimming window until the specified number of mistmaches (non-A/T bases) is reached.
+  <h4>For detailed usage instructions please run:</h4>
+  <pre><code>hts_PolyATTrim --help</code></pre>  
+  <br><h7><a href="#TOC">Table of contents</a></h7>
+  <br>
+</div>
+
+<div id="hts_SeqScreener">
+  <h3>hts_SeqScreener</h3>
+  hts_SeqScreener is a simple sequence screening tool which uses a kmer lookup approach
+  to identify reads from an unwanted source. By default it will look for reads which are
+  likely to have come from PhiX (commonly added to Illumina sequencing runs), but the user
+  can also provide a sequece or set of sequences to screen against (sequences should be less than a few Kb in length).
+  This tool can also be useful in removing primer dimers and other reads containing sequencing adapters.
+  For example, setting -k 15 -x .01 in combination with a collection of adapters in fasta format, has been found to work well for this purpose.
+  <h4>For detailed usage instructions please run:</h4>
+  <pre><code>hts_SeqScreener --help</code></pre>  
+  <br><h7><a href="#TOC">Table of contents</a></h7>
+  <br>
+</div>
+
+<div id="hts_SuperDeduper">
+  <h3>hts_SuperDeduper</h3>
+  hts_SuperDeduper is a reference free duplicate read removal tool.
+  Traditionally PCR duplicates have been removed by comparing the mapping location of paired reads and removing those pairs with identical R1 and R2 mapping locations.
+  hts_SuperDeduper avoids relying on mapping location by using a short subsequence within each read as a barcode for the read pair. Any other read pair with this same
+  barcode is identified as a PCR duplicate and discarded. Default settings for this tool have been tuned to produce sets of duplicated reads which are highly congruent
+  with those identified using picard mark-duplicates. 
+  <h4>For detailed usage instructions please run:</h4>
+  <pre><code>hts_SuperDeduper --help</code></pre>  
+  <br><h7><a href="#TOC">Table of contents</a></h7>
+  <br>  
+</div>
+
+<div id="Example Pipelines">
+  <h3>Example Pipelines</h3>
+  Building pipelines with HTStream will feel natural to Unix/Linux users. Simply string together a set of HTS tools using Linux pipes, and your pipeline is done.
+
+  <br><br><h4>Example 1 </h4>
+  A simple pipeline for overlapping reads and screening for PhiX with JSON logging data written to a common logging file:
+    <pre><code>hts_Overlapper -e 0.1 -L ./01-cleaned/Sample1_stats.log -1 ./00-RawData/Sample1_R1.fastq.gz -2 ./00-RawData/Sample1_R2.fastq.gz -O \
+      | hts_SeqScreener -k 12 -S -A -L ./01-cleaned/Sample1_stats.log -f -p ./01-cleaned/Sample1 </code></pre>
+  
+  <br><br><h4>Example 2 </h4>
+      A more complex example which 1) deduplicates reads, 2) screens them for PhiX, 3)trims poly-A/T bases, 4) screens resulting reads against a collection of adapter sequences, and 5) collects detailed statistics
+      before writing the reads out. Note that in this example, two statistics files will be created. One will contain program-specific statistics, while the second will contain 
+      <pre>
+        <code>hts_SuperDeduper -L ./01-Cleaned/Sample1_stats.log -1 ./00-RawData/Sample1_L001_R1_001.fastq.gz -2 ./00-RawData/Sample1_L001_R2_001.fastq.gz -O \
+    | hts_SeqScreener -S -O -A -L ./01-Cleaned/Sample1_stats.log \
+    | hts_PolyATTrim -m 100 -S -O -A -L ./01-Cleaned/Sample1_stats.log \
+    | hts_SeqScreener -S -O -A -L ./01-Cleaned/Sample1_stats.log --seq adapters.fa -k 15 -x .01 \
+    | hts_Stats -N Detailed_Stats -S -A -L ./01-Cleaned/Sample1_StatsStats.log -g -p ./01-Cleaned/Sample1
+      </code>
+      </pre>
+
+  <br><br><h4>Example 3 </h4>
+  For most projects, the number of samples is simply too large to write HTS pipelines by hand. Additionally copy/paste errors can easily ruin your day (or a whole analysis). Instead, a better practice
+    is to script the analysis. The following is an example Python script which will generate HTS cleaning pipelines for a set of PE read files. In its current form it creates a bash script, but could
+    easily be modified to enable submission to a cluster. The script assumes that gzipped reads are stored in a 00-RawData folder, and that the file names end in "_L001_R1_001.fastq.gz". These assumptions
+    will mostly need to be adjusted on a case-by-case basis.
+  
+  <pre><code>
+      from glob import glob
+      import os
+      
+      cleaning = open("cleaning_commands.sh", 'w')
+      
+      for r1 in glob("./00-RawData/*_R1_*.gz"):
+          r2 = r1.replace("R1", "R2")
+          s = r1.split('/')[-1].replace("_L001_R1_001.fastq.gz", '')
+          cmd = "hts_SuperDeduper -L ./01-Cleaned/" + s + "_stats.log -1 " + r1 + " -2 " + r2 + " -O | "
+          cmd += "hts_SeqScreener -S -O -A -L ./01-Cleaned/" + s + "_stats.log | "
+          cmd += "hts_PolyATTrim -m 100 -S -O -A -L ./01-Cleaned/" + s + "_stats.log | "
+          cmd += "hts_SeqScreener -S -O -A -L ./01-Cleaned/" + s + "_stats.log --seq adapters.fa -k 15 -x .01 | "
+          cmd += "hts_Stats -N phix-remover-adapters -S -A -L ./01-Cleaned/" + s + "_StatsStats.log -g -p ./01-Cleaned/" + s
+          cleaning.write(cmd+'\n')
+      
+      cleaning.close()
+
+</code></pre>
+
+  <br><br><h4>Example 4 </h4>
+  Please see the following link for an excellent HTStream tutorial from the <a href="http://bioinformatics.ucdavis.edu/">UC Davis Bioinformatics Core</a> where HTStream was used to pre-process RNA-Seq reads.<br>
+  <a href="https://ucdavis-bioinformatics-training.github.io/2018-June-RNA-Seq-Workshop/tuesday/preproc.html">UC Davis Bioinformatics Core 2018 RNA-Seq Workshop</a>
+
+
+  <br><h7><a href="#TOC">Table of contents</a></h7>
+  <br>
+</div>
+

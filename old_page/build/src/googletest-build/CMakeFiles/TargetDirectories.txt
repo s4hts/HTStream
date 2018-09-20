@@ -1,0 +1,4 @@
+/bio/HTStream/build/src/googletest-build/CMakeFiles/rebuild_cache.dir
+/bio/HTStream/build/src/googletest-build/CMakeFiles/gtest.dir
+/bio/HTStream/build/src/googletest-build/CMakeFiles/edit_cache.dir
+/bio/HTStream/build/src/googletest-build/CMakeFiles/gtest_main.dir

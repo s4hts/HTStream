@@ -1,0 +1,401 @@
+Start testing: Jan 21 19:19 PST
+----------------------------------------------------------
+1/10 Testing: test_common
+1/10 Test: test_common
+Command: "/bio/HTStream/build/common/hts_common_test"
+Directory: /bio/HTStream/build/common
+"test_common" start time: Jan 21 19:19 PST
+Output:
+----------------------------------------------------------
+Running main() from gtest_main.cc
+[==========] Running 14 tests from 6 test cases.
+[----------] Global test environment set-up.
+[----------] 8 tests from ReadsTest
+[ RUN      ] ReadsTest.fasta_to_read
+[       OK ] ReadsTest.fasta_to_read (0 ms)
+[ RUN      ] ReadsTest.parseTabRead
+[       OK ] ReadsTest.parseTabRead (0 ms)
+[ RUN      ] ReadsTest.testInterRead
+[       OK ] ReadsTest.testInterRead (0 ms)
+[ RUN      ] ReadsTest.parseSingleReadFastq
+[       OK ] ReadsTest.parseSingleReadFastq (1 ms)
+[ RUN      ] ReadsTest.parsePairedReadFastq
+AAAAAF5CFFFF6FGFGGGGGGHHGHHFBHFFHHHHHBEGHHHHHEGGHHHHHFGFGGFEFGHBFBHHHHHEEGFFEGHHFHHEBGHHHEGHHGEGGEHHHGHHHEHHFFG3GHHHHGCDEGGGHHDGEHHGHHHFEEGGFHHHHGHHHH1
+>AA3>A>22ADFC5FBGGGGGCGHGHGHGGHHHGGGGFHFFHFGGHHHGGGGEHHHHFHHGHGGGGGGGCGGFHHGGHGGHHGHHHGHHHHHHHHGHGGGGGGFHHHHHHHGGGGGHHHGHHHGHHHGHHHHHHHGGEGFC?DGGHHHHG0
+>AAA3DCAAFFFB4EAEFGGGE2AFGGGGFGHBGHFHHHFHHGGGHHHHHHHHHHHHHHHHHGHHEGHCGGGGGGGHHHHHFHHGHGHHHHHHHHGHHHHGHHHGHHEHGHHHHHGHGHGHHHHHHHHHHGHHHHHHHHH0GHGHHGGGGF
+>3A3>4@4C4FFBGFGGGGGGGGGGHGHHHHGGHHGGFGGGHHGHHHHGHGGGGEHHGGHHHHHHFHHHHFFHHHFHHHHHHHHHGGGHGHHGHGHHDCEGCEG?EGGGGHHHHHHHHHHHGHHHHGHHHHHHHHFFGHHEHHHGGHHHHH
+>>111>1AFFFDCEECGGGGGGHHHHHHHHHGFGC?GHFHHHHGGHHHHHHHHHHHHHHHHGHHHHHHGHHFHHHHHHHHGHGHHHHHHHBHHGGGGGHHHHHHHHHGHHGHHHHHHHHHEGHGHHHHGHHHHHHHFGGHGHGGHHGHHF2
+[       OK ] ReadsTest.parsePairedReadFastq (0 ms)
+[ RUN      ] ReadsTest.testWriteFastqSingle
+[       OK ] ReadsTest.testWriteFastqSingle (0 ms)
+[ RUN      ] ReadsTest.testTabWrite
+[       OK ] ReadsTest.testTabWrite (0 ms)
+[ RUN      ] ReadsTest.testInterWrite
+[       OK ] ReadsTest.testInterWrite (0 ms)
+[----------] 8 tests from ReadsTest (1 ms total)
+
+[----------] 1 test from EmptyTest
+[ RUN      ] EmptyTest.firstTest
+[       OK ] EmptyTest.firstTest (0 ms)
+[----------] 1 test from EmptyTest (0 ms total)
+
+[----------] 1 test from CreatePERead
+[ RUN      ] CreatePERead.createPEReadWorks
+ 0100010101110100111111
+[       OK ] CreatePERead.createPEReadWorks (0 ms)
+[----------] 1 test from CreatePERead (0 ms total)
+
+[----------] 1 test from ConvertToTwobit
+[ RUN      ] ConvertToTwobit.ConvertToTwobitWorks
+[       OK ] ConvertToTwobit.ConvertToTwobitWorks (0 ms)
+[----------] 1 test from ConvertToTwobit (0 ms total)
+
+[----------] 1 test from qual
+[ RUN      ] qual.avgQualScore
+[       OK ] qual.avgQualScore (0 ms)
+[----------] 1 test from qual (0 ms total)
+
+[----------] 2 tests from read
+[ RUN      ] read.BitToStrWorks
+[       OK ] read.BitToStrWorks (0 ms)
+[ RUN      ] read.ReverseComplementWorks
+[       OK ] read.ReverseComplementWorks (0 ms)
+[----------] 2 tests from read (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 14 tests from 6 test cases ran. (1 ms total)
+[  PASSED  ] 14 tests.
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"test_common" end time: Jan 21 19:19 PST
+"test_common" time elapsed: 00:00:00
+----------------------------------------------------------
+
+2/10 Testing: hts_Stats_test
+2/10 Test: hts_Stats_test
+Command: "/bio/HTStream/build/hts_Stats/hts_Stats_test"
+Directory: /bio/HTStream/build/hts_Stats
+"hts_Stats_test" start time: Jan 21 19:19 PST
+Output:
+----------------------------------------------------------
+Running main() from gtest_main.cc
+[==========] Running 1 test from 1 test case.
+[----------] Global test environment set-up.
+[----------] 1 test from Stats
+[ RUN      ] Stats.BasicTrim
+[       OK ] Stats.BasicTrim (0 ms)
+[----------] 1 test from Stats (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test case ran. (0 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"hts_Stats_test" end time: Jan 21 19:19 PST
+"hts_Stats_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+3/10 Testing: hts_SuperDeduper_test
+3/10 Test: hts_SuperDeduper_test
+Command: "/bio/HTStream/build/hts_SuperDeduper/hts_SuperDeduper_test"
+Directory: /bio/HTStream/build/hts_SuperDeduper
+"hts_SuperDeduper_test" start time: Jan 21 19:19 PST
+Output:
+----------------------------------------------------------
+Running main() from gtest_main.cc
+[==========] Running 1 test from 1 test case.
+[----------] Global test environment set-up.
+[----------] 1 test from SDTest
+[ RUN      ] SDTest.HashMapLoadTest
+1
+[       OK ] SDTest.HashMapLoadTest (0 ms)
+[----------] 1 test from SDTest (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test case ran. (1 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"hts_SuperDeduper_test" end time: Jan 21 19:19 PST
+"hts_SuperDeduper_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+4/10 Testing: hts_PolyATTrim_test
+4/10 Test: hts_PolyATTrim_test
+Command: "/bio/HTStream/build/hts_PolyATTrim/hts_PolyATTrim_test"
+Directory: /bio/HTStream/build/hts_PolyATTrim
+"hts_PolyATTrim_test" start time: Jan 21 19:19 PST
+Output:
+----------------------------------------------------------
+Running main() from gtest_main.cc
+[==========] Running 3 tests from 1 test case.
+[----------] Global test environment set-up.
+[----------] 3 tests from PolyATTail
+[ RUN      ] PolyATTail.BasicTrim
+[       OK ] PolyATTail.BasicTrim (0 ms)
+[ RUN      ] PolyATTail.AllTrim
+[       OK ] PolyATTail.AllTrim (0 ms)
+[ RUN      ] PolyATTail.Stranded
+[       OK ] PolyATTail.Stranded (0 ms)
+[----------] 3 tests from PolyATTail (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 3 tests from 1 test case ran. (0 ms total)
+[  PASSED  ] 3 tests.
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"hts_PolyATTrim_test" end time: Jan 21 19:19 PST
+"hts_PolyATTrim_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+5/10 Testing: hts_QWindowTrim_test
+5/10 Test: hts_QWindowTrim_test
+Command: "/bio/HTStream/build/hts_QWindowTrim/hts_QWindowTrim_test"
+Directory: /bio/HTStream/build/hts_QWindowTrim
+"hts_QWindowTrim_test" start time: Jan 21 19:19 PST
+Output:
+----------------------------------------------------------
+Running main() from gtest_main.cc
+[==========] Running 6 tests from 1 test case.
+[----------] Global test environment set-up.
+[----------] 6 tests from QTrimTest
+[ RUN      ] QTrimTest.LeftTrim
+[       OK ] QTrimTest.LeftTrim (0 ms)
+[ RUN      ] QTrimTest.RightTrim
+[       OK ] QTrimTest.RightTrim (0 ms)
+[ RUN      ] QTrimTest.NoTrim
+[       OK ] QTrimTest.NoTrim (0 ms)
+[ RUN      ] QTrimTest.BasicTrim
+[       OK ] QTrimTest.BasicTrim (0 ms)
+[ RUN      ] QTrimTest.AllTrim
+[       OK ] QTrimTest.AllTrim (0 ms)
+[ RUN      ] QTrimTest.Stranded
+[       OK ] QTrimTest.Stranded (0 ms)
+[----------] 6 tests from QTrimTest (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 6 tests from 1 test case ran. (0 ms total)
+[  PASSED  ] 6 tests.
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"hts_QWindowTrim_test" end time: Jan 21 19:19 PST
+"hts_QWindowTrim_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+6/10 Testing: hts_CutTrim_test
+6/10 Test: hts_CutTrim_test
+Command: "/bio/HTStream/build/hts_CutTrim/hts_CutTrim_test"
+Directory: /bio/HTStream/build/hts_CutTrim
+"hts_CutTrim_test" start time: Jan 21 19:19 PST
+Output:
+----------------------------------------------------------
+Running main() from gtest_main.cc
+[==========] Running 4 tests from 1 test case.
+[----------] Global test environment set-up.
+[----------] 4 tests from CutTrim
+[ RUN      ] CutTrim.BasicTrim
+[       OK ] CutTrim.BasicTrim (0 ms)
+[ RUN      ] CutTrim.Stranded
+[       OK ] CutTrim.Stranded (0 ms)
+[ RUN      ] CutTrim.MaxLength
+[       OK ] CutTrim.MaxLength (0 ms)
+[ RUN      ] CutTrim.Both
+[       OK ] CutTrim.Both (0 ms)
+[----------] 4 tests from CutTrim (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 4 tests from 1 test case ran. (0 ms total)
+[  PASSED  ] 4 tests.
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"hts_CutTrim_test" end time: Jan 21 19:19 PST
+"hts_CutTrim_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+7/10 Testing: hts_SeqScreener_test
+7/10 Test: hts_SeqScreener_test
+Command: "/bio/HTStream/build/hts_SeqScreener/hts_SeqScreener_test"
+Directory: /bio/HTStream/build/hts_SeqScreener
+"hts_SeqScreener_test" start time: Jan 21 19:19 PST
+Output:
+----------------------------------------------------------
+Running main() from gtest_main.cc
+[==========] Running 4 tests from 1 test case.
+[----------] Global test environment set-up.
+[----------] 4 tests from PhixRemover
+[ RUN      ] PhixRemover.all_from_fastq
+ACGTACGTTTTT
+[       OK ] PhixRemover.all_from_fastq (0 ms)
+[ RUN      ] PhixRemover.check_check_read
+Hits should equal 6 == 6
+[       OK ] PhixRemover.check_check_read (0 ms)
+[ RUN      ] PhixRemover.setLookupTestOrderedVec
+Testing Building Lookup Table with sequence AAAAAAAGCT
+HERE 1
+HERE 2
+HERE 3
+4
+[       OK ] PhixRemover.setLookupTestOrderedVec (0 ms)
+[ RUN      ] PhixRemover.setLookupTest
+Testing Building Lookup Table with sequence AAAAAAAGCT
+[       OK ] PhixRemover.setLookupTest (0 ms)
+[----------] 4 tests from PhixRemover (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 4 tests from 1 test case ran. (0 ms total)
+[  PASSED  ] 4 tests.
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"hts_SeqScreener_test" end time: Jan 21 19:19 PST
+"hts_SeqScreener_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+8/10 Testing: hts_NTrimmer_test
+8/10 Test: hts_NTrimmer_test
+Command: "/bio/HTStream/build/hts_NTrimmer/hts_NTrimmer_test"
+Directory: /bio/HTStream/build/hts_NTrimmer
+"hts_NTrimmer_test" start time: Jan 21 19:19 PST
+Output:
+----------------------------------------------------------
+Running main() from gtest_main.cc
+[==========] Running 9 tests from 1 test case.
+[----------] Global test environment set-up.
+[----------] 9 tests from TrimN
+[ RUN      ] TrimN.EdgeRightN
+[       OK ] TrimN.EdgeRightN (0 ms)
+[ RUN      ] TrimN.EdgeLeftN
+[       OK ] TrimN.EdgeLeftN (0 ms)
+[ RUN      ] TrimN.EdgeCaseNonEnds
+[       OK ] TrimN.EdgeCaseNonEnds (0 ms)
+[ RUN      ] TrimN.BasicTrim
+[       OK ] TrimN.BasicTrim (0 ms)
+[ RUN      ] TrimN.NoTrim
+[       OK ] TrimN.NoTrim (0 ms)
+[ RUN      ] TrimN.TwoBasicTrim
+[       OK ] TrimN.TwoBasicTrim (0 ms)
+[ RUN      ] TrimN.equalTrim
+[       OK ] TrimN.equalTrim (0 ms)
+[ RUN      ] TrimN.allN
+[       OK ] TrimN.allN (0 ms)
+[ RUN      ] TrimN.longN
+[       OK ] TrimN.longN (0 ms)
+[----------] 9 tests from TrimN (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 9 tests from 1 test case ran. (0 ms total)
+[  PASSED  ] 9 tests.
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"hts_NTrimmer_test" end time: Jan 21 19:19 PST
+"hts_NTrimmer_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+9/10 Testing: hts_AdapterTrimmer_test
+9/10 Test: hts_AdapterTrimmer_test
+Command: "/bio/HTStream/build/hts_AdapterTrimmer/hts_AdapterTrimmer_test"
+Directory: /bio/HTStream/build/hts_AdapterTrimmer
+"hts_AdapterTrimmer_test" start time: Jan 21 19:19 PST
+Output:
+----------------------------------------------------------
+Running main() from gtest_main.cc
+[==========] Running 11 tests from 1 test case.
+[----------] Global test environment set-up.
+[----------] 11 tests from Adapter
+[ RUN      ] Adapter.failed_read
+[       OK ] Adapter.failed_read (1 ms)
+[ RUN      ] Adapter.engulfR1
+[       OK ] Adapter.engulfR1 (0 ms)
+[ RUN      ] Adapter.engulfR2
+[       OK ] Adapter.engulfR2 (0 ms)
+[ RUN      ] Adapter.trim
+[       OK ] Adapter.trim (0 ms)
+[ RUN      ] Adapter.trim_short_R1
+[       OK ] Adapter.trim_short_R1 (0 ms)
+[ RUN      ] Adapter.normal
+[       OK ] Adapter.normal (0 ms)
+[ RUN      ] Adapter.normal_short_R1
+[       OK ] Adapter.normal_short_R1 (0 ms)
+[ RUN      ] Adapter.perfectOverlap
+[       OK ] Adapter.perfectOverlap (0 ms)
+[ RUN      ] Adapter.perfectOverlap_short_R1
+[       OK ] Adapter.perfectOverlap_short_R1 (0 ms)
+[ RUN      ] Adapter.noOverlap
+[       OK ] Adapter.noOverlap (0 ms)
+[ RUN      ] Adapter.noOverlap_short_R1
+[       OK ] Adapter.noOverlap_short_R1 (0 ms)
+[----------] 11 tests from Adapter (1 ms total)
+
+[----------] Global test environment tear-down
+[==========] 11 tests from 1 test case ran. (1 ms total)
+[  PASSED  ] 11 tests.
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"hts_AdapterTrimmer_test" end time: Jan 21 19:19 PST
+"hts_AdapterTrimmer_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+10/10 Testing: hts_Overlapper_test
+10/10 Test: hts_Overlapper_test
+Command: "/bio/HTStream/build/hts_Overlapper/hts_Overlapper_test"
+Directory: /bio/HTStream/build/hts_Overlapper
+"hts_Overlapper_test" start time: Jan 21 19:19 PST
+Output:
+----------------------------------------------------------
+Running main() from gtest_main.cc
+[==========] Running 11 tests from 1 test case.
+[----------] Global test environment set-up.
+[----------] 11 tests from Overlapper
+[ RUN      ] Overlapper.test_check_length
+[       OK ] Overlapper.test_check_length (0 ms)
+[ RUN      ] Overlapper.engulfR1
+[       OK ] Overlapper.engulfR1 (0 ms)
+[ RUN      ] Overlapper.engulfR2
+[       OK ] Overlapper.engulfR2 (0 ms)
+[ RUN      ] Overlapper.trim
+[       OK ] Overlapper.trim (0 ms)
+[ RUN      ] Overlapper.trim_short_R1
+[       OK ] Overlapper.trim_short_R1 (0 ms)
+[ RUN      ] Overlapper.normal
+[       OK ] Overlapper.normal (0 ms)
+[ RUN      ] Overlapper.normal_short_R1
+[       OK ] Overlapper.normal_short_R1 (1 ms)
+[ RUN      ] Overlapper.perfectOverlap
+[       OK ] Overlapper.perfectOverlap (0 ms)
+[ RUN      ] Overlapper.perfectOverlap_short_R1
+[       OK ] Overlapper.perfectOverlap_short_R1 (0 ms)
+[ RUN      ] Overlapper.noOverlap
+[       OK ] Overlapper.noOverlap (0 ms)
+[ RUN      ] Overlapper.noOverlap_short_R1
+[       OK ] Overlapper.noOverlap_short_R1 (0 ms)
+[----------] 11 tests from Overlapper (1 ms total)
+
+[----------] Global test environment tear-down
+[==========] 11 tests from 1 test case ran. (1 ms total)
+[  PASSED  ] 11 tests.
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"hts_Overlapper_test" end time: Jan 21 19:19 PST
+"hts_Overlapper_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Jan 21 19:19 PST

@@ -1,0 +1,11 @@
+test_common 1 0.00247407
+hts_Stats_test 1 0.00258994
+hts_SuperDeduper_test 1 0.00264311
+hts_PolyATTrim_test 1 0.00238013
+hts_QWindowTrim_test 1 0.00202918
+hts_CutTrim_test 1 0.00193
+hts_SeqScreener_test 1 0.00188398
+hts_NTrimmer_test 1 0.00194407
+hts_AdapterTrimmer_test 1 0.0025568
+hts_Overlapper_test 1 0.00246811
+---

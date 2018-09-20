@@ -1,0 +1,59 @@
+Determining if the pthread_create exist failed with the following output:
+Change Dir: /bio/HTStream/build/src/googletest-build/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_a168b/fast"
+make[3]: Entering directory '/bio/HTStream/build/src/googletest-build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_a168b.dir/build.make CMakeFiles/cmTC_a168b.dir/build
+make[4]: Entering directory '/bio/HTStream/build/src/googletest-build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_a168b.dir/CheckSymbolExists.c.o
+/usr/bin/cc    -o CMakeFiles/cmTC_a168b.dir/CheckSymbolExists.c.o   -c /bio/HTStream/build/src/googletest-build/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_a168b
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a168b.dir/link.txt --verbose=1
+/usr/bin/cc      -rdynamic CMakeFiles/cmTC_a168b.dir/CheckSymbolExists.c.o  -o cmTC_a168b 
+CMakeFiles/cmTC_a168b.dir/CheckSymbolExists.c.o: In function `main':
+CheckSymbolExists.c:(.text+0x1b): undefined reference to `pthread_create'
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_a168b.dir/build.make:97: recipe for target 'cmTC_a168b' failed
+make[4]: *** [cmTC_a168b] Error 1
+make[4]: Leaving directory '/bio/HTStream/build/src/googletest-build/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_a168b/fast' failed
+make[3]: *** [cmTC_a168b/fast] Error 2
+make[3]: Leaving directory '/bio/HTStream/build/src/googletest-build/CMakeFiles/CMakeTmp'
+
+File /bio/HTStream/build/src/googletest-build/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <pthread.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef pthread_create
+  return ((int*)(&pthread_create))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+
+Determining if the function pthread_create exists in the pthreads failed with the following output:
+Change Dir: /bio/HTStream/build/src/googletest-build/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_d58cb/fast"
+make[3]: Entering directory '/bio/HTStream/build/src/googletest-build/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_d58cb.dir/build.make CMakeFiles/cmTC_d58cb.dir/build
+make[4]: Entering directory '/bio/HTStream/build/src/googletest-build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_d58cb.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=pthread_create   -o CMakeFiles/cmTC_d58cb.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.9/Modules/CheckFunctionExists.c
+Linking C executable cmTC_d58cb
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d58cb.dir/link.txt --verbose=1
+/usr/bin/cc  -DCHECK_FUNCTION_EXISTS=pthread_create    -rdynamic CMakeFiles/cmTC_d58cb.dir/CheckFunctionExists.c.o  -o cmTC_d58cb -lpthreads 
+/usr/bin/ld: cannot find -lpthreads
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_d58cb.dir/build.make:97: recipe for target 'cmTC_d58cb' failed
+make[4]: *** [cmTC_d58cb] Error 1
+make[4]: Leaving directory '/bio/HTStream/build/src/googletest-build/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_d58cb/fast' failed
+make[3]: *** [cmTC_d58cb/fast] Error 2
+make[3]: Leaving directory '/bio/HTStream/build/src/googletest-build/CMakeFiles/CMakeTmp'
+
+

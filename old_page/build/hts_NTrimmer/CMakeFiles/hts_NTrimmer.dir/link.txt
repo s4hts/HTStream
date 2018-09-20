@@ -1,0 +1,1 @@
+/usr/bin/c++   -std=c++11  -Wall  -rdynamic CMakeFiles/hts_NTrimmer.dir/src/hts_NTrimmer.cpp.o  -o hts_NTrimmer  -L/bio/HTStream/build/common -Wl,-rpath,/bio/HTStream/build/common: ../common/libhts_common.a -Wl,-Bstatic -lboost_system -lboost_program_options -lboost_iostreams -lboost_filesystem -lboost_regex -Wl,-Bdynamic 

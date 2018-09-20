@@ -1,0 +1,2 @@
+/usr/bin/ar qc libhts_common.a  CMakeFiles/hts_common.dir/src/ioHandler.cpp.o CMakeFiles/hts_common.dir/src/read.cpp.o CMakeFiles/hts_common.dir/src/utils.cpp.o
+/usr/bin/ranlib libhts_common.a

@@ -1,0 +1,9 @@
+/bio/HTStream/build/bin/hts_Stats
+/bio/HTStream/build/bin/hts_SuperDeduper
+/bio/HTStream/build/bin/hts_PolyATTrim
+/bio/HTStream/build/bin/hts_QWindowTrim
+/bio/HTStream/build/bin/hts_CutTrim
+/bio/HTStream/build/bin/hts_SeqScreener
+/bio/HTStream/build/bin/hts_NTrimmer
+/bio/HTStream/build/bin/hts_AdapterTrimmer
+/bio/HTStream/build/bin/hts_Overlapper
