@@ -42,6 +42,7 @@ function Toggle(tt) {
         <section id="downloads" class="clearfix">
           <a href="https://github.com/ibest/HTStream/zipball/master" id="download-zip" class="button"><span>Download .zip</span></a>
           <a href="https://github.com/ibest/HTStream/tarball/master" id="download-tar-gz" class="button"><span>Download .tar.gz</span></a>
+          <a href="https://github.com/ibest/HTStream/releases/download/v1.0.0-release/HTStream_1.0.0-release.tar.gz" id='download-tar-gz' class="button"><span>Download binary</span></a>
           <a href="https://github.com/ibest/HTStream" id="view-on-github" class="button"><span>View on GitHub</span></a>
         </section>
 
@@ -88,10 +89,14 @@ function Toggle(tt) {
 
         <div id="Installation">
         <h3>Installation HTStream</h3>
-        <h4>1) The simplest way (coming soon with many thanks to the Bioconda team):</h4>
+        Options for installing HTStream include the following:
+        <h4>1) Download and unpack the binary:</h4>
+        <pre><code>wget https://github.com/ibest/HTStream/releases/download/v1.0.0-release/HTStream_1.0.0-release.tar.gz
+tar xvf HTStream_1.0.0-release.tar.gz</code></pre>
+        <h4>2) Bioconda users (coming soon with many thanks to the Bioconda team):</h4>
         <pre><code>conda install -c bioconda htstream</code></pre>
 
-        <h4>2) Building on Linux</h4>
+        <h4>3) Building on Linux</h4>
         Linux Prerequisites:
        <ul>
          <li>Cmake 3.2 or greater.</li>
@@ -120,7 +125,7 @@ cd boost_1_60_0
 BOOST_INCLUDE=$(pwd)
 BOOST_INCLUDE_LIB=$(pwd)/stage/lib</code></pre>
 
-        <h4>3) On Mac OSX</h4>
+        <h4>4) Building on Mac OSX</h4>
         First, <a href="http://brew.sh/">Install Homebrew</a>
 <pre><code>brew upgrade
 brew install cmake
@@ -307,7 +312,7 @@ Output: --------------->   <---------------</code></pre>
 
   <br><h4>Example 3 </h4>
   For most projects, the number of samples is simply too large to write HTS pipelines by hand. Additionally copy/paste errors can easily ruin your day (or a whole analysis). Instead, a better practice
-    is to script the analysis. The following is an example Python script which will generate HTS cleaning pipelines for a set of PE read files. In its current form it creates a bash script, but could
+    is to script the analysis. The following is an example Python script which will generate HTS cleaning pipelines for a set of PE read files. In its current form, it creates a bash script, but this could
     easily be modified to enable submission to a cluster. The script assumes that gzipped reads are stored in a 00-RawData folder, and that the file names end in "_L001_R1_001.fastq.gz". These assumptions
     will mostly need to be adjusted on a case-by-case basis.
   
@@ -331,9 +336,8 @@ Output: --------------->   <---------------</code></pre>
 
 </code></pre>
 
-  <br><h4>Example 4 </h4>
-  Please see the following link for an excellent HTStream tutorial from the <a href="http://bioinformatics.ucdavis.edu/">UC Davis Bioinformatics Core</a> where HTStream was used to pre-process RNA-Seq reads.<br>
-  <a href="https://ucdavis-bioinformatics-training.github.io/2018-June-RNA-Seq-Workshop/tuesday/preproc.html">UC Davis Bioinformatics Core 2018 RNA-Seq Workshop</a>
+  <br><h4>Additional Examples And Tutorials </h4>
+  An excellent HTStream tutorial for processing RNA-seq data <a href="https://ucdavis-bioinformatics-training.github.io/2018-June-RNA-Seq-Workshop/tuesday/preproc.html">UC Davis Bioinformatics Core 2018 RNA-Seq Workshop</a>
 
 
   <br><h7><a href="#TOC">Table of contents</a></h7>
