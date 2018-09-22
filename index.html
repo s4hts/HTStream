@@ -299,8 +299,10 @@ Output: --------------->   <---------------</code></pre>
       | hts_SeqScreener -k 12 -S -A -L ./01-cleaned/Sample1_stats.log -f -p ./01-cleaned/Sample1 </code></pre>
   
   <br><h4>Example 2 </h4>
-      A more complex example which 1) deduplicates reads, 2) screens them for PhiX, 3)trims poly-A/T bases, 4) screens resulting reads against a collection of adapter sequences, and 5) collects detailed statistics
-      before writing the reads out. Note that in this example, two statistics files will be created. One will contain program-specific statistics, while the second will contain 
+      A more complex example which 1) deduplicates reads, 2) screens them for PhiX, 3) trims poly-A/T bases, 4) screens resulting reads against a collection
+      of adapter sequences, and 5) collects detailed statistics
+      before writing the reads out. Note that in this example, two statistics files will be created. One will contain program-specific statistics, while
+      the second will contain statistics about the cleaned set of reads.
       <pre>
         <code>hts_SuperDeduper -L ./01-Cleaned/Sample1_stats.log -1 ./00-RawData/Sample1_L001_R1_001.fastq.gz -2 ./00-RawData/Sample1_L001_R2_001.fastq.gz -O \
     | hts_SeqScreener -S -O -A -L ./01-Cleaned/Sample1_stats.log \
