@@ -21,8 +21,8 @@ TEST_F(PolyATTail, BasicTrim) {
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        trim_left(per->non_const_read_one(), min_trim, max_mismatch);
-        trim_right(per->non_const_read_one(), min_trim, max_mismatch);
+        trim_left(per->non_const_read_one(), 'T', min_trim, max_mismatch);
+        trim_right(per->non_const_read_one(), 'T', min_trim, max_mismatch);
         ASSERT_EQ("GGAAAAAAAAAG", (per->non_const_read_one()).get_sub_seq());
     }
 };
@@ -36,8 +36,8 @@ TEST_F(PolyATTail, AllTrim) {
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        trim_left(per->non_const_read_two(), min_trim, max_mismatch);
-        trim_right(per->non_const_read_two(), min_trim, max_mismatch);
+        trim_left(per->non_const_read_two(), 'A', min_trim, max_mismatch);
+        trim_right(per->non_const_read_two(), 'A', min_trim, max_mismatch);
         ASSERT_EQ("", (per->non_const_read_two()).get_sub_seq());
     }
 };
@@ -54,10 +54,10 @@ TEST_F(PolyATTail, Stranded) {
         while(ifp.has_next()) {
             auto i = ifp.next();
             PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-            trim_right(per->non_const_read_one(), min_trim, max_mismatch);
-            trim_left(per->non_const_read_one(), min_trim, max_mismatch);
-            trim_right(per->non_const_read_two(), min_trim, max_mismatch);
-            trim_left(per->non_const_read_two(), min_trim, max_mismatch);
+            trim_right(per->non_const_read_one(), 'A', min_trim, max_mismatch);
+            trim_left(per->non_const_read_one(), 'A', min_trim, max_mismatch);
+            trim_right(per->non_const_read_two(), 'T',  min_trim, max_mismatch);
+            trim_left(per->non_const_read_two(),'T', min_trim, max_mismatch);
             per->checkDiscarded(min_length);
             //per->checkDiscarded(min_length);
             //stranded (R2 will be RCed)
@@ -66,5 +66,3 @@ TEST_F(PolyATTail, Stranded) {
     }
     ASSERT_EQ("Read1\tCTTTTTTTTTCC\t############\n", out1->str());
 };
-
-
