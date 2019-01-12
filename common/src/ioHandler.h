@@ -246,9 +246,9 @@ protected:
      *
      * id = id
      * bitwas flag
-     * SE - 68
-     * PE R1 - 69
-     * PE R2 - 133
+     * SE - 4
+     * PE R1 - 77
+     * PE R2 - 141
      * RNAME - *
      * POS - 0
      * MAPQ - 255
@@ -258,9 +258,9 @@ protected:
      * TLEN - SEQ.length
      * SEQ - seq
      * QUAL - qual */
-    const size_t se_bitwise = 68;
-    const size_t pe1_bitwise = 69;
-    const size_t pe2_bitwise = 133;
+    const size_t se_bitwise = 4;
+    const size_t pe1_bitwise = 77;
+    const size_t pe2_bitwise = 141;
 
     void samout(const Read &read, size_t bitwiseflag) {
         *output << read.get_id() << '\t'
