@@ -30,19 +30,19 @@ seqLookup readOneMap(std::string seq1, const size_t kmer, const size_t kmerOffse
 
 void outputWriters(std::shared_ptr<OutputWriter> &pe, std::shared_ptr<OutputWriter> &se, bool fastq_out, bool tab_out, bool interleaved_out, bool unmapped_out,  bool force, bool gzip_out, bool std_out, std::string &prefix) {
 
-    std::vector<std::string> default_outfiles = {"_R1", "_R2", "_SE"};
+    std::vector<std::string> default_outfiles = {"_R1", "_R2", "_SE", "_INTERLEAVED"};
 
     std::shared_ptr<HtsOfstream> out_1 = nullptr;
     std::shared_ptr<HtsOfstream> out_2 = nullptr;
     std::shared_ptr<HtsOfstream> out_3 = nullptr;
-    
+
     if (interleaved_out)  {
         for (auto& outfile: default_outfiles) {
-            outfile = prefix + "INTER" + ".fastq";
+            outfile = prefix + outfile + ".fastq";
         }
 
-        out_1= std::make_shared<HtsOfstream>(default_outfiles[0], force, gzip_out, false);
-        out_3= std::make_shared<HtsOfstream>(default_outfiles[1], force, gzip_out, false);
+        out_1= std::make_shared<HtsOfstream>(default_outfiles[3], force, gzip_out, false);
+        out_3= std::make_shared<HtsOfstream>(default_outfiles[2], force, gzip_out, false);
 
         pe= std::make_shared<PairedEndReadOutInter>(out_1);
         se= std::make_shared<SingleEndReadOutFastq>(out_3);
@@ -54,10 +54,9 @@ void outputWriters(std::shared_ptr<OutputWriter> &pe, std::shared_ptr<OutputWrit
 
         pe= std::make_shared<ReadBaseOutUnmapped>(out_1);
         se= std::make_shared<ReadBaseOutUnmapped>(out_1);
-
     } else if (tab_out || std_out) {
         for (auto& outfile: default_outfiles) {
-            outfile = prefix + "tab" + ".tastq";
+            outfile = prefix + ".tab6";
         }
         out_1= std::make_shared<HtsOfstream>(default_outfiles[0], force, gzip_out, std_out);
 
@@ -67,7 +66,6 @@ void outputWriters(std::shared_ptr<OutputWriter> &pe, std::shared_ptr<OutputWrit
         for (auto& outfile: default_outfiles) {
             outfile = prefix + outfile + ".fastq";
         }
-
         out_1= std::make_shared<HtsOfstream>(default_outfiles[0], force, gzip_out, false);
         out_2= std::make_shared<HtsOfstream>(default_outfiles[1], force, gzip_out, false);
         out_3= std::make_shared<HtsOfstream>(default_outfiles[2], force, gzip_out, false);
