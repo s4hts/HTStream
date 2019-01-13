@@ -32,7 +32,7 @@ namespace bi = boost::iostreams;
 int main(int argc, char** argv)
 {
     const std::string program_name = "hts_Stats";
-    std::string app_description = 
+    std::string app_description =
                        "The hts_Stats app produce basic statistics about the reads in a dataset.\n";
     app_description += "  Including the basepair composition and number of bases Q30.";
 
@@ -45,10 +45,10 @@ int main(int argc, char** argv)
             // version|v ; help|h ; notes|N ; stats-file|L ; append-stats-file|A
         po::options_description input = setInputOptions();
             // read1-input|1 ; read2-input|2 ; singleend-input|U
-            // tab-input|T ; interleaved-input|I ; from-stdin|S
+            // tab-input|T ; interleaved-input|I
         po::options_description output = setOutputOptions(program_name);
             // force|F ; prefix|p ; gzip-output,g ; fastq-output|f
-            // tab-output|t ; interleaved-output|i ; unmapped-output|u ; to-stdout,O
+            // tab-output|t ; interleaved-output|i ; unmapped-output|u
 
         po::options_description cmdline_options;
         cmdline_options.add(standard).add(input).add(output);
@@ -63,18 +63,18 @@ int main(int argc, char** argv)
             /** --help option
              */
             version_or_help(program_name, app_description, cmdline_options, vm);
-            
+
             po::notify(vm); // throws on error, so do after help in case
 
             std::string statsFile(vm["stats-file"].as<std::string>());
             std::string prefix(vm["prefix"].as<std::string>());
-            
+
             std::shared_ptr<OutputWriter> pe = nullptr;
             std::shared_ptr<OutputWriter> se = nullptr;
-            
+
             StatsCounters counters(statsFile, vm["append-stats-file"].as<bool>() , program_name, vm["notes"].as<std::string>());
 
-            outputWriters(pe, se, vm["fastq-output"].as<bool>(), vm["tab-output"].as<bool>(), vm["interleaved-output"].as<bool>(), vm["unmapped-output"].as<bool>(), vm["force"].as<bool>(), vm["gzip-output"].as<bool>(), vm["to-stdout"].as<bool>(), prefix );           
+            outputWriters(pe, se, vm["fastq-output"].as<bool>(), vm["tab-output"].as<bool>(), vm["interleaved-output"].as<bool>(), vm["unmapped-output"].as<bool>(), vm["force"].as<bool>(), vm["gzip-output"].as<bool>(), prefix );
 
             if(vm.count("read1-input")) {
                 if (!vm.count("read2-input")) {
@@ -82,7 +82,7 @@ int main(int argc, char** argv)
                 }
                 auto read1_files = vm["read1-input"].as<std::vector<std::string> >();
                 auto read2_files = vm["read2-input"].as<std::vector<std::string> >();
-                
+
                 if (read1_files.size() != read2_files.size()) {
                     throw std::runtime_error("must have same number of input files for read1 and read2");
                 }
@@ -90,7 +90,7 @@ int main(int argc, char** argv)
                 for(size_t i = 0; i < read1_files.size(); ++i) {
                     bi::stream<bi::file_descriptor_source> is1{check_open_r(read1_files[i]), bi::close_handle};
                     bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
-                   
+
                     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
                     helper_stats(ifp, pe, se, counters);
                 }
@@ -104,7 +104,7 @@ int main(int argc, char** argv)
                     helper_stats(ifs, pe, se,counters);
                 }
             }
-            
+
             if(vm.count("tab-input")) {
                 auto read_files = vm["tab-input"].as<std::vector<std::string> > ();
                 for (auto file : read_files) {
@@ -113,7 +113,7 @@ int main(int argc, char** argv)
                     helper_stats(ift, pe, se,counters);
                 }
             }
-            
+
             if (vm.count("interleaved-input")) {
                 auto read_files = vm["interleaved-input"].as<std::vector<std::string > >();
                 for (auto file : read_files) {
@@ -122,12 +122,12 @@ int main(int argc, char** argv)
                     helper_stats(ifp, pe, se,counters);
                 }
             }
-           
-            if (vm.count("from-stdin")) {
+
+            if (!isatty(fileno(stdin))) {
                 bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
                 helper_stats(ift, pe, se,counters);
-            }  
+            }
             counters.write_out();
         }
         catch(po::error& e)
