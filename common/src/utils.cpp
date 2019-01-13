@@ -160,6 +160,7 @@ void version_or_help(std::string program_name, std::string app_description, po::
     std::string prolog="HTStream <https://github.com/ibest/HTStream> application: " + program_name;
     std::string epilog="Please report any issues, request for enhancement, or comments to <https://github.com/ibest/HTStream/issues>";
     int SUCCESS = 0;
+    int FAILURE = 1;
     if (vm.count("version")) {
         std::cout << VERSION << std::endl;
         exit(SUCCESS); //success
@@ -170,14 +171,15 @@ void version_or_help(std::string program_name, std::string app_description, po::
         std::cout << desc << std::endl;
         std::cout << std::endl << epilog << std::endl;
         exit(SUCCESS); //success
-    } /* else if ( !vm.count("read1-input") & !vm.count("singleend-input") & !vm.count("tab-input") & !vm.count("interleaved-input") & !vm.count("from-stdin") ){
+    } else if ( !vm.count("read1-input") & !vm.count("singleend-input") & !vm.count("tab-input") & !vm.count("interleaved-input") & isatty(fileno(stdin)) ){
+        std::cout << "ERROR: Input file absent" << std::endl << std::endl;
         std::cout << prolog << std::endl;
         std::cout << "Version: " << VERSION << std::endl;
         std::cout << app_description << std::endl;
         std::cout << desc << std::endl;
         std::cout << std::endl << epilog << std::endl;
-        exit(SUCCESS); //success
-    } */
+        exit(FAILURE); //success
+    }
 }
 
 char rc (const char &bp) {
