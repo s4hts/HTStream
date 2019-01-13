@@ -36,7 +36,17 @@ void outputWriters(std::shared_ptr<OutputWriter> &pe, std::shared_ptr<OutputWrit
     std::shared_ptr<HtsOfstream> out_2 = nullptr;
     std::shared_ptr<HtsOfstream> out_3 = nullptr;
 
-    if (interleaved_out) {
+    if (fastq_out) {
+      for (auto& outfile: default_outfiles) {
+          outfile = prefix + outfile + ".fastq";
+      }
+      out_1= std::make_shared<HtsOfstream>(default_outfiles[0], force, gzip_out, false);
+      out_2= std::make_shared<HtsOfstream>(default_outfiles[1], force, gzip_out, false);
+      out_3= std::make_shared<HtsOfstream>(default_outfiles[2], force, gzip_out, false);
+
+      pe= std::make_shared<PairedEndReadOutFastq>(out_1, out_2);
+      se= std::make_shared<SingleEndReadOutFastq>(out_3);
+    } else if (interleaved_out) {
         for (auto& outfile: default_outfiles) {
             outfile = prefix + outfile + ".fastq";
         }
@@ -46,14 +56,6 @@ void outputWriters(std::shared_ptr<OutputWriter> &pe, std::shared_ptr<OutputWrit
 
         pe= std::make_shared<PairedEndReadOutInter>(out_1);
         se= std::make_shared<SingleEndReadOutFastq>(out_3);
-    } else if (unmapped_out) {
-        for (auto& outfile: default_outfiles) {
-            outfile = prefix + ".sam";
-        }
-        out_1= std::make_shared<HtsOfstream>(default_outfiles[0], force, gzip_out, false);
-
-        pe= std::make_shared<ReadBaseOutUnmapped>(out_1);
-        se= std::make_shared<ReadBaseOutUnmapped>(out_1);
     } else if (tab_out) {
         for (auto& outfile: default_outfiles) {
             outfile = prefix + ".tab6";
@@ -62,17 +64,15 @@ void outputWriters(std::shared_ptr<OutputWriter> &pe, std::shared_ptr<OutputWrit
 
         pe= std::make_shared<ReadBaseOutTab>(out_1);
         se= std::make_shared<ReadBaseOutTab>(out_1);
-    } else if (fastq_out) {
-        for (auto& outfile: default_outfiles) {
-            outfile = prefix + outfile + ".fastq";
-        }
-        out_1= std::make_shared<HtsOfstream>(default_outfiles[0], force, gzip_out, false);
-        out_2= std::make_shared<HtsOfstream>(default_outfiles[1], force, gzip_out, false);
-        out_3= std::make_shared<HtsOfstream>(default_outfiles[2], force, gzip_out, false);
+    } else if (unmapped_out) {
+          for (auto& outfile: default_outfiles) {
+              outfile = prefix + ".sam";
+          }
+          out_1= std::make_shared<HtsOfstream>(default_outfiles[0], force, gzip_out, false);
 
-        pe= std::make_shared<PairedEndReadOutFastq>(out_1, out_2);
-        se= std::make_shared<SingleEndReadOutFastq>(out_3);
-    } else {
+          pe= std::make_shared<ReadBaseOutUnmapped>(out_1);
+          se= std::make_shared<ReadBaseOutUnmapped>(out_1);
+    } else { // output to stdout
         for (auto& outfile: default_outfiles) {
             outfile = prefix + ".tab6";
         }
@@ -178,7 +178,7 @@ void version_or_help(std::string program_name, std::string app_description, po::
         std::cout << app_description << std::endl;
         std::cout << desc << std::endl;
         std::cout << std::endl << epilog << std::endl;
-        exit(FAILURE); //success
+        exit(FAILURE); //failure
     }
 }
 
