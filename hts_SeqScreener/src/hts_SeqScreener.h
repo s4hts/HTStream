@@ -98,17 +98,6 @@ void setBitsBools(boost::dynamic_bitset<> &bs, size_t loc, bool set1, bool set2)
     bs[loc + 1] = set2;
 }
 
-Read fasta_set_to_one_read(InputReader<SingleEndRead, FastaReadImpl> &faReader     ) {
-    std::string s;
-
-    while(faReader.has_next()) {
-        auto r = faReader.next();
-        s += (r->get_read().get_seq());
-    }
-    return Read(s, "", "All_Header");
-}
-
-
 std::pair <bool, bool> setBitsChar(char c) {
 
     switch (std::toupper(c)) {
@@ -284,7 +273,7 @@ void helper_discard(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> 
     /*These the lookups are compared, the larger Lookup is taken and searched for,
      * if there is a "soft hit", initiate a search of the vector with the cooresponding Rest*/
 
-void setLookup( kmerSet &lookup, Read &rb, size_t kmerSize) {
+void setLookup_read( kmerSet &lookup, Read &rb, size_t kmerSize) {
     /*This function is only called once, these values calculation are minimal cost so they are not in the function args*/
     /*Total size of kmer bits*/
     size_t bitKmer = kmerSize * 2;
@@ -319,6 +308,17 @@ void setLookup( kmerSet &lookup, Read &rb, size_t kmerSize) {
          }
     }
 
+}
+
+uint64_t setLookup_fasta( kmerSet &lookup, InputReader<SingleEndRead, FastaReadImpl> &faReader, size_t kmerSize ) {
+    uint64_t slen = 0;
+    while(faReader.has_next()) {
+        auto r = faReader.next();
+        Read readSeq = Read(r->get_read().get_seq(), "", "");
+        slen += readSeq.getLength();
+        setLookup_read(lookup, readSeq, kmerSize);
+    }
+    return slen;
 }
 
 #endif

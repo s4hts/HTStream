@@ -91,25 +91,27 @@ int main(int argc, char** argv)
 
             //sets read information
             //Phix isn't set to default since it makes help a PITA to read
-            Read readSeq;
+            //sets kmer lookup arrays
+            kmerSet lookup;
+            uint64_t screen_len;
             std::string lookup_file = vm["seq"].as<std::string>();
             if (vm["seq"].as<std::string>() != "") {
                 bi::stream <bi::file_descriptor_source> fa{check_open_r(lookup_file), bi::close_handle};
                 InputReader<SingleEndRead, FastaReadImpl> faReader(fa);
-                readSeq = fasta_set_to_one_read(faReader);
+                screen_len = setLookup_fasta(lookup, faReader, vm["kmer"].as<size_t>());
             } else {
-                readSeq = Read(phixSeq_True, "", "");
+                Read readSeq;
                 lookup_file = "PhiX";
+                readSeq = Read(phixSeq_True, "", "");
+                screen_len = readSeq.getLength();
+                setLookup_read(lookup, readSeq, vm["kmer"].as<size_t>());
             }
-            //sets kmer lookup arrays
-            kmerSet lookup;
-            setLookup(lookup, readSeq, vm["kmer"].as<size_t>());
             if (lookup.size() == 0){
                 std::cerr << "\n\tException lookup table contains no kmers" << std::endl;
                 return ERROR_NOLOOKUP_EXCEPTION;
             }
 
-            counters.set_screeninfo(lookup_file, readSeq.getLength(), lookup.size());
+            counters.set_screeninfo(lookup_file, screen_len, lookup.size());
 
             if(vm.count("read1-input")) {
                 if (!vm.count("read2-input")) {
