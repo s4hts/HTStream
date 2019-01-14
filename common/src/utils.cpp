@@ -85,36 +85,36 @@ void outputWriters(std::shared_ptr<OutputWriter> &pe, std::shared_ptr<OutputWrit
 
 po::options_description setInputOptions(){
 
-    po::options_description input("Input Options");
+    po::options_description input("Input Options [default: tab6 format on stdin]");
     input.add_options()
             //input options
             ("read1-input,1", po::value< std::vector<std::string> >()->multitoken(),
-                                           "Read 1 paired end fastq input <space seperated for multiple files>")
+                                           "Read 1 paired end fastq input <space separated for multiple files>")
             ("read2-input,2", po::value< std::vector<std::string> >()->multitoken(),
-                                           "Read 2 paired end fastq input <space seperated for multiple files>")
+                                           "Read 2 paired end fastq input <space separated for multiple files>")
             ("singleend-input,U", po::value< std::vector<std::string> >()->multitoken(),
-                                           "Single end read fastq input <space seperated for multiple files>")
+                                           "Single end read fastq input <space separated for multiple files>")
             ("tab-input,T", po::value< std::vector<std::string> >()->multitoken(),
-                                           "Tab input <space seperated for multiple files>")
+                                           "Tab-delimited (tab6) input <space separated for multiple files>")
             ("interleaved-input,I", po::value< std::vector<std::string> >()->multitoken(),
-                                           "Interleaved fastq input <space seperated for multiple files>")
-            ("from-stdin,S", "STDIN input <MUST BE TAB DELIMITED INPUT>, DEFAULT AND DEPRECATED PARAMETER");
+                                           "Interleaved fastq input <space separated for multiple files>")
+            ("from-stdin,S", "DEPRECATED PARAMETER");
     return input;
 }
 
 po::options_description setOutputOptions(std::string program_name){
-    po::options_description output("Output Options");
+    po::options_description output("Output Options [default: tab6 format to stdout]");
     output.add_options()
             //output options
             ("force,F", po::bool_switch()->default_value(false),         "Forces overwrite of files")
             ("prefix,p", po::value<std::string>()->default_value(program_name),
                                            "Prefix for output files")
             ("gzip-output,g", po::bool_switch()->default_value(false),  "Output gzipped files")
-            ("fastq-output,f", po::bool_switch()->default_value(false), "Output to Fastq format <PE AND/OR SE files>")
-            ("tab-output,t", po::bool_switch()->default_value(false),   "Output to tab-delimited file format")
-            ("interleaved-output,i", po::bool_switch()->default_value(false),     "Output to interleaved fastq file <PE ONLY>")
-            ("unmapped-output,u", po::bool_switch()->default_value(false),   "Output to unmapped sam file format")
-            ("to-stdout,O", po::bool_switch()->default_value(false),    "Output to STDOUT in tab-delimited file format, DEFAULT AND DEPRECATED PARAMETER");
+            ("fastq-output,f", po::bool_switch()->default_value(false), "Output to Fastq files <PE AND/OR SE files>")
+            ("tab-output,t", po::bool_switch()->default_value(false),   "Output to tab-delimited (tab6) file")
+            ("interleaved-output,i", po::bool_switch()->default_value(false),     "Output to interleaved fastq files <INTERLEAVED PE AND/OR SE files>")
+            ("unmapped-output,u", po::bool_switch()->default_value(false),   "Output to unmapped sam file")
+            ("to-stdout,O", po::bool_switch()->default_value(false),    "DEPRECATED PARAMETER");
     return output;
 }
 
@@ -171,6 +171,16 @@ void version_or_help(std::string program_name, std::string app_description, po::
         std::cout << desc << std::endl;
         std::cout << std::endl << epilog << std::endl;
         exit(SUCCESS); //success
+    } else if ( vm.count("from-stdin") | vm.count("to-stdout") ){
+        std::cout << "ERROR: parameters -S --from-stdin and -O --to-stdout have been DEPRECATED" << std::endl
+                  << "  New defaults are to accept tab5/tab6 format on stdin and to output tab6 format on stdout" <<  std::endl
+                  << "  Making the parameters unnecesseary and should be removed from application calls and pipelines." <<  std::endl <<  std::endl;
+        std::cout << prolog << std::endl;
+        std::cout << "Version: " << VERSION << std::endl;
+        std::cout << app_description << std::endl;
+        std::cout << desc << std::endl;
+        std::cout << std::endl << epilog << std::endl;
+        exit(FAILURE); //failure
     } else if ( !vm.count("read1-input") & !vm.count("singleend-input") & !vm.count("tab-input") & !vm.count("interleaved-input") & isatty(fileno(stdin)) ){
         std::cout << "ERROR: Input file absent" << std::endl << std::endl;
         std::cout << prolog << std::endl;
