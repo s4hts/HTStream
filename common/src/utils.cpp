@@ -114,7 +114,7 @@ po::options_description setOutputOptions(std::string program_name){
             ("tab-output,t", po::bool_switch()->default_value(false),   "Output to tab-delimited (tab6) file")
             ("interleaved-output,i", po::bool_switch()->default_value(false),     "Output to interleaved fastq files <INTERLEAVED PE AND/OR SE files>")
             ("unmapped-output,u", po::bool_switch()->default_value(false),   "Output to unmapped sam file")
-            ("to-stdout,O", po::bool_switch()->default_value(false),    "DEPRECATED PARAMETER");
+            ("to-stdout,O", "DEPRECATED PARAMETER");
     return output;
 }
 
