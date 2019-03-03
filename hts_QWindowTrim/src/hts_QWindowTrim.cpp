@@ -49,8 +49,8 @@ int main(int argc, char** argv)
             // read1-input|1 ; read2-input|2 ; singleend-input|U
             // tab-input|T ; interleaved-input|I
         po::options_description output = setOutputOptions(program_name);
-            // force|F ; prefix|p ; gzip-output,g ; fastq-output|f
-            // tab-output|t ; interleaved-output|i ; unmapped-output|u
+          // force|F ; uncompressed|u ; fastq-output|f
+          // tab-output|t ; interleaved-output|i ; unmapped-output|z
 
         po::options_description desc("Application Specific Options");
 
@@ -61,7 +61,7 @@ int main(int argc, char** argv)
 
         desc.add_options()
             ("window-size,w", po::value<size_t>()->default_value(10)->notifier(boost::bind(&check_range<size_t>, "window-size", _1, 1, 10000)),    "Window size in which to trim (min 1, max 10000)")
-            ("avg-qual,q", po::value<size_t>()->default_value(20)->notifier(boost::bind(&check_range<size_t>, "avg-qual", _1, 1, 10000)),    "Threshold for quality score average in the window (min 1, max 10000)")
+            ("avg-qual-score,q", po::value<size_t>()->default_value(20)->notifier(boost::bind(&check_range<size_t>, "avg-qual", _1, 1, 10000)),    "Threshold for quality score average in the window (min 1, max 10000)")
             ("qual-offset,o", po::value<size_t>()->default_value(33)->notifier(boost::bind(&check_range<size_t>, "qual-offset", _1, 1, 10000)), "Quality offset for ascii q-score (default is 33) (min 1, max 10000)");
 
         po::options_description cmdline_options;
@@ -71,25 +71,22 @@ int main(int argc, char** argv)
 
         try
         {
-            po::store(po::parse_command_line(argc, argv, cmdline_options),
-                      vm); // can throw
+            po::store(po::parse_command_line(argc, argv, cmdline_options), vm); // can throw
 
+            /** --help option
+            */
             version_or_help(program_name, app_description, cmdline_options, vm);
-
             po::notify(vm); // throws on error, so do after help in case
-
-
-            size_t qual_threshold = vm["avg-qual"].as<size_t>() + vm["qual-offset"].as<size_t>() ;
-
-            std::string statsFile(vm["stats-file"].as<std::string>());
-            std::string prefix(vm["prefix"].as<std::string>());
 
             std::shared_ptr<OutputWriter> pe = nullptr;
             std::shared_ptr<OutputWriter> se = nullptr;
+            outputWriters(pe, se, vm);
 
+            std::string statsFile(vm["stats-file"].as<std::string>());
             TrimmingCounters counters(statsFile, vm["append-stats-file"].as<bool>(), program_name, vm["notes"].as<std::string>());
 
-            outputWriters(pe, se, vm["fastq-output"].as<bool>(), vm["tab-output"].as<bool>(), vm["interleaved-output"].as<bool>(), vm["unmapped-output"].as<bool>(), vm["force"].as<bool>(), vm["gzip-output"].as<bool>(), prefix );
+            size_t qual_threshold = vm["avg-qual"].as<size_t>() + vm["qual-offset"].as<size_t>() ;
+
             // there are any problems
             if(vm.count("read1-input")) {
                 if (!vm.count("read2-input")) {

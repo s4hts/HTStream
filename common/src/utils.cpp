@@ -21,62 +21,63 @@ seqLookup readOneMap(std::string seq1, const size_t kmer, const size_t kmerOffse
 
     seqLookup baseReadMap;
     std::string::iterator it;
-    for ( it = seq1.begin() ; it <= seq1.end() - ( static_cast<long> ( kmer ) ) ; it += static_cast<long> ( kmerOffset )   ) {
+    for ( it = seq1.begin() ; it <= seq1.end() - ( static_cast<long> ( kmer ) ) ; it += static_cast<long> ( kmerOffset ) ) {
         baseReadMap.insert(std::make_pair( std::string ( it, it+ static_cast<long> ( kmer )  ) , it - seq1.begin() ));
     }
 
     return baseReadMap;
 }
 
-void outputWriters(std::shared_ptr<OutputWriter> &pe, std::shared_ptr<OutputWriter> &se, bool fastq_out, bool tab_out, bool interleaved_out, bool unmapped_out,  bool force, bool gzip_out, std::string &prefix) {
+void outputWriters(std::shared_ptr<OutputWriter> &pe, std::shared_ptr<OutputWriter> &se, po::variables_map vm) {
 
-    std::vector<std::string> default_outfiles = {"_R1", "_R2", "_SE", "_INTERLEAVED"};
+    std::vector<std::string> default_outfiles = {"", "_R1", "_R2", "_SE", "_INTERLEAVED"};
 
     std::shared_ptr<HtsOfstream> out_1 = nullptr;
     std::shared_ptr<HtsOfstream> out_2 = nullptr;
     std::shared_ptr<HtsOfstream> out_3 = nullptr;
 
-    if (fastq_out) {
+    if (vm.count("fastq-output")) {
+      std::string prefix = vm["fastq-output"].as<std::string>();
       for (auto& outfile: default_outfiles) {
           outfile = prefix + outfile + ".fastq";
       }
-      out_1= std::make_shared<HtsOfstream>(default_outfiles[0], force, gzip_out, false);
-      out_2= std::make_shared<HtsOfstream>(default_outfiles[1], force, gzip_out, false);
-      out_3= std::make_shared<HtsOfstream>(default_outfiles[2], force, gzip_out, false);
+      out_1= std::make_shared<HtsOfstream>(default_outfiles[1], vm["force"].as<bool>(), !vm["uncompressed"].as<bool>(), false);
+      out_2= std::make_shared<HtsOfstream>(default_outfiles[2], vm["force"].as<bool>(), !vm["uncompressed"].as<bool>(), false);
+      out_3= std::make_shared<HtsOfstream>(default_outfiles[3], vm["force"].as<bool>(), !vm["uncompressed"].as<bool>(), false);
 
       pe= std::make_shared<PairedEndReadOutFastq>(out_1, out_2);
       se= std::make_shared<SingleEndReadOutFastq>(out_3);
-    } else if (interleaved_out) {
+    } else if (vm.count("interleaved-output")) {
+        std::string prefix = vm["interleaved-output"].as<std::string>();
         for (auto& outfile: default_outfiles) {
             outfile = prefix + outfile + ".fastq";
         }
 
-        out_1= std::make_shared<HtsOfstream>(default_outfiles[3], force, gzip_out, false);
-        out_3= std::make_shared<HtsOfstream>(default_outfiles[2], force, gzip_out, false);
+        out_1= std::make_shared<HtsOfstream>(default_outfiles[4], vm["force"].as<bool>(), !vm["uncompressed"].as<bool>(), false);
+        out_3= std::make_shared<HtsOfstream>(default_outfiles[3], vm["force"].as<bool>(), !vm["uncompressed"].as<bool>(), false);
 
         pe= std::make_shared<PairedEndReadOutInter>(out_1);
         se= std::make_shared<SingleEndReadOutFastq>(out_3);
-    } else if (tab_out) {
+    } else if (vm.count("tab-output")) {
+        std::string prefix = vm["tab-output"].as<std::string>();
         for (auto& outfile: default_outfiles) {
             outfile = prefix + ".tab6";
         }
-        out_1= std::make_shared<HtsOfstream>(default_outfiles[0], force, gzip_out, false);
+        out_1= std::make_shared<HtsOfstream>(default_outfiles[0], vm["force"].as<bool>(), !vm["uncompressed"].as<bool>(), false);
 
         pe= std::make_shared<ReadBaseOutTab>(out_1);
         se= std::make_shared<ReadBaseOutTab>(out_1);
-    } else if (unmapped_out) {
-          for (auto& outfile: default_outfiles) {
-              outfile = prefix + ".sam";
-          }
-          out_1= std::make_shared<HtsOfstream>(default_outfiles[0], force, gzip_out, false);
-
-          pe= std::make_shared<ReadBaseOutUnmapped>(out_1);
-          se= std::make_shared<ReadBaseOutUnmapped>(out_1);
-    } else { // output to stdout
+    } else if (vm.count("unmapped-output")) {
+        std::string prefix = vm["unmapped-output"].as<std::string>();
         for (auto& outfile: default_outfiles) {
-            outfile = prefix + ".tab6";
+            outfile = prefix + ".sam";
         }
-        out_1= std::make_shared<HtsOfstream>(default_outfiles[0], force, gzip_out, true);
+        out_1= std::make_shared<HtsOfstream>(default_outfiles[0], vm["force"].as<bool>(), !vm["uncompressed"].as<bool>(), false);
+
+        pe= std::make_shared<ReadBaseOutUnmapped>(out_1);
+        se= std::make_shared<ReadBaseOutUnmapped>(out_1);
+    } else { // output to stdout
+        out_1= std::make_shared<HtsOfstream>(default_outfiles[0], vm["force"].as<bool>(), !vm["uncompressed"].as<bool>(), true);
 
         pe= std::make_shared<ReadBaseOutTab>(out_1);
         se= std::make_shared<ReadBaseOutTab>(out_1);
@@ -107,13 +108,13 @@ po::options_description setOutputOptions(std::string program_name){
     output.add_options()
             //output options
             ("force,F", po::bool_switch()->default_value(false),         "Forces overwrite of files")
-            ("prefix,p", po::value<std::string>()->default_value(program_name),
-                                           "Prefix for output files")
-            ("gzip-output,g", po::bool_switch()->default_value(false),  "Output gzipped files")
-            ("fastq-output,f", po::bool_switch()->default_value(false), "Output to Fastq files <PE AND/OR SE files>")
-            ("tab-output,t", po::bool_switch()->default_value(false),   "Output to tab-delimited (tab6) file")
-            ("interleaved-output,i", po::bool_switch()->default_value(false),     "Output to interleaved fastq files <INTERLEAVED PE AND/OR SE files>")
-            ("unmapped-output,u", po::bool_switch()->default_value(false),   "Output to unmapped sam file")
+            ("uncompressed,u", po::bool_switch()->default_value(false),  "Output uncompressed (not gzipped) files")
+            ("fastq-output,f", po::value<std::string>(), "Output to Fastq files <PE AND/OR SE files>")
+            ("interleaved-output,i", po::value<std::string>(),     "Output to interleaved fastq files <INTERLEAVED PE AND/OR SE files>")
+            ("tab-output,t", po::value<std::string>(),   "Output to tab-delimited (tab6) file")
+            ("unmapped-output,z", po::value<std::string>(),   "Output to unmapped sam file")
+            ("prefix,p", "DEPRECATED PARAMETER")
+            ("gzip-output,g", "DEPRECATED PARAMETER")
             ("to-stdout,O", "DEPRECATED PARAMETER");
     return output;
 }
@@ -171,23 +172,33 @@ void version_or_help(std::string program_name, std::string app_description, po::
         std::cout << desc << std::endl;
         std::cout << std::endl << epilog << std::endl;
         exit(SUCCESS); //success
-    } else if ( vm.count("from-stdin") | vm.count("to-stdout") ){
-        std::cout << "ERROR: parameters -S --from-stdin and -O --to-stdout have been DEPRECATED" << std::endl
+    } else if ( vm.count("from-stdin") | vm.count("to-stdout") | vm.count("gzip-output") | vm.count("prefix") ){
+        std::cerr << "ERROR: parameters -S --from-stdin, -O --to-stdout, -g --gzip-output, AND -p --prefix have been DEPRECATED" << std::endl
                   << "  New defaults are to accept tab5/tab6 format on stdin and to output tab6 format on stdout" <<  std::endl
-                  << "  Making the parameters unnecesseary and should be removed from application calls and pipelines." <<  std::endl <<  std::endl;
-        std::cout << prolog << std::endl;
-        std::cout << "Version: " << VERSION << std::endl;
-        std::cout << app_description << std::endl;
-        std::cout << desc << std::endl;
-        std::cout << std::endl << epilog << std::endl;
+                  << "  Making the parameters unnecesseary and should be removed from application calls and pipelines." <<  std::endl
+                  << "  prefix is now specified as part of the output file choice" << std::endl
+                  << "  gzipped output is now default, use -u, --uncompressed to not gzip output." << std::endl << std::endl;
+        std::cerr << prolog << std::endl;
+        std::cerr << "Version: " << VERSION << std::endl;
+        std::cerr << app_description << std::endl;
+        std::cerr << desc << std::endl;
+        std::cerr << std::endl << epilog << std::endl;
+        exit(FAILURE); //failure
+    } else if ( (vm.count("fastq-output") + vm.count("tab-output") + vm.count("interleaved-output") + vm.count("unmapped-output")) > 1 ){
+        std::cerr << "ERROR: More than 1 output file format option provided" << std::endl << std::endl;
+        std::cerr << prolog << std::endl;
+        std::cerr << "Version: " << VERSION << std::endl;
+        std::cerr << app_description << std::endl;
+        std::cerr << desc << std::endl;
+        std::cerr << std::endl << epilog << std::endl;
         exit(FAILURE); //failure
     } else if ( !vm.count("read1-input") & !vm.count("singleend-input") & !vm.count("tab-input") & !vm.count("interleaved-input") & isatty(fileno(stdin)) ){
-        std::cout << "ERROR: Input file absent" << std::endl << std::endl;
-        std::cout << prolog << std::endl;
-        std::cout << "Version: " << VERSION << std::endl;
-        std::cout << app_description << std::endl;
-        std::cout << desc << std::endl;
-        std::cout << std::endl << epilog << std::endl;
+        std::cerr << "ERROR: Input data absent" << std::endl << std::endl;
+        std::cerr << prolog << std::endl;
+        std::cerr << "Version: " << VERSION << std::endl;
+        std::cerr << app_description << std::endl;
+        std::cerr << desc << std::endl;
+        std::cerr << std::endl << epilog << std::endl;
         exit(FAILURE); //failure
     }
 }

@@ -47,8 +47,8 @@ int main(int argc, char** argv)
             // read1-input|1 ; read2-input|2 ; singleend-input|U
             // tab-input|T ; interleaved-input|I
         po::options_description output = setOutputOptions(program_name);
-            // force|F ; prefix|p ; gzip-output,g ; fastq-output|f
-            // tab-output|t ; interleaved-output|i ; unmapped-output|u
+            // force|F ; uncompressed|u ; fastq-output|f
+            // tab-output|t ; interleaved-output|i ; unmapped-output|z
 
         po::options_description desc("Application Specific Options");
 
@@ -72,19 +72,17 @@ int main(int argc, char** argv)
         {
             po::store(po::parse_command_line(argc, argv, cmdline_options), vm); // can throw
 
+            /** --help option
+             */
             version_or_help(program_name, app_description, cmdline_options, vm);
-
             po::notify(vm); // throws on error, so do after help in case
-
-            std::string statsFile(vm["stats-file"].as<std::string>());
-            std::string prefix(vm["prefix"].as<std::string>());
 
             std::shared_ptr<OutputWriter> pe = nullptr;
             std::shared_ptr<OutputWriter> se = nullptr;
+            outputWriters(pe, se, vm);
 
+            std::string statsFile(vm["stats-file"].as<std::string>());
             AdapterCounters counters(statsFile, vm["append-stats-file"].as<bool>(), program_name, vm["notes"].as<std::string>());
-
-            outputWriters(pe, se, vm["fastq-output"].as<bool>(), vm["tab-output"].as<bool>(), vm["interleaved-output"].as<bool>(), vm["unmapped-output"].as<bool>(), vm["force"].as<bool>(), vm["gzip-output"].as<bool>(), prefix );
 
             if(vm.count("read1-input")) {
                 if (!vm.count("read2-input")) {
