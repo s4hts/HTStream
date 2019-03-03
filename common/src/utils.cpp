@@ -200,6 +200,14 @@ void version_or_help(std::string program_name, std::string app_description, po::
         std::cerr << desc << std::endl;
         std::cerr << std::endl << epilog << std::endl;
         exit(FAILURE); //failure
+    } else if ( vm["append-stats-file"].as<bool>() && vm["force"].as<bool>() ){
+        std::cerr << "ERROR: cannot specify both force and append" << std::endl << std::endl;
+        std::cerr << prolog << std::endl;
+        std::cerr << "Version: " << VERSION << std::endl;
+        std::cerr << app_description << std::endl;
+        std::cerr << desc << std::endl;
+        std::cerr << std::endl << epilog << std::endl;
+        exit(FAILURE); //failure
     }
 }
 

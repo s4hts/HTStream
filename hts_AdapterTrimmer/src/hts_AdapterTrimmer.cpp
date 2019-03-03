@@ -82,7 +82,7 @@ int main(int argc, char** argv)
             outputWriters(pe, se, vm);
 
             std::string statsFile(vm["stats-file"].as<std::string>());
-            AdapterCounters counters(statsFile, vm["append-stats-file"].as<bool>(), program_name, vm["notes"].as<std::string>());
+            AdapterCounters counters(statsFile, vm["force"].as<bool>(), vm["append-stats-file"].as<bool>(), program_name, vm["notes"].as<std::string>());
 
             if(vm.count("read1-input")) {
                 if (!vm.count("read2-input")) {

@@ -23,7 +23,7 @@ public:
     uint64_t Ignored = 0;
     uint64_t Duplicate = 0;
 
-    SuperDeduperCounters(const std::string &statsFile, bool appendStats, const std::string &program_name, const std::string &notes) : Counters::Counters(statsFile, appendStats, program_name, notes) {
+    SuperDeduperCounters(const std::string &statsFile, bool force, bool appendStats, const std::string &program_name, const std::string &notes) : Counters::Counters(statsFile, force, appendStats, program_name, notes) {
         generic.push_back(std::forward_as_tuple("ignored", Ignored));
         generic.push_back(std::forward_as_tuple("duplicate", Duplicate));
     }
