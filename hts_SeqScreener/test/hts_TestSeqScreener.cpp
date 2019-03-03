@@ -10,14 +10,21 @@ class SeqScreener : public ::testing::Test {
         const size_t lookup_kmer_test = 2;
 };
 
-TEST_F(SeqScreener, all_from_fastq) {
-    const std::string faFile = ">1\nACGT\nACGT\n>2\nTTTT\n";
-    std::istringstream fa(faFile);
-    InputReader<SingleEndRead, FastaReadImpl> f(fa);
-    Read r = fasta_set_to_one_read( f );
-    std::cout << r.get_seq() << '\n';
-    ASSERT_EQ("ACGTACGTTTTT", r.get_seq());
-};
+TEST_F(SeqScreener, check_fasta) {
+  const std::string faFile = ">1\nAGCTAGCT\n>2\nCCGGAATTCC\n";
+  std::istringstream fa(faFile);
+  InputReader<SingleEndRead, FastaReadImpl> f(fa);
+
+  kmerSet lookup;
+  uint64_t screen_len;
+  size_t true_kmer = 5;
+  screen_len = setLookup_fasta(lookup, f, true_kmer);
+
+  std::cout << "Length should be 18 == " << screen_len << '\n';
+  ASSERT_EQ(18, screen_len);
+  std::cout << "Lookup size should be 6 == " << lookup.size() << '\n';
+  ASSERT_EQ(6,lookup.size());
+}
 
 TEST_F(SeqScreener, check_check_read) {
     std::string s("AAAAAAAGCT");
@@ -25,7 +32,7 @@ TEST_F(SeqScreener, check_check_read) {
     Read testRead = Read(s, "", "");
     kmerSet lookup;
     size_t true_kmer = 5;
-    setLookup(lookup, readPhix, true_kmer);
+    setLookup_read(lookup, readPhix, true_kmer);
 
     boost::dynamic_bitset<> fLu(true_kmer * 2);
     boost::dynamic_bitset<> rLu(true_kmer * 2);
@@ -43,7 +50,7 @@ TEST_F(SeqScreener, setLookupTestOrderedVec) {
     Read readPhix = Read(s, "", "");
     kmerSet lookup;
 
-    setLookup(lookup, readPhix, 5);
+    setLookup_read(lookup, readPhix, 5);
     std::cout << lookup.size() << '\n';
     ASSERT_EQ(4, lookup.size());
 };
@@ -53,7 +60,7 @@ TEST_F(SeqScreener, setLookupTest) {
     std::cout << "Testing Building Lookup Table with sequence " << s << '\n';
     Read readPhix = Read(s, "", "");
     kmerSet lookup;
-    setLookup(lookup, readPhix, 5);
+    setLookup_read(lookup, readPhix, 5);
     //ASSERT_EQ(true , lookup.end != lookup.find(boost::dynamic_bitset<>(10, "1001111111")))
     //std::string s("1001111111");
 
@@ -65,7 +72,7 @@ TEST_F(SeqScreener, setLookupTestAmbiguities) {
     Read readAmbiguities = Read(s, "", "");
     std::cout << "Seq in read " << readAmbiguities.get_seq() << '\n';
     kmerSet lookup;
-    setLookup(lookup, readAmbiguities, 5);
+    setLookup_read(lookup, readAmbiguities, 5);
     std::cout << "myset contains:";
     for ( auto it = lookup.begin(); it != lookup.end(); ++it )
         std::cout << " " << *it;
@@ -80,7 +87,7 @@ TEST_F(SeqScreener, setLookupTestAmbiguities2_nokmers) {
     Read readAmbiguities = Read(s, "", "");
     std::cout << "Seq in read " << readAmbiguities.get_seq() << '\n';
     kmerSet lookup;
-    setLookup(lookup, readAmbiguities, 5);
+    setLookup_read(lookup, readAmbiguities, 5);
     std::cout << lookup.size() << '\n';
     ASSERT_EQ(0, lookup.size());
 };
