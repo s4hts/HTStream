@@ -156,7 +156,7 @@ private:
     virtual void check_write() {
         bf::path p(fStats);
         if (!(force || aStats) && bf::exists(p)) {
-          throw std::runtime_error("Stats File " + fStats + " all ready exists. Please use -F or delete it\n");
+          //throw std::runtime_error("Stats File " + fStats + " all ready exists. Please use -F or delete it\n");
         } else {
           outStats.open(fStats, std::ios::out | std::ios::app);
         }

@@ -35,7 +35,7 @@ int main(int argc, char** argv)
     std::string app_description =
                        "hts_QWindowTrim uses a sliding window approach to remove low quality\n";
     app_description += "  bases (5' or 3') from a read. A window will slide from each end of the\n";
-    app_description += "  read, moving inwards. Once the window reaches an average quality <avg-qual>\n";
+    app_description += "  read, moving inwards. Once the window reaches an average quality <avg-qual-score>\n";
     app_description += "  it will stop trimming.";
 
     try
@@ -61,7 +61,7 @@ int main(int argc, char** argv)
 
         desc.add_options()
             ("window-size,w", po::value<size_t>()->default_value(10)->notifier(boost::bind(&check_range<size_t>, "window-size", _1, 1, 10000)),    "Window size in which to trim (min 1, max 10000)")
-            ("avg-qual-score,q", po::value<size_t>()->default_value(20)->notifier(boost::bind(&check_range<size_t>, "avg-qual", _1, 1, 10000)),    "Threshold for quality score average in the window (min 1, max 10000)")
+            ("avg-qual-score,q", po::value<size_t>()->default_value(20)->notifier(boost::bind(&check_range<size_t>, "avg-qual-score", _1, 1, 10000)),    "Threshold for quality score average in the window (min 1, max 10000)")
             ("qual-offset,o", po::value<size_t>()->default_value(33)->notifier(boost::bind(&check_range<size_t>, "qual-offset", _1, 1, 10000)), "Quality offset for ascii q-score (default is 33) (min 1, max 10000)");
 
         po::options_description cmdline_options;
@@ -85,7 +85,7 @@ int main(int argc, char** argv)
             std::string statsFile(vm["stats-file"].as<std::string>());
             TrimmingCounters counters(statsFile, vm["force"].as<bool>(), vm["append-stats-file"].as<bool>(), program_name, vm["notes"].as<std::string>());
 
-            size_t qual_threshold = vm["avg-qual"].as<size_t>() + vm["qual-offset"].as<size_t>() ;
+            size_t qual_threshold = vm["avg-qual-score"].as<size_t>() + vm["qual-offset"].as<size_t>() ;
 
             // there are any problems
             if(vm.count("read1-input")) {
