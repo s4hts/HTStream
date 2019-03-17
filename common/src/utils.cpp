@@ -28,6 +28,30 @@ seqLookup readOneMap(std::string seq1, const size_t kmer, const size_t kmerOffse
     return baseReadMap;
 }
 
+template <class T, class Impl>
+void inputReaders(std::vector<std::shared_ptr<InputReader<T, Impl>>> &ifr, std::vector<std::string> r1_input, std::vector<std::string> r2_input, std::vector<std::string> se_input, std::vector<std::string> interleaved_input, std::vector<std::string> tab_input, bool std_in) {
+
+    if(r1_input.size() > 0) { // paired-end reads
+        if (r2_input.size() != r1_input.size()) {
+            throw std::runtime_error("must have same number of input files for read1 and read2");
+        }
+        ifr.push_back(std::make_shared<InputReader<PairedEndRead, PairedEndReadFastqImpl>>(r1_input, r2_input));
+    }
+    if (interleaved_input.size() > 0) { // interleaved pairs
+        ifr.push_back(std::make_shared<InputReader<PairedEndRead, InterReadImpl>>(interleaved_input));
+    }
+    if(se_input.size() > 0) { // single-end reads
+        ifr.push_back(std::make_shared<InputReader<SingleEndRead, SingleEndReadFastqImpl>>(se_input));
+    }
+    if(tab_input.size() > 0) { // tab_input
+        ifr.push_back(std::make_shared<InputReader<ReadBase, TabReadImpl>>(tab_input));
+    }
+    if(std_in) {
+        bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
+        ifr = std::make_shared<InputReader<ReadBase, TabReadImpl>>(tabin);
+    }
+}
+
 void outputWriters(std::shared_ptr<OutputWriter> &pe, std::shared_ptr<OutputWriter> &se, bool fastq_out, bool tab_out, bool interleaved_out, bool unmapped_out,  bool force, bool gzip_out, bool std_out, std::string &prefix) {
 
     std::vector<std::string> default_outfiles = {"_R1", "_R2", "_SE"};
@@ -35,35 +59,30 @@ void outputWriters(std::shared_ptr<OutputWriter> &pe, std::shared_ptr<OutputWrit
     std::shared_ptr<HtsOfstream> out_1 = nullptr;
     std::shared_ptr<HtsOfstream> out_2 = nullptr;
     std::shared_ptr<HtsOfstream> out_3 = nullptr;
-    
-    if (interleaved_out)  {
-        for (auto& outfile: default_outfiles) {
-            outfile = prefix + "INTER" + ".fastq";
-        }
+    const size_t ERROR_IN_COMMAND_LINE = 1;
 
+    if (interleaved_out)  {
+        default_outfiles[0] = prefix + "_interleaved" + ".fastq";
+        default_outfiles[2] = prefix + "_SE" + ".fastq";
         out_1= std::make_shared<HtsOfstream>(default_outfiles[0], force, gzip_out, false);
-        out_3= std::make_shared<HtsOfstream>(default_outfiles[1], force, gzip_out, false);
+        out_3= std::make_shared<HtsOfstream>(default_outfiles[2], force, gzip_out, false);
 
         pe= std::make_shared<PairedEndReadOutInter>(out_1);
         se= std::make_shared<SingleEndReadOutFastq>(out_3);
     } else if (unmapped_out) {
-        for (auto& outfile: default_outfiles) {
-            outfile = prefix + ".sam";
-        }
+        default_outfiles[0] = prefix + ".sam";
         out_1= std::make_shared<HtsOfstream>(default_outfiles[0], force, gzip_out, std_out);
 
         pe= std::make_shared<ReadBaseOutUnmapped>(out_1);
         se= std::make_shared<ReadBaseOutUnmapped>(out_1);
 
     } else if (tab_out || std_out) {
-        for (auto& outfile: default_outfiles) {
-            outfile = prefix + "tab" + ".tastq";
-        }
+        default_outfiles[0] = prefix + "_tab6" + ".fastq";
         out_1= std::make_shared<HtsOfstream>(default_outfiles[0], force, gzip_out, std_out);
 
         pe= std::make_shared<ReadBaseOutTab>(out_1);
         se= std::make_shared<ReadBaseOutTab>(out_1);
-    } else if (fastq_out || (! std_out && ! tab_out) ) {
+    } else if (fastq_out) {
         for (auto& outfile: default_outfiles) {
             outfile = prefix + outfile + ".fastq";
         }
@@ -74,6 +93,9 @@ void outputWriters(std::shared_ptr<OutputWriter> &pe, std::shared_ptr<OutputWrit
 
         pe= std::make_shared<PairedEndReadOutFastq>(out_1, out_2);
         se= std::make_shared<SingleEndReadOutFastq>(out_3);
+    } else {
+        std::cerr << "ERROR: " << "Output file type absent from command line" << std::endl << std::endl;
+        exit(ERROR_IN_COMMAND_LINE); //success
     }
 }
 
@@ -92,7 +114,7 @@ po::options_description setInputOptions(){
                                            "Tab input <space seperated for multiple files>")
             ("interleaved-input,I", po::value< std::vector<std::string> >()->multitoken(),
                                            "Interleaved fastq input <space seperated for multiple files>")
-            ("from-stdin,S", "STDIN input <MUST BE TAB DELIMITED INPUT>");
+            ("from-stdin,S", po::bool_switch(), "input from STDIN input <Must be tab-delimited file format>");
     return input;
 }
 
@@ -104,7 +126,7 @@ po::options_description setOutputOptions(std::string program_name){
             ("prefix,p", po::value<std::string>()->default_value(program_name),
                                            "Prefix for output files")
             ("gzip-output,g", po::bool_switch()->default_value(false),  "Output gzipped files")
-            ("fastq-output,f", po::bool_switch()->default_value(true), "Output to Fastq format <PE AND/OR SE files>")
+            ("fastq-output,f", po::bool_switch()->default_value(false), "Output to Fastq format <PE AND/OR SE files>")
             ("tab-output,t", po::bool_switch()->default_value(false),   "Output to tab-delimited file format")
             ("interleaved-output,i", po::bool_switch()->default_value(false),     "Output to interleaved fastq file <PE ONLY>")
             ("unmapped-output,u", po::bool_switch()->default_value(false),   "Output to unmapped sam file format")

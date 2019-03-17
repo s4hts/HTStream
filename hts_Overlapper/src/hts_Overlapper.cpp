@@ -31,7 +31,7 @@ namespace bi = boost::iostreams;
 int main(int argc, char** argv)
 {
     const std::string program_name = "hts_Overlapper";
-    std::string app_description = 
+    std::string app_description =
                        "The hts_Overlapper application attempts to overlap paired end reads\n";
     app_description += "  to produce the original transcript, trim adapters, and in some\n";
     app_description += "  cases, correct sequencing errors.\n";
@@ -67,7 +67,7 @@ int main(int argc, char** argv)
         setDefaultParamsOverlapping(desc);
             // kmer|k ; kmer-offset|r ; max-mismatch-errorDensity|x
             // check-lengths|c ; min-overlap|o
-        
+
         po::options_description cmdline_options;
         cmdline_options.add(standard).add(input).add(output).add(desc);
 
@@ -76,17 +76,17 @@ int main(int argc, char** argv)
         {
             po::store(po::parse_command_line(argc, argv, cmdline_options),
                       vm); // can throw
-            
+
             version_or_help(program_name, app_description, cmdline_options, vm);
 
             po::notify(vm); // throws on error, so do after help in case
-         
+
             std::string statsFile(vm["stats-file"].as<std::string>());
             std::string prefix(vm["prefix"].as<std::string>());
-   
+
             std::shared_ptr<OutputWriter> pe = nullptr;
             std::shared_ptr<OutputWriter> se = nullptr;
-            
+
             OverlappingCounters counters(statsFile, vm["append-stats-file"].as<bool>(), program_name, vm["notes"].as<std::string>());
 
             outputWriters(pe, se, vm["fastq-output"].as<bool>(), vm["tab-output"].as<bool>(), vm["interleaved-output"].as<bool>(), vm["unmapped-output"].as<bool>(), vm["force"].as<bool>(), vm["gzip-output"].as<bool>(), vm["to-stdout"].as<bool>(), prefix );
@@ -97,57 +97,67 @@ int main(int argc, char** argv)
                 }
                 auto read1_files = vm["read1-input"].as<std::vector<std::string> >();
                 auto read2_files = vm["read2-input"].as<std::vector<std::string> >();
-                
                 if (read1_files.size() != read2_files.size()) {
                     throw std::runtime_error("must have same number of input files for read1 and read2");
                 }
-
                 for(size_t i = 0; i < read1_files.size(); ++i) {
                     bi::stream<bi::file_descriptor_source> is1{check_open_r(read1_files[i]), bi::close_handle};
                     bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
 
                     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
-                    helper_overlapper(ifp, pe, se, counters, vm["max-mismatch-errorDensity"].as<double>(), vm["max-mismatch"].as<size_t>(), vm["min-overlap"].as<size_t>(), vm["stranded"].as<bool>(), vm["min-length"].as<size_t>(), vm["check-lengths"].as<size_t>(),   vm["kmer"].as<size_t>(), vm["kmer-offset"].as<size_t>(), vm["no-orphans"].as<bool>() ); }
-            }
-
-            if(vm.count("singleend-input")) {
-                auto read_files = vm["singleend-input"].as<std::vector<std::string> >();
-                for (auto file : read_files) {
-                    bi::stream<bi::file_descriptor_source> sef{ check_open_r(file), bi::close_handle};
-                    InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(sef);
-                    helper_overlapper(ifs, pe, se, counters, vm["max-mismatch-errorDensity"].as<double>(), vm["max-mismatch"].as<size_t>(), vm["min-overlap"].as<size_t>(), vm["stranded"].as<bool>(), vm["min-length"].as<size_t>(), vm["check-lengths"].as<size_t>(),   vm["kmer"].as<size_t>(), vm["kmer-offset"].as<size_t>(), vm["no-orphans"].as<bool>() );
+                    helper_overlapper(ifp, pe, se, counters, vm["max-mismatch-errorDensity"].as<double>(), vm["max-mismatch"].as<size_t>(), vm["min-overlap"].as<size_t>(), vm["stranded"].as<bool>(), vm["min-length"].as<size_t>(), vm["check-lengths"].as<size_t>(),   vm["kmer"].as<size_t>(), vm["kmer-offset"].as<size_t>(), vm["no-orphans"].as<bool>() );
                 }
-            }
-            
-            if(vm.count("tab-input")) {
-                auto read_files = vm["tab-input"].as<std::vector<std::string> > ();
-                for (auto file : read_files) {
-                    bi::stream<bi::file_descriptor_source> tabin{ check_open_r(file), bi::close_handle};
-                    InputReader<ReadBase, TabReadImpl> ift(tabin);
-                    helper_overlapper(ift, pe, se, counters, vm["max-mismatch-errorDensity"].as<double>(), vm["max-mismatch"].as<size_t>(), vm["min-overlap"].as<size_t>(), vm["stranded"].as<bool>(), vm["min-length"].as<size_t>(), vm["check-lengths"].as<size_t>(),   vm["kmer"].as<size_t>(), vm["kmer-offset"].as<size_t>(), vm["no-orphans"].as<bool>() );
+                if(vm.count("singleend-input")) { // can have interleaved paired-end reads and/or single-end reads
+                    auto read_files = vm["singleend-input"].as<std::vector<std::string> >();
+                    for (auto file : read_files) {
+                        bi::stream<bi::file_descriptor_source> sef{ check_open_r(file), bi::close_handle};
+                        InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(sef);
+                        helper_overlapper(ifs, pe, se, counters, vm["max-mismatch-errorDensity"].as<double>(), vm["max-mismatch"].as<size_t>(), vm["min-overlap"].as<size_t>(), vm["stranded"].as<bool>(), vm["min-length"].as<size_t>(), vm["check-lengths"].as<size_t>(),   vm["kmer"].as<size_t>(), vm["kmer-offset"].as<size_t>(), vm["no-orphans"].as<bool>() );
+                    }
                 }
-            }
-            
-            if (vm.count("interleaved-input")) {
+            } else if (vm.count("interleaved-input")) { // can have interleaved paired-end reads and/or single-end reads
                 auto read_files = vm["interleaved-input"].as<std::vector<std::string > >();
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> inter{ check_open_r(file), bi::close_handle};
                     InputReader<PairedEndRead, InterReadImpl> ifp(inter);
                     helper_overlapper(ifp, pe, se, counters, vm["max-mismatch-errorDensity"].as<double>(), vm["max-mismatch"].as<size_t>(), vm["min-overlap"].as<size_t>(), vm["stranded"].as<bool>(), vm["min-length"].as<size_t>(), vm["check-lengths"].as<size_t>(),   vm["kmer"].as<size_t>(), vm["kmer-offset"].as<size_t>(), vm["no-orphans"].as<bool>() );
                 }
-            }
-           
-            if (vm.count("from-stdin")) {
+                if(vm.count("singleend-input")) {
+                    auto read_files = vm["singleend-input"].as<std::vector<std::string> >();
+                    for (auto file : read_files) {
+                        bi::stream<bi::file_descriptor_source> sef{ check_open_r(file), bi::close_handle};
+                        InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(sef);
+                        helper_overlapper(ifs, pe, se, counters, vm["max-mismatch-errorDensity"].as<double>(), vm["max-mismatch"].as<size_t>(), vm["min-overlap"].as<size_t>(), vm["stranded"].as<bool>(), vm["min-length"].as<size_t>(), vm["check-lengths"].as<size_t>(),   vm["kmer"].as<size_t>(), vm["kmer-offset"].as<size_t>(), vm["no-orphans"].as<bool>() );
+                    }
+                }
+            } else if(vm.count("singleend-input")) {
+                auto read_files = vm["singleend-input"].as<std::vector<std::string> >();
+                for (auto file : read_files) {
+                    bi::stream<bi::file_descriptor_source> sef{ check_open_r(file), bi::close_handle};
+                    InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(sef);
+                    helper_overlapper(ifs, pe, se, counters, vm["max-mismatch-errorDensity"].as<double>(), vm["max-mismatch"].as<size_t>(), vm["min-overlap"].as<size_t>(), vm["stranded"].as<bool>(), vm["min-length"].as<size_t>(), vm["check-lengths"].as<size_t>(),   vm["kmer"].as<size_t>(), vm["kmer-offset"].as<size_t>(), vm["no-orphans"].as<bool>() );
+                }
+            } else if(vm.count("tab-input")) {
+                auto read_files = vm["tab-input"].as<std::vector<std::string> > ();
+                for (auto file : read_files) {
+                    bi::stream<bi::file_descriptor_source> tabin{ check_open_r(file), bi::close_handle};
+                    InputReader<ReadBase, TabReadImpl> ift(tabin);
+                    helper_overlapper(ift, pe, se, counters, vm["max-mismatch-errorDensity"].as<double>(), vm["max-mismatch"].as<size_t>(), vm["min-overlap"].as<size_t>(), vm["stranded"].as<bool>(), vm["min-length"].as<size_t>(), vm["check-lengths"].as<size_t>(),   vm["kmer"].as<size_t>(), vm["kmer-offset"].as<size_t>(), vm["no-orphans"].as<bool>() );
+                }
+            } else if (vm.count("from-stdin")) {
                 bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
                 helper_overlapper(ift, pe, se, counters, vm["max-mismatch-errorDensity"].as<double>(), vm["max-mismatch"].as<size_t>(), vm["min-overlap"].as<size_t>(), vm["stranded"].as<bool>(), vm["min-length"].as<size_t>(), vm["check-lengths"].as<size_t>(),   vm["kmer"].as<size_t>(), vm["kmer-offset"].as<size_t>(), vm["no-orphans"].as<bool>() );
-            }  
+            } else {
+              std::cerr << "ERROR: " << "Input file type absent from command line" << std::endl << std::endl;
+              version_or_help(program_name, app_description, cmdline_options, vm, true);
+              exit(ERROR_IN_COMMAND_LINE); //success
+            }
             counters.write_out();
         }
         catch(po::error& e)
         {
             std::cerr << "ERROR: " << e.what() << std::endl << std::endl;
-            version_or_help(program_name, app_description, cmdline_options, vm, true);
             return ERROR_IN_COMMAND_LINE;
         }
 
@@ -163,4 +173,3 @@ int main(int argc, char** argv)
     return SUCCESS;
 
 }
-
