@@ -76,7 +76,7 @@ double SingleEndRead::avg_q_score()
 double PairedEndRead::avg_q_score()
 {
     double sum = std::accumulate(one.get_qual().begin(), one.get_qual().end(), double(0), qual_sum);
-    sum += std::accumulate(one.get_qual().begin(), one.get_qual().end(), double(0), qual_sum);
+    sum += std::accumulate(two.get_qual().begin(), two.get_qual().end(), double(0), qual_sum);
     return sum/double(one.get_qual().length() + two.get_qual().length());
 }
 
