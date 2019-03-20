@@ -94,6 +94,13 @@ bool trim_right(Read &rb, char ccheck, size_t min_trim, size_t max_trim, size_t 
     return false;
 }
 
+/*
+For each read, a sliding window of length window_size is shifted along the left or right end of the read
+sequence and the fraction of A’s (or T’s depending on strandedness of sequencing) is calculated within
+each window. A minimum of perfect_windows mustd have 100 As/Ts and the remaining windows > 0.3 A’s and
+this is used as a candidate poly(A) site.
+https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5279776/ 
+*/
 template <class T, class Impl>
 void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, TrimmingCounters& counters, size_t min_length, bool no_r1, bool no_r2, bool no_pA, bool no_pT, size_t min_trim, size_t window_size, size_t perfect_windows, size_t max_trim, double max_mismatch_errorDensity, bool stranded, bool no_left, bool no_right, bool no_orphans) {
     bool r1fA, r1fT, r2fA, r2fT, r1rA, r1rT, r2rA, r2rT = false;
