@@ -63,8 +63,11 @@ int main(int argc, char** argv)
             ("skip_polyT,i", po::bool_switch()->default_value(false), "Skip check for polyT sequence")
             ("skip_read1,i", po::bool_switch()->default_value(false), "Skip check for read1")
             ("skip_read2,i", po::bool_switch()->default_value(false), "Skip check for read2")
-            ("max-mismatch,x", po::value<size_t>()->default_value(3)->notifier(boost::bind(&check_range<size_t>, "max-mismatch", _1, 0, 10000)), "Max amount of mismatches allowed in trimmed area (min 0, max 10000)")
-            ("min-trim,M", po::value<size_t>()->default_value(5)->notifier(boost::bind(&check_range<size_t>, "min-trim", _1, 1, 10000)), "Min base pairs trim for AT tail (min 1, max 10000)");
+            ("window-size,w", po::value<size_t>()->default_value(6)->notifier(boost::bind(&check_range<size_t>, "window-size", _1, 1, 10000)),    "Window size in which to trim (min 1, max 10000)")
+            ("max-mismatch-errorDensity,e", po::value<double>()->default_value(.30)->notifier(boost::bind(&check_range<double>, "max-mismatch-errorDensity", _1, 0.0, 1.0)), "Max percent of mismatches allowed in overlapped section (min 0.0, max 1.0)")
+            ("perfect-windows,i", po::value<size_t>()->default_value(1)->notifier(boost::bind(&check_range<size_t>, "perfect-windows", _1, 0, 10000)),    "Number perfect match windows needed before a match is reported  (min 1, max 10000)")
+            ("min-trim,M", po::value<size_t>()->default_value(5)->notifier(boost::bind(&check_range<size_t>, "min-trim", _1, 1, 10000)), "Min base pairs trim for AT tail (min 1, max 10000)")
+            ("max-size,x", po::value<size_t>()->default_value(30)->notifier(boost::bind(&check_range<size_t>, "max-size", _1, 0, 10000)), "Max size a polyAT can be (min 0, max 10000)");
 
         po::options_description cmdline_options;
         cmdline_options.add(standard).add(input).add(output).add(desc);
@@ -106,13 +109,13 @@ int main(int argc, char** argv)
                     bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
 
                     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
-                    helper_trim(ifp, pe, se, counters, vm["min-length"].as<std::size_t>(), vm["skip_read1"].as<bool>(), vm["skip_read2"].as<bool>(), vm["skip_polyA"].as<bool>(), vm["skip_polyT"].as<bool>(), vm["min-trim"].as<std::size_t>(), vm["max-mismatch"].as<std::size_t>(), vm["stranded"].as<bool>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>(), vm["no-orphans"].as<bool>() );                }
+                    helper_trim(ifp, pe, se, counters, vm["min-length"].as<std::size_t>(), vm["skip_read1"].as<bool>(), vm["skip_read2"].as<bool>(), vm["skip_polyA"].as<bool>(), vm["skip_polyT"].as<bool>(), vm["min-trim"].as<std::size_t>(), vm["window-size"].as<std::size_t>(), vm["perfect-windows"].as<std::size_t>(), vm["max-size"].as<std::size_t>(), vm["max-mismatch-errorDensity"].as<double>(), vm["stranded"].as<bool>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>(), vm["no-orphans"].as<bool>() );                }
                 if(vm.count("singleend-input")) { // can have paired-end reads and/or single-end reads
                     auto read_files = vm["singleend-input"].as<std::vector<std::string> >();
                     for (auto file : read_files) {
                         bi::stream<bi::file_descriptor_source> sef{ check_open_r(file), bi::close_handle};
                         InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(sef);
-                        helper_trim(ifs, pe, se, counters, vm["min-length"].as<std::size_t>(), vm["skip_read1"].as<bool>(), vm["skip_read2"].as<bool>(), vm["skip_polyA"].as<bool>(), vm["skip_polyT"].as<bool>(), vm["min-trim"].as<std::size_t>(), vm["max-mismatch"].as<std::size_t>(), vm["stranded"].as<bool>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>(), vm["no-orphans"].as<bool>() );
+                        helper_trim(ifs, pe, se, counters, vm["min-length"].as<std::size_t>(), vm["skip_read1"].as<bool>(), vm["skip_read2"].as<bool>(), vm["skip_polyA"].as<bool>(), vm["skip_polyT"].as<bool>(), vm["min-trim"].as<std::size_t>(), vm["window-size"].as<std::size_t>(), vm["perfect-windows"].as<std::size_t>(), vm["max-size"].as<std::size_t>(), vm["max-mismatch-errorDensity"].as<double>(), vm["stranded"].as<bool>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>(), vm["no-orphans"].as<bool>() );
                   }
                 }
             } else if (vm.count("interleaved-input")) { // can have interleaved paired-end reads and/or single-end reads
@@ -120,14 +123,14 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> inter{ check_open_r(file), bi::close_handle};
                     InputReader<PairedEndRead, InterReadImpl> ifp(inter);
-                    helper_trim(ifp, pe, se, counters, vm["min-length"].as<std::size_t>(), vm["skip_read1"].as<bool>(), vm["skip_read2"].as<bool>(), vm["skip_polyA"].as<bool>(), vm["skip_polyT"].as<bool>(), vm["min-trim"].as<std::size_t>(), vm["max-mismatch"].as<std::size_t>(), vm["stranded"].as<bool>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>(), vm["no-orphans"].as<bool>() );
+                    helper_trim(ifp, pe, se, counters, vm["min-length"].as<std::size_t>(), vm["skip_read1"].as<bool>(), vm["skip_read2"].as<bool>(), vm["skip_polyA"].as<bool>(), vm["skip_polyT"].as<bool>(), vm["min-trim"].as<std::size_t>(), vm["window-size"].as<std::size_t>(), vm["perfect-windows"].as<std::size_t>(), vm["max-size"].as<std::size_t>(), vm["max-mismatch-errorDensity"].as<double>(), vm["stranded"].as<bool>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>(), vm["no-orphans"].as<bool>() );
                 }
                 if(vm.count("singleend-input")) {
                     auto read_files = vm["singleend-input"].as<std::vector<std::string> >();
                     for (auto file : read_files) {
                         bi::stream<bi::file_descriptor_source> sef{ check_open_r(file), bi::close_handle};
                         InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(sef);
-                        helper_trim(ifs, pe, se, counters, vm["min-length"].as<std::size_t>(), vm["skip_read1"].as<bool>(), vm["skip_read2"].as<bool>(), vm["skip_polyA"].as<bool>(), vm["skip_polyT"].as<bool>(), vm["min-trim"].as<std::size_t>(), vm["max-mismatch"].as<std::size_t>(), vm["stranded"].as<bool>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>(), vm["no-orphans"].as<bool>() );
+                        helper_trim(ifs, pe, se, counters, vm["min-length"].as<std::size_t>(), vm["skip_read1"].as<bool>(), vm["skip_read2"].as<bool>(), vm["skip_polyA"].as<bool>(), vm["skip_polyT"].as<bool>(), vm["min-trim"].as<std::size_t>(), vm["window-size"].as<std::size_t>(), vm["perfect-windows"].as<std::size_t>(), vm["max-size"].as<std::size_t>(), vm["max-mismatch-errorDensity"].as<double>(), vm["stranded"].as<bool>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>(), vm["no-orphans"].as<bool>() );
                     }
                 }
             } else if(vm.count("singleend-input")) {
@@ -135,19 +138,19 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> sef{ check_open_r(file), bi::close_handle};
                     InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(sef);
-                    helper_trim(ifs, pe, se, counters, vm["min-length"].as<std::size_t>(), vm["skip_read1"].as<bool>(), vm["skip_read2"].as<bool>(), vm["skip_polyA"].as<bool>(), vm["skip_polyT"].as<bool>(), vm["min-trim"].as<std::size_t>(), vm["max-mismatch"].as<std::size_t>(), vm["stranded"].as<bool>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>(), vm["no-orphans"].as<bool>() );
+                    helper_trim(ifs, pe, se, counters, vm["min-length"].as<std::size_t>(), vm["skip_read1"].as<bool>(), vm["skip_read2"].as<bool>(), vm["skip_polyA"].as<bool>(), vm["skip_polyT"].as<bool>(), vm["min-trim"].as<std::size_t>(), vm["window-size"].as<std::size_t>(), vm["perfect-windows"].as<std::size_t>(), vm["max-size"].as<std::size_t>(), vm["max-mismatch-errorDensity"].as<double>(), vm["stranded"].as<bool>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>(), vm["no-orphans"].as<bool>() );
                 }
             } else if(vm.count("tab-input")) {
                 auto read_files = vm["tab-input"].as<std::vector<std::string> > ();
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> tabin{ check_open_r(file), bi::close_handle};
                     InputReader<ReadBase, TabReadImpl> ift(tabin);
-                    helper_trim(ift, pe, se, counters, vm["min-length"].as<std::size_t>(), vm["skip_read1"].as<bool>(), vm["skip_read2"].as<bool>(), vm["skip_polyA"].as<bool>(), vm["skip_polyT"].as<bool>(), vm["min-trim"].as<std::size_t>(), vm["max-mismatch"].as<std::size_t>(), vm["stranded"].as<bool>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>(), vm["no-orphans"].as<bool>() );
+                    helper_trim(ift, pe, se, counters, vm["min-length"].as<std::size_t>(), vm["skip_read1"].as<bool>(), vm["skip_read2"].as<bool>(), vm["skip_polyA"].as<bool>(), vm["skip_polyT"].as<bool>(), vm["min-trim"].as<std::size_t>(), vm["window-size"].as<std::size_t>(), vm["perfect-windows"].as<std::size_t>(), vm["max-size"].as<std::size_t>(), vm["max-mismatch-errorDensity"].as<double>(), vm["stranded"].as<bool>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>(), vm["no-orphans"].as<bool>() );
                 }
             } else if (vm.count("from-stdin")) {
                 bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
-                helper_trim(ift, pe, se, counters, vm["min-length"].as<std::size_t>(), vm["skip_read1"].as<bool>(), vm["skip_read2"].as<bool>(), vm["skip_polyA"].as<bool>(), vm["skip_polyT"].as<bool>(), vm["min-trim"].as<std::size_t>(), vm["max-mismatch"].as<std::size_t>(), vm["stranded"].as<bool>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>(), vm["no-orphans"].as<bool>() );
+                helper_trim(ift, pe, se, counters, vm["min-length"].as<std::size_t>(), vm["skip_read1"].as<bool>(), vm["skip_read2"].as<bool>(), vm["skip_polyA"].as<bool>(), vm["skip_polyT"].as<bool>(), vm["min-trim"].as<std::size_t>(), vm["window-size"].as<std::size_t>(), vm["perfect-windows"].as<std::size_t>(), vm["max-size"].as<std::size_t>(), vm["max-mismatch-errorDensity"].as<double>(), vm["stranded"].as<bool>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>(), vm["no-orphans"].as<bool>() );
             } else {
               std::cerr << "ERROR: " << "Input file type absent from command line" << std::endl << std::endl;
               version_or_help(program_name, app_description, cmdline_options, vm, true);
