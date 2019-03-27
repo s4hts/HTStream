@@ -37,7 +37,7 @@ bool trim_left(Read &rb, char ccheck, size_t min_trim, size_t max_trim, size_t w
               ++mismatch;
           }
       }
-      if (mismatch > max_mismatch){
+      if (static_cast<double> (mismatch) > max_mismatch){
         break;
       } else if (mismatch == 0) {
         pwindows++;
@@ -58,7 +58,7 @@ bool trim_left(Read &rb, char ccheck, size_t min_trim, size_t max_trim, size_t w
 bool trim_right(Read &rb, char ccheck, size_t min_trim, size_t max_trim, size_t window_size, double max_mismatch_errorDensity, size_t perfect_windows){
     size_t i = 0, pwindows = 0;
     double mismatch = 0;
-    double max_mismatch = window_size*max_mismatch_errorDensity;
+    double max_mismatch = static_cast<double> (window_size) * max_mismatch_errorDensity;
 
     std::string seq = rb.get_seq();
     std::string::reverse_iterator current_loc, tmp_loc, trim_loc = seq.rbegin();
@@ -69,14 +69,14 @@ bool trim_right(Read &rb, char ccheck, size_t min_trim, size_t max_trim, size_t 
       }
     }
 */
-    for ( current_loc = seq.rbegin() + window_size; current_loc < seq.rend() ; ++current_loc ) {
+    for ( current_loc = seq.rbegin() + (window_size-1); current_loc < seq.rend() ; ++current_loc ) {
       mismatch=0;
       for (tmp_loc = current_loc, i=window_size; i > 0; --tmp_loc, --i) {
           if ( *tmp_loc != ccheck ) {
               mismatch++;
           }
       }
-      if (mismatch > max_mismatch){
+      if (static_cast<double> (mismatch) > max_mismatch){
         break;
       } else if (mismatch == 0) {
         pwindows++;
@@ -99,7 +99,7 @@ For each read, a sliding window of length window_size is shifted along the left 
 sequence and the fraction of A’s (or T’s depending on strandedness of sequencing) is calculated within
 each window. A minimum of perfect_windows mustd have 100 As/Ts and the remaining windows > 0.3 A’s and
 this is used as a candidate poly(A) site.
-https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5279776/ 
+https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5279776/
 */
 template <class T, class Impl>
 void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, TrimmingCounters& counters, size_t min_length, bool no_r1, bool no_r2, bool no_pA, bool no_pT, size_t min_trim, size_t window_size, size_t perfect_windows, size_t max_trim, double max_mismatch_errorDensity, bool stranded, bool no_left, bool no_right, bool no_orphans) {
