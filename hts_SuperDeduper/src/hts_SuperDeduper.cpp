@@ -45,10 +45,10 @@ int main(int argc, char** argv)
             // version|v ; help|h ; notes|N ; stats-file|L ; append-stats-file|A
         po::options_description input = setInputOptions();
             // read1-input|1 ; read2-input|2 ; singleend-input|U
-            // tab-input|T ; interleaved-input|I ; from-stdin|S
+            // tab-input|T ; interleaved-input|I
         po::options_description output = setOutputOptions(program_name);
-            // force|F ; prefix|p ; gzip-output,g ; fastq-output|f
-            // tab-output|t ; interleaved-output|i ; unmapped-output|u ; to-stdout,O
+          // force|F ; uncompressed|u ; fastq-output|f
+          // tab-output|t ; interleaved-output|i ; unmapped-output|z
 
         po::options_description desc("Application Specific Options");
 
@@ -66,24 +66,19 @@ int main(int argc, char** argv)
 
         try
         {
-            po::store(po::parse_command_line(argc, argv, cmdline_options),vm); // can throw
+            po::store(po::parse_command_line(argc, argv, cmdline_options), vm); // can throw
 
             /** --help option
-             */
-
+            */
+            version_or_help(program_name, app_description, cmdline_options, vm);
             po::notify(vm); // throws on error, so do after help in case
-
-            version_or_help( program_name, app_description, cmdline_options, vm);
-
-            std::string statsFile(vm["stats-file"].as<std::string>());
-            std::string prefix(vm["prefix"].as<std::string>());
 
             std::shared_ptr<OutputWriter> pe = nullptr;
             std::shared_ptr<OutputWriter> se = nullptr;
+            outputWriters(pe, se, vm);
 
-            SuperDeduperCounters counters(statsFile, vm["append-stats-file"].as<bool>() , program_name, vm["notes"].as<std::string>());
-
-            outputWriters(pe, se, vm["fastq-output"].as<bool>(), vm["tab-output"].as<bool>(), vm["interleaved-output"].as<bool>(), vm["unmapped-output"].as<bool>(), vm["force"].as<bool>(), vm["gzip-output"].as<bool>(), vm["to-stdout"].as<bool>(), prefix );
+            std::string statsFile(vm["stats-file"].as<std::string>());
+            SuperDeduperCounters counters(statsFile, vm["force"].as<bool>(), vm["append-stats-file"].as<bool>(), program_name, vm["notes"].as<std::string>());
 
             // there are any problems
             if(vm.count("read1-input")) {
@@ -139,7 +134,18 @@ int main(int argc, char** argv)
                     InputReader<ReadBase, TabReadImpl> ift(tabin);
                     load_map(ift, counters, read_map, pe, se,vm["avg-qual-score"].as<double>(),  vm["inform-avg-qual-score"].as<double>(),  vm["start"].as<size_t>() - 1, vm["length"].as<size_t>(), vm["log_freq"].as<size_t>() );
                 }
-            } else if (vm.count("from-stdin")) {
+            }
+
+            if (vm.count("interleaved-input")) {
+                auto read_files = vm["interleaved-input"].as<std::vector<std::string > >();
+                for (auto file : read_files) {
+                    bi::stream<bi::file_descriptor_source> inter{ check_open_r(file), bi::close_handle};
+                    InputReader<PairedEndRead, InterReadImpl> ifp(inter);
+                    load_map(ifp, counters, read_map, pe, se,vm["avg-qual-score"].as<double>(),  vm["inform-avg-qual-score"].as<double>(), vm["start"].as<size_t>() - 1, vm["length"].as<size_t>(), vm["log_freq"].as<size_t>() );
+                }
+            }
+
+            if (!isatty(fileno(stdin))) {
                 bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
                 load_map(ift, counters, read_map, pe, se,vm["avg-qual-score"].as<double>(),  vm["inform-avg-qual-score"].as<double>(),  vm["start"].as<size_t>() - 1, vm["length"].as<size_t>(), vm["log_freq"].as<size_t>() );
