@@ -289,7 +289,7 @@ void setLookup_read( kmerSet &lookup, Read &rb, size_t kmerSize) {
     std::string seq = rb.get_seq();
     std::pair<bool, bool> bits;
     for (std::string::iterator bp = seq.begin(); bp != seq.end(); ++bp) {
-        if (std::toupper(*bp) == 'A' || std::toupper(*bp) == 'C' || std::toupper(*bp) == 'G' || std::toupper(*bp) == 'T' ) { // N
+        if (std::toupper(*bp) == 'A' || std::toupper(*bp) == 'C' || std::toupper(*bp) == 'G' || std::toupper(*bp) == 'T' ) {
             reverseLookup >>= 2;
             forwardLookup <<=2;
 
@@ -303,7 +303,7 @@ void setLookup_read( kmerSet &lookup, Read &rb, size_t kmerSize) {
                 boost::dynamic_bitset<> &bs = forwardLookup > reverseLookup ? forwardLookup : reverseLookup;
                 lookup.insert(bs);
             }
-         } else {
+         } else { // all other characters (N, ambiguities) produce no kmers
            current_added = 0;
          }
     }
