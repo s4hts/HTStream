@@ -4,7 +4,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <boost/optional.hpp>
 #include <memory>
-#include <iostream> 
+#include <iostream>
 #include <unordered_map>
 #include "typedefs.h"
 
@@ -21,16 +21,16 @@ public:
         size_t i = (2 * StrKey.length()) -1;
         for (const char &c : StrKey) {
             switch(c) {
-            case 'A': 
+            case 'A':
                 break;
-            case 'C': 
+            case 'C':
                 bit[i-1] = 1;
                 break;
-            case 'G': 
+            case 'G':
                 bit[i] = 1;
                 break;
-            case 'T': 
-                bit[i] = 1; 
+            case 'T':
+                bit[i] = 1;
                 bit[i-1] = 1;
                 break;
             case 'N':
@@ -44,7 +44,7 @@ public:
     static std::string bit_to_str(const BitSet &bits);
     static boost::optional<BitSet> reverse_complement(const std::string& str, int start, int length);
     virtual double avg_q_score() = 0;
-    bool rc; 
+    bool rc;
 };
 
 class Read {
@@ -59,8 +59,8 @@ private:
     size_t minLength;
 public:
     Read(const std::string& seq_, const std::string& qual_, const std::string& id_) :
-        seq(seq_), qual(qual_), id(id_), length(seq_.length()), cut_R(seq_.length()), cut_L(0), discard(false), minLength(1) { }
-    Read() : seq(""), qual(""), id(""), length(0), cut_R(seq.length()), cut_L(0), discard(false), minLength(1) { } 
+        seq(seq_), qual(qual_), id(id_), length(seq_.length()), cut_R(seq_.length()), cut_L(0), discard(false), minLength(1) { std::replace( id.begin(), id.end(), '\t', ' '); }
+    Read() : seq(""), qual(""), id(""), length(0), cut_R(seq.length()), cut_L(0), discard(false), minLength(1) { }
     Read subread(size_t _start, size_t _length);
     std::string subseq(size_t _start, size_t _length);
     const std::string& get_seq() const  { return seq; }
@@ -74,15 +74,15 @@ public:
 
 
     const std::string get_seq_rc() const { if (cut_R < cut_L) { return ""; }
-                                           std::string s = seq.substr(cut_L, cut_R - cut_L) ;  
-                                           std::transform(begin(s), end(s), begin(s), complement); 
-                                           std::reverse(begin(s), end(s)); 
+                                           std::string s = seq.substr(cut_L, cut_R - cut_L) ;
+                                           std::transform(begin(s), end(s), begin(s), complement);
+                                           std::reverse(begin(s), end(s));
                                            return s; }
 
 
     const std::string get_qual_rc() const { if (cut_R < cut_L) { return ""; }
-                                            std::string q = qual.substr(cut_L, cut_R - cut_L); 
-                                            std::reverse(begin(q), end(q)); 
+                                            std::string q = qual.substr(cut_L, cut_R - cut_L);
+                                            std::reverse(begin(q), end(q));
                                             return q;  }
 
 
@@ -90,11 +90,11 @@ public:
         if (cut_R < cut_L) {
             return;
         }
-        std::string s = seq.substr(cut_L, cut_R - cut_L) ;  
-        std::transform(begin(s), end(s), begin(s), complement); 
-        std::reverse(begin(s), end(s)); 
-        std::string q = qual.substr(cut_L, cut_R - cut_L); 
-        std::reverse(begin(q), end(q)); 
+        std::string s = seq.substr(cut_L, cut_R - cut_L) ;
+        std::transform(begin(s), end(s), begin(s), complement);
+        std::reverse(begin(s), end(s));
+        std::string q = qual.substr(cut_L, cut_R - cut_L);
+        std::reverse(begin(q), end(q));
         seq = s;
         qual = q;
     }
