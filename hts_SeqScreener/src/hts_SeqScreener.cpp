@@ -179,10 +179,6 @@ int main(int argc, char** argv)
                 bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
                 helper_discard(ift, pe, se, counters, lookup, vm["percentage-hits"].as<double>(), vm["check-read-2"].as<bool>(),vm["kmer"].as<size_t>(), vm["inverse"].as<bool>(), vm["record"].as<bool>());
-            } else {
-              std::cerr << "ERROR: " << "Input file type absent from command line" << std::endl << std::endl;
-              version_or_help(program_name, app_description, cmdline_options, vm, true);
-              exit(ERROR_IN_COMMAND_LINE); //success
             }
             counters.write_out();
         }
