@@ -33,8 +33,9 @@ int main(int argc, char** argv)
 
     const std::string program_name = "hts_Primers";
     std::string app_description =
-                       "The hts_Primers application will identify primers located on the 5' ends of R1 and R2, \n";
-    app_description += "   cut and return the the read adding the primer to the read id.\n";
+                       "The hts_Primers application identifies primer sequences located on the 5' ends of R1 and R2,\n";
+    app_description += "    or 5' and 3' end of SE reads, optionally cut/flip and return the the read adding the \n";
+    app_description += "    primer to the read id.\n";
 
     try
     {
@@ -52,8 +53,18 @@ int main(int argc, char** argv)
 
         po::options_description desc("Application Specific Options");
 
-        setDefaultParamsCutting(desc);
-            // no-orphans|n ; stranded|s ; min-length|m
+        desc.add_options()
+            ("primer_file,P", po::value<std::string>(), "file with primers");
+        desc.add_options()
+            ("primer_mismatches,m", po::value<size_t>()->default_value(4)->notifier(boost::bind(&check_range<size_t>, "primer_mismatches", _1, 0, 10000)), "Max hamming dist from primer (min 0, max 10000)");
+        desc.add_options()
+            ("primer_end_mismatches,e", po::value<size_t>()->default_value(4)->notifier(boost::bind(&check_range<size_t>, "primer_end_mismatches", _1, 0, 10000)), "Required number of matching bases at end of primer (min 0, max 10000)");
+        desc.add_options()
+            ("float,l", po::value<size_t>()->default_value(0)->notifier(boost::bind(&check_range<size_t>, "float", _1, 0, 10000)), "Variable number of bases preceeding primer allowed to float");
+        desc.add_options()
+            ("flip,x", po::bool_switch()->default_value(false), "Primers can be seen in both orientiations, tests flip and reorients all reads to the same orientation.");
+        desc.add_options()
+            ("keep,k", po::bool_switch()->default_value(false), "Don't cut off the primer sequence, leave it as a part of the read");
 
         po::options_description cmdline_options;
         cmdline_options.add(standard).add(input).add(output).add(desc);
@@ -68,15 +79,12 @@ int main(int argc, char** argv)
             version_or_help(program_name, app_description, cmdline_options, vm);
             po::notify(vm); // throws on error, so do after help in case
 
-            std::string statsFile(vm["stats-file"].as<std::string>());
-            std::string prefix(vm["prefix"].as<std::string>());
-
             std::shared_ptr<OutputWriter> pe = nullptr;
             std::shared_ptr<OutputWriter> se = nullptr;
+            outputWriters(pe, se, vm);
 
-            TrimmingCounters counters(statsFile, vm["append-stats-file"].as<bool>() , program_name, vm["notes"].as<std::string>());
-
-            outputWriters(pe, se, vm["fastq-output"].as<bool>(), vm["tab-output"].as<bool>(), vm["interleaved-output"].as<bool>(), vm["unmapped-output"].as<bool>(), vm["force"].as<bool>(), vm["gzip-output"].as<bool>(), vm["to-stdout"].as<bool>(), prefix );
+            std::string statsFile(vm["stats-file"].as<std::string>());
+            PrimerCounters counters(statsFile, vm["force"].as<bool>(), vm["append-stats-file"].as<bool>(), program_name, vm["notes"].as<std::string>());
 
             if(vm.count("read1-input")) {
                 if (!vm.count("read2-input")) {
@@ -90,55 +98,38 @@ int main(int argc, char** argv)
                 for(size_t i = 0; i < read1_files.size(); ++i) {
                     bi::stream<bi::file_descriptor_source> is1{check_open_r(read1_files[i]), bi::close_handle};
                     bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
-
                     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
-                    helper_trim(ifp, pe, se, counters, vm["min-length"].as<size_t>() , vm["stranded"].as<bool>(), vm["no-orphans"].as<bool>() );
+                    helper_Primers(ifp, pe, se, counters, vm);
                 }
-                if(vm.count("singleend-input")) { // can have paired-end reads and/or single-end reads
-                    auto read_files = vm["singleend-input"].as<std::vector<std::string> >();
-                    for (auto file : read_files) {
-                        bi::stream<bi::file_descriptor_source> sef{ check_open_r(file), bi::close_handle};
-                        InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(sef);
-                        helper_trim(ifs, pe, se, counters, vm["min-length"].as<size_t>() , vm["stranded"].as<bool>(), vm["no-orphans"].as<bool>() );
-                    }
-                }
-            } else if (vm.count("interleaved-input")) { // can have interleaved paired-end reads and/or single-end reads
+            }
+            if (vm.count("interleaved-input")) {
                 auto read_files = vm["interleaved-input"].as<std::vector<std::string > >();
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> inter{ check_open_r(file), bi::close_handle};
-                    InputReader<PairedEndRead, InterReadImpl> ifp(inter);
-                    helper_trim(ifp, pe, se, counters, vm["min-length"].as<size_t>() , vm["stranded"].as<bool>(), vm["no-orphans"].as<bool>() );
+                    InputReader<PairedEndRead, InterReadImpl> ifi(inter);
+                    helper_Primers(ifi, pe, se, counters, vm);
                 }
-                if(vm.count("singleend-input")) {
-                    auto read_files = vm["singleend-input"].as<std::vector<std::string> >();
-                    for (auto file : read_files) {
-                        bi::stream<bi::file_descriptor_source> sef{ check_open_r(file), bi::close_handle};
-                        InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(sef);
-                        helper_trim(ifs, pe, se, counters, vm["min-length"].as<size_t>() , vm["stranded"].as<bool>(), vm["no-orphans"].as<bool>() );
-                    }
-                }
-            } else if(vm.count("singleend-input")) {
+            }
+            if(vm.count("singleend-input")) {
                 auto read_files = vm["singleend-input"].as<std::vector<std::string> >();
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> sef{ check_open_r(file), bi::close_handle};
                     InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(sef);
-                    helper_trim(ifs, pe, se, counters, vm["min-length"].as<size_t>() , vm["stranded"].as<bool>(), vm["no-orphans"].as<bool>() );
+                    helper_Primers(ifs, pe, se, counters, vm);
                 }
-            } else if(vm.count("tab-input")) {
+            }
+            if(vm.count("tab-input")) {
                 auto read_files = vm["tab-input"].as<std::vector<std::string> > ();
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> tabin{ check_open_r(file), bi::close_handle};
                     InputReader<ReadBase, TabReadImpl> ift(tabin);
-                    helper_trim(ift, pe, se, counters, vm["min-length"].as<size_t>() , vm["stranded"].as<bool>(), vm["no-orphans"].as<bool>() );
+                    helper_Primers(ift, pe, se, counters, vm);
                 }
-            } else if (vm.count("from-stdin")) {
+            }
+            if (!isatty(fileno(stdin))) {
                 bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
-                helper_trim(ift, pe, se, counters, vm["min-length"].as<size_t>() , vm["stranded"].as<bool>(), vm["no-orphans"].as<bool>() );
-            } else {
-              std::cerr << "ERROR: " << "Input file type absent from command line" << std::endl << std::endl;
-              version_or_help(program_name, app_description, cmdline_options, vm, true);
-              exit(ERROR_IN_COMMAND_LINE); //success
+                helper_Primers(ift, pe, se, counters, vm);
             }
             counters.write_out();
         }

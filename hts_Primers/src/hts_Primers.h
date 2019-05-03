@@ -197,7 +197,7 @@ void check_read_se(SingleEndRead &se ) {
  * The idea is ...
  * */
 template <class T, class Impl>
-void helper_Primer(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, PrimerCounters &counter, std::string adapter = "") {
+void helper_Primer(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, PrimerCounters &counter, po::variables_map vm) {
 
     while(reader.has_next()) {
         auto i = reader.next();
