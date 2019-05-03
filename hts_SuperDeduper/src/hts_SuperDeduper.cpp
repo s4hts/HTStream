@@ -80,7 +80,6 @@ int main(int argc, char** argv)
             std::string statsFile(vm["stats-file"].as<std::string>());
             SuperDeduperCounters counters(statsFile, vm["force"].as<bool>(), vm["append-stats-file"].as<bool>(), program_name, vm["notes"].as<std::string>());
 
-            // there are any problems
             if(vm.count("read1-input")) {
                 if (!vm.count("read2-input")) {
                     throw std::runtime_error("must specify both read1 and read2 input files.");
@@ -93,41 +92,27 @@ int main(int argc, char** argv)
                 for(size_t i = 0; i < read1_files.size(); ++i) {
                     bi::stream<bi::file_descriptor_source> is1{check_open_r(read1_files[i]), bi::close_handle};
                     bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
-
                     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
-                    load_map(ifp, counters, read_map, pe, se,vm["avg-qual-score"].as<double>(), vm["inform-avg-qual-score"].as<double>(), vm["start"].as<size_t>() - 1, vm["length"].as<size_t>(), vm["log_freq"].as<size_t>() );
+                    load_map(ifp, counters, read_map, pe, se, vm["avg-qual-score"].as<double>(), vm["inform-avg-qual-score"].as<double>(), vm["start"].as<size_t>() - 1, vm["length"].as<size_t>(), vm["log_freq"].as<size_t>() );
                 }
-                if(vm.count("singleend-input")) { // can have paired-end reads and/or single-end reads
-                    auto read_files = vm["singleend-input"].as<std::vector<std::string> >();
-                    for (auto file : read_files) {
-                        bi::stream<bi::file_descriptor_source> ser{ check_open_r(file), bi::close_handle};
-                        InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(ser);
-                        load_map(ifs, counters, read_map, pe, se,vm["avg-qual-score"].as<double>(), vm["inform-avg-qual-score"].as<double>(), vm["start"].as<size_t>() - 1, vm["length"].as<size_t>(), vm["log_freq"].as<size_t>() );
-                    }
-                }
-            } else if (vm.count("interleaved-input")) {
+            }
+            if (vm.count("interleaved-input")) {
                 auto read_files = vm["interleaved-input"].as<std::vector<std::string > >();
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> inter{ check_open_r(file), bi::close_handle};
-                    InputReader<PairedEndRead, InterReadImpl> ifp(inter);
-                    load_map(ifp, counters, read_map, pe, se,vm["avg-qual-score"].as<double>(),  vm["inform-avg-qual-score"].as<double>(), vm["start"].as<size_t>() - 1, vm["length"].as<size_t>(), vm["log_freq"].as<size_t>() );
+                    InputReader<PairedEndRead, InterReadImpl> ifi(inter);
+                    load_map(ifi, counters, read_map, pe, se, vm["avg-qual-score"].as<double>(), vm["inform-avg-qual-score"].as<double>(), vm["start"].as<size_t>() - 1, vm["length"].as<size_t>(), vm["log_freq"].as<size_t>() );
                 }
-                if(vm.count("singleend-input")) { // can have interleaved paired-end reads and/or single-end reads
-                    auto read_files = vm["singleend-input"].as<std::vector<std::string> >();
-                    for (auto file : read_files) {
-                        bi::stream<bi::file_descriptor_source> ser{ check_open_r(file), bi::close_handle};
-                        InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(ser);
-                        load_map(ifs, counters, read_map, pe, se,vm["avg-qual-score"].as<double>(), vm["inform-avg-qual-score"].as<double>(), vm["start"].as<size_t>() - 1, vm["length"].as<size_t>(), vm["log_freq"].as<size_t>() );
-                    }
-                }
-            } else if(vm.count("singleend-input")) {
+            }
+            if(vm.count("singleend-input")) {
                 auto read_files = vm["singleend-input"].as<std::vector<std::string> >();
                 for (auto file : read_files) {
-                    bi::stream<bi::file_descriptor_source> ser{ check_open_r(file), bi::close_handle};
-                    InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(ser);
-                    load_map(ifs, counters, read_map, pe, se,vm["avg-qual-score"].as<double>(), vm["inform-avg-qual-score"].as<double>(), vm["start"].as<size_t>() - 1, vm["length"].as<size_t>(), vm["log_freq"].as<size_t>() );
+                    bi::stream<bi::file_descriptor_source> sef{ check_open_r(file), bi::close_handle};
+                    InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(sef);
+                    load_map(ifs, counters, read_map, pe, se, vm["avg-qual-score"].as<double>(), vm["inform-avg-qual-score"].as<double>(), vm["start"].as<size_t>() - 1, vm["length"].as<size_t>(), vm["log_freq"].as<size_t>() );
                 }
-            } else if(vm.count("tab-input")) {
+            }
+            if(vm.count("tab-input")) {
                 auto read_files = vm["tab-input"].as<std::vector<std::string> > ();
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> tabin{ check_open_r(file), bi::close_handle};
@@ -135,7 +120,6 @@ int main(int argc, char** argv)
                     load_map(ift, counters, read_map, pe, se,vm["avg-qual-score"].as<double>(),  vm["inform-avg-qual-score"].as<double>(),  vm["start"].as<size_t>() - 1, vm["length"].as<size_t>(), vm["log_freq"].as<size_t>() );
                 }
             }
-
             if (vm.count("interleaved-input")) {
                 auto read_files = vm["interleaved-input"].as<std::vector<std::string > >();
                 for (auto file : read_files) {
@@ -144,7 +128,6 @@ int main(int argc, char** argv)
                     load_map(ifp, counters, read_map, pe, se,vm["avg-qual-score"].as<double>(),  vm["inform-avg-qual-score"].as<double>(), vm["start"].as<size_t>() - 1, vm["length"].as<size_t>(), vm["log_freq"].as<size_t>() );
                 }
             }
-
             if (!isatty(fileno(stdin))) {
                 bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
