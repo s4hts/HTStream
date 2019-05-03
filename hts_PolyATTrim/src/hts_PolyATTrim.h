@@ -117,27 +117,7 @@ void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe,
               if (!no_pA) r2fA = trim_left(per->non_const_read_two(), 'A', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
               if (!no_pT && !r2fA) r2fT = trim_left(per->non_const_read_two(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
             }
-            // polyAT must be on one of the two fragment ends (when PE), don't bother checking middle if not
-            if (r1fA || r1fT || r2fA || r2fT ){
-              if (r2fT){
-                r1rA = trim_right(per->non_const_read_one(), 'A', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
-                // maybe add new r2.setRCut to no seq, if r2 5' end and r1 3' end then r2 3' end MUST also be polyAT ie r2 is nothing but polyAT
-                per->non_const_read_two().setRCut(0);
-              } else if (r2fA){
-                r1rT = trim_right(per->non_const_read_one(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
-                // maybe add new r2.setRCut to no seq, if r2 5' end and r1 3' end then r2 3' end MUST also be polyAT ie r2 is nothing but polyAT
-                per->non_const_read_two().setRCut(0);
-              }
-              if (r1fT){
-                r2rA = trim_right(per->non_const_read_two(), 'A', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
-                // add new r1.setRCut to no seq, if r1 5' end and r2 3' end then r1 3' end MUST also be polyAT ie r1 is nothing but polyAT
-                per->non_const_read_one().setRCut(0);
-              } else if (r1fA){
-                r2rT = trim_right(per->non_const_read_two(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
-                // add new r1.setRCut to no seq, if r1 5' end and r2 3' end then r1 3' end MUST also be polyAT ie r1 is nothing but polyAT
-                per->non_const_read_one().setRCut(0);
-              }
-            }
+            // polyAT must be on one of the two fragment ends (when PE), don't bother checking read ends, reads should be overlapped otherwise.
             per->checkDiscarded(min_length);
             writer_helper(per, pe, se, stranded, no_orphans);
             counters.output(*per, no_orphans);
