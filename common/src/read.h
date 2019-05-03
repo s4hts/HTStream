@@ -59,7 +59,11 @@ private:
     size_t minLength;
 public:
     Read(const std::string& seq_, const std::string& qual_, const std::string& id_) :
+<<<<<<< HEAD
         seq(seq_), qual(qual_), id(id_), length(seq_.length()), cut_R(seq_.length()), cut_L(0), discard(false), minLength(1) { }
+=======
+        seq(seq_), qual(qual_), id(id_), length(seq_.length()), cut_R(seq_.length()), cut_L(0), discard(false), minLength(1) { std::replace( id.begin(), id.end(), '\t', ' '); }
+>>>>>>> input_output_fix
     Read() : seq(""), qual(""), id(""), length(0), cut_R(seq.length()), cut_L(0), discard(false), minLength(1) { }
     Read subread(size_t _start, size_t _length);
     std::string subseq(size_t _start, size_t _length);

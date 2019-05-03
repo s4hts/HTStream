@@ -1,0 +1,86 @@
+
+/* input/options parameter characters used
+
+  read1-input                 1   Input           All
+  read2-input                 2   Input           All
+
+A
+  r1-cut-left                 a                   CutTrim
+  adapter-sequence            a                   AdapterTrimmer
+  inform-avg-qual-score       a                   SuperDeduper
+  append-stats-file           A   Standard        All
+B
+  r1-cut-right                b                   CutTrim
+C
+  r2-cut-left                 c                   CutTrim
+  check-lengths               c   Overlapping     AdapterTrimmer,Overlapper
+  check-read-2                C                   SeqScreener
+D
+  r2-cut-right                d                   CutTrim
+E
+  max-mismatch-errorDensity   e   Overlapping     AdapterTrimmer,Overlapper
+  log_freq                    e                   SuperDeduper
+F
+  fastq-output                f   Output          All
+  force                       F   Output          All
+G
+  gzip-output                 g   Output          All <-- DEPRECATED
+H
+  help                        h   Standard        All
+I
+  interleaved-input           I   Input           All
+  interleaved-output          i   Output          All
+J
+K
+  kmer                        k   Overlapping     AdapterTrimmer,Overlapper
+  kmer                        k                   SeqScreener
+L
+  no-left                     l   Trim            PolyATTrim, QWindowTrim
+  length                      l                   SuperDeduper
+  stats-file                  L   Standard        All
+M
+  min-length                  m   Cutting         AdapterTrimmer, CutTrim, NTrimmer, Overlapper, PolyATTrim, QWindowTrim
+  min-trim                    M                   PolyATtrim
+  max-length                  M                   CutTrim
+N
+  no-orphans                  n   Cutting         AdapterTrimmer, CutTrim, NTrimmer, Overlapper, PolyATTrim, QWindowTrim
+  inverse                     n                   SeqScreener
+  notes                       N   Standard        All
+O
+  qual-offset                 o                   QWindowTrim
+  min-overlap                 o   Overlapping     AdapterTrimmer,Overlapper
+  to-stdout                   O   Output          All <-- DEPRECATED
+P
+  prefix                      p   Output          All <-- DEPRECATED
+Q
+  avg-qual-score              q                   QWindowTrim
+  avg-qual-score              q                   SuperDeduper
+R
+  no-right                    r   Trim            PolyATTrim, QWindowTrim
+  kmer-offset                 r   Overlapping     AdapterTrimmer,Overlapper
+  record                      r                   SeqScreener
+S
+  stranded                    s   Cutting         AdapterTrimmer, CutTrim, NTrimmer, Overlapper, PolyATTrim, QWindowTrim
+  seq                         s                   SeqScreener
+  start                       s                   SuperDeduper
+  from-stdin                  S   Output          All <-- DEPRECATED
+T
+  tab-output                  t   Output          All
+  tab-input                   T   Input           All
+U
+  uncompressed                u   Output          All
+  singleend-input             U   Input           All
+V
+  version                     v   Standard        All
+W
+  window-size                 w                   QWindowTrim
+X
+  max-mismatch                x   Overlapping     AdapterTrimmer,Overlapper
+  max-mismatch                x                   PolyATTrim
+  percentage-hits             x                   SeqScreener
+  no-fixbases                 X                   AdapterTrimmer
+Y
+Z
+  unmapped-output               z   Output          All
+
+*/

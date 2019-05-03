@@ -10,21 +10,21 @@ class SDTest : public ::testing::Test {
 };
 
 TEST_F(SDTest, HashMapLoadTest) {
-    
+
     std::istringstream in1(readData);
     std::istringstream in2(readData);
     size_t start = 5;
     size_t length = 5;
     double avg_auto_write = 100;
     BitMap read_map;
-    SuperDeduperCounters counter("/dev/null", false, "hts_SuperDeduper", "");
-  
+    SuperDeduperCounters counter("/dev/null", true, false, "hts_SuperDeduper", "");
+
     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(in1, in2);
     std::shared_ptr<std::ostringstream> out1(new std::ostringstream);
     std::shared_ptr<HtsOfstream> hts_of(new HtsOfstream(out1));
-    std::shared_ptr<OutputWriter> tab(new ReadBaseOutTab(hts_of));  
-   
-    
+    std::shared_ptr<OutputWriter> tab(new ReadBaseOutTab(hts_of));
+
+
     load_map(ifp, counter, read_map, tab, tab, avg_auto_write, 3, start, length, 100);
     std::cout << read_map.size() << '\n';
     ASSERT_EQ(read_map.size(), 1);
@@ -32,6 +32,5 @@ TEST_F(SDTest, HashMapLoadTest) {
     ASSERT_EQ(counter.Duplicate, 2);
     ASSERT_EQ(counter.Ignored, 1);
 
-    
-};
 
+};

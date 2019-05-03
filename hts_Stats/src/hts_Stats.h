@@ -39,7 +39,7 @@ public:
     uint64_t R2_BpLen = 0;
     uint64_t R2_bQ30 = 0;
 
-    StatsCounters(const std::string &statsFile, bool appendStats, const std::string &program_name, const std::string &notes) : Counters::Counters(statsFile, appendStats, program_name, notes) {
+    StatsCounters(const std::string &statsFile, bool force, bool appendStats, const std::string &program_name, const std::string &notes) : Counters::Counters(statsFile, force, appendStats, program_name, notes) {
         R1_Length.resize(1);
         R2_Length.resize(1);
         SE_Length.resize(1);
@@ -83,7 +83,7 @@ public:
             }
         }
     }
- 
+
     using Counters::output;
     void output(PairedEndRead &per) {
         Counters::output(per);
@@ -112,7 +112,7 @@ public:
         }
         ++R2_Length[two.getLength()];
     }
-    
+
     void output(SingleEndRead &ser) {
         Counters::output(ser);
         Read &one = ser.non_const_read_one();
@@ -161,16 +161,16 @@ public:
         write_sublabels("Single_end", se);
         write_sublabels("Paired_end", pe);
 
-        finalize_json();        
+        finalize_json();
     }
- 
+
 };
 
 template <class T, class Impl>
 void helper_stats(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, StatsCounters& counters) {
     while(reader.has_next()) {
         auto i = reader.next();
-        PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());        
+        PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
         if (per) {
             counters.input(*per);
             counters.output(*per);

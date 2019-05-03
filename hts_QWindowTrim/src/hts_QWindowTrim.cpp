@@ -35,7 +35,7 @@ int main(int argc, char** argv)
     std::string app_description =
                        "hts_QWindowTrim uses a sliding window approach to remove low quality\n";
     app_description += "  bases (5' or 3') from a read. A window will slide from each end of the\n";
-    app_description += "  read, moving inwards. Once the window reaches an average quality <avg-qual>\n";
+    app_description += "  read, moving inwards. Once the window reaches an average quality <avg-qual-score>\n";
     app_description += "  it will stop trimming.";
 
     try
@@ -47,10 +47,10 @@ int main(int argc, char** argv)
             // version|v ; help|h ; notes|N ; stats-file|L ; append-stats-file|A
         po::options_description input = setInputOptions();
             // read1-input|1 ; read2-input|2 ; singleend-input|U
-            // tab-input|T ; interleaved-input|I ; from-stdin|S
+            // tab-input|T ; interleaved-input|I
         po::options_description output = setOutputOptions(program_name);
-            // force|F ; prefix|p ; gzip-output,g ; fastq-output|f
-            // tab-output|t ; interleaved-output|i ; unmapped-output|u ; to-stdout,O
+          // force|F ; uncompressed|u ; fastq-output|f
+          // tab-output|t ; interleaved-output|i ; unmapped-output|z
 
         po::options_description desc("Application Specific Options");
 
@@ -61,7 +61,7 @@ int main(int argc, char** argv)
 
         desc.add_options()
             ("window-size,w", po::value<size_t>()->default_value(10)->notifier(boost::bind(&check_range<size_t>, "window-size", _1, 1, 10000)),    "Window size in which to trim (min 1, max 10000)")
-            ("avg-qual,q", po::value<size_t>()->default_value(20)->notifier(boost::bind(&check_range<size_t>, "avg-qual", _1, 1, 10000)),    "Threshold for quality score average in the window (min 1, max 10000)")
+            ("avg-qual-score,q", po::value<size_t>()->default_value(20)->notifier(boost::bind(&check_range<size_t>, "avg-qual-score", _1, 1, 10000)),    "Threshold for quality score average in the window (min 1, max 10000)")
             ("qual-offset,o", po::value<size_t>()->default_value(33)->notifier(boost::bind(&check_range<size_t>, "qual-offset", _1, 1, 10000)), "Quality offset for ascii q-score (default is 33) (min 1, max 10000)");
 
         po::options_description cmdline_options;
@@ -71,26 +71,22 @@ int main(int argc, char** argv)
 
         try
         {
-            po::store(po::parse_command_line(argc, argv, cmdline_options),
-                      vm); // can throw
+            po::store(po::parse_command_line(argc, argv, cmdline_options), vm); // can throw
 
+            /** --help option
+            */
             version_or_help(program_name, app_description, cmdline_options, vm);
-
             po::notify(vm); // throws on error, so do after help in case
-
-
-            size_t qual_threshold = vm["avg-qual"].as<size_t>() + vm["qual-offset"].as<size_t>() ;
-
-            std::string statsFile(vm["stats-file"].as<std::string>());
-            std::string prefix(vm["prefix"].as<std::string>());
 
             std::shared_ptr<OutputWriter> pe = nullptr;
             std::shared_ptr<OutputWriter> se = nullptr;
+            outputWriters(pe, se, vm);
 
-            TrimmingCounters counters(statsFile, vm["append-stats-file"].as<bool>(), program_name, vm["notes"].as<std::string>());
+            std::string statsFile(vm["stats-file"].as<std::string>());
+            TrimmingCounters counters(statsFile, vm["force"].as<bool>(), vm["append-stats-file"].as<bool>(), program_name, vm["notes"].as<std::string>());
 
-            outputWriters(pe, se, vm["fastq-output"].as<bool>(), vm["tab-output"].as<bool>(), vm["interleaved-output"].as<bool>(), vm["unmapped-output"].as<bool>(), vm["force"].as<bool>(), vm["gzip-output"].as<bool>(), vm["to-stdout"].as<bool>(), prefix );
-            // there are any problems
+            size_t qual_threshold = vm["avg-qual-score"].as<size_t>() + vm["qual-offset"].as<size_t>() ;
+
             if(vm.count("read1-input")) {
                 if (!vm.count("read2-input")) {
                     throw std::runtime_error("must specify both read1 and read2 input files.");
@@ -103,55 +99,38 @@ int main(int argc, char** argv)
                 for(size_t i = 0; i < read1_files.size(); ++i) {
                     bi::stream<bi::file_descriptor_source> is1{check_open_r(read1_files[i]), bi::close_handle};
                     bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
-
                     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
                     helper_trim(ifp, pe, se, counters, vm["min-length"].as<size_t>() , vm["stranded"].as<bool>(), vm["no-orphans"].as<bool>(), qual_threshold, vm["window-size"].as<size_t>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>() );
                 }
-                if(vm.count("singleend-input")) { // can have paired-end reads and/or single-end reads
-                    auto read_files = vm["singleend-input"].as<std::vector<std::string> >();
-                    for (auto file : read_files) {
-                        bi::stream<bi::file_descriptor_source> sef{ check_open_r(file), bi::close_handle};
-                        InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(sef);
-                        helper_trim(ifs, pe, se, counters, vm["min-length"].as<size_t>() , vm["stranded"].as<bool>(), vm["no-orphans"].as<bool>(), qual_threshold, vm["window-size"].as<size_t>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>() );
-                    }
-                }
-            } else if (vm.count("interleaved-input")) { // can have interleaved paired-end reads and/or single-end reads
+            }
+            if (vm.count("interleaved-input")) {
                 auto read_files = vm["interleaved-input"].as<std::vector<std::string > >();
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> inter{ check_open_r(file), bi::close_handle};
-                    InputReader<PairedEndRead, InterReadImpl> ifp(inter);
-                    helper_trim(ifp, pe, se, counters, vm["min-length"].as<size_t>() , vm["stranded"].as<bool>(), vm["no-orphans"].as<bool>(), qual_threshold, vm["window-size"].as<size_t>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>() );
+                    InputReader<PairedEndRead, InterReadImpl> ifi(inter);
+                    helper_trim(ifi, pe, se, counters, vm["min-length"].as<size_t>() , vm["stranded"].as<bool>(), vm["no-orphans"].as<bool>(), qual_threshold, vm["window-size"].as<size_t>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>() );
                 }
-                if(vm.count("singleend-input")) {
-                    auto read_files = vm["singleend-input"].as<std::vector<std::string> >();
-                    for (auto file : read_files) {
-                        bi::stream<bi::file_descriptor_source> sef{ check_open_r(file), bi::close_handle};
-                        InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(sef);
-                        helper_trim(ifs, pe, se, counters, vm["min-length"].as<size_t>() , vm["stranded"].as<bool>(), vm["no-orphans"].as<bool>(), qual_threshold, vm["window-size"].as<size_t>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>() );
-                    }
-                }
-            } else if(vm.count("singleend-input")) {
+            }
+            if(vm.count("singleend-input")) {
                 auto read_files = vm["singleend-input"].as<std::vector<std::string> >();
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> sef{ check_open_r(file), bi::close_handle};
                     InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(sef);
                     helper_trim(ifs, pe, se, counters, vm["min-length"].as<size_t>() , vm["stranded"].as<bool>(), vm["no-orphans"].as<bool>(), qual_threshold, vm["window-size"].as<size_t>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>() );
                 }
-            } else if(vm.count("tab-input")) {
+            }
+            if(vm.count("tab-input")) {
                 auto read_files = vm["tab-input"].as<std::vector<std::string> > ();
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> tabin{ check_open_r(file), bi::close_handle};
                     InputReader<ReadBase, TabReadImpl> ift(tabin);
                     helper_trim(ift, pe, se, counters, vm["min-length"].as<size_t>() , vm["stranded"].as<bool>(), vm["no-orphans"].as<bool>(), qual_threshold, vm["window-size"].as<size_t>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>() );
                 }
-            } else if (vm.count("from-stdin")) {
+            }
+            if (!isatty(fileno(stdin))) {
                 bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
                 helper_trim(ift, pe, se, counters, vm["min-length"].as<size_t>() , vm["stranded"].as<bool>(), vm["no-orphans"].as<bool>(), qual_threshold, vm["window-size"].as<size_t>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>() );
-            } else {
-              std::cerr << "ERROR: " << "Input file type absent from command line" << std::endl << std::endl;
-              version_or_help(program_name, app_description, cmdline_options, vm, true);
-              exit(ERROR_IN_COMMAND_LINE); //success
             }
             counters.write_out();
         }

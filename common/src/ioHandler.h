@@ -209,7 +209,7 @@ class PairedEndReadOutFastq : public OutputWriter {
 public:
     PairedEndReadOutFastq(std::shared_ptr<HtsOfstream> &out1_, std::shared_ptr<HtsOfstream> &out2_) : out1(out1_), out2(out2_) { }
     ~PairedEndReadOutFastq() { out1->flush(); out2->flush(); }
-    void write(const PairedEndRead &read) { format_writer(read.get_read_one(), read.get_read_two());  }
+    void write(const PairedEndRead &read) { format_writer(read.get_read_one(), read.get_read_two()); }
     void write(const ReadBase &read) {
         const PairedEndRead *per = dynamic_cast<const PairedEndRead*>(&read);
         if (per) {
@@ -218,12 +218,9 @@ public:
             throw std::runtime_error("SingleEndRead passed in PairedEndReadOutFastq::write");
         }
     }
-
-
 protected:
     std::shared_ptr<HtsOfstream> out1 = nullptr;
     std::shared_ptr<HtsOfstream> out2 = nullptr;
-
     void format_writer(const Read &read1, const Read &read2) {
         *out1 << "@" << read1.get_id() << '\n' << read1.get_sub_seq() << "\n+\n" << read1.get_sub_qual() << '\n';
         *out2 << "@" << read2.get_id() << '\n' << read2.get_sub_seq() << "\n+\n" << read2.get_sub_qual() << '\n';
@@ -280,9 +277,9 @@ protected:
      *
      * id = id
      * bitwas flag
-     * SE - 68
-     * PE R1 - 69
-     * PE R2 - 133
+     * SE - 4
+     * PE R1 - 77
+     * PE R2 - 141
      * RNAME - *
      * POS - 0
      * MAPQ - 255
