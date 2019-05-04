@@ -1,4 +1,4 @@
-edit_distance#ifndef PRIMERS_H
+#ifndef PRIMERS_H
 #define PRIMERS_H
 //  this is so we can implment hash function for dynamic_bitset
 #define BOOST_DYNAMIC_BITSET_DONT_USE_FRIENDS
@@ -112,92 +112,11 @@ size_t dist(size_t x, size_t y) {
 }
 
 
-/*This is a O(N) time algorithm
- * it will search for the longest base pair segment that has
- * no N's within it*/
-void trim_n(Read &rb) {
-
-    std::string seq = rb.get_seq();
-    size_t bestLeft = 0, currentLeft = 0, bestRight = 0;
-    size_t i = 0;
-
-    for (std::string::iterator it = seq.begin(); it != seq.end(); ++it) {
-        i = static_cast<size_t>(it - seq.begin() );
-
-        if (*it == 'N') {
-            currentLeft = i + 1;
-        } else if (dist(bestLeft, bestRight) < dist(currentLeft, i)) {
-            bestRight = i;
-            bestLeft = currentLeft;
-        }
-    }
-    rb.setLCut(bestLeft);
-    rb.setRCut(bestRight+1);
-}
-
-unsigned int checkIfAdapter(Read &r1, Read &adapter, size_t loc1, size_t loc2, const double misDensity, const size_t &mismatch, const size_t &minOverlap ) {
-    size_t minLoc = std::min(loc1, loc2);
-    int loc1_t = loc1 - minLoc;
-    int loc2_t = loc2 - minLoc;
-    int r1_len = r1.getLength();
-    int adapter_len = adapter.getLength();
-
-    size_t maxLoop = std::min(r1_len - loc1_t, adapter_len - loc2_t);
-    size_t maxMis = std::min(mismatch, static_cast<size_t>(maxLoop * misDensity));
-
-    const std::string &seq1 = r1.get_seq();
-    const std::string &seq_adapter = adapter.get_seq();
-
-    auto i1 = seq1.begin();
-    std::advance(i1, loc1_t);
-    auto i2 = seq_adapter.begin();
-    std::advance(i2, loc2_t);
-    if (maxLoop < minOverlap || !threshold_mismatches(i1, i2, maxLoop, maxMis) ) {
-        // no overlap identified
-        return 0;
-    }
-    // overlap exists thats meet maxMis criteria
-    r1.setRCut(loc1_t);
-
-    return 1;
-}
-
-void check_read_se(SingleEndRead &se ) {
-
-    Read &r1 = se.non_const_read_one();
-    /* if adapter is longer than sequence, set length to same as seq */
-    if (adapter_seq.length() < r1.getLength()){
-        adapter_seq = adapter_seq.substr(0, r1.getLength());
-    }
-
-    Read adapter = Read(adapter_seq, "", "");
-
-   /* checkL needs to be as long as or longer than the shortest read */
-    size_t checkL = std::min(adapter.getLength(), checkLengths);
-    /* kmer needs to be as long as or longer than the shortest read */
-    size_t kkmer = std::min(adapter.getLength(), kmer);
-    /* Create a map with non-overlapping kmers*/
-    seqLookup mOne = readOneMap(r1.get_seq(), kkmer, kmerOffset);
-
-    /*Do a quick check if the shorter read kmer shows up in longer read (read 2)
-     * If it does, then try the brute force approach*/
-    for (size_t bp = 0; bp < (checkLengths - kmer); ++bp) {
-        // check first checkLength kmers at the beginning of read2 (sins)
-        auto test = mOne.equal_range(adapter_seq.substr(bp, kmer));
-        for (auto it = test.first; it != test.second; ++it) {
-            unsigned int overlapped = checkIfAdapter(r1, adapter, it->second, bp, misDensity, mismatch, minOver);
-            if (overlapped) {
-                return;
-            }
-        }
-    }
-}
-
 /* This is the helper class for Primer
  * The idea is ...
  * */
 template <class T, class Impl>
-void helper_Primer(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, PrimerCounters &counter, po::variables_map vm) {
+void helper_Primers(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, PrimerCounters &counter, po::variables_map vm) {
 
     while(reader.has_next()) {
         auto i = reader.next();

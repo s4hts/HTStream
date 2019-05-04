@@ -54,7 +54,9 @@ int main(int argc, char** argv)
         po::options_description desc("Application Specific Options");
 
         desc.add_options()
-            ("primer_file,P", po::value<std::string>(), "file with primers");
+            ("primers_5p,P", po::value<std::string>(), "5' primers, comma separated list, or fasta file");
+        desc.add_options()
+            ("primers_3p,Q", po::value<std::string>(), "3' primers, comma separated list, or fasta file");
         desc.add_options()
             ("primer_mismatches,m", po::value<size_t>()->default_value(4)->notifier(boost::bind(&check_range<size_t>, "primer_mismatches", _1, 0, 10000)), "Max hamming dist from primer (min 0, max 10000)");
         desc.add_options()
