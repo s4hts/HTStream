@@ -163,7 +163,7 @@ Read InputFasta::load_read(std::istream *input) {
     while(input->good() and (input->peek() == '\n' || input->peek() == '\r')) {
         input->get();
     }
-    return Read(seq, "", id);
+    return Read(seq, "", id.substr(1));
 
 }
 

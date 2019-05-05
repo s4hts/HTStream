@@ -15,6 +15,7 @@ public:
     const std::string readTabData = "TESTOne\tACTG\t####\tTESTOne\tACTG\t####\nTestTwo\tACTG\t####\n";
     const std::string readDataInter = "@Whatever1\nAAAAAAA\n+\n#######\n@Whatever2\nGGGCCCT\n+\nBBBBBBB\n";
     const std::string fastaFile = ">1\nTACCCACACA\nTTTTACACACAACAC\n>2\nACGATGACA\n";
+    const std::string fastaString = "TACCCACACA,TTTTACACACAACAC,ACGATGACA";
 };
 
 TEST_F(ReadsTest, fasta_to_read) {
@@ -134,4 +135,17 @@ TEST_F(ReadsTest, testInterWrite) {
     }
 
     ASSERT_EQ(readDataInter, out1->str());
+}
+
+TEST_F(ReadsTest, testString2Fasta) {
+
+    std::istringstream fa_to_read(string2fasta(fastaString));
+    InputReader<SingleEndRead, FastaReadImpl> faReader(fa_to_read);
+
+    auto a = faReader.next();
+    auto b = faReader.next();
+    Read readSeq = b->get_read();
+
+    ASSERT_EQ("TTTTACACACAACAC", readSeq.get_seq());
+    ASSERT_EQ("seq2", readSeq.get_id());
 }
