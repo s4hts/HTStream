@@ -43,7 +43,7 @@ void  __attribute__ ((noreturn)) throw_error(const std::string& filename) {
 /*
 takes a delimited string and converts to fasta format for reading in
 */
-std::string string2fasta(const std::string& seqstring, const char delim=',') {
+std::string string2fasta(std::string seqstring, const char delim) {
   std::string newfa;
   int index=1;
   std::stringstream ss( seqstring );

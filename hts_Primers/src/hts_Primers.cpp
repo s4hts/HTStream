@@ -98,9 +98,9 @@ int main(int argc, char** argv)
                   bi::stream <bi::file_descriptor_source> fa_to_read5{check_open_r(primers5), bi::close_handle};
                 } else {
                   // comma seperated
-                  //std::istringstream fa_to_read5(string2fasta(primers5));
+                  std::istringstream fa_to_read5(string2fasta(primers5));
+                  InputReader<SingleEndRead, FastaReadImpl> fp5(fa_to_read5);
                 }
-                  //InputReader<SingleEndRead, FastaReadImpl> fp5(fa_to_read5);
             } else {
               //InputReader<SingleEndRead, FastaReadImpl> fp5 = nullptr;
             }
@@ -112,11 +112,12 @@ int main(int argc, char** argv)
                 if (bf::exists(p3)) {
                   // fastq file
                   bi::stream <bi::file_descriptor_source> fa_to_read3{check_open_r(primers3), bi::close_handle};
+                  InputReader<SingleEndRead, FastaReadImpl> fp3(fa_to_read3);
                 } else {
                   // comma seperated
-                  //std::istringstream fa_to_read3(string2fasta(primers3));
+                  std::istringstream fa_to_read3(string2fasta(primers3));
+                  InputReader<SingleEndRead, FastaReadImpl> fp3(fa_to_read3);
                 }
-                  //InputReader<SingleEndRead, FastaReadImpl> fp3(fa_to_read3);
             } else {
               //InputReader<SingleEndRead, FastaReadImpl> fp3(nullptr);
             }
