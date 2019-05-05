@@ -16,7 +16,7 @@
 #include <unordered_map>
 #include <boost/functional/hash.hpp>
 
-#include "hts_PRIMERS.h"
+#include "hts_Primers.h"
 
 namespace
 {
@@ -26,6 +26,7 @@ namespace
 
 } // namespace
 
+namespace bf = boost::filesystem;
 namespace bi = boost::iostreams;
 
 int main(int argc, char** argv)
@@ -87,6 +88,38 @@ int main(int argc, char** argv)
 
             std::string statsFile(vm["stats-file"].as<std::string>());
             PrimerCounters counters(statsFile, vm["force"].as<bool>(), vm["append-stats-file"].as<bool>(), program_name, vm["notes"].as<std::string>());
+
+            std::string primers5;
+            if (vm.count("primers_5p")) {
+                primers5 = vm["primers_5p"].as<std::string>();
+                bf::path p5(primers5);
+                if (bf::exists(p5)) {
+                  // fastq file
+                  bi::stream <bi::file_descriptor_source> fa_to_read5{check_open_r(primers5), bi::close_handle};
+                } else {
+                  // comma seperated
+                  //std::istringstream fa_to_read5(string2fasta(primers5));
+                }
+                  //InputReader<SingleEndRead, FastaReadImpl> fp5(fa_to_read5);
+            } else {
+              //InputReader<SingleEndRead, FastaReadImpl> fp5 = nullptr;
+            }
+
+            std::string primers3;
+            if (vm.count("primers_3p")) {
+                primers3 = vm["primers_3p"].as<std::string>();
+                bf::path p3(primers3);
+                if (bf::exists(p3)) {
+                  // fastq file
+                  bi::stream <bi::file_descriptor_source> fa_to_read3{check_open_r(primers3), bi::close_handle};
+                } else {
+                  // comma seperated
+                  //std::istringstream fa_to_read3(string2fasta(primers3));
+                }
+                  //InputReader<SingleEndRead, FastaReadImpl> fp3(fa_to_read3);
+            } else {
+              //InputReader<SingleEndRead, FastaReadImpl> fp3(nullptr);
+            }
 
             if(vm.count("read1-input")) {
                 if (!vm.count("read2-input")) {
