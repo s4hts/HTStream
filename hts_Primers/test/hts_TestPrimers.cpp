@@ -5,17 +5,17 @@
 
 class Primer : public ::testing::Test {
     public:
+        const std::string primer_1 =        "TTCATTAAAAATTGAATTGACATTAACCT";
+        const std::string read_seq_1 = "CGGGTTTCATTAAAAATTGAATTGACATTAACCTATAAAAATAGGCGTCGAGGCCCTTTCGTCTTCTATCGGAGCTCCAAGACCGCCTCGGCGTGAAGGTGGTGATAGCGCCCGGAAGAGAGTCAATTCAGGGTGGTGAATACTCTAGATC";
         const std::string readData_1 = "@Read1\nTTTTTNGAAAAAAAAAGNTTTTT\n+\n#######################\n";
 };
 
-TEST_F(Primer, stub) {
-    std::istringstream in1(readData_1);
-    std::istringstream in2(readData_1);
+TEST_F(Primer, bounded_edit_distance) {
+  ALIGNPOS r;
 
-    InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(in1, in2);
+  r = bounded_edit_distance(primer_1, read_seq_1, 6, 4, 4);
 
-    while(ifp.has_next()) {
-        auto i = ifp.next();
-        PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-    }
+  ASSERT_EQ(0, r.dist);
+  ASSERT_EQ(5, r.spos);
+  ASSERT_EQ(34, r.epos);
 };

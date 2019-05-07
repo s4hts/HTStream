@@ -47,7 +47,7 @@ int main(int argc, char** argv)
             // version|v ; help|h ; notes|N ; stats-file|L ; append-stats-file|A
         po::options_description input = setInputOptions();
             // read1-input|1 ; read2-input|2 ; singleend-input|U
-            // tab-input|T ; interleaved-input|I ; from-stdin|S
+            // tab-input|T ; interleaved-input|I
         po::options_description output = setOutputOptions(program_name);
             // force|F ; prefix|p ; gzip-output,g ; fastq-output|f
             // tab-output|t ; interleaved-output|i ; unmapped-output|u ; to-stdout,O
@@ -59,7 +59,7 @@ int main(int argc, char** argv)
         desc.add_options()
             ("primers_3p,Q", po::value<std::string>(), "3' primers, comma separated list, or fasta file");
         desc.add_options()
-            ("primer_mismatches,m", po::value<size_t>()->default_value(4)->notifier(boost::bind(&check_range<size_t>, "primer_mismatches", _1, 0, 10000)), "Max hamming dist from primer (min 0, max 10000)");
+            ("primer_mismatches,m", po::value<int>()->default_value(4)->notifier(boost::bind(&check_range<size_t>, "primer_mismatches", _1, 0, 10000)), "Max hamming dist from primer (min 0, max 10000)");
         desc.add_options()
             ("primer_end_mismatches,e", po::value<size_t>()->default_value(4)->notifier(boost::bind(&check_range<size_t>, "primer_end_mismatches", _1, 0, 10000)), "Required number of matching bases at end of primer (min 0, max 10000)");
         desc.add_options()
