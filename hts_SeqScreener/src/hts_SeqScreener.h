@@ -110,7 +110,7 @@ std::pair <bool, bool> setBitsChar(char c) {
         case 'G':
             return std::pair<bool, bool> (1, 0);
         default:
-            throw std::runtime_error("Unknown base pair in sequence " + c);
+            throw std::runtime_error(std::string("Unknown base pair in sequence ") + c);
     }
 }
 

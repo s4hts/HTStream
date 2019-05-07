@@ -87,7 +87,6 @@ int main(int argc, char** argv)
 
             size_t qual_threshold = vm["avg-qual-score"].as<size_t>() + vm["qual-offset"].as<size_t>() ;
 
-            // there are any problems
             if(vm.count("read1-input")) {
                 if (!vm.count("read2-input")) {
                     throw std::runtime_error("must specify both read1 and read2 input files.");
@@ -100,41 +99,27 @@ int main(int argc, char** argv)
                 for(size_t i = 0; i < read1_files.size(); ++i) {
                     bi::stream<bi::file_descriptor_source> is1{check_open_r(read1_files[i]), bi::close_handle};
                     bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
-
                     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
                     helper_trim(ifp, pe, se, counters, vm["min-length"].as<size_t>() , vm["stranded"].as<bool>(), vm["no-orphans"].as<bool>(), qual_threshold, vm["window-size"].as<size_t>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>() );
                 }
-                if(vm.count("singleend-input")) { // can have paired-end reads and/or single-end reads
-                    auto read_files = vm["singleend-input"].as<std::vector<std::string> >();
-                    for (auto file : read_files) {
-                        bi::stream<bi::file_descriptor_source> sef{ check_open_r(file), bi::close_handle};
-                        InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(sef);
-                        helper_trim(ifs, pe, se, counters, vm["min-length"].as<size_t>() , vm["stranded"].as<bool>(), vm["no-orphans"].as<bool>(), qual_threshold, vm["window-size"].as<size_t>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>() );
-                    }
-                }
-            } else if (vm.count("interleaved-input")) { // can have interleaved paired-end reads and/or single-end reads
+            }
+            if (vm.count("interleaved-input")) {
                 auto read_files = vm["interleaved-input"].as<std::vector<std::string > >();
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> inter{ check_open_r(file), bi::close_handle};
-                    InputReader<PairedEndRead, InterReadImpl> ifp(inter);
-                    helper_trim(ifp, pe, se, counters, vm["min-length"].as<size_t>() , vm["stranded"].as<bool>(), vm["no-orphans"].as<bool>(), qual_threshold, vm["window-size"].as<size_t>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>() );
+                    InputReader<PairedEndRead, InterReadImpl> ifi(inter);
+                    helper_trim(ifi, pe, se, counters, vm["min-length"].as<size_t>() , vm["stranded"].as<bool>(), vm["no-orphans"].as<bool>(), qual_threshold, vm["window-size"].as<size_t>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>() );
                 }
-                if(vm.count("singleend-input")) {
-                    auto read_files = vm["singleend-input"].as<std::vector<std::string> >();
-                    for (auto file : read_files) {
-                        bi::stream<bi::file_descriptor_source> sef{ check_open_r(file), bi::close_handle};
-                        InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(sef);
-                        helper_trim(ifs, pe, se, counters, vm["min-length"].as<size_t>() , vm["stranded"].as<bool>(), vm["no-orphans"].as<bool>(), qual_threshold, vm["window-size"].as<size_t>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>() );
-                    }
-                }
-            } else if(vm.count("singleend-input")) {
+            }
+            if(vm.count("singleend-input")) {
                 auto read_files = vm["singleend-input"].as<std::vector<std::string> >();
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> sef{ check_open_r(file), bi::close_handle};
                     InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(sef);
                     helper_trim(ifs, pe, se, counters, vm["min-length"].as<size_t>() , vm["stranded"].as<bool>(), vm["no-orphans"].as<bool>(), qual_threshold, vm["window-size"].as<size_t>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>() );
                 }
-            } else if(vm.count("tab-input")) {
+            }
+            if(vm.count("tab-input")) {
                 auto read_files = vm["tab-input"].as<std::vector<std::string> > ();
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> tabin{ check_open_r(file), bi::close_handle};
@@ -142,24 +127,10 @@ int main(int argc, char** argv)
                     helper_trim(ift, pe, se, counters, vm["min-length"].as<size_t>() , vm["stranded"].as<bool>(), vm["no-orphans"].as<bool>(), qual_threshold, vm["window-size"].as<size_t>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>() );
                 }
             }
-
-            if (vm.count("interleaved-input")) {
-                auto read_files = vm["interleaved-input"].as<std::vector<std::string > >();
-                for (auto file : read_files) {
-                    bi::stream<bi::file_descriptor_source> inter{ check_open_r(file), bi::close_handle};
-                    InputReader<PairedEndRead, InterReadImpl> ifp(inter);
-                    helper_trim(ifp, pe, se, counters, vm["min-length"].as<size_t>() , vm["stranded"].as<bool>(), vm["no-orphans"].as<bool>(), qual_threshold, vm["window-size"].as<size_t>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>() );
-                }
-            }
-
             if (!isatty(fileno(stdin))) {
                 bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
                 helper_trim(ift, pe, se, counters, vm["min-length"].as<size_t>() , vm["stranded"].as<bool>(), vm["no-orphans"].as<bool>(), qual_threshold, vm["window-size"].as<size_t>(), vm["no-left"].as<bool>(), vm["no-right"].as<bool>() );
-            } else {
-              std::cerr << "ERROR: " << "Input file type absent from command line" << std::endl << std::endl;
-              version_or_help(program_name, app_description, cmdline_options, vm, true);
-              exit(ERROR_IN_COMMAND_LINE); //success
             }
             counters.write_out();
         }

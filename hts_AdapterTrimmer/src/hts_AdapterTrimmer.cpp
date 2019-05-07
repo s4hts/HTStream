@@ -71,6 +71,7 @@ int main(int argc, char** argv)
         try
         {
             po::store(po::parse_command_line(argc, argv, cmdline_options), vm); // can throw
+
             /** --help option
              */
             version_or_help(program_name, app_description, cmdline_options, vm);
@@ -89,18 +90,32 @@ int main(int argc, char** argv)
                 }
                 auto read1_files = vm["read1-input"].as<std::vector<std::string> >();
                 auto read2_files = vm["read2-input"].as<std::vector<std::string> >();
-
                 if (read1_files.size() != read2_files.size()) {
                     throw std::runtime_error("must have same number of input files for read1 and read2");
                 }
-                InputReader<PairedEndRead, PairedEndReadFastqImpl> ifr(vm["read1-input"].as<std::vector<std::string> >(), vm["read2-input"].as<std::vector<std::string> >());
-                helper_adapterTrimmer(ifr, pe, se, counters, vm["max-mismatch-errorDensity"].as<double>(), vm["max-mismatch"].as<size_t>(), vm["min-overlap"].as<size_t>(), vm["stranded"].as<bool>(), vm["min-length"].as<size_t>(), vm["check-lengths"].as<size_t>(), vm["kmer"].as<size_t>(), vm["kmer-offset"].as<size_t>(), vm["no-orphans"].as<bool>(), vm["no-fixbases"].as<bool>(), vm["adapter-sequence"].as<std::string>() );
+                for(size_t i = 0; i < read1_files.size(); ++i) {
+                    bi::stream<bi::file_descriptor_source> is1{check_open_r(read1_files[i]), bi::close_handle};
+                    bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
+                    InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
+                    helper_adapterTrimmer(ifp, pe, se, counters, vm["max-mismatch-errorDensity"].as<double>(), vm["max-mismatch"].as<size_t>(), vm["min-overlap"].as<size_t>(), vm["stranded"].as<bool>(), vm["min-length"].as<size_t>(), vm["check-lengths"].as<size_t>(), vm["kmer"].as<size_t>(), vm["kmer-offset"].as<size_t>(), vm["no-orphans"].as<bool>(), vm["no-fixbases"].as<bool>(), vm["adapter-sequence"].as<std::string>() );
+                }
             }
-            if (vm.count("interleaved-input")) { // interleaved pairs
-                InputReader<PairedEndRead, InterReadImpl> ifr(vm["interleaved-input"].as<std::vector<std::string > >());
-                helper_adapterTrimmer(ifr, pe, se, counters, vm["max-mismatch-errorDensity"].as<double>(), vm["max-mismatch"].as<size_t>(), vm["min-overlap"].as<size_t>(), vm["stranded"].as<bool>(), vm["min-length"].as<size_t>(), vm["check-lengths"].as<size_t>(), vm["kmer"].as<size_t>(), vm["kmer-offset"].as<size_t>(), vm["no-orphans"].as<bool>(), vm["no-fixbases"].as<bool>(), vm["adapter-sequence"].as<std::string>() );
+            if (vm.count("interleaved-input")) {
+                auto read_files = vm["interleaved-input"].as<std::vector<std::string > >();
+                for (auto file : read_files) {
+                    bi::stream<bi::file_descriptor_source> inter{ check_open_r(file), bi::close_handle};
+                    InputReader<PairedEndRead, InterReadImpl> ifi(inter);
+                    helper_adapterTrimmer(ifi, pe, se, counters, vm["max-mismatch-errorDensity"].as<double>(), vm["max-mismatch"].as<size_t>(), vm["min-overlap"].as<size_t>(), vm["stranded"].as<bool>(), vm["min-length"].as<size_t>(), vm["check-lengths"].as<size_t>(), vm["kmer"].as<size_t>(), vm["kmer-offset"].as<size_t>(), vm["no-orphans"].as<bool>(), vm["no-fixbases"].as<bool>(), vm["adapter-sequence"].as<std::string>() );
+                }
             }
-
+            if(vm.count("singleend-input")) {
+                auto read_files = vm["singleend-input"].as<std::vector<std::string> >();
+                for (auto file : read_files) {
+                    bi::stream<bi::file_descriptor_source> sef{ check_open_r(file), bi::close_handle};
+                    InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(sef);
+                    helper_adapterTrimmer(ifs, pe, se, counters, vm["max-mismatch-errorDensity"].as<double>(), vm["max-mismatch"].as<size_t>(), vm["min-overlap"].as<size_t>(), vm["stranded"].as<bool>(), vm["min-length"].as<size_t>(), vm["check-lengths"].as<size_t>(), vm["kmer"].as<size_t>(), vm["kmer-offset"].as<size_t>(), vm["no-orphans"].as<bool>(), vm["no-fixbases"].as<bool>(), vm["adapter-sequence"].as<std::string>() );
+                }
+            }
             if(vm.count("tab-input")) {
                 auto read_files = vm["tab-input"].as<std::vector<std::string> > ();
                 for (auto file : read_files) {
@@ -109,23 +124,11 @@ int main(int argc, char** argv)
                     helper_adapterTrimmer(ift, pe, se, counters, vm["max-mismatch-errorDensity"].as<double>(), vm["max-mismatch"].as<size_t>(), vm["min-overlap"].as<size_t>(), vm["stranded"].as<bool>(), vm["min-length"].as<size_t>(), vm["check-lengths"].as<size_t>(), vm["kmer"].as<size_t>(), vm["kmer-offset"].as<size_t>(), vm["no-orphans"].as<bool>(), vm["no-fixbases"].as<bool>(), vm["adapter-sequence"].as<std::string>() );
                 }
             }
-
-            if (vm.count("interleaved-input")) {
-                auto read_files = vm["interleaved-input"].as<std::vector<std::string > >();
-                for (auto file : read_files) {
-                    bi::stream<bi::file_descriptor_source> inter{ check_open_r(file), bi::close_handle};
-                    InputReader<PairedEndRead, InterReadImpl> ifp(inter);
-                    helper_adapterTrimmer(ifp, pe, se, counters, vm["max-mismatch-errorDensity"].as<double>(), vm["max-mismatch"].as<size_t>(), vm["min-overlap"].as<size_t>(), vm["stranded"].as<bool>(), vm["min-length"].as<size_t>(), vm["check-lengths"].as<size_t>(), vm["kmer"].as<size_t>(), vm["kmer-offset"].as<size_t>(), vm["no-orphans"].as<bool>(), vm["no-fixbases"].as<bool>(), vm["adapter-sequence"].as<std::string>() );
-                }
-            }
-
             if (!isatty(fileno(stdin))) {
                 bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
                 helper_adapterTrimmer(ift, pe, se, counters, vm["max-mismatch-errorDensity"].as<double>(), vm["max-mismatch"].as<size_t>(), vm["min-overlap"].as<size_t>(), vm["stranded"].as<bool>(), vm["min-length"].as<size_t>(), vm["check-lengths"].as<size_t>(), vm["kmer"].as<size_t>(), vm["kmer-offset"].as<size_t>(), vm["no-orphans"].as<bool>(), vm["no-fixbases"].as<bool>(), vm["adapter-sequence"].as<std::string>() );
             }
-            counters.write_out();
-
             counters.write_out();
         }
         catch(po::error& e)
