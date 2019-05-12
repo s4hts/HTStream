@@ -55,9 +55,9 @@ int main(int argc, char** argv)
         po::options_description desc("Application Specific Options");
 
         desc.add_options()
-            ("primers_5p,P", po::value<std::string>(), "5' primers, comma separated list, or fasta file");
+            ("primers_5p,P", po::value<std::string>(), "5' primers, comma separated list of sequences, or fasta file");
         desc.add_options()
-            ("primers_3p,Q", po::value<std::string>(), "3' primers, comma separated list, or fasta file");
+            ("primers_3p,Q", po::value<std::string>(), "3' primers, comma separated list of sequences, or fasta file");
         desc.add_options()
             ("primer_mismatches,m", po::value<int>()->default_value(4)->notifier(boost::bind(&check_range<size_t>, "primer_mismatches", _1, 0, 10000)), "Max hamming dist from primer (min 0, max 10000)");
         desc.add_options()
@@ -89,37 +89,14 @@ int main(int argc, char** argv)
             std::string statsFile(vm["stats-file"].as<std::string>());
             PrimerCounters counters(statsFile, vm["force"].as<bool>(), vm["append-stats-file"].as<bool>(), program_name, vm["notes"].as<std::string>());
 
-            std::string primers5;
+            SeqMap p5_primer_sequence;
             if (vm.count("primers_5p")) {
-                primers5 = vm["primers_5p"].as<std::string>();
-                bf::path p5(primers5);
-                if (bf::exists(p5)) {
-                  // fastq file
-                  bi::stream <bi::file_descriptor_source> fa_to_read5{check_open_r(primers5), bi::close_handle};
-                } else {
-                  // comma seperated
-                  std::istringstream fa_to_read5(string2fasta(primers5));
-                  InputReader<SingleEndRead, FastaReadImpl> fp5(fa_to_read5);
-                }
-            } else {
-              //InputReader<SingleEndRead, FastaReadImpl> fp5 = nullptr;
+                p5_primer_sequence = fasta2dict(vm["primers_5p"].as<std::string>());
             }
 
-            std::string primers3;
+            SeqMap p3_primer_sequence;
             if (vm.count("primers_3p")) {
-                primers3 = vm["primers_3p"].as<std::string>();
-                bf::path p3(primers3);
-                if (bf::exists(p3)) {
-                  // fastq file
-                  bi::stream <bi::file_descriptor_source> fa_to_read3{check_open_r(primers3), bi::close_handle};
-                  InputReader<SingleEndRead, FastaReadImpl> fp3(fa_to_read3);
-                } else {
-                  // comma seperated
-                  std::istringstream fa_to_read3(string2fasta(primers3));
-                  InputReader<SingleEndRead, FastaReadImpl> fp3(fa_to_read3);
-                }
-            } else {
-              //InputReader<SingleEndRead, FastaReadImpl> fp3(nullptr);
+                p3_primer_sequence = fasta2dict(vm["primers_3p"].as<std::string>());
             }
 
             if(vm.count("read1-input")) {
@@ -135,7 +112,7 @@ int main(int argc, char** argv)
                     bi::stream<bi::file_descriptor_source> is1{check_open_r(read1_files[i]), bi::close_handle};
                     bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
                     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
-                    helper_Primers(ifp, pe, se, counters, vm);
+                    helper_Primers(ifp, pe, se, counters, vm, p5_primer_sequence, p3_primer_sequence);
                 }
             }
             if (vm.count("interleaved-input")) {
@@ -143,7 +120,7 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> inter{ check_open_r(file), bi::close_handle};
                     InputReader<PairedEndRead, InterReadImpl> ifi(inter);
-                    helper_Primers(ifi, pe, se, counters, vm);
+                    helper_Primers(ifi, pe, se, counters, vm, p5_primer_sequence, p3_primer_sequence);
                 }
             }
             if(vm.count("singleend-input")) {
@@ -151,7 +128,7 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> sef{ check_open_r(file), bi::close_handle};
                     InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(sef);
-                    helper_Primers(ifs, pe, se, counters, vm);
+                    helper_Primers(ifs, pe, se, counters, vm, p5_primer_sequence, p3_primer_sequence);
                 }
             }
             if(vm.count("tab-input")) {
@@ -159,13 +136,13 @@ int main(int argc, char** argv)
                 for (auto file : read_files) {
                     bi::stream<bi::file_descriptor_source> tabin{ check_open_r(file), bi::close_handle};
                     InputReader<ReadBase, TabReadImpl> ift(tabin);
-                    helper_Primers(ift, pe, se, counters, vm);
+                    helper_Primers(ift, pe, se, counters, vm, p5_primer_sequence, p3_primer_sequence);
                 }
             }
             if (!isatty(fileno(stdin))) {
                 bi::stream<bi::file_descriptor_source> tabin {fileno(stdin), bi::close_handle};
                 InputReader<ReadBase, TabReadImpl> ift(tabin);
-                helper_Primers(ift, pe, se, counters, vm);
+                helper_Primers(ift, pe, se, counters, vm, p5_primer_sequence, p3_primer_sequence);
             }
             counters.write_out();
         }

@@ -20,6 +20,36 @@ extern template class InputReader<ReadBase, TabReadImpl>;
 # define MIN3(a, b, c) ((a) < (b) ? ((a) < (c) ? (a) : (c)) : ((b) < (c) ? (b) : (c)))
 #endif
 
+typedef std::unordered_map <std::string, std::string> SeqMap;
+
+SeqMap fasta2dict(std::string primers){
+    SeqMap primerMap;
+    bf::path p(primers);
+    if (bf::exists(p)) {
+      // fastq file
+      bi::stream <bi::file_descriptor_source> fa_to_read{check_open_r(primers), bi::close_handle};
+      InputReader<SingleEndRead, FastaReadImpl> fp(fa_to_read);
+      while(fp.has_next()) {
+          auto i = fp.next();
+          SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
+          Read r1 = ser->non_const_read_one();
+          primerMap[r1.get_id()] = r1.get_seq();
+      }
+    } else {
+      // comma seperated
+      std::istringstream fa_to_read(string2fasta(primers));
+      InputReader<SingleEndRead, FastaReadImpl> fp(fa_to_read);
+      while(fp.has_next()) {
+          auto i = fp.next();
+          SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
+          Read r1 = ser->non_const_read_one();
+          primerMap[r1.get_id()] = r1.get_seq();
+      }
+    }
+    return (primerMap);
+}
+
+
 class PrimerCounters : public Counters {
 
 public:
@@ -44,10 +74,59 @@ public:
     }
 };
 
+/*
+A |	A	T
+C |	C	G
+G |	G	C
+M |	A or C
+R |	A or G
+W |	A or T
+S |	C or G
+Y |	C or T
+K |	G or T
+V |	A or C or G
+H |	A or C or T
+D |	A or G or T
+B |	C or G or T
+N |	G or A or T or C
+*/
+int charMatch(const char p, const char s){
+    if (p == s){
+      return 0;
+    } else {
+      switch(p) {
+        case 'M' : if (s == 'A' || s == 'C' ) return  0;
+                 break;
+        case 'R' : if (s == 'A' || s == 'G' ) return  0;
+                 break;
+        case 'W' : if (s == 'A' || s == 'T' ) return  0;
+                 break;
+        case 'S' : if (s == 'C' || s == 'G' ) return  0;
+                 break;
+        case 'Y' : if (s == 'C' || s == 'T' ) return  0;
+                 break;
+        case 'K' : if (s == 'G' || s == 'T' ) return  0;
+                 break;
+        case 'V' : if (s == 'A' || s == 'C' || s == 'G' ) return  0;
+                 break;
+        case 'H' : if (s == 'A' || s == 'C' || s == 'T' ) return  0;
+                 break;
+        case 'D' : if (s == 'A' || s == 'G' || s == 'T' ) return  0;
+                 break;
+        case 'B' : if (s == 'C' || s == 'G' || s == 'T' ) return  0;
+                 break;
+        case 'N' : if (s == 'A' || s == 'C' || s == 'G' || s == 'T' ) return  0;
+                 break;
+      }
+    }
+    return 1;
+}
+
 typedef struct AlignPos {
     int dist; // The edit distance
     size_t spos; // Matching Start Position
     size_t epos; // Matching End Position
+    std::string name;
 }ALIGNPOS;
 
 /*
@@ -88,7 +167,7 @@ bounded_edit_distance(const std::string &primer, const std::string &seq, size_t 
             cmin = i;
             for (size_t j = 1, lastdiag = i-1; j <= primerlen - end_matches ; j++) { // inner loop is the primer
                 olddiag = column[j];
-                column[j] = MIN3(column[j] + 1, column[j-1] + 1, lastdiag + (primer[j-1] == seq[x+i-1] ? 0 : 1));
+                column[j] = MIN3(column[j] + 1, column[j-1] + 1, lastdiag + charMatch(primer[j-1],seq[x+i-1]));
                 lastdiag = olddiag;
                 if (column[j] < cmin) cmin = column[j];
             }
@@ -113,7 +192,7 @@ bounded_edit_distance(const std::string &primer, const std::string &seq, size_t 
     return (val);
 }
 
-void check_read_pe(PairedEndRead &pe, const int pMismatches, const size_t pEndMismatches, const size_t pfloat, const size_t flip, const size_t keep) {
+void check_read_pe(PairedEndRead &pe, SeqMap &primer5p, SeqMap &primer3p, const int pMismatches, const size_t pEndMismatches, const size_t pfloat, const size_t flip, const size_t keep) {
 
     ALIGNPOS best_val;
     Read &r1 = pe.non_const_read_one();
@@ -122,31 +201,76 @@ void check_read_pe(PairedEndRead &pe, const int pMismatches, const size_t pEndMi
     const std::string &seq1 = r1.get_seq();
     const std::string &seq2 = r2.get_seq();
 
-    const std::string p5Primer;
+    const std::string p5Primer = "TTCATTAAAAATTGAATTGACATTAACCT";
     best_val = bounded_edit_distance(p5Primer,  seq1,  pfloat,  pMismatches, pEndMismatches);
 }
 
-void check_read_se(SingleEndRead &se, const int pMismatches, const size_t pEndMismatches, const size_t pfloat, const size_t flip, const size_t keep) {
+void check_read_se(SingleEndRead &se, SeqMap &primer5p, SeqMap &primer3p, const int pMismatches, const size_t pEndMismatches, const size_t pfloat, const size_t flip, const size_t keep) {
 
+    ALIGNPOS test_val, best_val;
     Read &r1 = se.non_const_read_one();
 
+    best_val.dist = pMismatches + 1;
     const std::string &seq1 = r1.get_seq();
-
+    for ( auto it = primer5p.begin(); it != primer5p.end(); ++it ){
+      const std::string p5Primer = it->second;
+      test_val = bounded_edit_distance(p5Primer,  seq1,  pfloat,  pMismatches, pEndMismatches);
+      if (test_val.dist < best_val.dist){
+        best_val = test_val;
+        best_val.name = it->first;
+      }
+      if (best_val.dist == 0) break;
+    }
+    if (best_val.dist <= pMismatches){
+      r1.add_comment("P5:" + best_val.name);
+      if (!keep) r1.setLCut(best_val.epos);
+    } else if (flip) {
+      r1.set_read_rc();
+      best_val.dist = pMismatches + 1;
+      const std::string &seq1 = r1.get_seq();
+      for ( auto it = primer5p.begin(); it != primer5p.end(); ++it ){
+        const std::string p5Primer = it->second;
+        test_val = bounded_edit_distance(p5Primer,  seq1,  pfloat,  pMismatches, pEndMismatches);
+        if (test_val.dist < best_val.dist){
+          best_val = test_val;
+          best_val.name = it->first;
+        }
+        if (best_val.dist == 0) break;
+      }
+      if (best_val.dist <= pMismatches){
+        r1.add_comment("FLIP");
+        r1.add_comment("P5:" + best_val.name);
+        if (!keep) r1.setLCut(best_val.epos);
+      }
+    }
+    best_val.dist = pMismatches + 1;
     const std::string &seq2 = r1.get_seq_rc();
-
+    for ( auto it = primer3p.begin(); it != primer3p.end(); ++it ){
+      const std::string p3Primer = it->second;
+      test_val = bounded_edit_distance(p3Primer,  seq2,  pfloat,  pMismatches, pEndMismatches);
+      if (test_val.dist < best_val.dist){
+        best_val = test_val;
+        best_val.name = it->first;
+      }
+      if (best_val.dist == 0) break;
+    }
+    if (best_val.dist <= pMismatches){
+      r1.add_comment("P3:" + best_val.name);
+      if (!keep) r1.setRCut(r1.getLength() -  best_val.epos);
+    }
 }
 
 /* This is the helper class for Primer
  * The idea is ...
  * */
 template <class T, class Impl>
-void helper_Primers(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, PrimerCounters &counter, po::variables_map vm) {
+void helper_Primers(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, PrimerCounters &counter, po::variables_map vm, SeqMap &primer5p, SeqMap &primer3p) {
 
     const int pMismatches = vm["primer_mismatches"].as<int>();
     const size_t pEndMismatches = vm["primer_end_mismatches"].as<size_t>();
     const size_t pfloat = vm["float"].as<size_t>();
-    const size_t flip = vm["flip"].as<size_t>();
-    const size_t keep = vm["keep"].as<size_t>();
+    const bool flip = vm["flip"].as<bool>();
+    const bool keep = vm["keep"].as<bool>();
 
     while(reader.has_next()) {
         auto i = reader.next();
@@ -159,6 +283,7 @@ void helper_Primers(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> 
             SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
             if (ser) {
                 counter.input(*ser);
+                check_read_se(*ser, primer5p, primer3p, pMismatches, pEndMismatches, pfloat, flip, keep);
                 counter.output(*ser);
                 writer_helper(ser, pe, se);
             } else {
