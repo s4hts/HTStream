@@ -267,23 +267,22 @@ void check_read_se(SingleEndRead &se , const double misDensity, const size_t &mi
 
     Read &r1 = se.non_const_read_one();
     /* if adapter is longer than sequence, set length to same as seq */
-    if (adapter_seq.length() < r1.getLength()){
+    if (adapter_seq.length() > r1.getLength()){
         adapter_seq = adapter_seq.substr(0, r1.getLength());
     }
 
     Read adapter = Read(adapter_seq, "", "");
 
-   /* checkL needs to be as long as or longer than the shortest read */
+   /* checkL and kkmer cannot be larger than the adapter length */
     size_t checkL = std::min(adapter.getLength(), checkLengths);
-    /* kmer needs to be as long as or longer than the shortest read */
     size_t kkmer = std::min(adapter.getLength(), kmer);
     /* Create a map with non-overlapping kmers*/
     seqLookup mOne = readOneMap(r1.get_seq(), kkmer, kmerOffset);
 
-    /*Do a quick check if the shorter read kmer shows up in longer read (read 2)
+    /*Do a quick check if the adapter kmer shows up in the read
      * If it does, then try the brute force approach*/
     for (size_t bp = 0; bp < (checkLengths - kmer); ++bp) {
-        // check first checkLength kmers at the beginning of read2 (sins)
+        // check first checkLength kmers at the beginning of read
         auto test = mOne.equal_range(adapter_seq.substr(bp, kmer));
         for (auto it = test.first; it != test.second; ++it) {
             unsigned int overlapped = checkIfAdapter(r1, adapter, it->second, bp, misDensity, mismatch, minOver);
