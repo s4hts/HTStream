@@ -5,6 +5,7 @@
 #include <boost/optional.hpp>
 #include <memory>
 #include <iostream>
+#include <regex>
 #include <unordered_map>
 #include "typedefs.h"
 
@@ -51,7 +52,9 @@ class Read {
 private:
     std::string seq;
     std::string qual;
+    std::string id_orig;
     std::string id;
+    std::string id2;
     size_t length;
     size_t cut_R;
     size_t cut_L;
@@ -59,7 +62,11 @@ private:
     size_t minLength;
 public:
     Read(const std::string& seq_, const std::string& qual_, const std::string& id_) :
-        seq(seq_), qual(qual_), id(id_), length(seq_.length()), cut_R(seq_.length()), cut_L(0), discard(false), minLength(1) { std::replace( id.begin(), id.end(), '\t', ' '); }
+        seq(seq_), qual(qual_), id_orig(id_), length(seq_.length()), cut_R(seq_.length()), cut_L(0), discard(false), minLength(1) {
+           std::regex re("\\s{2,}");
+           std::string fmt = " ";
+           id = regex_replace(id_orig, re, fmt);
+         }
     Read() : seq(""), qual(""), id(""), length(0), cut_R(seq.length()), cut_L(0), discard(false), minLength(1) { }
     Read subread(size_t _start, size_t _length);
     std::string subseq(size_t _start, size_t _length);
