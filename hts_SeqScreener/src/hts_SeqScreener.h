@@ -40,7 +40,7 @@ public:
 
     uint64_t PE_hits = 0;
 
-    SeqScreenerCounters(const std::string &statsFile, bool appendStats, const std::string &program_name, const std::string &notes) : Counters::Counters(statsFile, appendStats, program_name, notes) {
+    SeqScreenerCounters(const std::string &statsFile, bool force, bool appendStats, const std::string &program_name, const std::string &notes) : Counters::Counters(statsFile, force, appendStats, program_name, notes) {
         generic.push_back(std::forward_as_tuple("inverse", Inverse));
         generic.push_back(std::forward_as_tuple("record", Record));
 
@@ -110,7 +110,7 @@ std::pair <bool, bool> setBitsChar(char c) {
         case 'G':
             return std::pair<bool, bool> (1, 0);
         default:
-            throw std::runtime_error("Unknown base pair in sequence " + c);
+            throw std::runtime_error(std::string("Unknown base pair in sequence ") + c);
     }
 }
 

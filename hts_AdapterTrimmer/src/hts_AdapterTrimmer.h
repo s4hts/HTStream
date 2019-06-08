@@ -34,7 +34,7 @@ public:
     uint64_t PE_Adapter_Trim = 0;
     uint64_t PE_Adapter_BpTrim = 0;
 
-    AdapterCounters(const std::string &statsFile, bool appendStats, const std::string &program_name, const std::string &notes) : Counters::Counters(statsFile, appendStats, program_name, notes) {
+    AdapterCounters(const std::string &statsFile, bool force, bool appendStats, const std::string &program_name, const std::string &notes) : Counters::Counters(statsFile, force, appendStats, program_name, notes) {
 
         generic.push_back(std::forward_as_tuple("fixbases", Fixbases));
 

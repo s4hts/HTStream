@@ -14,10 +14,13 @@
 #include "typedefs.h"
 #include <boost/filesystem/path.hpp>
 
+namespace bf = boost::filesystem;
+
 class Counters {
 public:
     std::fstream outStats;
     std::string fStats;
+    bool force;
     bool aStats;
     std::string pName;
     std::string pNotes;
@@ -35,8 +38,9 @@ public:
     uint64_t PE_In = 0;
     uint64_t PE_Out = 0;
 
-    Counters(const std::string &statsFile, bool appendStats, const std::string &program_name, const std::string &notes):
+    Counters(const std::string &statsFile, bool force, bool appendStats, const std::string &program_name, const std::string &notes):
             fStats(statsFile),
+            force(force),
             aStats(appendStats),
             pName(program_name),
             pNotes(notes) {
@@ -150,6 +154,7 @@ public:
 
 private:
     virtual void check_write() {
+        bf::path p(fStats);
         outStats.open(fStats, std::ios::out | std::ios::app);
 
         if(outStats.is_open())
@@ -179,7 +184,7 @@ public:
     uint64_t R2_Discarded = 0;
     uint64_t PE_Discarded = 0;
 
-    TrimmingCounters(const std::string &statsFile, bool appendStats, const std::string &program_name, const std::string &notes) : Counters::Counters(statsFile, appendStats, program_name, notes) {
+    TrimmingCounters(const std::string &statsFile, bool force, bool appendStats, const std::string &program_name, const std::string &notes) : Counters::Counters(statsFile, force, appendStats, program_name, notes) {
         se.push_back(std::forward_as_tuple("SE_rightTrim", SE_Right_Trim));
         se.push_back(std::forward_as_tuple("SE_leftTrim", SE_Left_Trim));
         se.push_back(std::forward_as_tuple("SE_discarded", SE_Discarded));
