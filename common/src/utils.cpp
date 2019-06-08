@@ -72,7 +72,11 @@ void outputWriters(std::shared_ptr<OutputWriter> &pe, std::shared_ptr<OutputWrit
         for (auto& outfile: default_outfiles) {
             outfile = prefix + ".sam";
         }
-        out_1= std::make_shared<HtsOfstream>(default_outfiles[0], vm["force"].as<bool>(), !vm["uncompressed"].as<bool>(), false);
+        if (prefix == "stdout"){
+          out_1= std::make_shared<HtsOfstream>(default_outfiles[0], vm["force"].as<bool>(), !vm["uncompressed"].as<bool>(), true);
+        } else {
+          out_1= std::make_shared<HtsOfstream>(default_outfiles[0], vm["force"].as<bool>(), !vm["uncompressed"].as<bool>(), false);
+        }
 
         pe= std::make_shared<ReadBaseOutUnmapped>(out_1);
         se= std::make_shared<ReadBaseOutUnmapped>(out_1);
