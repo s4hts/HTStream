@@ -55,6 +55,7 @@ private:
     std::string id_orig;
     std::string id;
     std::string id2;
+    std::vector<std::string> comments;
     size_t length;
     size_t cut_R;
     size_t cut_L;
@@ -85,9 +86,14 @@ public:
     std::string subseq(size_t _start, size_t _length);
     const std::string& get_seq() const  { return seq; }
     const std::string& get_qual() const { return qual; }
-    const std::string get_id() const { std::string tmp = (id2 == "") ? id : id + " " + id2; return tmp; }
+    const std::string get_id() const { std::string tmp = (id2 == "") ? id : id + get_comment() + " " + id2; return tmp; }
     const std::string get_id_first() const { return id; }
-
+    const std::string get_comment(bool sam=false) const {
+      std::string result = "";
+      const char delim = (sam) ? '\t' : '_';
+      for (auto const& s : comments) { result = result + delim + s; }
+      return result;
+    }
     static char complement(char bp);
 
     const std::string get_sub_seq() const { return cut_R < cut_L ? "" : seq.substr(cut_L, cut_R - cut_L); }
@@ -107,7 +113,7 @@ public:
                                             return q;  }
 
 
-    void add_comment( std::string comment ) { id = id + "|" + comment;}
+    void add_comment( std::string tag ) { comments.push_back(tag);}
     void set_read_rc() {
         if (cut_R < cut_L) {
             return;

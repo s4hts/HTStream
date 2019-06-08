@@ -261,7 +261,7 @@ void check_read_pe(PairedEndRead &pe, PrimerCounters &counter, SeqMap &primer5p,
       if (best_val.dist == 0) break;
     }
     if (best_val.dist <= pMismatches){
-      r1.add_comment("P5:" + best_val.name);
+      r1.add_comment("P5:Z:" + best_val.name);
       if (!keep) r1.setLCut(best_val.epos);
     } else if (flip) {
       best_val.dist = pMismatches + 1;
@@ -278,8 +278,7 @@ void check_read_pe(PairedEndRead &pe, PrimerCounters &counter, SeqMap &primer5p,
       if (best_val.dist <= pMismatches){
         std::swap(r1, r2);
         counter.increment_flipped();
-        r1.add_comment("FLIP");
-        r1.add_comment("P5:" + best_val.name);
+        r1.add_comment("P5:Z:" + best_val.name + "-FLIP");
         if (!keep) r1.setLCut(best_val.epos);
       }
     }
@@ -295,7 +294,7 @@ void check_read_pe(PairedEndRead &pe, PrimerCounters &counter, SeqMap &primer5p,
       if (best_val.dist == 0) break;
     }
     if (best_val.dist <= pMismatches){
-      r2.add_comment("P3:" + best_val.name);
+      r2.add_comment("P3:Z:" + best_val.name);
       if (!keep) r2.setLCut(best_val.epos);
     }
 
@@ -318,7 +317,7 @@ void check_read_se(SingleEndRead &se, PrimerCounters &counter, SeqMap &primer5p,
       if (best_val.dist == 0) break;
     }
     if (best_val.dist <= pMismatches){
-      r1.add_comment("P5:" + best_val.name);
+      r1.add_comment("P5:Z:" + best_val.name);
       if (!keep) r1.setLCut(best_val.epos);
     } else if (flip) {
       Read &temp = r1;
@@ -337,8 +336,7 @@ void check_read_se(SingleEndRead &se, PrimerCounters &counter, SeqMap &primer5p,
       if (best_val.dist <= pMismatches){
         r1 = temp;
         counter.increment_flipped();
-        r1.add_comment("FLIP");
-        r1.add_comment("P5:" + best_val.name);
+        r1.add_comment("P5:Z:" + best_val.name + "-FLIP");
         if (!keep) r1.setLCut(best_val.epos);
       }
     }
@@ -354,7 +352,7 @@ void check_read_se(SingleEndRead &se, PrimerCounters &counter, SeqMap &primer5p,
       if (best_val.dist == 0) break;
     }
     if (best_val.dist <= pMismatches){
-      r1.add_comment("P3:" + best_val.name);
+      r1.add_comment("P3:Z:" + best_val.name);
       if (!keep) r1.setRCut(r1.getLength() -  best_val.epos);
     }
 }

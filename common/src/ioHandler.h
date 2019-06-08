@@ -305,7 +305,7 @@ protected:
             << "0\t" /*PNEXT*/
             << "0\t" /*TLEN*/
             << read.get_sub_seq() << "\t"
-            << read.get_sub_qual() << "\n";
+            << read.get_sub_qual() << read.get_comment(true) << "\n";
     }
 
     void samout_rc(const Read &read, size_t bitwiseflag) {
@@ -319,7 +319,7 @@ protected:
             << "0\t" /*PNEXT*/
             << "0\t" /*TLEN*/
             << read.get_seq_rc() << "\t"
-            << read.get_qual_rc() << "\n";
+            << read.get_qual_rc() << read.get_comment(true) << "\n";
     }
 
     /*Unmapped specs for SE reads*/
