@@ -298,8 +298,8 @@ Output: --------------->   <---------------</code></pre>
 
   <br><br><h4>Example 1 </h4>
   A simple pipeline for overlapping reads and screening for PhiX with JSON logging data written to a common logging file:
-    <pre><code>hts_Overlapper -e 0.1 -L ./01-cleaned/Sample1_stats.log -1 ./00-RawData/Sample1_R1.fastq.gz -2 ./00-RawData/Sample1_R2.fastq.gz -O \
-      | hts_SeqScreener -k 12 -S -A -L ./01-cleaned/Sample1_stats.log -f -p ./01-cleaned/Sample1 </code></pre>
+    <pre><code>hts_Overlapper -e 0.1 -L ./01-cleaned/Sample1_stats.log -1 ./00-RawData/Sample1_R1.fastq.gz -2 ./00-RawData/Sample1_R2.fastq.gz \
+      | hts_SeqScreener -k 12 -A -L ./01-cleaned/Sample1_stats.log -f ./01-cleaned/Sample1 </code></pre>
   
   <br><h4>Example 2 </h4>
       A more complex example which 1) deduplicates reads, 2) screens them for PhiX, 3) trims poly-A/T bases, 4) screens resulting reads against a collection
@@ -307,11 +307,11 @@ Output: --------------->   <---------------</code></pre>
       before writing the reads out. Note that in this example, two statistics files will be created. One will contain program-specific statistics, while
       the second will contain statistics about the cleaned set of reads.
       <pre>
-        <code>hts_SuperDeduper -L ./01-Cleaned/Sample1_stats.log -1 ./00-RawData/Sample1_L001_R1_001.fastq.gz -2 ./00-RawData/Sample1_L001_R2_001.fastq.gz -O \
-    | hts_SeqScreener -S -O -A -L ./01-Cleaned/Sample1_stats.log \
-    | hts_PolyATTrim -m 100 -S -O -A -L ./01-Cleaned/Sample1_stats.log \
-    | hts_SeqScreener -S -O -A -L ./01-Cleaned/Sample1_stats.log --seq adapters.fa -k 15 -x .01 \
-    | hts_Stats -N Detailed_Stats -S -A -L ./01-Cleaned/Sample1_StatsStats.log -g -p ./01-Cleaned/Sample1
+        <code>hts_SuperDeduper -L ./01-Cleaned/Sample1_stats.log -1 ./00-RawData/Sample1_L001_R1_001.fastq.gz -2 ./00-RawData/Sample1_L001_R2_001.fastq.gz \
+    | hts_SeqScreener -A -L ./01-Cleaned/Sample1_stats.log \
+    | hts_PolyATTrim -m 100 -A -L ./01-Cleaned/Sample1_stats.log \
+    | hts_SeqScreener -A -L ./01-Cleaned/Sample1_stats.log --seq adapters.fa -k 15 -x .01 \
+    | hts_Stats -N Detailed_Stats -A -L ./01-Cleaned/Sample1_StatsStats.log -f ./01-Cleaned/Sample1
       </code>
       </pre>
 
@@ -330,11 +330,11 @@ Output: --------------->   <---------------</code></pre>
       for r1 in glob("./00-RawData/*_R1_*.gz"):
           r2 = r1.replace("R1", "R2")
           s = r1.split('/')[-1].replace("_L001_R1_001.fastq.gz", '')
-          cmd = "hts_SuperDeduper -L ./01-Cleaned/" + s + "_stats.log -1 " + r1 + " -2 " + r2 + " -O | "
-          cmd += "hts_SeqScreener -S -O -A -L ./01-Cleaned/" + s + "_stats.log | "
-          cmd += "hts_PolyATTrim -m 100 -S -O -A -L ./01-Cleaned/" + s + "_stats.log | "
-          cmd += "hts_SeqScreener -S -O -A -L ./01-Cleaned/" + s + "_stats.log --seq adapters.fa -k 15 -x .01 | "
-          cmd += "hts_Stats -N phix-remover-adapters -S -A -L ./01-Cleaned/" + s + "_StatsStats.log -g -p ./01-Cleaned/" + s
+          cmd = "hts_SuperDeduper -L ./01-Cleaned/" + s + "_stats.log -1 " + r1 + " -2 " + r2 + " | "
+          cmd += "hts_SeqScreener -A -L ./01-Cleaned/" + s + "_stats.log | "
+          cmd += "hts_PolyATTrim -m 100 -A -L ./01-Cleaned/" + s + "_stats.log | "
+          cmd += "hts_SeqScreener -A -L ./01-Cleaned/" + s + "_stats.log --seq adapters.fa -k 15 -x .01 | "
+          cmd += "hts_Stats -N phix-remover-adapters -A -L ./01-Cleaned/" + s + "_StatsStats.log -f ./01-Cleaned/" + s
           cleaning.write(cmd+'\n')
       
       cleaning.close()
