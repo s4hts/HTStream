@@ -294,7 +294,7 @@ protected:
     const size_t pe2_bitwise = 141;
 
     void samout(const Read &read, size_t bitwiseflag) {
-        *output << read.get_id() << '\t'
+        *output << read.get_id_first() << '\t'
             << bitwiseflag << '\t'
             << "*\t" /*RNAME*/
             << "0\t" /*POS*/
@@ -308,7 +308,7 @@ protected:
     }
 
     void samout_rc(const Read &read, size_t bitwiseflag) {
-        *output << read.get_id() << '\t'
+        *output << read.get_id_first() << '\t'
             << bitwiseflag << '\t'
             << "*\t" /*RNAME*/
             << "0\t" /*POS*/

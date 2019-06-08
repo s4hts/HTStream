@@ -63,16 +63,30 @@ private:
 public:
     Read(const std::string& seq_, const std::string& qual_, const std::string& id_) :
         seq(seq_), qual(qual_), id_orig(id_), length(seq_.length()), cut_R(seq_.length()), cut_L(0), discard(false), minLength(1) {
-           std::regex re("\\s{2,}");
+           std::regex re("\\s{1,}");
            std::string fmt = " ";
-           id = regex_replace(id_orig, re, fmt);
+           std::string s = regex_replace(id_orig, re, fmt);
+           std::string fastq_delimiter = " ";
+           // split the id into 2 delimited on the first space
+           size_t pos = 0;
+           pos = s.find(fastq_delimiter);
+           if (pos != std::string::npos){
+             id = s.substr(0, pos);
+             id2 = s.erase(0, pos + fastq_delimiter.length());
+           } else {
+             id = s;
+             id2 = "";
+           }
          }
-    Read() : seq(""), qual(""), id(""), length(0), cut_R(seq.length()), cut_L(0), discard(false), minLength(1) { }
+    Read() :
+        seq(""), qual(""), id_orig(""), id(""), id2(""), length(0), cut_R(seq.length()), cut_L(0), discard(false), minLength(1) {
+        }
     Read subread(size_t _start, size_t _length);
     std::string subseq(size_t _start, size_t _length);
     const std::string& get_seq() const  { return seq; }
     const std::string& get_qual() const { return qual; }
-    const std::string& get_id() const { return id; }
+    const std::string get_id() const { std::string tmp = (id2 == "") ? id : id + " " + id2; return tmp; }
+    const std::string get_id_first() const { return id; }
 
     static char complement(char bp);
 
