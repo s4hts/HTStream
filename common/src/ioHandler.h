@@ -282,11 +282,11 @@ protected:
      * PE R2 - 141
      * RNAME - *
      * POS - 0
-     * MAPQ - 255
+     * MAPQ - 0
      * CIGAR - *
      * RNEXT - *
-     * PNEXT - *
-     * TLEN - SEQ.length
+     * PNEXT - 0
+     * TLEN - 0
      * SEQ - seq
      * QUAL - qual */
     const size_t se_bitwise = 4;
@@ -298,11 +298,11 @@ protected:
             << bitwiseflag << '\t'
             << "*\t" /*RNAME*/
             << "0\t" /*POS*/
-            << "255\t" /*MAPQ*/
+            << "0\t" /*MAPQ*/
             << "*\t" /*CIGAR*/
-            << "0\t" /*RNEXT*/
+            << "*\t" /*RNEXT*/
             << "0\t" /*PNEXT*/
-            << read.getLength() << "\t"
+            << "0\t" /*TLEN*/
             << read.get_sub_seq() << "\t"
             << read.get_sub_qual() << "\n";
     }
@@ -312,11 +312,11 @@ protected:
             << bitwiseflag << '\t'
             << "*\t" /*RNAME*/
             << "0\t" /*POS*/
-            << "255\t" /*MAPQ*/
+            << "0\t" /*MAPQ*/
             << "*\t" /*CIGAR*/
-            << "0\t" /*RNEXT*/
+            << "*\t" /*RNEXT*/
             << "0\t" /*PNEXT*/
-            << read.getLength() << "\t"
+            << "0\t" /*TLEN*/
             << read.get_seq_rc() << "\t"
             << read.get_qual_rc() << "\n";
     }
