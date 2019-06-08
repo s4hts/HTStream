@@ -107,6 +107,7 @@ public:
                                             return q;  }
 
 
+    void add_comment( std::string comment ) { id = id + "|" + comment;}
     void set_read_rc() {
         if (cut_R < cut_L) {
             return;

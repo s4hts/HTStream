@@ -8,6 +8,7 @@ class PolyATTail : public ::testing::Test {
         const std::string readData_1 = "@Read1\nTTTTTTGGAAAAAAAAAGTTTTTTTTG\n+\n###########################\n";
         const std::string readData_2 = "@Read1\nAAACAAAAAAGGAAAAAAATAAA\n+\n#######################\n";
         const std::string readData_3 = "@Read1\nAAAAAAAAAAAAAAAAAAAAAAAA\n+\n########################\n";
+        const std::string readData_4 = "@Read1\nGNTTTTTTCATTGGATGCATTAATAACCCATGTTTTACCTTTTGAAAAAATAAATGAAGGATTTGACCTGCTTCACTCTGGGAAAAGGTAGATTTTTTAG\n+\nA#AFFJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ\n";
         size_t min_trim = 5;
         size_t max_trim = 30;
         size_t window_size = 6;
@@ -114,4 +115,25 @@ TEST_F(PolyATTail, Stranded) {
         }
     }
     ASSERT_EQ("Read1\tCTTTTTTTTTCC\t############\n", out1->str());
+};
+
+
+TEST_F(PolyATTail, closebutno) {
+    std::istringstream in1(readData_4);
+
+    InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(in1);
+    std::shared_ptr<std::ostringstream> out1(new std::ostringstream);
+    {
+        std::shared_ptr<HtsOfstream> hts_of(new HtsOfstream(out1));
+        std::shared_ptr<OutputWriter> tab(new ReadBaseOutTab(hts_of));
+        while(ifs.has_next()) {
+            auto i = ifs.next();
+            SingleEndRead *ser = dynamic_cast<SingleEndRead*>(i.get());
+            trim_left(ser->non_const_read_one(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
+            trim_right(ser->non_const_read_one(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
+            ser->checkDiscarded(min_length);
+            writer_helper(ser, tab, tab, true);
+        }
+    }
+    ASSERT_EQ("Read1\tGNTTTTTTCATTGGATGCATTAATAACCCATGTTTTACCTTTTGAAAAAATAAATGAAGGATTTGACCTGCTTCACTCTGGGAAAAGGTAGATTTTTTAG\tA#AFFJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ\n", out1->str());
 };
