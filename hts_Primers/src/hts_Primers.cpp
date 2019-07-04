@@ -71,6 +71,8 @@ int main(int argc, char** argv)
             ("flip,x", po::bool_switch()->default_value(false), "Primers can be seen in both orientiations, tests flip and reorients all reads to the same orientation.");
         desc.add_options()
             ("keep,k", po::bool_switch()->default_value(false), "Don't cut off the primer sequence, leave it as a part of the read");
+        desc.add_options()
+            ("min_primer_matches,r", po::value<size_t>()->default_value(0)->notifier(boost::bind(&check_range<size_t>, "min_primer_matches", _1, 0, 2)), "Minimum number of primers to match to keep the fragment (0, keep all fragments, 1 must match either 5' or 3' primer, 2 must match both 5' and 3' primers)");
 
         po::options_description cmdline_options;
         cmdline_options.add(standard).add(input).add(output).add(desc);

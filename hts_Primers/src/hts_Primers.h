@@ -273,10 +273,11 @@ bounded_edit_distance(const std::string &primer, const std::string &seq, size_t 
     return (val);
 }
 
-void check_read_pe(PairedEndRead &pe, PrimerCounters &counter, SeqMap &primer5p, SeqMap &primer3p, const int pMismatches, const size_t pEndMismatches, const size_t pfloat, const size_t flip, const size_t keep) {
+void check_read_pe(PairedEndRead &pe, PrimerCounters &counter, SeqMap &primer5p, SeqMap &primer3p, const int pMismatches, const size_t pEndMismatches, const size_t pfloat, const size_t flip, const size_t keep, const size_t mpmatches) {
 
     ALIGNPOS test_val, best_val;
     std::string p5primer = "None", p7primer = "None";
+    size_t pmatches = 0;
 
     Read &r1 = pe.non_const_read_one();
     Read &r2 = pe.non_const_read_two();
@@ -296,6 +297,7 @@ void check_read_pe(PairedEndRead &pe, PrimerCounters &counter, SeqMap &primer5p,
       p5primer = best_val.name;
       r1.add_comment("P5:Z:" + best_val.name);
       if (!keep) r1.setLCut(best_val.epos);
+      pmatches++;
     } else if (flip) {
       best_val.dist = pMismatches + 1;
       const std::string &seq1 = r2.get_seq();
@@ -314,6 +316,7 @@ void check_read_pe(PairedEndRead &pe, PrimerCounters &counter, SeqMap &primer5p,
         p5primer = best_val.name;
         r1.add_comment("Pf:Z:FLIP_P5:Z:" + best_val.name);
         if (!keep) r1.setLCut(best_val.epos);
+        pmatches++;
       }
     }
     best_val.dist = pMismatches + 1;
@@ -331,15 +334,18 @@ void check_read_pe(PairedEndRead &pe, PrimerCounters &counter, SeqMap &primer5p,
       p7primer = best_val.name;
       r2.add_comment("P3:Z:" + best_val.name);
       if (!keep) r2.setLCut(best_val.epos);
+      pmatches++;
     }
     counter.primer_match_counter(p5primer,p7primer);
+    if (pmatches < mpmatches) {r1.setRCut(0); r2.setRCut(0);}
 }
 
-void check_read_se(SingleEndRead &se, PrimerCounters &counter, SeqMap &primer5p, SeqMap &primer3p, const int pMismatches, const size_t pEndMismatches, const size_t pfloat, const size_t flip, const size_t keep) {
+void check_read_se(SingleEndRead &se, PrimerCounters &counter, SeqMap &primer5p, SeqMap &primer3p, const int pMismatches, const size_t pEndMismatches, const size_t pfloat, const size_t flip, const size_t keep, const size_t mpmatches) {
 
     ALIGNPOS test_val, best_val;
     Read &r1 = se.non_const_read_one();
     std::string p5primer = "None", p7primer = "None";
+    size_t pmatches = 0;
 
     best_val.dist = pMismatches + 1;
     const std::string &seq1 = r1.get_seq();
@@ -356,6 +362,7 @@ void check_read_se(SingleEndRead &se, PrimerCounters &counter, SeqMap &primer5p,
       p5primer = best_val.name;
       r1.add_comment("P5:Z:" + best_val.name);
       if (!keep) r1.setLCut(best_val.epos);
+      pmatches++;
     } else if (flip) {
       Read &temp = r1;
       temp.set_read_rc();
@@ -376,6 +383,7 @@ void check_read_se(SingleEndRead &se, PrimerCounters &counter, SeqMap &primer5p,
         p5primer = best_val.name;
         r1.add_comment("Pf:Z:FLIP_P5:Z:" + best_val.name);
         if (!keep) r1.setLCut(best_val.epos);
+        pmatches++;
       }
     }
     best_val.dist = pMismatches + 1;
@@ -393,8 +401,10 @@ void check_read_se(SingleEndRead &se, PrimerCounters &counter, SeqMap &primer5p,
       p7primer = best_val.name;
       r1.add_comment("P3:Z:" + best_val.name);
       if (!keep) r1.setRCut(r1.getLength() -  best_val.epos);
+      pmatches++;
     }
     counter.primer_match_counter(p5primer,p7primer);
+    if (pmatches < mpmatches) {r1.setRCut(0);}
 }
 
 /* This is the helper class for Primer
@@ -404,6 +414,7 @@ template <class T, class Impl>
 void helper_Primers(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, PrimerCounters &counter, po::variables_map vm, SeqMap &primer5p, SeqMap &primer3p) {
 
     const int pMismatches = vm["primer_mismatches"].as<int>();
+    const size_t min_mprimers = vm["min_primer_matches"].as<size_t>();
     const size_t pEndMismatches = vm["primer_end_mismatches"].as<size_t>();
     const size_t pfloat = vm["float"].as<size_t>();
     const bool flip = vm["flip"].as<bool>();
@@ -414,7 +425,7 @@ void helper_Primers(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> 
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
         if (per) {
             counter.input(*per);
-            check_read_pe(*per, counter, primer5p, primer3p, pMismatches, pEndMismatches, pfloat, flip, keep);
+            check_read_pe(*per, counter, primer5p, primer3p, pMismatches, pEndMismatches, pfloat, flip, keep, min_mprimers);
             per->checkDiscarded(vm["min-length"].as<size_t>());
             counter.output(*per, vm["no-orphans"].as<bool>());
             writer_helper(per, pe, se, vm["stranded"].as<bool>(), vm["no-orphans"].as<bool>());
@@ -422,7 +433,7 @@ void helper_Primers(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> 
             SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
             if (ser) {
                 counter.input(*ser);
-                check_read_se(*ser, counter, primer5p, primer3p, pMismatches, pEndMismatches, pfloat, flip, keep);
+                check_read_se(*ser, counter, primer5p, primer3p, pMismatches, pEndMismatches, pfloat, flip, keep, min_mprimers);
                 ser->checkDiscarded(vm["min-length"].as<size_t>());
                 counter.output(*ser);
                 writer_helper(ser, pe, se);
