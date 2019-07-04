@@ -103,6 +103,7 @@ int main(int argc, char** argv)
             }
 
             counters.set_keep_primer(vm["keep"].as<bool>());
+            counters.set_seqmap(p5_primer_sequence,p3_primer_sequence);
 
             if(vm.count("read1-input")) {
                 if (!vm.count("read2-input")) {

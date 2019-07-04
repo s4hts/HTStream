@@ -29,6 +29,9 @@ public:
     uint64_t keep_primer = 0;
     uint64_t flipped = 0;
 
+    std::vector<sLabel> primers;
+    std::unordered_map < std::string, uint_fast64_t> primers_seen_counter;
+
     uint64_t SE_Discarded = 0;
 
     uint64_t R1_Discarded = 0;
@@ -36,8 +39,8 @@ public:
     uint64_t PE_Discarded = 0;
 
     PrimerCounters(const std::string &statsFile, bool force, bool appendStats, const std::string &program_name, const std::string &notes) : Counters::Counters(statsFile, force, appendStats, program_name, notes) {
-        generic.push_back(std::forward_as_tuple("Keep_primer", keep_primer));
         generic.push_back(std::forward_as_tuple("Flipped", flipped));
+        generic.push_back(std::forward_as_tuple("PrimersKeep", keep_primer));
 
         se.push_back(std::forward_as_tuple("SE_discarded", SE_Discarded));
 
@@ -46,6 +49,16 @@ public:
         pe.push_back(std::forward_as_tuple("PE_discarded", PE_Discarded));
     }
 
+    void set_seqmap(SeqMap primerMap_5p, SeqMap primerMap_3p) {
+        SeqMap primers_5p = primerMap_5p;
+        for (auto &pt: primers_5p) {
+            primers.push_back(std::forward_as_tuple(pt.first, pt.second));
+        }
+        SeqMap primers_3p = primerMap_3p;
+        for (auto &pt: primers_3p) {
+            primers.push_back(std::forward_as_tuple(pt.first, pt.second));
+        }
+    }
     void set_keep_primer(bool keep) {
         keep_primer = (uint64_t)keep;
     }
@@ -57,6 +70,12 @@ public:
     virtual void input(const ReadBase &read) {
         Counters::input(read);
     }
+
+    void primer_match_counter(std::string &p5primer, std::string &p7primer){
+        std::string primerPair = "\"" + p5primer + "\",\"" + p7primer + "\"";
+        primers_seen_counter[primerPair]++;
+    }
+
     virtual void output(SingleEndRead &ser)  {
         if (ser.non_const_read_one().getDiscard()) {
             ++SE_Discarded;
@@ -86,10 +105,18 @@ public:
     }
 
     virtual void write_out() {
+        std::vector<Label> iPrimers;
+        for (auto &it: primers_seen_counter) {
+            if (it.second > 0) {
+                iPrimers.push_back(std::forward_as_tuple(it.first, it.second));
+            }
+        }
 
         initialize_json();
 
         write_labels(generic);
+        write_vector("Primers",primers);
+        write_vector("Primers_counts",iPrimers);
         write_sublabels("Single_end", se);
         write_sublabels("Paired_end", pe);
 
@@ -141,32 +168,35 @@ D |	A or G or T
 B |	C or G or T
 N |	G or A or T or C
 */
-int charMatch(const char p, const char s){
+int charMatch(const char pr, const char se){
+    const char p = std::toupper(pr);
+    const char s = std::toupper(se);
+
     if (p == s){
       return 0;
-    } else {
+    } else { // ambiguity base
       switch(p) {
-        case 'M' : if (s == 'A' || s == 'C' ) return  0;
+        case 'M' : if (s == 'M' || s == 'A' || s == 'C' ) return  0;
                  break;
-        case 'R' : if (s == 'A' || s == 'G' ) return  0;
+        case 'R' : if (s == 'R' || s == 'A' || s == 'G' ) return  0;
                  break;
-        case 'W' : if (s == 'A' || s == 'T' ) return  0;
+        case 'W' : if (s == 'W' || s == 'A' || s == 'T' ) return  0;
                  break;
-        case 'S' : if (s == 'C' || s == 'G' ) return  0;
+        case 'S' : if (s == 'S' || s == 'C' || s == 'G' ) return  0;
                  break;
-        case 'Y' : if (s == 'C' || s == 'T' ) return  0;
+        case 'Y' : if (s == 'Y' || s == 'C' || s == 'T' ) return  0;
                  break;
-        case 'K' : if (s == 'G' || s == 'T' ) return  0;
+        case 'K' : if (s == 'K' || s == 'G' || s == 'T' ) return  0;
                  break;
-        case 'V' : if (s == 'A' || s == 'C' || s == 'G' ) return  0;
+        case 'V' : if (s == 'V' || s == 'M' || s == 'R' || s == 'S' || s == 'A' || s == 'C' || s == 'G' ) return  0;
                  break;
-        case 'H' : if (s == 'A' || s == 'C' || s == 'T' ) return  0;
+        case 'H' : if (s == 'H' || s == 'M' || s == 'W' || s == 'Y' || s == 'A' || s == 'C' || s == 'T' ) return  0;
                  break;
-        case 'D' : if (s == 'A' || s == 'G' || s == 'T' ) return  0;
+        case 'D' : if (s == 'D' || s == 'R' || s == 'W' || s == 'K' || s == 'A' || s == 'G' || s == 'T' ) return  0;
                  break;
-        case 'B' : if (s == 'C' || s == 'G' || s == 'T' ) return  0;
+        case 'B' : if (s == 'B' || s == 'S' || s == 'Y' || s == 'K' || s == 'C' || s == 'G' || s == 'T' ) return  0;
                  break;
-        case 'N' : if (s == 'A' || s == 'C' || s == 'G' || s == 'T' ) return  0;
+        case 'N' : return  0;
                  break;
       }
     }
@@ -246,6 +276,8 @@ bounded_edit_distance(const std::string &primer, const std::string &seq, size_t 
 void check_read_pe(PairedEndRead &pe, PrimerCounters &counter, SeqMap &primer5p, SeqMap &primer3p, const int pMismatches, const size_t pEndMismatches, const size_t pfloat, const size_t flip, const size_t keep) {
 
     ALIGNPOS test_val, best_val;
+    std::string p5primer = "None", p7primer = "None";
+
     Read &r1 = pe.non_const_read_one();
     Read &r2 = pe.non_const_read_two();
 
@@ -261,6 +293,7 @@ void check_read_pe(PairedEndRead &pe, PrimerCounters &counter, SeqMap &primer5p,
       if (best_val.dist == 0) break;
     }
     if (best_val.dist <= pMismatches){
+      p5primer = best_val.name;
       r1.add_comment("P5:Z:" + best_val.name);
       if (!keep) r1.setLCut(best_val.epos);
     } else if (flip) {
@@ -278,7 +311,8 @@ void check_read_pe(PairedEndRead &pe, PrimerCounters &counter, SeqMap &primer5p,
       if (best_val.dist <= pMismatches){
         std::swap(r1, r2);
         counter.increment_flipped();
-        r1.add_comment("P5:Z:" + best_val.name + "-FLIP");
+        p5primer = best_val.name;
+        r1.add_comment("Pf:Z:FLIP_P5:Z:" + best_val.name);
         if (!keep) r1.setLCut(best_val.epos);
       }
     }
@@ -294,16 +328,18 @@ void check_read_pe(PairedEndRead &pe, PrimerCounters &counter, SeqMap &primer5p,
       if (best_val.dist == 0) break;
     }
     if (best_val.dist <= pMismatches){
+      p7primer = best_val.name;
       r2.add_comment("P3:Z:" + best_val.name);
       if (!keep) r2.setLCut(best_val.epos);
     }
-
+    counter.primer_match_counter(p5primer,p7primer);
 }
 
 void check_read_se(SingleEndRead &se, PrimerCounters &counter, SeqMap &primer5p, SeqMap &primer3p, const int pMismatches, const size_t pEndMismatches, const size_t pfloat, const size_t flip, const size_t keep) {
 
     ALIGNPOS test_val, best_val;
     Read &r1 = se.non_const_read_one();
+    std::string p5primer = "None", p7primer = "None";
 
     best_val.dist = pMismatches + 1;
     const std::string &seq1 = r1.get_seq();
@@ -317,6 +353,7 @@ void check_read_se(SingleEndRead &se, PrimerCounters &counter, SeqMap &primer5p,
       if (best_val.dist == 0) break;
     }
     if (best_val.dist <= pMismatches){
+      p5primer = best_val.name;
       r1.add_comment("P5:Z:" + best_val.name);
       if (!keep) r1.setLCut(best_val.epos);
     } else if (flip) {
@@ -336,7 +373,8 @@ void check_read_se(SingleEndRead &se, PrimerCounters &counter, SeqMap &primer5p,
       if (best_val.dist <= pMismatches){
         r1 = temp;
         counter.increment_flipped();
-        r1.add_comment("P5:Z:" + best_val.name + "-FLIP");
+        p5primer = best_val.name;
+        r1.add_comment("Pf:Z:FLIP_P5:Z:" + best_val.name);
         if (!keep) r1.setLCut(best_val.epos);
       }
     }
@@ -352,9 +390,11 @@ void check_read_se(SingleEndRead &se, PrimerCounters &counter, SeqMap &primer5p,
       if (best_val.dist == 0) break;
     }
     if (best_val.dist <= pMismatches){
+      p7primer = best_val.name;
       r1.add_comment("P3:Z:" + best_val.name);
       if (!keep) r1.setRCut(r1.getLength() -  best_val.epos);
     }
+    counter.primer_match_counter(p5primer,p7primer);
 }
 
 /* This is the helper class for Primer
