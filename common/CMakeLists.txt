@@ -4,7 +4,6 @@ project (hts_common)
 file(GLOB sources "src/*.cpp")
 message( status "sources: " ${sources})
 
-set(Boost_USE_STATIC_LIBS   ON)
 FIND_PACKAGE( Boost 1.56 COMPONENTS system program_options filesystem iostreams REQUIRED )
 
 set(COMMON_INCLUDES ${CMAKE_SOURCE_DIR}/common/src)

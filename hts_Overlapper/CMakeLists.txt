@@ -11,7 +11,6 @@ set(COMMON_INCLUDES ${CMAKE_SOURCE_DIR}/common/src)
 set(PROJECT_LINK_LIBS hts_common)
 link_directories(${CMAKE_BINARY_DIR}/common)
 
-set(Boost_USE_STATIC_LIBS   ON)
 FIND_PACKAGE( Boost 1.56 COMPONENTS system program_options iostreams filesystem REQUIRED )
 include_directories(${COMMON_INCLUDES} ${Boost_INCLUDE_DIR} )
 
