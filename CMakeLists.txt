@@ -4,14 +4,16 @@ project (HTStream)
 option(BUILD_STATIC_BIN "builds static binary (linux only)" OFF)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 ")
-#set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
-set(BUILD_SHARED_LIBS OFF)
-set(Boost_USE_STATIC_LIBS   ON)
+
+set(Boost_USE_STATIC_LIBS OFF)
+set(BUILD_SHARED_LIBS ON)
 
 if (APPLE)
 elseif (UNIX)
   if (BUILD_STATIC_BIN)
     set(EXTRA_BUILD_FLAGS "-static")
+    set(Boost_USE_STATIC_LIBS ON)
+    set(BUILD_SHARED_LIBS OFF)
   endif()
 endif()
 
