@@ -126,12 +126,12 @@ void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe,
             if (ser) {
                 counters.input(*ser);
                 if (!no_left) {
-                  if (!no_pA) r1fA = trim_left(per->non_const_read_one(), 'A', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
-                  if (!no_pT && !r1fA) r1fT = trim_left(per->non_const_read_one(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
+                  if (!no_pA) r1fA = trim_left(ser->non_const_read_one(), 'A', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
+                  if (!no_pT && !r1fA) r1fT = trim_left(ser->non_const_read_one(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
                 }
                 if (!no_right && !r1fA && !r1fT) {
-                  if (!no_pA) r1rA = trim_right(per->non_const_read_one(), 'A', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
-                  if (!no_pT && ! r1rA) r1rT = trim_right(per->non_const_read_one(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
+                  if (!no_pA) r1rA = trim_right(ser->non_const_read_one(), 'A', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
+                  if (!no_pT && ! r1rA) r1rT = trim_right(ser->non_const_read_one(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
                 }
                 ser->checkDiscarded(min_length);
                 writer_helper(ser, pe, se, false, false);
