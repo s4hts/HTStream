@@ -21,8 +21,9 @@ seqLookup readOneMap(std::string seq1, const size_t kmer, const size_t kmerOffse
 
     seqLookup baseReadMap;
     std::string::iterator it;
-    for ( it = seq1.begin() ; it <= seq1.end() - ( static_cast<long> ( kmer ) ) ; it += static_cast<long> ( kmerOffset ) ) {
-        baseReadMap.insert(std::make_pair( std::string ( it, it+ static_cast<long> ( kmer )  ) , it - seq1.begin() ));
+    const std::string::iterator seq1_begin = seq1.begin();
+    for ( it = seq1_begin ; it <= seq1.end() - ( static_cast<long> ( kmer ) ) ; it += static_cast<long> ( kmerOffset ) ) {
+        baseReadMap.insert(std::make_pair( std::string ( it, it+ static_cast<long> ( kmer )  ) , it - seq1_begin ));
     }
 
     return baseReadMap;
