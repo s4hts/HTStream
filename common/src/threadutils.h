@@ -23,6 +23,10 @@ public:
     threadsafe_queue(): done(false)
     {}
 
+    bool is_done() {
+        return done;
+    }
+
     void set_done() {
         if (!done) {
             done = true;
@@ -83,6 +87,31 @@ public:
         std::lock_guard<std::mutex> lk(mut);
         return data_queue.empty();
     }
+};
+
+class thread_guard
+{
+    std::thread& t;
+    const std::function<void()> *func;
+public:
+    explicit thread_guard(std::thread& t_, const std::function<void()> &func_):
+        t(t_), func(&func_)
+    {}
+    explicit thread_guard(std::thread& t_):
+        t(t_), func(NULL)
+    {}
+
+
+    ~thread_guard() {
+        if(func) {
+            (*func)();
+        }
+        if(t.joinable()) {
+            t.join();
+        }
+    }
+    thread_guard(thread_guard const&) = delete;
+    thread_guard& operator=(thread_guard const&) = delete;
 };
 
 class function_wrapper
@@ -174,7 +203,7 @@ public:
     thread_pool(): done(false), joiner(threads, work_queue)
     {
         // todo add this as prameter
-        unsigned const thread_count = std::thread::hardware_concurrency();
+        unsigned const thread_count = 4;//std::thread::hardware_concurrency();
 
         try {
             for (unsigned i = 0; i < thread_count; ++i) {

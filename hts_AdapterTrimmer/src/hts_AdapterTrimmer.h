@@ -5,6 +5,9 @@
 #define STARTS 4098
 
 #include "ioHandler.h"
+#include "utils.h"
+#include "threadutils.h"
+
 #include <map>
 #include <unordered_map>
 #include <boost/dynamic_bitset.hpp>
@@ -12,7 +15,6 @@
 #include <algorithm>
 #include <bitset>
 #include <utility>
-#include "utils.h"
 
 extern template class InputReader<SingleEndRead, SingleEndReadFastqImpl>;
 extern template class InputReader<PairedEndRead, PairedEndReadFastqImpl>;
@@ -211,10 +213,10 @@ void getOverlappedReads(Read &r1, Read &r2, const seqLookup &seq1Map,  const dou
     }
 }
 
-void check_read_pe(PairedEndRead &pe , const double misDensity, const size_t &mismatch, const size_t &minOver, const size_t &checkLengths, const size_t kmer, const size_t kmerOffset, bool noFixBases = false ) {
+ReadBasePtr check_read_pe(PairedEndReadPtr pe, const double misDensity, const size_t mismatch, const size_t minOver, const size_t checkLengths, const size_t kmer, const size_t kmerOffset, bool noFixBases = false ) {
 
-    Read &r1 = pe.non_const_read_one();
-    Read &r2 = pe.non_const_read_two();
+    Read &r1 = pe->non_const_read_one();
+    Read &r2 = pe->non_const_read_two();
 
     bool swapped = false;
     /*Read1 is always longer than Read 2)*/
@@ -234,6 +236,7 @@ void check_read_pe(PairedEndRead &pe , const double misDensity, const size_t &mi
     if (swapped) {
         std::swap(r1, r2);
     }
+    return std::dynamic_pointer_cast<ReadBase>(pe);
 }
 
 unsigned int checkIfAdapter(Read &r1, Read &adapter, size_t loc1, size_t loc2, const double misDensity, const size_t &mismatch, const size_t &minOverlap ) {
@@ -263,9 +266,9 @@ unsigned int checkIfAdapter(Read &r1, Read &adapter, size_t loc1, size_t loc2, c
     return 1;
 }
 
-void check_read_se(SingleEndRead &se , const double misDensity, const size_t &mismatch, const size_t &minOver, const size_t &checkLengths, const size_t kmer, const size_t kmerOffset, std::string adapter_seq = "" ) {
+ReadBasePtr check_read_se(SingleEndReadPtr se , const double misDensity, const size_t &mismatch, const size_t &minOver, const size_t &checkLengths, const size_t kmer, const size_t kmerOffset, std::string adapter_seq = "" ) {
 
-    Read &r1 = se.non_const_read_one();
+    Read &r1 = se->non_const_read_one();
     /* if adapter is longer than sequence, set length to same as seq */
     if (adapter_seq.length() > r1.getLength()){
         adapter_seq = adapter_seq.substr(0, r1.getLength());
@@ -287,11 +290,45 @@ void check_read_se(SingleEndRead &se , const double misDensity, const size_t &mi
         for (auto it = test.first; it != test.second; ++it) {
             unsigned int overlapped = checkIfAdapter(r1, adapter, it->second, bp, misDensity, mismatch, minOver);
             if (overlapped) {
-                return;
+                return se;
+            }
+        }
+    }
+    return std::dynamic_pointer_cast<ReadBase>(se);
+}
+
+void writer_thread(std::shared_ptr<OutputWriter> pe,  std::shared_ptr<OutputWriter> se, AdapterCounters &counter, const bool stranded, const bool no_orphan, const size_t min_length, threadsafe_queue<std::future<ReadBasePtr>> &futures) {
+
+    while(!futures.is_done()) {
+        std::future<ReadBasePtr> fread;
+        futures.wait_and_pop(fread);
+
+        ReadBasePtr rbase = fread.get();
+
+        // null read indicates all done
+        if (!rbase.get()) {
+            futures.set_done();
+            return;
+        }
+
+        PairedEndReadPtr per = std::dynamic_pointer_cast<PairedEndRead>(rbase);
+        if (per) {
+            per->checkDiscarded(min_length);
+            counter.output(*per, no_orphan);
+            writer_helper(per.get(), pe, se, stranded, no_orphan);
+        } else {
+            SingleEndReadPtr ser = std::dynamic_pointer_cast<SingleEndRead>(rbase);
+            if (ser) {
+                ser->checkDiscarded(min_length);
+                counter.output(*ser);
+                writer_helper(ser.get(), pe, se);
+            } else {
+                throw std::runtime_error("Unknown read type");
             }
         }
     }
 }
+
 
 /*This is the helper class for overlap
  * The idea is in the wet lab, they set up sequences to sequences toward each other
@@ -304,32 +341,40 @@ void check_read_se(SingleEndRead &se , const double misDensity, const size_t &mi
  * With a sin it is useful to have the higher confidence as well as removing the adapters*/
 template <class T, class Impl>
 void helper_adapterTrimmer(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, AdapterCounters &counter, const double misDensity, const size_t mismatch, const size_t minOver, const bool stranded, const size_t min_length, const size_t checkLengths, const size_t kmer, const size_t kmerOffset, bool no_orphan = false, bool noFixBases = false, std::string adapter = "") {
+    
+    threadsafe_queue<std::future<ReadBasePtr>> futures;
+    thread_pool threads;
 
+    std::thread output_thread([=, &counter, &futures]() mutable { writer_thread(pe, se, counter, stranded, no_orphan, min_length, futures); });
+    thread_guard tg(output_thread);
+    
     if (noFixBases) counter.set_fixbases();
 
     while(reader.has_next()) {
         auto i = reader.next();
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
         if (per) {
-            counter.input(*per);
-            check_read_pe(*per, misDensity, mismatch, minOver, checkLengths, kmer, kmerOffset, noFixBases);
-            per->checkDiscarded(min_length);
-            counter.output(*per, no_orphan);
-            writer_helper(per, pe, se, stranded, no_orphan);
+            std::shared_ptr<PairedEndRead> sper = std::make_shared<PairedEndRead>(std::move(*per));
+            counter.input(*sper);
+            futures.push(threads.submit([=]() mutable {
+                        return check_read_pe(sper, misDensity, mismatch, minOver, checkLengths, kmer, kmerOffset, noFixBases); }));
+
         } else {
             SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
 
             if (ser) {
-                counter.input(*ser);
-                check_read_se(*ser, misDensity, mismatch, minOver, checkLengths, kmer, kmerOffset, adapter);
-                ser->checkDiscarded(min_length);
-                counter.output(*ser);
-                writer_helper(ser, pe, se);
+                std::shared_ptr<SingleEndRead> sser = std::make_shared<SingleEndRead>(std::move(*ser));
+                counter.input(*sser);
+                futures.push(threads.submit([=]() mutable {
+                            return check_read_se(sser, misDensity, mismatch, minOver, checkLengths, kmer, kmerOffset, adapter); }));
             } else {
                 throw std::runtime_error("Unknown read type");
             }
         }
     }
+
+    // null ptr indicates end of processing
+    futures.push(threads.submit([]() { return ReadBasePtr(); }));
 }
 
 #endif

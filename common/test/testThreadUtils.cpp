@@ -13,10 +13,8 @@ public:
 };
 
 TEST_F(ThreadTest, accumulate) {
-    long count = 0;
     long max = 10000;
     long block_size = 100;
-    long num_blocks = (max/block_size);
     thread_pool threads;
 
     
@@ -27,7 +25,7 @@ TEST_F(ThreadTest, accumulate) {
 
     std::vector<std::future<long> > futures;
     for (auto i = data_vec.begin(); i < data_vec.end(); i+=block_size) {
-        futures.push_back(threads.submit([i,block_size]() { return (long)std::accumulate(i, i+block_size, 0); }));
+        futures.push_back(threads.submit([i,block_size]() { return static_cast<long>(std::accumulate(i, i+block_size, 0)); }));
     }
 
     long sum = 0;

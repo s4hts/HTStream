@@ -12,6 +12,7 @@ set(PROJECT_LINK_LIBS hts_common)
 link_directories(${CMAKE_BINARY_DIR}/common)
 
 FIND_PACKAGE( Boost 1.56 COMPONENTS system program_options iostreams filesystem REQUIRED )
+find_package(Threads REQUIRED)
 include_directories(${COMMON_INCLUDES} ${Boost_INCLUDE_DIR} )
 
 
@@ -20,7 +21,7 @@ if (BUILD_STATIC_BIN)
   set_target_properties(${PROJECT_NAME} PROPERTIES LINK_SEARCH_START_STATIC 1)
   set_target_properties(${PROJECT_NAME} PROPERTIES LINK_SEARCH_END_STATIC 1)
 endif()
-target_link_libraries(${PROJECT_NAME} ${EXTRA_BUILD_FLAGS} ${PROJECT_LINK_LIBS} ${Boost_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${EXTRA_BUILD_FLAGS} ${PROJECT_LINK_LIBS} ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
 add_custom_target(valgrind_${PROJECT_NAME}
   DEPENDS ${PROJECT_NAME}
