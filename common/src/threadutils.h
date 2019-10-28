@@ -37,6 +37,7 @@ public:
         if (!done) {
             done = true;
             data_cond.notify_all();
+            push_cond.notify_all();
         }
     }
     
