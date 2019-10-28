@@ -17,10 +17,16 @@ class threadsafe_queue {
 private:
     std::atomic_bool done;
     mutable std::mutex mut;
-    std::queue<std::shared_ptr<T> > data_queue;
+    std::queue<T> data_queue;
     std::condition_variable data_cond;
+    std::condition_variable push_cond;
+    size_t max_size;
+    
 public:
-    threadsafe_queue(): done(false)
+
+    // max_size will prevent the queue from growing forever by blocking on push
+    // until queue drains bellow max size
+    threadsafe_queue(size_t max_size_=0): done(false), max_size(max_size_)
     {}
 
     bool is_done() {
@@ -40,8 +46,9 @@ public:
         if (done) {
             return;
         }
-        value = std::move(*data_queue.front());
+        value = std::move(data_queue.front());
         data_queue.pop();
+        push_cond.notify_one();
     }
 
     bool try_pop(T& value) {
@@ -51,6 +58,8 @@ public:
         }
         value = std::move(*data_queue.front());
         data_queue.pop();
+        push_cond.notify_one();
+        
         return true;
     }
     
@@ -60,8 +69,10 @@ public:
         if (done) {
             return std::shared_ptr<T>();
         }
-        std::shared_ptr<T> res=data_queue.front();
+        std::shared_ptr<T> res(std::make_shared<T>(std::move(data_queue.front())));
         data_queue.pop();
+        push_cond.notify_one();
+
         return res;
     }
 
@@ -71,15 +82,19 @@ public:
             return std::shared_ptr<T>();
         }
 
-        std::shared_ptr<T> res=data_queue.front();
+        std::shared_ptr<T> res(std::make_shared<T>(std::move(data_queue.front())));
         data_queue.pop();
+        push_cond.notify_one();
+        
         return res;
     }
 
     void push(T&& new_value) {
-        std::shared_ptr<T> data( std::make_shared<T>(std::forward<T>(new_value)) );
-        std::lock_guard<std::mutex> lk(mut);
-        data_queue.push(data);
+        std::unique_lock<std::mutex> lk(mut);
+        while (max_size > 0 && data_queue.size() >= max_size) {
+            push_cond.wait(lk, [this] { return data_queue.size() < max_size || done; });
+        }
+        data_queue.push(std::forward<T>(new_value));
         data_cond.notify_one();
     }
 
@@ -200,11 +215,12 @@ public:
         return res;
     }
 
-    thread_pool(): done(false), joiner(threads, work_queue)
+    thread_pool(size_t queue_max_size=0, size_t thread_count=0): done(false), work_queue(queue_max_size), joiner(threads, work_queue)
     {
-        // todo add this as prameter
-        unsigned const thread_count = 4;//std::thread::hardware_concurrency();
-
+        if (thread_count == 0) {
+            thread_count = std::thread::hardware_concurrency();
+        }
+        
         try {
             for (unsigned i = 0; i < thread_count; ++i) {
                 threads.push_back(std::thread(&thread_pool::worker_thread, this));

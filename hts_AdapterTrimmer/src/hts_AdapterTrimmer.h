@@ -340,41 +340,49 @@ void writer_thread(std::shared_ptr<OutputWriter> pe,  std::shared_ptr<OutputWrit
  * With a lin it is useful to have a higher confidence in the bases in the overlap and longer read
  * With a sin it is useful to have the higher confidence as well as removing the adapters*/
 template <class T, class Impl>
-void helper_adapterTrimmer(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, AdapterCounters &counter, const double misDensity, const size_t mismatch, const size_t minOver, const bool stranded, const size_t min_length, const size_t checkLengths, const size_t kmer, const size_t kmerOffset, bool no_orphan = false, bool noFixBases = false, std::string adapter = "") {
+void helper_adapterTrimmer(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, AdapterCounters &counter, const double misDensity, const size_t mismatch, const size_t minOver, const bool stranded, const size_t min_length, const size_t checkLengths, const size_t kmer, const size_t kmerOffset, bool no_orphan = false, bool noFixBases = false, std::string adapter = "", size_t num_threads = 2) {
     
-    threadsafe_queue<std::future<ReadBasePtr>> futures;
-    thread_pool threads;
+    threadsafe_queue<std::future<ReadBasePtr>> futures(50000);
+    thread_pool threads(50000, num_threads);
 
     std::thread output_thread([=, &counter, &futures]() mutable { writer_thread(pe, se, counter, stranded, no_orphan, min_length, futures); });
     thread_guard tg(output_thread);
-    
-    if (noFixBases) counter.set_fixbases();
 
-    while(reader.has_next()) {
-        auto i = reader.next();
-        PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
-        if (per) {
-            std::shared_ptr<PairedEndRead> sper = std::make_shared<PairedEndRead>(std::move(*per));
-            counter.input(*sper);
-            futures.push(threads.submit([=]() mutable {
-                        return check_read_pe(sper, misDensity, mismatch, minOver, checkLengths, kmer, kmerOffset, noFixBases); }));
-
-        } else {
-            SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
-
-            if (ser) {
-                std::shared_ptr<SingleEndRead> sser = std::make_shared<SingleEndRead>(std::move(*ser));
-                counter.input(*sser);
+    try {
+        
+        if (noFixBases) counter.set_fixbases();
+        
+        while(reader.has_next()) {
+            auto i = reader.next();
+            PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
+            if (per) {
+                std::shared_ptr<PairedEndRead> sper = std::make_shared<PairedEndRead>(std::move(*per));
+                counter.input(*sper);
                 futures.push(threads.submit([=]() mutable {
-                            return check_read_se(sser, misDensity, mismatch, minOver, checkLengths, kmer, kmerOffset, adapter); }));
+                            return check_read_pe(sper, misDensity, mismatch, minOver, checkLengths, kmer, kmerOffset, noFixBases); }));
+                
             } else {
-                throw std::runtime_error("Unknown read type");
+                SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
+                
+                if (ser) {
+                    std::shared_ptr<SingleEndRead> sser = std::make_shared<SingleEndRead>(std::move(*ser));
+                    counter.input(*sser);
+                    futures.push(threads.submit([=]() mutable {
+                                return check_read_se(sser, misDensity, mismatch, minOver, checkLengths, kmer, kmerOffset, adapter); }));
+                } else {
+                    throw std::runtime_error("Unknown read type");
+                }
             }
         }
-    }
 
-    // null ptr indicates end of processing
-    futures.push(threads.submit([]() { return ReadBasePtr(); }));
+         // null ptr indicates end of processing
+        futures.push(threads.submit([]() { return ReadBasePtr(); }));
+    } catch (...) {
+
+        // make sure threads stop on exception
+        futures.set_done();
+        throw;
+    }
 }
 
 #endif
