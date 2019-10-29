@@ -103,7 +103,7 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5279776/
 */
 template <class T, class Impl>
 void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, TrimmingCounters& counters, size_t min_length, bool no_pA, bool no_pT, size_t min_trim, size_t window_size, size_t perfect_windows, size_t max_trim, double max_mismatch_errorDensity, bool stranded, bool no_left, bool no_right, bool no_orphans) {
-    bool r1fA, r1fT, r2fA, r2fT, r1rA, r1rT, r2rA, r2rT = false;
+    bool r1fA = false, r1fT = false, r2fA = false, r1rA = false;
     while(reader.has_next()) {
         auto i = reader.next();
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
@@ -115,7 +115,7 @@ void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe,
             }
             if (!no_right && !r1fA && !r1fT){ // 3' fragement end detection, can't have 5' and 3' polyAT
               if (!no_pA) r2fA = trim_left(per->non_const_read_two(), 'A', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
-              if (!no_pT && !r2fA) r2fT = trim_left(per->non_const_read_two(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
+              if (!no_pT && !r2fA) trim_left(per->non_const_read_two(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
             }
             // polyAT must be on one of the two fragment ends (when PE), don't bother checking read ends, reads should be overlapped otherwise.
             per->checkDiscarded(min_length);
@@ -131,7 +131,7 @@ void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe,
                 }
                 if (!no_right && !r1fA && !r1fT) {
                   if (!no_pA) r1rA = trim_right(per->non_const_read_one(), 'A', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
-                  if (!no_pT && ! r1rA) r1rT = trim_right(per->non_const_read_one(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
+                  if (!no_pT && ! r1rA) trim_right(per->non_const_read_one(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
                 }
                 ser->checkDiscarded(min_length);
                 writer_helper(ser, pe, se, false, false);

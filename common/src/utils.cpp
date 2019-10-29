@@ -110,8 +110,8 @@ po::options_description setInputOptions(){
     return input;
 }
 
-po::options_description setOutputOptions(std::string program_name){
-    po::options_description output("Output Options [default: tab6 format to stdout]");
+po::options_description setOutputOptions(const std::string& program_name){
+    po::options_description output(boost::str(boost::format("%s Output Options [default: tab6 format to stdout]") % program_name).c_str());
     output.add_options()
             //output options
             ("force,F", po::bool_switch()->default_value(false),         "Forces overwrite of files")

@@ -31,7 +31,7 @@ TEST_F(ReadsTest, fasta_to_read) {
         }
         ++read_count;
     }
-    ASSERT_EQ(read_count, 2);
+    ASSERT_EQ(read_count, 2u);
 };
 
 
@@ -43,7 +43,7 @@ TEST_F(ReadsTest, parseTabRead) {
         auto r = ifs.next();
         ++read_count;
     }
-    ASSERT_EQ(read_count, 2);
+    ASSERT_EQ(read_count, 2u);
 }
 
 TEST_F(ReadsTest, testInterRead) {
@@ -55,7 +55,7 @@ TEST_F(ReadsTest, testInterRead) {
         ++read_count;
     }
 
-    ASSERT_EQ(read_count, 1);
+    ASSERT_EQ(read_count, 1u);
 }
 
 
@@ -67,7 +67,7 @@ TEST_F(ReadsTest, parseSingleReadFastq) {
         auto r = ifs.next();
         read_count++;
     }
-    ASSERT_EQ(read_count, 5);
+    ASSERT_EQ(read_count, 5u);
 }
 
 TEST_F(ReadsTest, parsePairedReadFastq) {
@@ -81,7 +81,7 @@ TEST_F(ReadsTest, parsePairedReadFastq) {
         std::cout << i->get_read_one().get_qual() << std::endl;
         read_count++;
     }
-    ASSERT_EQ(read_count, 5);
+    ASSERT_EQ(read_count, 5u);
 }
 
 TEST_F(ReadsTest, testWriteFastqSingle) {
