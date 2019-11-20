@@ -83,6 +83,7 @@ function Toggle(tt) {
             <li><a href="#hts_PolyATTrim">hts_PolyATTrim</a></li>
             <li><a href="#hts_SeqScreener">hts_SeqScreener</a></li>
             <li><a href="#hts_SuperDeduper">hts_SuperDeduper</a></li>
+            <li><a href="#hts_Primers">hts_Primers (coming soon)</a></li>
             <li><a href="#Example Pipelines">ExamplePipelines</a></li>
           </ul>
           </div>
@@ -91,11 +92,22 @@ function Toggle(tt) {
         <h3>Installation HTStream</h3>
         Options for installing HTStream include the following:
         <h4>1) Download and unpack the binary:</h4>
-        <pre><code>wget https://github.com/ibest/HTStream/releases/download/v1.0.0-release/HTStream_1.0.0-release.tar.gz
-tar xvf HTStream_1.0.0-release.tar.gz</code></pre>
-        <h4>2) Bioconda users (coming soon with many thanks to the Bioconda team):</h4>
-        <pre><code>conda install -c bioconda htstream</code></pre>
+        <pre><code>wget https://github.com/ibest/HTStream/releases/download/v1.1.0-release/HTStream_v1.1.0-release.tar.gz
+tar xvf HTStream_v1.1.0-release.tar.gz</code></pre>
+        <h4>2) Bioconda:</h4>
+        If you don't have Bioconda, visit <a href="https://docs.conda.io/en/latest/miniconda.html">Miniconda</a> to get a copy of the Miniconda installer. For example:
+        <pre><code>wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+chmod +x Miniconda3-latest-Linux-x86_64.sh
+./Miniconda3-latest-Linux-x86_64.sh
 
+#Add channels for bioconda
+conda config --add channels defaults
+conda config --add channels bioconda
+conda config --add channels conda-forge
+
+#Install HTStream
+conda install htstream
+        </code></pre>
         <h4>3) Building on Linux</h4>
         Linux Prerequisites:
        <ul>
@@ -183,6 +195,8 @@ To build HTStream with statically linked libraries use <pre><code>cmake -DBUILD_
 <div id="hts_CutTrim">
   <h3>hts_CutTrim</h3>
   The hts_CutTrim application trims a fixed number of bases from the 5' and/or 3' end of each read.
+  For example, to trim the first 10 bases from a single end read:
+  <pre><code>hts_CutTrim -a 10 -U R1.fastq.gz -F R1_left_trimmed</code></pre>
   <h4>For detailed usage instructions please run:</h4>
   <pre><code>hts_CutTrim --help</code></pre>
   <h7><a href="#TOC">Table of contents</a></h7>
@@ -290,6 +304,16 @@ Output: --------------->   <---------------</code></pre>
   <pre><code>hts_SuperDeduper --help</code></pre>  
   <h7><a href="#TOC">Table of contents</a></h7> 
 </div>
+
+<br>
+<div id="hts_Primers">
+  <h3>hts_Primers</h3>
+  hts_Primers is a new tool in development for trimming and annotating reads based on a table of primers. More details coming soon.
+  <h4>For detailed usage instructions please run:</h4>
+  <pre><code>hts_Primers --help</code></pre>  
+  <h7><a href="#TOC">Table of contents</a></h7> 
+</div>
+
 
 <br>
 <div id="Example Pipelines">
