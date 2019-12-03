@@ -164,7 +164,7 @@ void setDefaultParamsOverlapping(po::options_description &desc) {
 }
 
 void setThreadPoolParams(po::options_description &desc) {
-    size_t min = 2;
+    size_t min = 1;
     size_t max = std::max(std::thread::hardware_concurrency(), static_cast<unsigned int>(min));
     desc.add_options()
         ("number-of-threads", po::value<size_t>()->default_value(min)->notifier(boost::bind(&check_range<size_t>, "number-of-threads", _1, min, max)), boost::str(boost::format("Number of worker threads (min 2, max %d)") % max).c_str());
