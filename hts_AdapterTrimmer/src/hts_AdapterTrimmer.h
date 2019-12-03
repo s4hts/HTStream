@@ -274,7 +274,6 @@ void check_read_se(SingleEndRead &se , const double misDensity, const size_t &mi
     Read adapter = Read(adapter_seq, "", "");
 
    /* checkL and kkmer cannot be larger than the adapter length */
-    size_t checkL = std::min(adapter.getLength(), checkLengths);
     size_t kkmer = std::min(adapter.getLength(), kmer);
     /* Create a map with non-overlapping kmers*/
     seqLookup mOne = readOneMap(r1.get_seq(), kkmer, kmerOffset);

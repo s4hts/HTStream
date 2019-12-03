@@ -1,4 +1,5 @@
 #include "utils.h"
+#include <boost/format.hpp>
 
 bool threshold_mismatches(std::string::const_iterator r1, std::string::const_iterator r2, size_t length, size_t max) {
     for (size_t i = 0; i < length; ++i) {
@@ -107,8 +108,8 @@ po::options_description setInputOptions(){
     return input;
 }
 
-po::options_description setOutputOptions(std::string program_name){
-    po::options_description output("Output Options [default: tab6 format to stdout]");
+po::options_description setOutputOptions(const std::string& program_name){
+    po::options_description output(boost::str(boost::format("%s Output Options [default: tab6 format to stdout]") % program_name).c_str());
     output.add_options()
             //output options
             ("force,F", po::bool_switch()->default_value(false),         "Forces overwrite of files")
