@@ -25,6 +25,7 @@ po::options_description setOutputOptions(const std::string& program_name);
 void setDefaultParamsCutting(po::options_description &desc);
 void setDefaultParamsTrim(po::options_description &desc);
 void setDefaultParamsOverlapping(po::options_description &desc);
+void setThreadPoolParams(po::options_description &desc);
 
 template<typename T>
 void check_range(const std::string& name, const T& value, const T& min, const T& max)

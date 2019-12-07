@@ -1,4 +1,5 @@
 #include "utils.h"
+#include <thread>
 #include <boost/format.hpp>
 
 bool threshold_mismatches(std::string::const_iterator r1, std::string::const_iterator r2, size_t length, size_t max) {
@@ -22,8 +23,9 @@ seqLookup readOneMap(std::string seq1, const size_t kmer, const size_t kmerOffse
 
     seqLookup baseReadMap;
     std::string::iterator it;
-    for ( it = seq1.begin() ; it <= seq1.end() - ( static_cast<long> ( kmer ) ) ; it += static_cast<long> ( kmerOffset ) ) {
-        baseReadMap.insert(std::make_pair( std::string ( it, it+ static_cast<long> ( kmer )  ) , it - seq1.begin() ));
+    const std::string::iterator seq1_begin = seq1.begin();
+    for ( it = seq1_begin ; it <= seq1.end() - ( static_cast<long> ( kmer ) ) ; it += static_cast<long> ( kmerOffset ) ) {
+        baseReadMap.insert(std::make_pair( std::string ( it, it+ static_cast<long> ( kmer )  ) , it - seq1_begin ));
     }
 
     return baseReadMap;
@@ -159,6 +161,13 @@ void setDefaultParamsOverlapping(po::options_description &desc) {
             ("max-mismatch,x", po::value<size_t>()->default_value(100)->notifier(boost::bind(&check_range<size_t>, "max-mismatch", _1, 0, 10000)), "Max number of total mismatches allowed in overlapped section (min 0, max 10000)")
             ("check-lengths,c", po::value<size_t>()->default_value(20)->notifier(boost::bind(&check_range<size_t>, "check-lengths", _1, 5, 10000)), "Check lengths of the ends (min 5, max 10000)")
             ("min-overlap,o", po::value<size_t>()->default_value(8)->notifier(boost::bind(&check_range<size_t>, "min-length", _1, 5, 10000)), "Min overlap required to merge two reads (min 5, max 10000)");
+}
+
+void setThreadPoolParams(po::options_description &desc) {
+    size_t min = 1;
+    size_t max = std::max(std::thread::hardware_concurrency(), static_cast<unsigned int>(min));
+    desc.add_options()
+        ("number-of-threads", po::value<size_t>()->default_value(min)->notifier(boost::bind(&check_range<size_t>, "number-of-threads", _1, min, max)), boost::str(boost::format("Number of worker threads (min 2, max %d)") % max).c_str());
 }
 
 void version_or_help(std::string program_name, std::string app_description, po::options_description &desc, po::variables_map vm, bool error) {
