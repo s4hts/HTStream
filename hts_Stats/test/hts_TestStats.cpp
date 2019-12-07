@@ -21,10 +21,10 @@ TEST_F(Stats, BasicTrim) {
         counters.input(*per);
         counters.output(*per);
     }
-    ASSERT_EQ(2, counters.A);
-    ASSERT_EQ(2, counters.T);
-    ASSERT_EQ(2, counters.C);
-    ASSERT_EQ(2, counters.G);
-    ASSERT_EQ(2, counters.R1_bQ30);
-    ASSERT_EQ(3, counters.R2_bQ30);
+    ASSERT_EQ(2u, counters.A);
+    ASSERT_EQ(2u, counters.T);
+    ASSERT_EQ(2u, counters.C);
+    ASSERT_EQ(2u, counters.G);
+    ASSERT_EQ(2u, counters.R1_bQ30);
+    ASSERT_EQ(3u, counters.R2_bQ30);
 };

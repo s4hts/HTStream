@@ -20,7 +20,7 @@ void version_or_help(std::string program_name, std::string app_description, po::
 
 po::options_description setStandardOptions();
 po::options_description setInputOptions();
-po::options_description setOutputOptions(std::string program_name);
+po::options_description setOutputOptions(const std::string& program_name);
 
 void setDefaultParamsCutting(po::options_description &desc);
 void setDefaultParamsTrim(po::options_description &desc);
