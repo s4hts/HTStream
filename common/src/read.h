@@ -14,6 +14,9 @@ typedef boost::dynamic_bitset<> BitSet;
 class ReadBase {
 public:
     virtual ~ReadBase() {}
+    ReadBase(ReadBase const&) = default;
+    ReadBase() = default;
+    
     virtual boost::optional<boost::dynamic_bitset<>> get_key(size_t start, size_t length) = 0;
     static boost::optional<BitSet> str_to_bit(const std::string& StrKey) {
           // converts a string to a 2bit representation: A:00, T:11, C:01, G:10

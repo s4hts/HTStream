@@ -157,16 +157,13 @@ private:
   std::vector<std::string> se_input;
   std::vector<std::string> interleaved_input;
   std::vector<std::string> tab_input;
-  bool std_in;
-
-  //InputReader ifr;
 
 public:
-    inputReaders(std::vector<std::string> r1_input_, std::vector<std::string> r2_input_, std::vector<std::string> se_input_, std::vector<std::string> interleaved_input_, std::vector<std::string> tab_input_, bool std_in_) :
-     r1_input(r1_input_), r2_input(r2_input_), se_input(se_input_), interleaved_input(interleaved_input_), tab_input(tab_input_), std_in(std_in_) { }
-
-     //bool has_next() { ifr.has_next() }
-     //value_type next() { ifr.next() }
+    inputReaders(std::vector<std::string> r1_input_, std::vector<std::string> r2_input_,
+                 std::vector<std::string> se_input_, 
+                 std::vector<std::string> interleaved_input_, 
+                 std::vector<std::string> tab_input_) :
+        r1_input(r1_input_), r2_input(r2_input_), se_input(se_input_), interleaved_input(interleaved_input_), tab_input(tab_input_) { }
 
 };
 
