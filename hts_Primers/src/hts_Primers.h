@@ -115,7 +115,7 @@ public:
         initialize_json();
 
         write_labels(generic);
-        write_vector("Primers",primers);
+        write_vector_slabel("Primers",primers);
         write_vector("Primers_counts",iPrimers);
         write_sublabels("Single_end", se);
         write_sublabels("Paired_end", pe);
@@ -314,7 +314,8 @@ void check_read_pe(PairedEndRead &pe, PrimerCounters &counter, SeqMap &primer5p,
         std::swap(r1, r2);
         counter.increment_flipped();
         p5primer = best_val.name;
-        r1.add_comment("Pf:Z:FLIP_P5:Z:" + best_val.name);
+        r1.add_comment("Pf:Z:FLIP");
+        r1.add_comment("P5:Z:" + best_val.name);
         if (!keep) r1.setLCut(best_val.epos);
         pmatches++;
       }
@@ -381,7 +382,8 @@ void check_read_se(SingleEndRead &se, PrimerCounters &counter, SeqMap &primer5p,
         r1 = temp;
         counter.increment_flipped();
         p5primer = best_val.name;
-        r1.add_comment("Pf:Z:FLIP_P5:Z:" + best_val.name);
+        r1.add_comment("Pf:Z:FLIP")
+        r1.add_comment("P5:Z:" + best_val.name);
         if (!keep) r1.setLCut(best_val.epos);
         pmatches++;
       }
