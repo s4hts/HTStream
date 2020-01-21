@@ -8,3 +8,4 @@ CTestTestfile.cmake
 build
 *.swp
 .Rproj.user
+.DS_Store
