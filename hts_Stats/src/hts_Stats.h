@@ -16,23 +16,6 @@ extern template class InputReader<PairedEndRead, PairedEndReadFastqImpl>;
 extern template class InputReader<PairedEndRead, InterReadImpl>;
 extern template class InputReader<ReadBase, TabReadImpl>;
 
-/*
-A |	A	T
-C |	C	G
-G |	G	C
-M |	A or C
-R |	A or G
-W |	A or T
-S |	C or G
-Y |	C or T
-K |	G or T
-V |	A or C or G
-H |	A or C or T
-D |	A or G or T
-B |	C or G or T
-N |	G or A or T or C
-*/
-
 class StatsCounters : public Counters {
 
 public:
@@ -40,8 +23,6 @@ public:
     std::vector<uint_fast64_t> R2_Length;
     std::vector<uint_fast64_t> SE_Length;
     std::vector<Label> bases;
-    std::vector<seqMatrix> baseMatrix;
-    std::vector<seqMatrix> qualityMatrix;
 
     uint64_t A = 0;
     uint64_t C = 0;
@@ -61,8 +42,6 @@ public:
         R1_Length.resize(1);
         R2_Length.resize(1);
         SE_Length.resize(1);
-        baseMatrix.resize(1);
-        qualityMatrix.resize(1);
 
         se.push_back(std::forward_as_tuple("SE_bpLen", SE_BpLen));
         se.push_back(std::forward_as_tuple("SE_bQ30", SE_bQ30));
@@ -81,11 +60,7 @@ public:
 
 
     void read_stats(Read &r) {
-        std::string seq = r.get_seq();
-
-        for (std::string::iterator bp = seq.begin(); it != seq.end(); ++bp) {
-            i = static_cast<size_t>(bp - seq.begin() );
-
+        for (auto bp : r.get_seq()) {
             switch (bp) {
                 case 'A':
                     ++A;
