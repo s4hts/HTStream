@@ -16,6 +16,23 @@ extern template class InputReader<PairedEndRead, PairedEndReadFastqImpl>;
 extern template class InputReader<PairedEndRead, InterReadImpl>;
 extern template class InputReader<ReadBase, TabReadImpl>;
 
+/*
+A |	A	T
+C |	C	G
+G |	G	C
+M |	A or C
+R |	A or G
+W |	A or T
+S |	C or G
+Y |	C or T
+K |	G or T
+V |	A or C or G
+H |	A or C or T
+D |	A or G or T
+B |	C or G or T
+N |	G or A or T or C
+*/
+
 class StatsCounters : public Counters {
 
 public:
