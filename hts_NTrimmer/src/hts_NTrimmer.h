@@ -24,7 +24,7 @@ size_t dist(size_t x, size_t y) {
 /*This is a O(N) time algorithm
  * it will search for the longest base pair segment that has
  * no N's within it*/
-void trim_n(Read &rb) {
+void trim_n(Read &rb, bool exclude) {
 
     std::string seq = rb.get_seq();
     size_t bestLeft = 0, currentLeft = 0, bestRight = 0;
@@ -34,7 +34,13 @@ void trim_n(Read &rb) {
         i = static_cast<size_t>(it - seq.begin() );
 
         if (*it == 'N') {
-            currentLeft = i + 1;
+            if (exlude) {
+              rb.setLCut(1);
+              rb.setRCut(0);
+              break;
+            } else {
+                currentLeft = i + 1;
+            }
         } else if (dist(bestLeft, bestRight) < dist(currentLeft, i)) {
             bestRight = i;
             bestLeft = currentLeft;
@@ -47,15 +53,15 @@ void trim_n(Read &rb) {
 
 /*Removes all Ns (ambiguity base) from a read*/
 template <class T, class Impl>
-void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, TrimmingCounters& counters, size_t min_length , bool stranded, bool no_orphans) {
+void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, TrimmingCounters& counters, size_t min_length , bool stranded, bool no_orphans, bool exclude) {
 
     while(reader.has_next()) {
         auto i = reader.next();
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
         if (per) {
             counters.input(*per);
-            trim_n(per->non_const_read_one());
-            trim_n(per->non_const_read_two());
+            trim_n(per->non_const_read_one(), exclude);
+            trim_n(per->non_const_read_two(), exclude);
             per->checkDiscarded(min_length);
             writer_helper(per, pe, se, stranded, no_orphans);
             counters.output(*per, no_orphans);
