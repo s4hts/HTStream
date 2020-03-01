@@ -9,15 +9,15 @@
 
 class ThreadTest : public ::testing::Test {
 public:
-    
+
 };
 
 TEST_F(ThreadTest, accumulate) {
-    long max = 10000000;
-    long block_size = 10000;
+    long max = 100000;
+    long block_size = 1000;
     thread_pool threads;
 
-    
+
     std::vector<long> data_vec;
     for (long i = 0; i < max; ++i) {
         data_vec.push_back(i);
@@ -41,13 +41,13 @@ TEST_F(ThreadTest, accumulate) {
 
     ASSERT_EQ(sum, std::accumulate(data_vec.begin(), data_vec.end(), 0l));
 }
-              
+
 TEST_F(ThreadTest, accumulate_queue_max) {
     long max = 10000;
     long block_size = 100;
     thread_pool threads(1);
 
-    
+
     std::vector<long> data_vec;
     for (long i = 0; i < max; ++i) {
         data_vec.push_back(i);
@@ -65,5 +65,3 @@ TEST_F(ThreadTest, accumulate_queue_max) {
 
     ASSERT_EQ(sum, std::accumulate(data_vec.begin(), data_vec.end(), 0));
 }
-
-              
