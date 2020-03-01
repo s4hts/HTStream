@@ -34,7 +34,7 @@ void trim_n(Read &rb, bool exclude) {
         i = static_cast<size_t>(it - seq.begin() );
 
         if (*it == 'N') {
-            if (exlude) {
+            if (exclude) {
               rb.setLCut(1);
               rb.setRCut(0);
               break;
@@ -69,7 +69,7 @@ void helper_trim(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe,
             SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
             if (ser) {
                 counters.input(*ser);
-                trim_n(ser->non_const_read_one());
+                trim_n(ser->non_const_read_one(), exclude);
                 ser->checkDiscarded(min_length);
                 writer_helper(ser, pe, se, false, false);
                 counters.output(*ser);
