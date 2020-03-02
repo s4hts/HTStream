@@ -56,7 +56,7 @@ int main(int argc, char** argv)
             // no-orphans|n ; stranded|s ; min-length|m
 
         desc.add_options()
-            ("exlude,e", po::bool_switch()->default_value(false), "Exclude any sequence with an N character");
+            ("exclude,e", po::bool_switch()->default_value(false), "Exclude any sequence with an N character");
 
         po::options_description cmdline_options;
         cmdline_options.add(standard).add(input).add(output).add(desc);

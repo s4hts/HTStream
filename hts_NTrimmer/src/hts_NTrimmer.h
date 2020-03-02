@@ -37,7 +37,7 @@ void trim_n(Read &rb, bool exclude) {
             if (exclude) {
               rb.setLCut(1);
               rb.setRCut(0);
-              break;
+              return;
             } else {
                 currentLeft = i + 1;
             }
