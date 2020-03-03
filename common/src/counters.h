@@ -74,19 +74,31 @@ public:
         ++TotalFragmentsInput;
     }
 
+    virtual void output(PairedEndRead &read, bool no_orphans = false) {
+        (void)read;  //ignore unused variable warning
+        (void)no_orphans;  //ignore unused variable warning
+        ++PE_Out;
+        ++TotalFragmentsOutput;
+     }
+
+    virtual void output(SingleEndRead &read) {
+        (void)read;  //ignore unused variable warning
+        ++SE_Out;
+        ++TotalFragmentsOutput;
+     }
+    
     virtual void output(ReadBase &read) {
         PairedEndRead *per = dynamic_cast<PairedEndRead *>(&read);
         if (per) {
-            ++PE_Out;
+            return output(*per);
         } else {
             SingleEndRead *ser = dynamic_cast<SingleEndRead *>(&read);
             if (ser) {
-                ++SE_Out;
+                return output(*ser);
             } else {
                 throw std::runtime_error("In utils.h output: read type not valid");
             }
         }
-        ++TotalFragmentsOutput;
     }
 
     virtual void write_out() {
@@ -223,6 +235,7 @@ public:
         pe.push_back(std::forward_as_tuple("R2_discarded", R2_Discarded));
         pe.push_back(std::forward_as_tuple("PE_discarded", PE_Discarded));
     }
+    virtual ~TrimmingCounters() {}
 
     void R1_stats(Read &one) {
         R1_Left_Trim += one.getLTrim();
@@ -240,7 +253,7 @@ public:
     }
 
     using Counters::output;
-    void output(PairedEndRead &per, bool no_orphans = false) {
+    virtual void output(PairedEndRead &per, bool no_orphans = false) {
         Read &one = per.non_const_read_one();
         Read &two = per.non_const_read_two();
         if (!one.getDiscard() && !two.getDiscard()) {
@@ -263,7 +276,7 @@ public:
         }
     }
 
-    void output(SingleEndRead &ser) {
+    virtual void output(SingleEndRead &ser) {
         Read &one = ser.non_const_read_one();
         if (!one.getDiscard()) {
             ++TotalFragmentsOutput;

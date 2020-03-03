@@ -85,7 +85,7 @@ public:
         }
     }
 
-    virtual void output(PairedEndRead &per, bool no_orphans = false)  {
+    void output(PairedEndRead &per, bool no_orphans = false)  {
         Read &one = per.non_const_read_one();
         Read &two = per.non_const_read_two();
         if (!one.getDiscard() && !two.getDiscard()) {
@@ -204,7 +204,7 @@ int charMatch(const char pr, const char se){
 }
 
 typedef struct AlignPos {
-    int dist; // The edit distance
+    long dist; // The edit distance
     size_t spos; // Matching Start Position
     size_t epos; // Matching End Position
     std::string name;
@@ -219,14 +219,16 @@ max error is the max number of mismaches between primer and seq, not including p
 end matches is the number of required perfect match basepairs at the end of primer
 */
 ALIGNPOS
-bounded_edit_distance(const std::string &primer, const std::string &seq, size_t float_bp, int max_error, size_t end_matches)
+bounded_edit_distance(const std::string &primer, const std::string &seq, size_t float_bp, size_t max_error, size_t end_matches)
 {
-    size_t lastdiag, olddiag, cmin, endmatchcount;
+    long lastdiag, olddiag, cmin;
+    size_t endmatchcount;
+    (void)lastdiag;
     size_t primerlen = primer.length();
     size_t seqlen = seq.length();
-    size_t column[primerlen - end_matches + 1];
+    long column[primerlen - end_matches + 1];
 
-    ALIGNPOS val = { max_error+1, 0, primerlen}; // dist and positions
+    ALIGNPOS val = { long(max_error+1), 0u, primerlen, ""}; // dist and positions
 
     /* (primer) should always be greater than end_matches */
     if (primerlen < end_matches){
@@ -248,11 +250,11 @@ bounded_edit_distance(const std::string &primer, const std::string &seq, size_t 
             cmin = i;
             for (size_t j = 1, lastdiag = i-1; j <= primerlen - end_matches ; j++) { // inner loop is the primer
                 olddiag = column[j];
-                column[j] = MIN3(column[j] + 1, column[j-1] + 1, lastdiag + charMatch(primer[j-1],seq[x+i-1]));
+                column[j] = MIN3(column[j] + 1, column[j-1] + 1, long(lastdiag + charMatch(primer[j-1],seq[x+i-1])));
                 lastdiag = olddiag;
                 if (column[j] < cmin) cmin = column[j];
             }
-            if (cmin > max_error) break; // if the smallest value in the column is > max error break
+            if (cmin > long(max_error)) break; // if the smallest value in the column is > max error break
             if (column[primerlen - end_matches] <= val.dist ){
                 endmatchcount=0;
                 for (size_t l = 1; l <= end_matches; l++){
@@ -273,7 +275,7 @@ bounded_edit_distance(const std::string &primer, const std::string &seq, size_t 
     return (val);
 }
 
-void check_read_pe(PairedEndRead &pe, PrimerCounters &counter, SeqMap &primer5p, SeqMap &primer3p, const int pMismatches, const size_t pEndMismatches, const size_t pfloat, const size_t flip, const size_t keep, const size_t mpmatches) {
+void check_read_pe(PairedEndRead &pe, PrimerCounters &counter, SeqMap &primer5p, SeqMap &primer3p, const size_t pMismatches, const size_t pEndMismatches, const size_t pfloat, const size_t flip, const size_t keep, const size_t mpmatches) {
 
     ALIGNPOS test_val, best_val;
     std::string p5primer = "None", p7primer = "None";
@@ -293,7 +295,7 @@ void check_read_pe(PairedEndRead &pe, PrimerCounters &counter, SeqMap &primer5p,
       }
       if (best_val.dist == 0) break;
     }
-    if (best_val.dist <= pMismatches){
+    if (best_val.dist <= long(pMismatches)){
       p5primer = best_val.name;
       r1.add_comment("P5:Z:" + best_val.name);
       if (!keep) r1.setLCut(best_val.epos);
@@ -310,7 +312,7 @@ void check_read_pe(PairedEndRead &pe, PrimerCounters &counter, SeqMap &primer5p,
         }
         if (best_val.dist == 0) break;
       }
-      if (best_val.dist <= pMismatches){
+      if (best_val.dist <= long(pMismatches)){
         std::swap(r1, r2);
         counter.increment_flipped();
         p5primer = best_val.name;
@@ -331,7 +333,7 @@ void check_read_pe(PairedEndRead &pe, PrimerCounters &counter, SeqMap &primer5p,
       }
       if (best_val.dist == 0) break;
     }
-    if (best_val.dist <= pMismatches){
+    if (best_val.dist <= long(pMismatches)){
       p7primer = best_val.name;
       r2.add_comment("P3:Z:" + best_val.name);
       if (!keep) r2.setLCut(best_val.epos);
@@ -341,7 +343,7 @@ void check_read_pe(PairedEndRead &pe, PrimerCounters &counter, SeqMap &primer5p,
     if (pmatches < mpmatches) {r1.setRCut(0); r2.setRCut(0);}
 }
 
-void check_read_se(SingleEndRead &se, PrimerCounters &counter, SeqMap &primer5p, SeqMap &primer3p, const int pMismatches, const size_t pEndMismatches, const size_t pfloat, const size_t flip, const size_t keep, const size_t mpmatches) {
+void check_read_se(SingleEndRead &se, PrimerCounters &counter, SeqMap &primer5p, SeqMap &primer3p, const size_t pMismatches, const size_t pEndMismatches, const size_t pfloat, const size_t flip, const size_t keep, const size_t mpmatches) {
 
     ALIGNPOS test_val, best_val;
     Read &r1 = se.non_const_read_one();
@@ -359,7 +361,7 @@ void check_read_se(SingleEndRead &se, PrimerCounters &counter, SeqMap &primer5p,
       }
       if (best_val.dist == 0) break;
     }
-    if (best_val.dist <= pMismatches){
+    if (best_val.dist <= long(pMismatches)){
       p5primer = best_val.name;
       r1.add_comment("P5:Z:" + best_val.name);
       if (!keep) r1.setLCut(best_val.epos);
@@ -378,7 +380,7 @@ void check_read_se(SingleEndRead &se, PrimerCounters &counter, SeqMap &primer5p,
         }
         if (best_val.dist == 0) break;
       }
-      if (best_val.dist <= pMismatches){
+      if (best_val.dist <= long(pMismatches)){
         r1 = temp;
         counter.increment_flipped();
         p5primer = best_val.name;
@@ -399,7 +401,7 @@ void check_read_se(SingleEndRead &se, PrimerCounters &counter, SeqMap &primer5p,
       }
       if (best_val.dist == 0) break;
     }
-    if (best_val.dist <= pMismatches){
+    if (best_val.dist <= long(pMismatches)){
       p7primer = best_val.name;
       r1.add_comment("P3:Z:" + best_val.name);
       if (!keep) r1.setRCut(r1.getLength() -  best_val.epos);
@@ -415,7 +417,7 @@ void check_read_se(SingleEndRead &se, PrimerCounters &counter, SeqMap &primer5p,
 template <class T, class Impl>
 void helper_Primers(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, PrimerCounters &counter, po::variables_map vm, SeqMap &primer5p, SeqMap &primer3p) {
 
-    const int pMismatches = vm["primer_mismatches"].as<int>();
+    const size_t pMismatches = vm["primer_mismatches"].as<size_t>();
     const size_t min_mprimers = vm["min_primer_matches"].as<size_t>();
     const size_t pEndMismatches = vm["primer_end_mismatches"].as<size_t>();
     const size_t pfloat = vm["float"].as<size_t>();

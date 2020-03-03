@@ -15,7 +15,7 @@ TEST_F(Primer, bounded_edit_distance) {
 
   r = bounded_edit_distance(primer_1, read_seq_1, 6, 4, 4);
 
-  ASSERT_EQ(0, r.dist);
-  ASSERT_EQ(5, r.spos);
-  ASSERT_EQ(34, r.epos);
+  ASSERT_EQ(0u, r.dist);
+  ASSERT_EQ(5u, r.spos);
+  ASSERT_EQ(34u, r.epos);
 };
