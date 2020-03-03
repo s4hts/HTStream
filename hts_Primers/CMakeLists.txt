@@ -11,17 +11,19 @@ set(COMMON_INCLUDES ${CMAKE_SOURCE_DIR}/common/src)
 set(PROJECT_LINK_LIBS hts_common)
 link_directories(${CMAKE_BINARY_DIR}/common)
 
-set(Boost_USE_STATIC_LIBS   ON)
 FIND_PACKAGE( Boost 1.56 COMPONENTS system program_options iostreams filesystem REQUIRED )
+find_package(Threads REQUIRED)
 include_directories(${COMMON_INCLUDES} ${Boost_INCLUDE_DIR} )
 
 
 add_executable(${PROJECT_NAME} ${sources})
-set_target_properties(${PROJECT_NAME} PROPERTIES LINK_SEARCH_START_STATIC 1)
-set_target_properties(${PROJECT_NAME} PROPERTIES LINK_SEARCH_END_STATIC 1)
-target_link_libraries(${PROJECT_NAME} ${EXTRA_BUILD_FLAGS} ${PROJECT_LINK_LIBS} ${Boost_LIBRARIES})
+if (BUILD_STATIC_BIN)
+  set_target_properties(${PROJECT_NAME} PROPERTIES LINK_SEARCH_START_STATIC 1)
+  set_target_properties(${PROJECT_NAME} PROPERTIES LINK_SEARCH_END_STATIC 1)
+endif()
+target_link_libraries(${PROJECT_NAME} ${EXTRA_BUILD_FLAGS} ${PROJECT_LINK_LIBS} ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
-add_custom_target(valgrind_Primers
+add_custom_target(valgrind_${PROJECT_NAME}
   DEPENDS ${PROJECT_NAME}
   COMMAND valgrind ./${PROJECT_NAME} -F -1 ${CMAKE_SOURCE_DIR}/test_suite/fastqFiles/testCase_1X_R1.fastq -2 ${CMAKE_SOURCE_DIR}/test_suite/fastqFiles/testCase_1X_R1.fastq -O
 )
@@ -37,9 +39,7 @@ include_directories(${GTEST_INCLUDE_DIRS} ${Boost_INCLUDE_DIR}
 file(GLOB TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/test/*.cpp)
 link_directories(${GTEST_LIBS_DIR})
 list(REMOVE_ITEM sources ${CMAKE_CURRENT_SOURCE_DIR}/src/${PROJECT_NAME}.cpp)
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Dprivate=public -lboost_serialization -lboost_unit_test_framework-mt -lboost_program_options")
 
 add_executable(${PROJECT_TEST_NAME} ${TEST_SRC_FILES} ${sources})
-#add_dependencies(${PROJECT_TEST_NAME} googletest)
 target_link_libraries(${PROJECT_TEST_NAME} gtest gtest_main ${CMAKE_THREAD_LIBS_INIT} ${PROJECT_LINK_LIBS})
 add_test(${PROJECT_TEST_NAME} ${PROJECT_TEST_NAME})
