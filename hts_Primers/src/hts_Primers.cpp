@@ -62,7 +62,7 @@ int main(int argc, char** argv)
         desc.add_options()
             ("primers_3p,Q", po::value<std::string>(), "3' primers, comma separated list of sequences, or fasta file");
         desc.add_options()
-            ("primer_mismatches,d", po::value<int>()->default_value(4)->notifier(boost::bind(&check_range<size_t>, "primer_mismatches", _1, 0, 10000)), "Max hamming dist from primer (min 0, max 10000)");
+            ("primer_mismatches,d", po::value<size_t>()->default_value(4)->notifier(boost::bind(&check_range<size_t>, "primer_mismatches", _1, 0, 10000)), "Max hamming dist from primer (min 0, max 10000)");
         desc.add_options()
             ("primer_end_mismatches,e", po::value<size_t>()->default_value(4)->notifier(boost::bind(&check_range<size_t>, "primer_end_mismatches", _1, 0, 10000)), "Required number of matching bases at end of primer (min 0, max 10000)");
         desc.add_options()
