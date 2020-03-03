@@ -38,9 +38,9 @@ public:
     uint64_t PE_In = 0;
     uint64_t PE_Out = 0;
 
-    Counters(const std::string &statsFile, bool force, bool appendStats, const std::string &program_name, const std::string &notes):
+    Counters(const std::string &statsFile, bool force_, bool appendStats, const std::string &program_name, const std::string &notes):
             fStats(statsFile),
-            force(force),
+            force(force_),
             aStats(appendStats),
             pName(program_name),
             pNotes(notes) {

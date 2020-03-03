@@ -14,6 +14,8 @@ typedef boost::dynamic_bitset<> BitSet;
 class ReadBase {
 public:
     virtual ~ReadBase() {}
+    ReadBase(ReadBase const&) = default;
+    ReadBase() = default;
     virtual boost::optional<boost::dynamic_bitset<>> get_key(size_t start, size_t length) = 0;
     static boost::optional<BitSet> str_to_bit(const std::string& StrKey) {
           // converts a string to a 2bit representation: A:00, T:11, C:01, G:10
@@ -47,6 +49,7 @@ public:
     virtual double avg_q_score() = 0;
     bool rc;
 };
+typedef std::shared_ptr<ReadBase> ReadBasePtr;
 
 class Read {
 private:
@@ -157,6 +160,8 @@ public:
 
     std::shared_ptr<ReadBase> convert(bool stranded);
 };
+typedef std::shared_ptr<PairedEndRead> PairedEndReadPtr;
+
 /* start, finish, discarded */
 class SingleEndRead: public ReadBase {
 private:
@@ -171,6 +176,7 @@ public:
     double avg_q_score();
     std::shared_ptr<ReadBase> convert(bool stranded);
     void set_read_rc() { one.set_read_rc();}
- };
+};
+typedef std::shared_ptr<SingleEndRead> SingleEndReadPtr;
 
 #endif

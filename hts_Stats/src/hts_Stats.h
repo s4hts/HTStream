@@ -22,7 +22,6 @@ public:
     std::vector<uint_fast64_t> R1_Length;
     std::vector<uint_fast64_t> R2_Length;
     std::vector<uint_fast64_t> SE_Length;
-
     std::vector<Label> bases;
 
     uint64_t A = 0;

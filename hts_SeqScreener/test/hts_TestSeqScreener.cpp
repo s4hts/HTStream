@@ -21,9 +21,9 @@ TEST_F(SeqScreener, check_fasta) {
   screen_len = setLookup_fasta(lookup, f, true_kmer);
 
   std::cout << "Length should be 18 == " << screen_len << '\n';
-  ASSERT_EQ(18, screen_len);
+  ASSERT_EQ(18u, screen_len);
   std::cout << "Lookup size should be 6 == " << lookup.size() << '\n';
-  ASSERT_EQ(6,lookup.size());
+  ASSERT_EQ(6u,lookup.size());
 }
 
 TEST_F(SeqScreener, check_check_read) {
@@ -40,7 +40,7 @@ TEST_F(SeqScreener, check_check_read) {
     size_t lookup_loc_rc = (true_kmer * 2) -2;
     double val = check_read(lookup, testRead, true_kmer * 2, lookup_loc, lookup_loc_rc, fLu, rLu );
     std::cout << "Hits should equal 6 == " << val << '\n';
-    ASSERT_EQ(6, val);
+    ASSERT_EQ(6u, val);
 };;
 
 
@@ -52,7 +52,7 @@ TEST_F(SeqScreener, setLookupTestOrderedVec) {
 
     setLookup_read(lookup, readPhix, 5);
     std::cout << lookup.size() << '\n';
-    ASSERT_EQ(4, lookup.size());
+    ASSERT_EQ(4u, lookup.size());
 };
 
 TEST_F(SeqScreener, setLookupTest) {
@@ -78,7 +78,7 @@ TEST_F(SeqScreener, setLookupTestAmbiguities) {
         std::cout << " " << *it;
     std::cout << std::endl;
     std::cout << lookup.size() << '\n';
-    ASSERT_EQ(4, lookup.size());
+    ASSERT_EQ(4u, lookup.size());
 };
 
 TEST_F(SeqScreener, setLookupTestAmbiguities2_nokmers) {
@@ -89,5 +89,5 @@ TEST_F(SeqScreener, setLookupTestAmbiguities2_nokmers) {
     kmerSet lookup;
     setLookup_read(lookup, readAmbiguities, 5);
     std::cout << lookup.size() << '\n';
-    ASSERT_EQ(0, lookup.size());
+    ASSERT_EQ(0u, lookup.size());
 };

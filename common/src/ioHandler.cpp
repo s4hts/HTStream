@@ -71,7 +71,7 @@ int check_open_r(const std::string& filename) {
     }
 
     if (p.extension() == ".gz") {
-        f = popen(("gunzip -c " + filename).c_str(), "r");
+        f = popen(("gunzip -c '" + filename + "'").c_str(), "r");
     } else {
         f = fopen(filename.c_str(), "r");
     }
@@ -95,7 +95,7 @@ int check_exists(const std::string& filename, bool force, bool gzip, bool std_ou
 
     if (force || !bf::exists(p)) {
         if (gzip) {
-            f = popen(("gzip > " + fname).c_str(), "w");
+            f = popen(("gzip > '" + fname + "'").c_str(), "w");
         } else {
             f = fopen(fname.c_str(), "w");
         }
