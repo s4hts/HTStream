@@ -67,18 +67,15 @@ private:
 public:
     Read(const std::string& seq_, const std::string& qual_, const std::string& id_) :
         seq(seq_), qual(qual_), id_orig(id_), length(seq_.length()), cut_R(seq_.length()), cut_L(0), discard(false), minLength(1) {
-           std::regex re("\\s{1,}");
-           std::string fmt = " ";
-           std::string s = regex_replace(id_orig, re, fmt);
-           std::string fastq_delimiter = " ";
+           std::string fastq_delimiter =  " \t\f\n\r\v";
            // split the id into 2 delimited on the first space
            size_t pos = 0;
-           pos = s.find(fastq_delimiter);
+           pos = id_orig.find_first_of(fastq_delimiter);
            if (pos != std::string::npos){
-             id = s.substr(0, pos);
-             id2 = s.erase(0, pos + fastq_delimiter.length());
+             id = id_orig.substr(0, pos);
+             id2 = id_orig.substr(pos+1, id_orig.size()-(pos+1));
            } else {
-             id = s;
+             id = id_orig;
              id2 = "";
            }
          }
