@@ -57,7 +57,7 @@ public:
         bases.push_back(std::forward_as_tuple("T", T));
         bases.push_back(std::forward_as_tuple("N", N));
     }
-
+    virtual ~StatsCounters() {}
 
     void read_stats(Read &r) {
         for (auto bp : r.get_seq()) {
@@ -84,8 +84,8 @@ public:
     }
 
     using Counters::output;
-    void output(PairedEndRead &per) {
-        Counters::output(per);
+    virtual void output(PairedEndRead &per, bool no_orphans = false) {
+        Counters::output(per, no_orphans);
         Read &one = per.non_const_read_one();
         Read &two = per.non_const_read_two();
         read_stats(one);

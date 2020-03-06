@@ -31,7 +31,7 @@ namespace bi = boost::iostreams;
 
 int check_open_r(const std::string& filename) ;
 int check_exists(const std::string& filename, bool force, bool gzip, bool std_out) ;
-std::string get_fasta_seq(std::istream &inFasta);
+std::string string2fasta(std::string seqstring, const char delim=',');
 Read fasta_to_read(std::string fasta_file);
 
 class HtsOfstream {
@@ -301,7 +301,7 @@ protected:
             << "0\t" /*PNEXT*/
             << "0\t" /*TLEN*/
             << read.get_sub_seq() << "\t"
-            << read.get_sub_qual() << "\n";
+            << read.get_sub_qual() << read.get_comment(true) << "\n";
     }
 
     void samout_rc(const Read &read, size_t bitwiseflag) {
@@ -315,7 +315,7 @@ protected:
             << "0\t" /*PNEXT*/
             << "0\t" /*TLEN*/
             << read.get_seq_rc() << "\t"
-            << read.get_qual_rc() << "\n";
+            << read.get_qual_rc() << read.get_comment(true) << "\n";
     }
 
     /*Unmapped specs for SE reads*/
