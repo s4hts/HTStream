@@ -5,7 +5,6 @@
 #include <boost/optional.hpp>
 #include <memory>
 #include <iostream>
-#include <regex>
 #include <unordered_map>
 #include "typedefs.h"
 
