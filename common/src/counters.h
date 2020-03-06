@@ -157,19 +157,6 @@ public:
         outStats << " [" << std::get<0>(tuple[i]) << "," << std::get<1>(tuple[i]) << "]";  // first, so as to keep the json comma convention
         outStats << " ],\n"; // finish off histogram
     }
-/*
-    virtual void write_vector_label(const std::string &vector_name, const std::vector<Label> &labeltuple, const unsigned int indent = 1) {
-        std::string pad(4 * indent, ' ');
-        if (labeltuple.size() == 0) return;
-        size_t i;
-        outStats << pad << "\"" << vector_name << "\": [";
-        for (i=0 ; i < labeltuple.size()-1; ++i) {
-            outStats << " [" << std::get<0>(labeltuple[i]) << "," << std::get<1>(labeltuple[i]) << "],"; //make sure json format is kept
-        }
-        outStats << " [" << std::get<0>(labeltuple[i]) << "," << std::get<1>(labeltuple[i]) << "]";  // first, so as to keep the json comma convention
-        outStats << " ],\n"; // finish off
-    }
-*/
 
     virtual void write_vector_slabel(const std::string &vector_name, const std::vector<sLabel> &labeltuple, const unsigned int indent = 1) {
         std::string pad(4 * indent, ' ');
