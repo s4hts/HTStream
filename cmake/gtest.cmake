@@ -2,16 +2,27 @@ cmake_minimum_required(VERSION 3.2)
 project(gtest_builder C CXX)
 include(ExternalProject)
 
+
+
+execute_process(
+  COMMAND "tar" "-xzf" "${CMAKE_SOURCE_DIR}/ext/googletest/release-1.10.0.tar.gz"
+  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/ext/googletest"
+  RESULT_VARIABLE tar_result
+  )
+
+message(STATUS "tar result: ${tar_result} ${CMAKE_SOURCE_DIR}/ext/googletest/release-1.10.0.tar.gz")
+
 ExternalProject_Add(googletest
-    URL https://github.com/google/googletest/archive/release-1.10.0.tar.gz
-    CMAKE_ARGS -DCMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG:PATH=DebugLibs
+  SOURCE_DIR "${CMAKE_SOURCE_DIR}/ext/googletest/googletest-release-1.10.0"
+  CMAKE_ARGS -DCMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG:PATH=DebugLibs
                -DCMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE:PATH=ReleaseLibs
                -DCMAKE_CXX_FLAGS=${MSVC_COMPILER_DEFS}
                -Dgtest_force_shared_crt=ON
                -DBUILD_GTEST=ON
-     PREFIX "${CMAKE_CURRENT_BINARY_DIR}"
+  PREFIX "${CMAKE_CURRENT_BINARY_DIR}"
+  
 # Disable install step
-    INSTALL_COMMAND ""
+  INSTALL_COMMAND ""
 )
 
 # Specify include dir
