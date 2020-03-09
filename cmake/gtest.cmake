@@ -10,6 +10,7 @@ ExternalProject_Add(googletest
                -Dgtest_force_shared_crt=ON
                -DBUILD_GTEST=ON
      PREFIX "${CMAKE_CURRENT_BINARY_DIR}"
+     URL_MD5 "ecd1fa65e7de707cd5c00bdac56022cd"
 # Disable install step
     INSTALL_COMMAND ""
 )
