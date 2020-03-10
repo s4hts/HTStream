@@ -83,8 +83,9 @@ function Toggle(tt) {
             <li><a href="#hts_PolyATTrim">hts_PolyATTrim</a></li>
             <li><a href="#hts_SeqScreener">hts_SeqScreener</a></li>
             <li><a href="#hts_SuperDeduper">hts_SuperDeduper</a></li>
-            <li><a href="#hts_Primers">hts_Primers (coming soon)</a></li>
+            <li><a href="#hts_Primers">hts_Primers </a></li>
             <li><a href="#Example Pipelines">ExamplePipelines</a></li>
+            <li><a href="#Parsing JSON log file in R">ParsingJSON</a></li>
           </ul>
           </div>
 
@@ -92,10 +93,12 @@ function Toggle(tt) {
         <h3>Installation HTStream</h3>
         Options for installing HTStream include the following:
         <h4>1) Download and unpack the binary:</h4>
+        The easist and most straight forward option if you are using a Linux system is just to download the compiled binary.
         <pre><code>wget https://github.com/ibest/HTStream/releases/download/v1.1.0-release/HTStream_v1.1.0-release.tar.gz
 tar xvf HTStream_v1.1.0-release.tar.gz</code></pre>
-        <h4>2) Bioconda:</h4>
-        If you don't have Bioconda, visit <a href="https://docs.conda.io/en/latest/miniconda.html">Miniconda</a> to get a copy of the Miniconda installer. For example:
+        <h4>2) <a href='https://bioconda.github.io/'>Bioconda:</a></h4>
+        Many people use conda environments to manage software. HTStream is available through the Bioconda channel.
+        If you don't have Bioconda, visit <a href="https://docs.conda.io/en/latest/miniconda.html">Miniconda</a> to get a copy of the Miniconda installer, or follow the steps below:
         <pre><code>wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
 chmod +x Miniconda3-latest-Linux-x86_64.sh
 ./Miniconda3-latest-Linux-x86_64.sh
@@ -107,28 +110,26 @@ conda config --add channels conda-forge
 
 #Install HTStream
 conda install htstream
-        </code></pre>
-        <h4>3) Building on Linux</h4>
-        Linux Prerequisites:
-       <ul>
-         <li>Cmake 3.2 or greater.</li>
-         <li>Boost 1.56 or greater
-         <ul>
-         <li>libboost-dev libboost-system-dev libboost-program-options-dev libboost-iostreams-dev libboost-filesystem-dev
-        </ul></li>
-       </ul>
-        
-        
-        
-        <h4>On Ubuntu and similar systems</h4>
-        Install Cmake
-        <pre><code>sudo apt-get install cmake # Cmake install - <a href='http://askubuntu.com/questions/610291/how-to-install-cmake-3-2-on-ubuntu-14-04'>Additional help here</a></code></pre>
+        </code></pre>        
 
-        Ubuntu: Install Boost (Boost 1.56 or greater is required)
-<pre><code>Ubuntu:
-    sudo apt install libboost-dev libboost-system-dev libboost-program-options-dev libboost-iostreams-dev libboost-filesystem-dev </code></pre>
+        
+<h4>3) Compiling HTStream on Linux</h4>
+Alternatively you might choose to compile HTStream yourself. This process can be more complicated, but we offer some suggestions below.
+<br><br>
+<h5>Linux Prerequisites</h5>
+<ul>
+  <li>Cmake 3.2 or greater.</li>
+  <li>Boost 1.56 or greater including the following
+  <ul>
+  <li>libboost-dev libboost-system-dev libboost-program-options-dev libboost-iostreams-dev libboost-filesystem-dev
+</ul></li>
+</ul>
 
-        Alternatively Boost can be installed from source:
+<h5> On Ubuntu or similar systems prerequisites can be installed as follows </h5>
+<pre><code>sudo apt-get install cmake # <a href='http://askubuntu.com/questions/610291/how-to-install-cmake-3-2-on-ubuntu-14-04'>Additional help for Cmake here</a></code></pre>
+<pre><code>sudo apt install libboost-dev libboost-system-dev libboost-program-options-dev libboost-iostreams-dev libboost-filesystem-dev </code></pre>
+
+Alternatively Boost can be installed from source:
 <pre><code>wget -O 1_60.tar.bz2 https://sourceforge.net/projects/boost/files/boost/1.60.0/boost_1_60_0.tar.bz2/download
 tar --bzip2 -xf 1_60.tar.bz2
 cd boost_1_60_0
@@ -137,13 +138,24 @@ cd boost_1_60_0
 BOOST_INCLUDE=$(pwd)
 BOOST_INCLUDE_LIB=$(pwd)/stage/lib</code></pre>
 
+<h5>Install HTStream</h5>
+<pre><code>git clone https://github.com/ibest/HTStream.git
+cd HTStream
+mkdir build
+cd build
+cmake ..
+#When using an alternative Boost install:
+#cmake -DCMAKE_INCLUDE_PATH=$BOOST_INCLUDE -DCMAKE_LIBRARY_PATH=$BOOST_INCLUDE_LIB .. 
+#To specify an install location use -DCMAKE_INSTALL_PREFIX=
+make 
+make install #install to /usr/local/bin with sudo access (or location specified with not sudo access)</code></pre>
+
         <h4>4) Building on Mac OSX</h4>
         First, <a href="http://brew.sh/">Install Homebrew</a>
 <pre><code>brew upgrade
 brew install cmake
 brew install boost</code></pre>
 
-        <h4>Install HTStream</h4>
 <pre><code>git clone https://github.com/ibest/HTStream.git
 cd HTStream
 mkdir build
@@ -308,7 +320,9 @@ Output: --------------->   <---------------</code></pre>
 <br>
 <div id="hts_Primers">
   <h3>hts_Primers</h3>
-  hts_Primers is a new tool in development for trimming and annotating reads based on a table of primers. More details coming soon.
+  The hts_Primers application identifies primer sequences located on the 5' ends of R1 and R2, or 5' and 3' end of SE reads. Optionally reads can be 
+  flipped based on primer orientation. Read ID is modified by adding the primer to the read id. Primer IDs are seq1,seq2, etc if supplied on the command line,
+  or the sequence names if included as a fasta file.
   <h4>For detailed usage instructions please run:</h4>
   <pre><code>hts_Primers --help</code></pre>  
   <h7><a href="#TOC">Table of contents</a></h7> 
@@ -323,7 +337,7 @@ Output: --------------->   <---------------</code></pre>
   <br><br><h4>Example 1 </h4>
   A simple pipeline for overlapping reads and screening for PhiX with JSON logging data written to a common logging file:
     <pre><code>hts_Overlapper -e 0.1 -L ./01-cleaned/Sample1_stats.log -1 ./00-RawData/Sample1_R1.fastq.gz -2 ./00-RawData/Sample1_R2.fastq.gz \
-      | hts_SeqScreener -k 12 -A -L ./01-cleaned/Sample1_stats.log -f ./01-cleaned/Sample1 </code></pre>
+      | hts_SeqScreener -k 12 -AL ./01-cleaned/Sample1_stats.log -f ./01-cleaned/Sample1 </code></pre>
   
   <br><h4>Example 2 </h4>
       A more complex example which 1) deduplicates reads, 2) screens them for PhiX, 3) trims poly-A/T bases, 4) screens resulting reads against a collection
@@ -346,6 +360,7 @@ Output: --------------->   <---------------</code></pre>
     will mostly need to be adjusted on a case-by-case basis.
   
   <pre><code>
+      #!/usr/bin/env python
       from glob import glob
       import os
       
@@ -355,10 +370,10 @@ Output: --------------->   <---------------</code></pre>
           r2 = r1.replace("R1", "R2")
           s = r1.split('/')[-1].replace("_L001_R1_001.fastq.gz", '')
           cmd = "hts_SuperDeduper -L ./01-Cleaned/" + s + "_stats.log -1 " + r1 + " -2 " + r2 + " | "
-          cmd += "hts_SeqScreener -A -L ./01-Cleaned/" + s + "_stats.log | "
-          cmd += "hts_PolyATTrim -m 100 -A -L ./01-Cleaned/" + s + "_stats.log | "
-          cmd += "hts_SeqScreener -A -L ./01-Cleaned/" + s + "_stats.log --seq adapters.fa -k 15 -x .01 | "
-          cmd += "hts_Stats -N phix-remover-adapters -A -L ./01-Cleaned/" + s + "_StatsStats.log -f ./01-Cleaned/" + s
+          cmd += "hts_SeqScreener -AL ./01-Cleaned/" + s + "_stats.log | "
+          cmd += "hts_PolyATTrim -m 100 -AL ./01-Cleaned/" + s + "_stats.log | "
+          cmd += "hts_SeqScreener -AL ./01-Cleaned/" + s + "_stats.log --seq adapters.fa -k 15 -x .01 | "
+          cmd += "hts_Stats -N phix-remover-adapters -AL ./01-Cleaned/" + s + "_StatsStats.log -f ./01-Cleaned/" + s
           cleaning.write(cmd+'\n')
       
       cleaning.close()
@@ -371,6 +386,39 @@ Output: --------------->   <---------------</code></pre>
 
   <br><h7><a href="#TOC">Table of contents</a></h7>
   <br>
+</div>
+
+<div id="ParsingJSON">
+  <h3>Parsing JSON log file in R</h3>
+  The JSON log files produced by HTStream can be parsed easily from within R using the <a href="https://cran.r-project.org/web/packages/jsonlite/index.html">jsonlite</a> package.
+  This is a very simple example showing how to load and access data from hts_Stats.
+  <pre><code>## R
+> library(jsonlite)
+> results = fromJSON("test.log")
+> names(results)
+[1] "hts_Stats_23737"
+
+> results$hts_Stats_23737$Paired_end
+
+$PE_in
+[1] 19595
+
+$PE_out
+[1] 19595
+
+$R1_bpLen
+[1] 5708153
+
+$R1_bQ30
+[1] 5233672
+
+$R2_bpLen
+[1] 5708153
+
+$R2_bQ30
+[1] 4946344
+
+  </code></pre>
 </div>
 
 
