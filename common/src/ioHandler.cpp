@@ -1,6 +1,7 @@
 #include "ioHandler.h"
 #include <exception>
 #include <cerrno>
+#include <sstream>
 
 void writer_helper(ReadBase *r, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, bool stranded, bool no_orphans ) { //class writer
     PairedEndRead *per = dynamic_cast<PairedEndRead*>(r);
