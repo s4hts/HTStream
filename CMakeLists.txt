@@ -7,7 +7,8 @@ option(BUILD_GPERFTOOLS "links to google perftools" OFF)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 message( status "cmake module path: " ${CMAKE_MODULE_PATH})
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 ")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 ")
+set(CMAKE_CXX_STANDARD 11)
 
 set(Boost_USE_STATIC_LIBS OFF)
 set(BUILD_SHARED_LIBS ON)
@@ -18,6 +19,7 @@ elseif (UNIX)
     set(EXTRA_BUILD_FLAGS ${EXTRA_BUILD_FLAGS} "-static -pthread -Wl,--whole-archive -lpthread -Wl,--no-whole-archive")
     set(Boost_USE_STATIC_LIBS ON)
     set(BUILD_SHARED_LIBS OFF)
+    #set(CMAKE_CXX_STANDARD 11)
   endif()
 endif()
 

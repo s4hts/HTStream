@@ -14,11 +14,11 @@ message(STATUS "tar result: ${tar_result} ${CMAKE_SOURCE_DIR}/ext/googletest/rel
 
 ExternalProject_Add(googletest
   SOURCE_DIR "${CMAKE_SOURCE_DIR}/ext/googletest/googletest-release-1.10.0"
-  CMAKE_ARGS -DCMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG:PATH=DebugLibs
-               -DCMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE:PATH=ReleaseLibs
-               -DCMAKE_CXX_FLAGS=${MSVC_COMPILER_DEFS}
-               -Dgtest_force_shared_crt=ON
-               -DBUILD_GTEST=ON
+  CMAKE_ARGS -Dgtest_force_shared_crt=ON
+               #-DCMAKE_CXX_FLAGS=${MSVC_COMPILER_DEFS}
+               #-DCMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE:PATH=ReleaseLibs
+               #-DBUILD_GTEST=ON
+               #-DCMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG:PATH=DebugLibs
   PREFIX "${CMAKE_CURRENT_BINARY_DIR}"
   
 # Disable install step
