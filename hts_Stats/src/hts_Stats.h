@@ -4,12 +4,14 @@
 #define BOOST_DYNAMIC_BITSET_DONT_USE_FRIENDS
 
 #include "ioHandler.h"
+#include "utils.h"
+#include "main_template.h"
+
 #include <map>
 #include <unordered_map>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/functional/hash.hpp>
 #include <algorithm>
-#include "utils.h"
 
 extern template class InputReader<SingleEndRead, SingleEndReadFastqImpl>;
 extern template class InputReader<PairedEndRead, PairedEndReadFastqImpl>;
@@ -62,23 +64,23 @@ public:
     void read_stats(Read &r) {
         for (auto bp : r.get_seq()) {
             switch (bp) {
-                case 'A':
-                    ++A;
-                    break;
-                case 'C':
-                    ++C;
-                    break;
-                case 'G':
-                    ++G;
-                    break;
-                case 'T':
-                    ++T;
-                    break;
-                case 'N':
-                    ++N;
-                    break;
-                default:
-                    throw std::runtime_error("Unknown bp in stats counter");
+            case 'A':
+                ++A;
+                break;
+            case 'C':
+                ++C;
+                break;
+            case 'G':
+                ++G;
+                break;
+            case 'T':
+                ++T;
+                break;
+            case 'N':
+                ++N;
+                break;
+            default:
+                throw std::runtime_error("Unknown bp in stats counter");
             }
         }
     }
@@ -165,27 +167,39 @@ public:
 
 };
 
-template <class T, class Impl>
-void helper_stats(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, StatsCounters& counters) {
-    while(reader.has_next()) {
-        auto i = reader.next();
-        PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
-        if (per) {
-            counters.input(*per);
-            counters.output(*per);
-            writer_helper(per, pe, se, false);
-        } else {
-            SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
-            if (ser) {
-                counters.input(*ser);
-                counters.output(*ser);
-                writer_helper(ser, pe, se, false);
+class Stats: public MainTemplate<StatsCounters, Stats> {
+public:
+
+    Stats() {
+        program_name = "hts_Stats";
+        app_description =
+            "The hts_Stats app produce basic statistics about the reads in a dataset.\n";
+        app_description += "  Including the basepair composition and number of bases Q30.";
+    }
+
+    void add_extra_options(po::options_description &) {
+    }
+    
+    template <class T, class Impl>
+    void do_app(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, StatsCounters& counters, const po::variables_map &) {
+        while(reader.has_next()) {
+            auto i = reader.next();
+            PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
+            if (per) {
+                counters.input(*per);
+                counters.output(*per);
+                writer_helper(per, pe, se, false);
             } else {
-                throw std::runtime_error("Unknown read type");
+                SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
+                if (ser) {
+                    counters.input(*ser);
+                    counters.output(*ser);
+                    writer_helper(ser, pe, se, false);
+                } else {
+                    throw std::runtime_error("Unknown read type");
+                }
             }
         }
     }
-
-}
-
+};
 #endif
