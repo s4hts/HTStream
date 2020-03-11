@@ -4,17 +4,18 @@
 #include "hts_NTrimmer.h"
 
 class TrimN : public ::testing::Test {
-    public:
-        const std::string readData_1 = "@Read1\nTTTTTNGAAAAAAAAAGNTTTTT\n+\n#######################\n";
-        const std::string readData_2 = "@Read1\nAAAAAAAAAAAAAAAAAAAAAAAA\n+\n########################\n";
-        const std::string readData_3 = "@Read1\nTTTTTNGGNTTTTTTTTTTTTTN\n+\n#######################\n";
-        const std::string readData_4 = "@Read1\nNTTTTAGGATTTTTTTTTTTTTN\n+\n#######################\n";
-        const std::string readData_5 = "@Read1\nATTTTAGGATTTTTTTTTTTTTN\n+\n#######################\n";
-        const std::string readData_6 = "@Read1\nNTTTTAGGATTTTTTTTTTTTTA\n+\n#######################\n";
-        const std::string readData_7 = "@Read1\nGTTTTAGGATTNTTTTTTTTTTA\n+\n#######################\n";
-        const std::string readData_8 = "@Read1\nNNNNNNNNNNNNNNNNNNNNNNN\n+\n#######################\n";
-        const std::string readData_9a = "@Read1\nCTGACTGACTGANNNACTGACTGACTGNCTGACTG\n+\n###################################\n";
-        const std::string readData_9b = "@Read1\nCTGACTGACTGANNNACTGACTGACTGANTGACTG\n+\n###################################\n";
+public:
+    const std::string readData_1 = "@Read1\nTTTTTNGAAAAAAAAAGNTTTTT\n+\n#######################\n";
+    const std::string readData_2 = "@Read1\nAAAAAAAAAAAAAAAAAAAAAAAA\n+\n########################\n";
+    const std::string readData_3 = "@Read1\nTTTTTNGGNTTTTTTTTTTTTTN\n+\n#######################\n";
+    const std::string readData_4 = "@Read1\nNTTTTAGGATTTTTTTTTTTTTN\n+\n#######################\n";
+    const std::string readData_5 = "@Read1\nATTTTAGGATTTTTTTTTTTTTN\n+\n#######################\n";
+    const std::string readData_6 = "@Read1\nNTTTTAGGATTTTTTTTTTTTTA\n+\n#######################\n";
+    const std::string readData_7 = "@Read1\nGTTTTAGGATTNTTTTTTTTTTA\n+\n#######################\n";
+    const std::string readData_8 = "@Read1\nNNNNNNNNNNNNNNNNNNNNNNN\n+\n#######################\n";
+    const std::string readData_9a = "@Read1\nCTGACTGACTGANNNACTGACTGACTGNCTGACTG\n+\n###################################\n";
+    const std::string readData_9b = "@Read1\nCTGACTGACTGANNNACTGACTGACTGANTGACTG\n+\n###################################\n";
+    NTrimmer nt;
 };
 
 TEST_F(TrimN, Exclude) {
@@ -26,7 +27,7 @@ TEST_F(TrimN, Exclude) {
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        trim_n(per->non_const_read_one(), true);
+        nt.trim_n(per->non_const_read_one(), true);
         ASSERT_EQ("", (per->non_const_read_one()).get_sub_seq());
     }
 };
@@ -40,7 +41,7 @@ TEST_F(TrimN, EdgeRightN) {
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        trim_n(per->non_const_read_one(), false);
+        nt.trim_n(per->non_const_read_one(), false);
         ASSERT_EQ("ATTTTAGGATTTTTTTTTTTTT", (per->non_const_read_one()).get_sub_seq());
     }
 };
@@ -55,7 +56,7 @@ TEST_F(TrimN, EdgeLeftN) {
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        trim_n(per->non_const_read_one(), false);
+        nt.trim_n(per->non_const_read_one(), false);
         ASSERT_EQ("TTTTAGGATTTTTTTTTTTTTA", (per->non_const_read_one()).get_sub_seq());
     }
 };
@@ -70,7 +71,7 @@ TEST_F(TrimN, EdgeCaseNonEnds) {
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        trim_n(per->non_const_read_one(), false);
+        nt.trim_n(per->non_const_read_one(), false);
         ASSERT_EQ("TTTTAGGATTTTTTTTTTTTT", (per->non_const_read_one()).get_sub_seq());
     }
 };
@@ -84,7 +85,7 @@ TEST_F(TrimN, BasicTrim) {
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        trim_n(per->non_const_read_one(), false);
+        nt.trim_n(per->non_const_read_one(), false);
         ASSERT_EQ("GAAAAAAAAAG", (per->non_const_read_one()).get_sub_seq());
     }
 };
@@ -98,7 +99,7 @@ TEST_F(TrimN, NoTrim) {
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        trim_n(per->non_const_read_two(), false);
+        nt.trim_n(per->non_const_read_two(), false);
         ASSERT_EQ("AAAAAAAAAAAAAAAAAAAAAAAA", (per->non_const_read_two()).get_sub_seq());
     }
 };
@@ -112,7 +113,7 @@ TEST_F(TrimN, TwoBasicTrim) {
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        trim_n(per->non_const_read_one(), false);
+        nt.trim_n(per->non_const_read_one(), false);
         ASSERT_EQ("TTTTTTTTTTTTT", (per->non_const_read_one()).get_sub_seq());
     }
 };
@@ -125,7 +126,7 @@ TEST_F(TrimN, equalTrim) {
     while(ifp.has_next()) {
         auto i = ifp.next();
         SingleEndRead *per = dynamic_cast<SingleEndRead*>(i.get());
-        trim_n(per->non_const_read_one(), false);
+        nt.trim_n(per->non_const_read_one(), false);
         ASSERT_EQ("GTTTTAGGATT", (per->non_const_read_one()).get_sub_seq());
     }
 };
@@ -138,7 +139,7 @@ TEST_F(TrimN, allN) {
     while(ifp.has_next()) {
         auto i = ifp.next();
         SingleEndRead *per = dynamic_cast<SingleEndRead*>(i.get());
-        trim_n(per->non_const_read_one(), false);
+        nt.trim_n(per->non_const_read_one(), false);
         ASSERT_EQ("N", (per->non_const_read_one()).get_sub_seq());
     }
 };
@@ -152,8 +153,8 @@ TEST_F(TrimN, longN) {
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        trim_n(per->non_const_read_one(), false);
-        trim_n(per->non_const_read_two(), false);
+        nt.trim_n(per->non_const_read_one(), false);
+        nt.trim_n(per->non_const_read_two(), false);
         ASSERT_EQ("CTGACTGACTGA", (per->non_const_read_one()).get_sub_seq());
         ASSERT_EQ("ACTGACTGACTGA", (per->non_const_read_two()).get_sub_seq());
     }
