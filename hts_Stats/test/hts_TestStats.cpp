@@ -3,13 +3,13 @@
 #include <iostream>
 #include "hts_Stats.h"
 
-class Stats : public ::testing::Test {
+class StatsTest : public ::testing::Test {
     public:
         const std::string readData_1 = "@Read1\nACTG\n+\nI#I#\n";
         const std::string readData_2 = "@Read2\nACTG\n+\nI#II\n";
 };
 
-TEST_F(Stats, BasicTrim) {
+TEST_F(StatsTest, BasicTrim) {
     std::istringstream in1(readData_1);
     std::istringstream in2(readData_2);
 

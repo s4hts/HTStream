@@ -4,17 +4,18 @@
 #include "hts_PolyATTrim.h"
 
 class PolyATTail : public ::testing::Test {
-    public:
-        const std::string readData_1 = "@Read1\nTTTTTTGGAAAAAAAAAGTTTTTTTTG\n+\n###########################\n";
-        const std::string readData_2 = "@Read1\nAAACAAAAAAGGAAAAAAATAAA\n+\n#######################\n";
-        const std::string readData_3 = "@Read1\nAAAAAAAAAAAAAAAAAAAAAAAA\n+\n########################\n";
-        const std::string readData_4 = "@Read1\nGNTTTTTTCATTGGATGCATTAATAACCCATGTTTTACCTTTTGAAAAAATAAATGAAGGATTTGACCTGCTTCACTCTGGGAAAAGGTAGATTTTTTAG\n+\nA#AFFJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ\n";
-        size_t min_trim = 5;
-        size_t max_trim = 30;
-        size_t window_size = 6;
-        size_t perfect_windows = 1;
-        size_t min_length = 5;
-        double max_mismatch_errorDensity = 0.3;
+public:
+    const std::string readData_1 = "@Read1\nTTTTTTGGAAAAAAAAAGTTTTTTTTG\n+\n###########################\n";
+    const std::string readData_2 = "@Read1\nAAACAAAAAAGGAAAAAAATAAA\n+\n#######################\n";
+    const std::string readData_3 = "@Read1\nAAAAAAAAAAAAAAAAAAAAAAAA\n+\n########################\n";
+    const std::string readData_4 = "@Read1\nGNTTTTTTCATTGGATGCATTAATAACCCATGTTTTACCTTTTGAAAAAATAAATGAAGGATTTGACCTGCTTCACTCTGGGAAAAGGTAGATTTTTTAG\n+\nA#AFFJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ\n";
+    size_t min_trim = 5;
+    size_t max_trim = 30;
+    size_t window_size = 6;
+    size_t perfect_windows = 1;
+    size_t min_length = 5;
+    double max_mismatch_errorDensity = 0.3;
+    PolyATTrim pa;
 };
 
 TEST_F(PolyATTail, BasicTrim) {
@@ -26,8 +27,8 @@ TEST_F(PolyATTail, BasicTrim) {
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        trim_left(per->non_const_read_one(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
-        trim_right(per->non_const_read_one(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
+        pa.trim_left(per->non_const_read_one(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
+        pa.trim_right(per->non_const_read_one(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
         ASSERT_EQ("GGAAAAAAAAAG", (per->non_const_read_one()).get_sub_seq());
     }
 };
@@ -41,8 +42,8 @@ TEST_F(PolyATTail, perfectMatch2) {
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        trim_left(per->non_const_read_two(), 'A', min_trim, max_trim, window_size, max_mismatch_errorDensity, 2);
-        trim_right(per->non_const_read_two(), 'A', min_trim, max_trim, window_size, max_mismatch_errorDensity, 2);
+        pa.trim_left(per->non_const_read_two(), 'A', min_trim, max_trim, window_size, max_mismatch_errorDensity, 2);
+        pa.trim_right(per->non_const_read_two(), 'A', min_trim, max_trim, window_size, max_mismatch_errorDensity, 2);
         ASSERT_EQ("AAACAAAAAAGG", (per->non_const_read_two()).get_sub_seq());
     }
 };
@@ -56,8 +57,8 @@ TEST_F(PolyATTail, mostTrim2) {
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        trim_left(per->non_const_read_two(), 'A', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
-        trim_right(per->non_const_read_two(), 'A', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
+        pa.trim_left(per->non_const_read_two(), 'A', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
+        pa.trim_right(per->non_const_read_two(), 'A', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
         ASSERT_EQ("GG", (per->non_const_read_two()).get_sub_seq());
     }
 };
@@ -71,8 +72,8 @@ TEST_F(PolyATTail, AllTrim) {
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        trim_left(per->non_const_read_two(), 'A', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
-        trim_right(per->non_const_read_two(), 'A', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
+        pa.trim_left(per->non_const_read_two(), 'A', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
+        pa.trim_right(per->non_const_read_two(), 'A', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
         ASSERT_EQ("", (per->non_const_read_two()).get_sub_seq());
     }
 };
@@ -86,8 +87,8 @@ TEST_F(PolyATTail, NoTrim) {
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        trim_left(per->non_const_read_two(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
-        trim_right(per->non_const_read_two(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
+        pa.trim_left(per->non_const_read_two(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
+        pa.trim_right(per->non_const_read_two(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
         ASSERT_EQ("AAAAAAAAAAAAAAAAAAAAAAAA", (per->non_const_read_two()).get_sub_seq());
     }
 };
@@ -104,10 +105,10 @@ TEST_F(PolyATTail, Stranded) {
         while(ifp.has_next()) {
             auto i = ifp.next();
             PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-            trim_right(per->non_const_read_one(), 'A', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
-            trim_left(per->non_const_read_one(), 'A', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
-            trim_right(per->non_const_read_two(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
-            trim_left(per->non_const_read_two(),'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
+            pa.trim_right(per->non_const_read_one(), 'A', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
+            pa.trim_left(per->non_const_read_one(), 'A', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
+            pa.trim_right(per->non_const_read_two(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
+            pa.trim_left(per->non_const_read_two(),'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
             per->checkDiscarded(min_length);
             //per->checkDiscarded(min_length);
             //stranded (R2 will be RCed)
@@ -129,8 +130,8 @@ TEST_F(PolyATTail, closebutno) {
         while(ifs.has_next()) {
             auto i = ifs.next();
             SingleEndRead *ser = dynamic_cast<SingleEndRead*>(i.get());
-            trim_left(ser->non_const_read_one(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
-            trim_right(ser->non_const_read_one(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
+            pa.trim_left(ser->non_const_read_one(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
+            pa.trim_right(ser->non_const_read_one(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
             ser->checkDiscarded(min_length);
             writer_helper(ser, tab, tab, true);
         }
