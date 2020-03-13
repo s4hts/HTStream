@@ -1,4 +1,4 @@
-# HTStream
+# HTStream    ![](https://github.com/ibest/HTStream/workflows/C++%20CI/badge.svg)
 A toolset for high throughput sequence analysis using a streaming approach facilitated by Linux pipes.
 
 
