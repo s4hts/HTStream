@@ -1,0 +1,28 @@
+name: C++ CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  ## note the environment is preserved over one job only, so we only use one job
+  build_and_test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+    - name: install boost libs
+      run: sudo apt install libboost-dev libboost-system-dev libboost-program-options-dev libboost-iostreams-dev libboost-filesystem-dev 
+    - name: make build dir
+      run: mkdir build&&cd build
+    - name: cmake
+      working-directory: ./build
+      run: cmake -DCMAKE_BUILD_TYPE=Release ..
+    - name: make
+      working-directory: ./build
+      run: make all
+    - name: test
+      working-directory: ./build
+      run: make test
