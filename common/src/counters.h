@@ -151,6 +151,7 @@ public:
     }
 
     virtual void end_sublabel(const unsigned int indent = 1) {
+        std::string pad(4 * indent, ' ');
         outStats.seekp(-2, std::ios::end );
         outStats << "\n" << pad << "},\n"; // finish off histogram
     }
