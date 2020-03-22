@@ -88,8 +88,8 @@ public:
 
         // READ 1 Base and Quality stats
         // update size of base and Q score matrix if needed
-        size_t current_size = R1_bases.size();
-        for( size_t gap = 0 ; gap < (one.getLength() - current_size); gap++ ) {
+        int current_size = R1_bases.size();
+        for( int gap = 0 ; gap < ((int)one.getLength() - current_size); gap++ ) {
             Vec bases(5,0); // A,C,T,G,N
             Vec qualities(43,0); // quality score 0 to 42
             R1_bases.push_back(bases);
@@ -135,7 +135,7 @@ public:
         // READ 2 Base and Quality stats
         // update size of base and Q score matrix if needed
         current_size = R2_bases.size();
-        for( size_t gap = 0 ; gap < (two.getLength() - current_size); gap++ ) {
+        for( int gap = 0 ; gap < ((int)two.getLength() - current_size); gap++ ) {
             Vec bases(5,0); // A,C,T,G,N
             Vec qualities(43,0); // quality score 0 to 42
             R2_bases.push_back(bases);
@@ -190,8 +190,8 @@ public:
         ++SE_Length[one.getLength()];
         // Single end Base and Quality stats
         // update size of base and Q score matrix if needed
-        size_t current_size = SE_bases.size();
-        for( size_t gap = 0 ; gap < (one.getLength() - current_size); gap++ ) {
+        int current_size = SE_bases.size();
+        for( int gap = 0 ; gap < ((int)one.getLength() - current_size); gap++ ) {
             Vec bases(5,0); // A,C,T,G,N
             Vec qualities(43,0); // quality score 0 to 42
             SE_bases.push_back(bases);
