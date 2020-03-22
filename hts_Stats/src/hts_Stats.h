@@ -288,9 +288,17 @@ public:
             }
         }
 
-        std::vector<std::string> ind;
+        std::vector<std::string> ind_se;
+        for (size_t j = 1; j <= SE_bases.size(); j++){
+          ind_se.push_back(std::to_string((int)j));
+        }
+        std::vector<std::string> ind_pe1;
         for (size_t j = 1; j <= R1_bases.size(); j++){
-          ind.push_back(std::to_string((int)j));
+          ind_pe1.push_back(std::to_string((int)j));
+        }
+        std::vector<std::string> ind_pe2;
+        for (size_t j = 1; j <= R2_bases.size(); j++){
+          ind_pe2.push_back(std::to_string((int)j));
         }
         std::vector<std::string> b{ "A", "C", "G", "T", "N"};
         std::vector<std::string> q;
@@ -305,17 +313,17 @@ public:
         start_sublabel("Single_end");
         write_labels(se, 2);
         write_vector("SE_readlength_histogram",iSE_Length, 2);
-        write_matrix("SE_Base_by_Cycle",SE_bases, b, ind, 0, 2);
-        write_matrix("SE_Qualities_by_Cycle",SE_qualities, q, ind, 0, 2);
+        write_matrix("SE_Base_by_Cycle",SE_bases, b, ind_se, 0, 2);
+        write_matrix("SE_Qualities_by_Cycle",SE_qualities, q, ind_se, 0, 2);
         end_sublabel();
         start_sublabel("Paired_end");
         write_labels(pe, 2);
         write_vector("R1_readlength_histogram",iR1_Length, 2);
-        write_matrix("R1_Base_by_Cycle",R1_bases, b, ind, 0, 2);
-        write_matrix("R1_Qualities_by_Cycle",R1_qualities, q, ind, 0, 2);
+        write_matrix("R1_Base_by_Cycle",R1_bases, b, ind_pe1, 0, 2);
+        write_matrix("R1_Qualities_by_Cycle",R1_qualities, q, ind_pe1, 0, 2);
         write_vector("R2_readlength_histogram",iR2_Length, 2);
-        write_matrix("R2_Base_by_Cycle",R2_bases, b, ind, 0, 2);
-        write_matrix("R2_Qualities_by_Cycle",R2_qualities, q, ind, 0, 2);
+        write_matrix("R2_Base_by_Cycle",R2_bases, b, ind_pe2, 0, 2);
+        write_matrix("R2_Qualities_by_Cycle",R2_qualities, q, ind_pe2, 0, 2);
         end_sublabel();
 
         finalize_json();
