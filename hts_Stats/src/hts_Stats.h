@@ -66,39 +66,8 @@ public:
     }
     virtual ~StatsCounters() {}
 
-    void read_stats(Read &r) {
-        std::string seq = r.get_seq();
-        size_t i = 0;
-
-        for (std::string::iterator bp = seq.begin(); bp != seq.end(); ++bp) {
-            i = static_cast<size_t>(bp - seq.begin() );
-
-            switch (*bp) {
-            case 'A':
-                ++A;
-                break;
-            case 'C':
-                ++C;
-                break;
-            case 'G':
-                ++G;
-                break;
-            case 'T':
-                ++T;
-                break;
-            case 'N':
-                ++N;
-                break;
-            default:
-                throw std::runtime_error("Unknown bp in stats counter");
-            }
-        }
-    }
-
     using Counters::output;
     virtual void output(PairedEndRead &per, bool no_orphans = false) {
-        size_t index = 0;
-
         Counters::output(per, no_orphans);
         Read &one = per.non_const_read_one();
         Read &two = per.non_const_read_two();
