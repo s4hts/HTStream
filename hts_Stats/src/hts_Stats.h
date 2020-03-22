@@ -66,163 +66,48 @@ public:
     }
     virtual ~StatsCounters() {}
 
-    using Counters::output;
-    virtual void output(PairedEndRead &per, bool no_orphans = false) {
-        Counters::output(per, no_orphans);
-        Read &one = per.non_const_read_one();
-        Read &two = per.non_const_read_two();
-
+    void read_stats(Read &r, uint64_t &BpLen, Vec &Length, Mat &read_bases, Mat &read_qualities, uint64_t &read_bQ30) {
         // Total length of bases per read
-        R1_BpLen += one.getLength();
-        R2_BpLen += two.getLength();
+        BpLen += r.getLength();
         // Size histogram per read
-        if ( one.getLength() + 1 > R1_Length.size() ) {
-            R1_Length.resize(one.getLength() + 1);
+        if ( r.getLength() + 1 > Length.size() ) {
+            Length.resize(r.getLength() + 1);
         }
-        ++R1_Length[one.getLength()];
-
-        if ( two.getLength() + 1 > R2_Length.size() ) {
-            R2_Length.resize(two.getLength() + 1);
-        }
-        ++R2_Length[two.getLength()];
-
-        // READ 1 Base and Quality stats
+        ++Length[r.getLength()];
+        // READ Base and Quality stats
         // update size of base and Q score matrix if needed
-        int current_size = R1_bases.size();
-        for( int gap = 0 ; gap < ((int)one.getLength() - current_size); gap++ ) {
+        for( size_t gap = 0 ; read_bases.size() < r.getLength(); gap++ ) {
             Vec bases(5,0); // A,C,T,G,N
             Vec qualities(43,0); // quality score 0 to 42
-            R1_bases.push_back(bases);
-            R1_qualities.push_back(qualities);
+            read_bases.push_back(bases);
+            read_qualities.push_back(qualities);
         }
-        std::string seq = one.get_seq();
-        std::string qual = one.get_qual();
-        uint64_t r1_q30bases=0;
-        for (size_t index = 0; index < one.getLength(); ++index) {
-            // bases
-            char bp = seq[index];
-            switch (bp) {
-              case 'A':
-                  ++A;
-                  ++R1_bases[index][0];
-                  break;
-              case 'C':
-                  ++C;
-                  ++R1_bases[index][1];
-                  break;
-              case 'G':
-                  ++G;
-                  ++R1_bases[index][2];
-                  break;
-              case 'T':
-                  ++T;
-                  ++R1_bases[index][3];
-                  break;
-              case 'N':
-                  ++N;
-                  ++R1_bases[index][4];
-                  break;
-              default:
-                  throw std::runtime_error("Unknown bp in stats counter");
-            }
-            // qualities
-            size_t qscore = qual[index];
-            r1_q30bases += (qscore - 33) >= 30;
-            ++R1_qualities[index][(qscore - 33)];
-        }
-        R1_bQ30 += r1_q30bases;
-
-        // READ 2 Base and Quality stats
-        // update size of base and Q score matrix if needed
-        current_size = R2_bases.size();
-        for( int gap = 0 ; gap < ((int)two.getLength() - current_size); gap++ ) {
-            Vec bases(5,0); // A,C,T,G,N
-            Vec qualities(43,0); // quality score 0 to 42
-            R2_bases.push_back(bases);
-            R2_qualities.push_back(qualities);
-        }
-        seq = two.get_seq();
-        qual = two.get_qual();
-        uint64_t r2_q30bases=0;
-        for (size_t index = 0; index < two.getLength(); ++index) {
-            // bases
-            char bp = seq[index];
-            switch (bp) {
-              case 'A':
-                  ++A;
-                  ++R2_bases[index][0];
-                  break;
-              case 'C':
-                  ++C;
-                  ++R2_bases[index][1];
-                  break;
-              case 'G':
-                  ++G;
-                  ++R2_bases[index][2];
-                  break;
-              case 'T':
-                  ++T;
-                  ++R2_bases[index][3];
-                  break;
-              case 'N':
-                  ++N;
-                  ++R2_bases[index][4];
-                  break;
-              default:
-                  throw std::runtime_error("Unknown bp in stats counter");
-            }
-            // qualities
-            size_t qscore = qual[index];
-            r2_q30bases += (qscore - 33) >= 30;
-            ++R2_qualities[index][(qscore - 33)];
-        }
-        R2_bQ30 += r2_q30bases;
-    }
-
-    void output(SingleEndRead &ser) {
-        Counters::output(ser);
-        Read &one = ser.non_const_read_one();
-
-        SE_BpLen += one.getLength();
-        if ( one.getLength() + 1 > SE_Length.size() ) {
-            SE_Length.resize(one.getLength() + 1);
-        }
-        ++SE_Length[one.getLength()];
-        // Single end Base and Quality stats
-        // update size of base and Q score matrix if needed
-        int current_size = SE_bases.size();
-        for( int gap = 0 ; gap < ((int)one.getLength() - current_size); gap++ ) {
-            Vec bases(5,0); // A,C,T,G,N
-            Vec qualities(43,0); // quality score 0 to 42
-            SE_bases.push_back(bases);
-            SE_qualities.push_back(qualities);
-        }
-        std::string seq = one.get_seq();
-        std::string qual = one.get_qual();
+        std::string seq = r.get_seq();
+        std::string qual = r.get_qual();
         uint64_t q30bases=0;
-        for (size_t index = 0; index < one.getLength(); ++index) {
+        for (size_t index = 0; index < r.getLength(); ++index) {
             // bases
             char bp = seq[index];
             switch (bp) {
               case 'A':
                   ++A;
-                  ++SE_bases[index][0];
+                  ++read_bases[index][0];
                   break;
               case 'C':
                   ++C;
-                  ++SE_bases[index][1];
+                  ++read_bases[index][1];
                   break;
               case 'G':
                   ++G;
-                  ++SE_bases[index][2];
+                  ++read_bases[index][2];
                   break;
               case 'T':
                   ++T;
-                  ++SE_bases[index][3];
+                  ++read_bases[index][3];
                   break;
               case 'N':
                   ++N;
-                  ++SE_bases[index][4];
+                  ++read_bases[index][4];
                   break;
               default:
                   throw std::runtime_error("Unknown bp in stats counter");
@@ -230,9 +115,21 @@ public:
             // qualities
             size_t qscore = qual[index];
             q30bases += (qscore - 33) >= 30;
-            ++SE_qualities[index][(qscore - 33)];
+            ++read_qualities[index][(qscore - 33)];
         }
-        SE_bQ30 += q30bases;
+        read_bQ30 += q30bases;
+    }
+
+    using Counters::output;
+    virtual void output(PairedEndRead &per, bool no_orphans = false) {
+        Counters::output(per, no_orphans);
+        read_stats(per.non_const_read_one(), R1_BpLen, R1_Length, R1_bases, R1_qualities, R1_bQ30);
+        read_stats(per.non_const_read_two(), R2_BpLen, R2_Length, R2_bases, R2_qualities, R2_bQ30);
+    }
+
+    void output(SingleEndRead &ser) {
+        Counters::output(ser);
+        read_stats(ser.non_const_read_one(), SE_BpLen, SE_Length, SE_bases, SE_qualities, SE_bQ30);
     }
 
     virtual void write_out() {
