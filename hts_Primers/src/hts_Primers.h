@@ -371,7 +371,7 @@ public:
             p3primer = best_val.name;
             if (!keep) r2.setLCut(best_val.epos);
             pmatches++;
-        } else if (flip && !flipped && p5primer.compare("None")) {
+        } else if (flip && !flipped && p5primer=="None") {
             best_val.dist = pMismatches + 1;
             const std::string &seq2 = r1.get_seq();
             for ( auto it = primer3p.begin(); it != primer3p.end(); ++it ){
