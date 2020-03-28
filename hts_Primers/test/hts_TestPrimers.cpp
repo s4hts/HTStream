@@ -169,3 +169,87 @@ TEST_F(Primer, test_pairs_flipped_3p_match_only) {
         ASSERT_EQ(1u, counter.flipped);
     }
 };
+
+TEST_F(Primer, test_single_match_only) {
+    std::istringstream in1(read_seq_se);
+    InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(in1);
+    SeqMap primer5p = p.fasta2dict(primer_5p);
+    SeqMap primer3p = p.fasta2dict(primer_3p);
+
+    PrimerCounters counter("/dev/null", true, false, "hts_Primers", "");
+    while(ifs.has_next()) {
+        auto i = ifs.next();
+        SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
+        counter.input(*ser);
+        // check_read_pe(PairedEndRead &pe, PrimerCounters &counter, SeqMap &primer5p, SeqMap &primer3p, const size_t pMismatches, const size_t pEndMismatches, const size_t pfloat, const size_t flip, const size_t keep, const size_t mpmatches
+        p.check_read_se(*ser, counter, primer5p, primer3p, 4, 4, 5, true, false, 2);
+        counter.output(*ser);
+        ASSERT_EQ("TACGGAGGGTGCAAGCGTTGTTCGGATTTATTGGGCGTAAAGCGCGTGTAGGCGGTTTTCTAAGTCTGATGTGAAAGCCCTGGGCTCAACCCAGGAAGTGCATTGGATACTGGGAGACTTGAATACGGGAGAGGGTAGTGGAATTCCTAGTGTAGGAGTGAAATCCGTAGATATTAGGAGGAACACCGGTGGCGAAGGCGGCTACCTGGACCGATATTGACGCTGAGACGCGAAAGCGTGGGGAGCAAACAGG", (ser->non_const_read_one()).get_sub_seq());
+        ASSERT_EQ(19u, (ser->non_const_read_one()).getLTrim());
+        ASSERT_EQ(21u, (ser->non_const_read_one()).getRTrim());
+        ASSERT_EQ(0u, counter.flipped);
+    }
+};
+
+TEST_F(Primer, test_single_match_flip) {
+    std::istringstream in1(read_seq_se);
+    InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(in1);
+    SeqMap primer3p = p.fasta2dict(primer_5p);
+    SeqMap primer5p = p.fasta2dict(primer_3p);
+
+    PrimerCounters counter("/dev/null", true, false, "hts_Primers", "");
+    while(ifs.has_next()) {
+        auto i = ifs.next();
+        SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
+        counter.input(*ser);
+        // check_read_pe(PairedEndRead &pe, PrimerCounters &counter, SeqMap &primer5p, SeqMap &primer3p, const size_t pMismatches, const size_t pEndMismatches, const size_t pfloat, const size_t flip, const size_t keep, const size_t mpmatches
+        p.check_read_se(*ser, counter, primer5p, primer3p, 4, 4, 5, true, false, 2);
+        counter.output(*ser);
+        ASSERT_EQ("CCTGTTTGCTCCCCACGCTTTCGCGTCTCAGCGTCAATATCGGTCCAGGTAGCCGCCTTCGCCACCGGTGTTCCTCCTAATATCTACGGATTTCACTCCTACACTAGGAATTCCACTACCCTCTCCCGTATTCAAGTCTCCCAGTATCCAATGCACTTCCTGGGTTGAGCCCAGGGCTTTCACATCAGACTTAGAAAACCGCCTACACGCGCTTTACGCCCAATAAATCCGAACAACGCTTGCACCCTCCGTA", (ser->non_const_read_one()).get_sub_seq());
+        ASSERT_EQ(21u, (ser->non_const_read_one()).getLTrim());
+        ASSERT_EQ(19u, (ser->non_const_read_one()).getRTrim());
+        ASSERT_EQ(1u, counter.flipped);
+    }
+};
+
+TEST_F(Primer, test_single_match_flip_5p_only) {
+    std::istringstream in1(read_seq_se);
+    InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(in1);
+    SeqMap primer3p;
+    SeqMap primer5p = p.fasta2dict(primer_3p);
+
+    PrimerCounters counter("/dev/null", true, false, "hts_Primers", "");
+    while(ifs.has_next()) {
+        auto i = ifs.next();
+        SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
+        counter.input(*ser);
+        // check_read_pe(PairedEndRead &pe, PrimerCounters &counter, SeqMap &primer5p, SeqMap &primer3p, const size_t pMismatches, const size_t pEndMismatches, const size_t pfloat, const size_t flip, const size_t keep, const size_t mpmatches
+        p.check_read_se(*ser, counter, primer5p, primer3p, 4, 4, 5, true, false, 1);
+        counter.output(*ser);
+        ASSERT_EQ("CCTGTTTGCTCCCCACGCTTTCGCGTCTCAGCGTCAATATCGGTCCAGGTAGCCGCCTTCGCCACCGGTGTTCCTCCTAATATCTACGGATTTCACTCCTACACTAGGAATTCCACTACCCTCTCCCGTATTCAAGTCTCCCAGTATCCAATGCACTTCCTGGGTTGAGCCCAGGGCTTTCACATCAGACTTAGAAAACCGCCTACACGCGCTTTACGCCCAATAAATCCGAACAACGCTTGCACCCTCCGTATTACCGCGGCGGCTGACAC", (ser->non_const_read_one()).get_sub_seq());
+        ASSERT_EQ(21u, (ser->non_const_read_one()).getLTrim());
+        ASSERT_EQ(0u, (ser->non_const_read_one()).getRTrim());
+        ASSERT_EQ(1u, counter.flipped);
+    }
+};
+
+TEST_F(Primer, test_single_match_flip_3p_only) {
+    std::istringstream in1(read_seq_se);
+    InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(in1);
+    SeqMap primer3p = p.fasta2dict(primer_5p);
+    SeqMap primer5p;
+
+    PrimerCounters counter("/dev/null", true, false, "hts_Primers", "");
+    while(ifs.has_next()) {
+        auto i = ifs.next();
+        SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
+        counter.input(*ser);
+        // check_read_pe(PairedEndRead &pe, PrimerCounters &counter, SeqMap &primer5p, SeqMap &primer3p, const size_t pMismatches, const size_t pEndMismatches, const size_t pfloat, const size_t flip, const size_t keep, const size_t mpmatches
+        p.check_read_se(*ser, counter, primer5p, primer3p, 4, 4, 5, true, false, 1);
+        counter.output(*ser);
+        ASSERT_EQ("TGGACTACTGGGGTATCTAATCCTGTTTGCTCCCCACGCTTTCGCGTCTCAGCGTCAATATCGGTCCAGGTAGCCGCCTTCGCCACCGGTGTTCCTCCTAATATCTACGGATTTCACTCCTACACTAGGAATTCCACTACCCTCTCCCGTATTCAAGTCTCCCAGTATCCAATGCACTTCCTGGGTTGAGCCCAGGGCTTTCACATCAGACTTAGAAAACCGCCTACACGCGCTTTACGCCCAATAAATCCGAACAACGCTTGCACCCTCCGTA", (ser->non_const_read_one()).get_sub_seq());
+        ASSERT_EQ(0u, (ser->non_const_read_one()).getLTrim());
+        ASSERT_EQ(19u, (ser->non_const_read_one()).getRTrim());
+        ASSERT_EQ(1u, counter.flipped);
+    }
+};

@@ -431,10 +431,8 @@ public:
             if (!keep) r1.setLCut(best_val.epos);
             pmatches++;
         } else if (flip) {
-            Read &temp = r1;
-            temp.set_read_rc();
             best_val.dist = pMismatches + 1;
-            const std::string &seq1 = temp.get_seq();
+            const std::string &seq1 = r1.get_seq_rc();
             for ( auto it = primer5p.begin(); it != primer5p.end(); ++it ){
                 const std::string p5Primer = it->second;
                 test_val = bounded_edit_distance(p5Primer,  seq1,  pfloat,  pMismatches, pEndMismatches);
@@ -445,7 +443,7 @@ public:
                 if (best_val.dist == 0) break;
             }
             if (best_val.dist <= long(pMismatches)){
-                r1 = temp;
+                r1.set_read_rc();
                 p5primer = best_val.name;
                 flipped = true;
                 if (!keep) r1.setLCut(best_val.epos);
