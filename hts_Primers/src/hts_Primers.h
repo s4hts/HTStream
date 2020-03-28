@@ -73,8 +73,8 @@ public:
         Counters::input(read);
     }
 
-    void primer_match_counter(std::string &p5primer, std::string &p7primer){
-        std::string primerPair = "\"" + p5primer + "\",\"" + p7primer + "\"";
+    void primer_match_counter(std::string &p5primer, std::string &p3primer){
+        std::string primerPair = "\"" + p5primer + "\",\"" + p3primer + "\"";
         primers_seen_counter[primerPair]++;
     }
 
@@ -165,7 +165,7 @@ public:
         desc.add_options()
             ("min_primer_matches,r", po::value<size_t>()->default_value(0)->notifier(boost::bind(&check_range<size_t>, "min_primer_matches", _1, 0, 2)), "Minimum number of primers to match to keep the fragment (0, keep all fragments, 1 must match either 5' or 3' primer, 2 must match both 5' and 3' primers)");
     }
-    
+
     SeqMap fasta2dict(std::string primers){
         SeqMap primerMap;
         bf::path p(primers);
@@ -314,8 +314,9 @@ public:
     void check_read_pe(PairedEndRead &pe, PrimerCounters &counter, SeqMap &primer5p, SeqMap &primer3p, const size_t pMismatches, const size_t pEndMismatches, const size_t pfloat, const size_t flip, const size_t keep, const size_t mpmatches) {
 
         ALIGNPOS test_val, best_val;
-        std::string p5primer = "None", p7primer = "None";
+        std::string p5primer = "None", p3primer = "None";
         size_t pmatches = 0;
+        bool flipped = false;
 
         Read &r1 = pe.non_const_read_one();
         Read &r2 = pe.non_const_read_two();
@@ -333,7 +334,6 @@ public:
         }
         if (best_val.dist <= long(pMismatches)){
             p5primer = best_val.name;
-            r1.add_comment("P5:Z:" + best_val.name);
             if (!keep) r1.setLCut(best_val.epos);
             pmatches++;
         } else if (flip) {
@@ -350,10 +350,8 @@ public:
             }
             if (best_val.dist <= long(pMismatches)){
                 std::swap(r1, r2);
-                counter.increment_flipped();
                 p5primer = best_val.name;
-                r1.add_comment("Pf:Z:FLIP");
-                r1.add_comment("P5:Z:" + best_val.name);
+                flipped = true;
                 if (!keep) r1.setLCut(best_val.epos);
                 pmatches++;
             }
@@ -370,20 +368,49 @@ public:
             if (best_val.dist == 0) break;
         }
         if (best_val.dist <= long(pMismatches)){
-            p7primer = best_val.name;
-            r2.add_comment("P3:Z:" + best_val.name);
+            p3primer = best_val.name;
             if (!keep) r2.setLCut(best_val.epos);
             pmatches++;
+        } else if (flip && !flipped && p5primer.compare("None")) {
+            best_val.dist = pMismatches + 1;
+            const std::string &seq2 = r1.get_seq();
+            for ( auto it = primer3p.begin(); it != primer3p.end(); ++it ){
+                const std::string p3Primer = it->second;
+                test_val = bounded_edit_distance(p3Primer,  seq2,  pfloat,  pMismatches, pEndMismatches);
+                if (test_val.dist < best_val.dist){
+                    best_val = test_val;
+                    best_val.name = it->first;
+                }
+                if (best_val.dist == 0) break;
+            }
+            if (best_val.dist <= long(pMismatches)){
+                std::swap(r1, r2);
+                p3primer = best_val.name;
+                flipped = true;
+                if (!keep) r2.setLCut(best_val.epos);
+                pmatches++;
+            }
         }
-        counter.primer_match_counter(p5primer,p7primer);
-        if (pmatches < mpmatches) {r1.setRCut(0); r2.setRCut(0);}
+        counter.primer_match_counter(p5primer,p3primer);
+        if (pmatches < mpmatches) {
+            r1.setRCut(0);
+            r2.setRCut(0);
+        } else {
+            if (flipped){
+              counter.increment_flipped();
+              r1.add_comment("Pf:Z:FLIP");
+              r2.add_comment("Pf:Z:FLIP");
+            }
+            r1.add_comment("P5:Z:" + p5primer);
+            r2.add_comment("P3:Z:" + p3primer);
+        }
     }
 
     void check_read_se(SingleEndRead &se, PrimerCounters &counter, SeqMap &primer5p, SeqMap &primer3p, const size_t pMismatches, const size_t pEndMismatches, const size_t pfloat, const size_t flip, const size_t keep, const size_t mpmatches) {
 
         ALIGNPOS test_val, best_val;
         Read &r1 = se.non_const_read_one();
-        std::string p5primer = "None", p7primer = "None";
+        std::string p5primer = "None", p3primer = "None";
         size_t pmatches = 0;
 
         best_val.dist = pMismatches + 1;
@@ -438,12 +465,12 @@ public:
             if (best_val.dist == 0) break;
         }
         if (best_val.dist <= long(pMismatches)){
-            p7primer = best_val.name;
+            p3primer = best_val.name;
             r1.add_comment("P3:Z:" + best_val.name);
             if (!keep) r1.setRCut(r1.getLength() -  best_val.epos);
             pmatches++;
         }
-        counter.primer_match_counter(p5primer,p7primer);
+        counter.primer_match_counter(p5primer,p3primer);
         if (pmatches < mpmatches) {r1.setRCut(0);}
     }
 
@@ -456,12 +483,12 @@ public:
         if (vm.count("primers_5p")) {
             primer5p = fasta2dict(vm["primers_5p"].as<std::string>());
         }
-        
+
         SeqMap primer3p;
         if (vm.count("primers_3p")) {
             primer3p = fasta2dict(vm["primers_3p"].as<std::string>());
         }
-        
+
         counter.set_keep_primer(vm["keep"].as<bool>());
         counter.set_seqmap(primer5p, primer3p);
 
