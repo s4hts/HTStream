@@ -371,7 +371,7 @@ public:
             p3primer = best_val.name;
             if (!keep) r2.setLCut(best_val.epos);
             pmatches++;
-        } else if (flip && !flipped && p5primer=="None") {
+        } else if (flip && p5primer=="None") {
             best_val.dist = pMismatches + 1;
             const std::string &seq2 = r1.get_seq();
             for ( auto it = primer3p.begin(); it != primer3p.end(); ++it ){
@@ -409,9 +409,11 @@ public:
     void check_read_se(SingleEndRead &se, PrimerCounters &counter, SeqMap &primer5p, SeqMap &primer3p, const size_t pMismatches, const size_t pEndMismatches, const size_t pfloat, const size_t flip, const size_t keep, const size_t mpmatches) {
 
         ALIGNPOS test_val, best_val;
-        Read &r1 = se.non_const_read_one();
         std::string p5primer = "None", p3primer = "None";
         size_t pmatches = 0;
+        bool flipped = false;
+
+        Read &r1 = se.non_const_read_one();
 
         best_val.dist = pMismatches + 1;
         const std::string &seq1 = r1.get_seq();
@@ -426,7 +428,6 @@ public:
         }
         if (best_val.dist <= long(pMismatches)){
             p5primer = best_val.name;
-            r1.add_comment("P5:Z:" + best_val.name);
             if (!keep) r1.setLCut(best_val.epos);
             pmatches++;
         } else if (flip) {
@@ -445,10 +446,8 @@ public:
             }
             if (best_val.dist <= long(pMismatches)){
                 r1 = temp;
-                counter.increment_flipped();
                 p5primer = best_val.name;
-                r1.add_comment("Pf:Z:FLIP");
-                r1.add_comment("P5:Z:" + best_val.name);
+                flipped = true;
                 if (!keep) r1.setLCut(best_val.epos);
                 pmatches++;
             }
@@ -466,12 +465,39 @@ public:
         }
         if (best_val.dist <= long(pMismatches)){
             p3primer = best_val.name;
-            r1.add_comment("P3:Z:" + best_val.name);
             if (!keep) r1.setRCut(r1.getLength() -  best_val.epos);
             pmatches++;
+        } else if (flip && p5primer=="None") {
+            best_val.dist = pMismatches + 1;
+            const std::string &temp = r1.get_seq();
+            for ( auto it = primer3p.begin(); it != primer3p.end(); ++it ){
+                const std::string p3Primer = it->second;
+                test_val = bounded_edit_distance(p3Primer,  temp,  pfloat,  pMismatches, pEndMismatches);
+                if (test_val.dist < best_val.dist){
+                    best_val = test_val;
+                    best_val.name = it->first;
+                }
+                if (best_val.dist == 0) break;
+            }
+            if (best_val.dist <= long(pMismatches)){
+                r1.set_read_rc();
+                p3primer = best_val.name;
+                flipped = true;
+                if (!keep) r1.setRCut(r1.getLength() -  best_val.epos);
+                pmatches++;
+            }
         }
         counter.primer_match_counter(p5primer,p3primer);
-        if (pmatches < mpmatches) {r1.setRCut(0);}
+        if (pmatches < mpmatches) {
+            r1.setRCut(0);
+        } else {
+            if (flipped){
+              counter.increment_flipped();
+              r1.add_comment("Pf:Z:FLIP");
+            }
+            r1.add_comment("P5:Z:" + p5primer);
+            r1.add_comment("P3:Z:" + p3primer);
+        }
     }
 
 /* This is the helper class for Primer
