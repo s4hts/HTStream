@@ -145,10 +145,10 @@ public:
         if (aStats && end != -1) {
             outStats.open(fStats, std::ios::in | std::ios::out); //append
             outStats.seekp(-6, std::ios::end );
-            outStats << "  }, \"" << pName << "_" << getpid()  << "\": {\n";
+            outStats << "  }, \"" << pName << "\": {\n";
         } else {
             outStats.open(fStats, std::ios::out | std::ios::trunc); //overwrite
-            outStats << "{ \"" << pName << "_" << getpid() <<  "\": {\n";
+            outStats << "{ \"" << pName << "\": {\n";
         }
     }
 
