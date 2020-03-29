@@ -21,9 +21,18 @@ extern template class InputReader<ReadBase, TabReadImpl>;
 class StatsCounters : public Counters {
 
 public:
-    std::vector<uint_fast64_t> R1_Length;
-    std::vector<uint_fast64_t> R2_Length;
-    std::vector<uint_fast64_t> SE_Length;
+    Vec R1_Length;
+    Vec R2_Length;
+    Vec SE_Length;
+
+    Mat R1_bases;
+    Mat R2_bases;
+    Mat SE_bases;
+
+    Mat R1_qualities;
+    Mat R2_qualities;
+    Mat SE_qualities;
+
     std::vector<Label> bases;
 
     uint64_t A = 0;
@@ -44,7 +53,6 @@ public:
         R1_Length.resize(1);
         R2_Length.resize(1);
         SE_Length.resize(1);
-
         se.push_back(std::forward_as_tuple("SE_bpLen", SE_BpLen));
         se.push_back(std::forward_as_tuple("SE_bQ30", SE_bQ30));
 
@@ -61,73 +69,70 @@ public:
     }
     virtual ~StatsCounters() {}
 
-    void read_stats(Read &r) {
-        for (auto bp : r.get_seq()) {
-            switch (bp) {
-            case 'A':
-                ++A;
-                break;
-            case 'C':
-                ++C;
-                break;
-            case 'G':
-                ++G;
-                break;
-            case 'T':
-                ++T;
-                break;
-            case 'N':
-                ++N;
-                break;
-            default:
-                throw std::runtime_error("Unknown bp in stats counter");
-            }
+    void read_stats(Read &r, uint64_t &BpLen, Vec &Length, Mat &read_bases, Mat &read_qualities, uint64_t &read_bQ30) {
+        // Total length of bases per read
+        BpLen += r.getLength();
+        // Size histogram per read
+        if ( r.getLength() + 1 > Length.size() ) {
+            Length.resize(r.getLength() + 1);
         }
+        ++Length[r.getLength()];
+        // READ Base and Quality stats
+        // update size of base and Q score matrix if needed
+        for( size_t gap = 0 ; read_bases.size() < r.getLength(); gap++ ) {
+            Vec bases(5,0); // A,C,T,G,N
+            Vec qualities(43,0); // quality score 0 to 42
+            read_bases.push_back(bases);
+            read_qualities.push_back(qualities);
+        }
+        std::string seq = r.get_seq();
+        std::string qual = r.get_qual();
+        uint64_t q30bases=0;
+        for (size_t index = 0; index < r.getLength(); ++index) {
+            // bases
+            char bp = seq[index];
+            switch (bp) {
+              case 'A':
+                  ++A;
+                  ++read_bases[index][0];
+                  break;
+              case 'C':
+                  ++C;
+                  ++read_bases[index][1];
+                  break;
+              case 'G':
+                  ++G;
+                  ++read_bases[index][2];
+                  break;
+              case 'T':
+                  ++T;
+                  ++read_bases[index][3];
+                  break;
+              case 'N':
+                  ++N;
+                  ++read_bases[index][4];
+                  break;
+              default:
+                  throw std::runtime_error("Unknown bp in stats counter");
+            }
+            // qualities
+            size_t qscore = qual[index];
+            q30bases += (qscore - 33) >= 30;
+            ++read_qualities[index][(qscore - 33)];
+        }
+        read_bQ30 += q30bases;
     }
 
     using Counters::output;
     virtual void output(PairedEndRead &per, bool no_orphans = false) {
         Counters::output(per, no_orphans);
-        Read &one = per.non_const_read_one();
-        Read &two = per.non_const_read_two();
-        read_stats(one);
-        read_stats(two);
-        uint64_t r1_q30bases=0;
-        for (auto q : one.get_qual()) {
-            r1_q30bases += (q - 33) >= 30;
-        }
-        uint64_t r2_q30bases=0;
-        for (auto q : two.get_qual()) {
-            r2_q30bases += (q - 33) >= 30;
-        }
-        R1_bQ30 += r1_q30bases;
-        R2_bQ30 += r2_q30bases;
-        R1_BpLen += one.getLength();
-        R2_BpLen += two.getLength();
-        if ( one.getLength() + 1 > R1_Length.size() ) {
-            R1_Length.resize(one.getLength() + 1);
-        }
-        ++R1_Length[one.getLength()];
-        if ( two.getLength() + 1 > R2_Length.size() ) {
-            R2_Length.resize(two.getLength() + 1);
-        }
-        ++R2_Length[two.getLength()];
+        read_stats(per.non_const_read_one(), R1_BpLen, R1_Length, R1_bases, R1_qualities, R1_bQ30);
+        read_stats(per.non_const_read_two(), R2_BpLen, R2_Length, R2_bases, R2_qualities, R2_bQ30);
     }
 
     void output(SingleEndRead &ser) {
         Counters::output(ser);
-        Read &one = ser.non_const_read_one();
-        read_stats(one);
-        uint_fast64_t q30bases=0;
-        for (auto q : one.get_qual()) {
-            q30bases += (q - 33) >= 30;
-        }
-        SE_bQ30 += q30bases;
-        SE_BpLen += one.getLength();
-        if ( one.getLength() + 1 > SE_Length.size() ) {
-            SE_Length.resize(one.getLength() + 1);
-        }
-        ++SE_Length[one.getLength()];
+        read_stats(ser.non_const_read_one(), SE_BpLen, SE_Length, SE_bases, SE_qualities, SE_bQ30);
     }
 
     virtual void write_out() {
@@ -152,15 +157,43 @@ public:
             }
         }
 
+        std::vector<std::string> ind_se;
+        for (size_t j = 1; j <= SE_bases.size(); j++){
+          ind_se.push_back(std::to_string((int)j));
+        }
+        std::vector<std::string> ind_pe1;
+        for (size_t j = 1; j <= R1_bases.size(); j++){
+          ind_pe1.push_back(std::to_string((int)j));
+        }
+        std::vector<std::string> ind_pe2;
+        for (size_t j = 1; j <= R2_bases.size(); j++){
+          ind_pe2.push_back(std::to_string((int)j));
+        }
+        std::vector<std::string> b{ "A", "C", "G", "T", "N"};
+        std::vector<std::string> q;
+        for (size_t j = 0; j < 43; j++){
+          q.push_back(std::to_string((int)j));
+        }
+
         initialize_json();
 
         write_labels(generic);
-        write_vector("SE_readlength_histogram",iSE_Length);
-        write_vector("R1_readlength_histogram",iR1_Length);
-        write_vector("R2_readlength_histogram",iR2_Length);
         write_sublabels("Base_composition", bases);
-        write_sublabels("Single_end", se);
-        write_sublabels("Paired_end", pe);
+        start_sublabel("Single_end");
+        write_labels(se, 2);
+        write_vector("SE_readlength_histogram",iSE_Length, 2);
+        write_matrix("SE_Base_by_Cycle",SE_bases, b, ind_se, 0, 2);
+        write_matrix("SE_Qualities_by_Cycle",SE_qualities, q, ind_se, 0, 2);
+        end_sublabel();
+        start_sublabel("Paired_end");
+        write_labels(pe, 2);
+        write_vector("R1_readlength_histogram",iR1_Length, 2);
+        write_matrix("R1_Base_by_Cycle",R1_bases, b, ind_pe1, 0, 2);
+        write_matrix("R1_Qualities_by_Cycle",R1_qualities, q, ind_pe1, 0, 2);
+        write_vector("R2_readlength_histogram",iR2_Length, 2);
+        write_matrix("R2_Base_by_Cycle",R2_bases, b, ind_pe2, 0, 2);
+        write_matrix("R2_Qualities_by_Cycle",R2_qualities, q, ind_pe2, 0, 2);
+        end_sublabel();
 
         finalize_json();
     }
