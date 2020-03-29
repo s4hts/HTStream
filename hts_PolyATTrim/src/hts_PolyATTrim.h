@@ -27,25 +27,29 @@ public:
             // no-left|l ; no-right|r
 
         desc.add_options()
-            ("skip_polyA,i", po::bool_switch()->default_value(false), "Skip check for polyA sequence")
-            ("skip_polyT,i", po::bool_switch()->default_value(false), "Skip check for polyT sequence")
+            ("skip_polyA,j", po::bool_switch()->default_value(false), "Skip check for polyA sequence")
+            ("skip_polyT,k", po::bool_switch()->default_value(false), "Skip check for polyT sequence")
             ("window-size,w", po::value<size_t>()->default_value(6)->notifier(boost::bind(&check_range<size_t>, "window-size", _1, 1, 10000)),    "Window size in which to trim (min 1, max 10000)")
-            ("max-mismatch-errorDensity,e", po::value<double>()->default_value(.30)->notifier(boost::bind(&check_range<double>, "max-mismatch-errorDensity", _1, 0.0, 1.0)), "Max percent of mismatches allowed in overlapped section (min 0.0, max 1.0)")
-            ("perfect-windows,i", po::value<size_t>()->default_value(1)->notifier(boost::bind(&check_range<size_t>, "perfect-windows", _1, 0, 10000)),    "Number perfect match windows needed before a match is reported  (min 1, max 10000)")
+            ("max-mismatch-errorDensity,e", po::value<double>()->default_value(0.30)->notifier(boost::bind(&check_range<double>, "max-mismatch-errorDensity", _1, 0.0, 1.0)), "Max percent of mismatches allowed in overlapped section (min 0.0, max 1.0)")
+            ("perfect-windows,c", po::value<size_t>()->default_value(1)->notifier(boost::bind(&check_range<size_t>, "perfect-windows", _1, 0, 10000)),    "Number perfect match windows needed before a match is reported  (min 1, max 10000)")
             ("min-trim,M", po::value<size_t>()->default_value(5)->notifier(boost::bind(&check_range<size_t>, "min-trim", _1, 1, 10000)), "Min base pairs trim for AT tail (min 1, max 10000)")
-            ("max-size,x", po::value<size_t>()->default_value(30)->notifier(boost::bind(&check_range<size_t>, "max-size", _1, 0, 10000)), "Max size a polyAT can be (min 0, max 10000)");
+            ("max-trim,x", po::value<size_t>()->default_value(30)->notifier(boost::bind(&check_range<size_t>, "max-trim", _1, 0, 10000)), "Max size a polyAT can be (min 0, max 10000)");
     }
-    
+
     PolyATTrim() {
         program_name = "hts_PolyATTrim";
         app_description =
             "hts_PolyATTrim trims poly A and T sequences from a read.\n";
-        app_description += "  It start at either the 5' end or 3' end of a fragment and expands a\n";
-        app_description += "  window towards the center until the max-mismatch-errorDensity parameter is met.\n";
-        app_description += "  and at least perfect-windows of are found. If the window is at least <min-trim> bases long,\n";
-        app_description += "  the window will be trimmed from the read.\n";
+        app_description += "  The algorithm is borrowed from Fig 2, Bonfert et al. doi: 2017 10.1371/journal.pone.0170914\n";
+        app_description += "  A sliding window of <window-size> (=6) is shifted from either end of the read\n";
+        app_description += "  (adjustable with --no-left and --no-right) until the <max-mismatch-errorDensity> is\n";
+        app_description += "  exceeded. The read is then trimmed as long as the following criteria are met:\n";
+        app_description += "  \ta) at least <perfect-windows> (=1) were observed\n";
+        app_description += "  \tb) at least <min-trim> (=5) bp will be trimmed\n";
+        app_description += "  \tc) no more than <max-trim> (=30) bp will be trimmed\n";
+        app_description += "  These settings may need to be adjusted depending on library type.";
     }
-        
+
     bool trim_left(Read &rb, char ccheck, size_t min_trim, size_t max_trim, size_t window_size, double max_mismatch_errorDensity, size_t perfect_windows){
         size_t i = 0;
         size_t mismatch = 0, pwindows = 0;
@@ -140,7 +144,7 @@ public:
         size_t min_trim = vm["min-trim"].as<std::size_t>();
         size_t window_size = vm["window-size"].as<std::size_t>();
         size_t perfect_windows = vm["perfect-windows"].as<std::size_t>();
-        size_t max_trim = vm["max-size"].as<std::size_t>();
+        size_t max_trim = vm["max-trim"].as<std::size_t>();
         double max_mismatch_errorDensity = vm["max-mismatch-errorDensity"].as<double>();
         bool stranded = vm["stranded"].as<bool>();
         bool no_left = vm["no-left"].as<bool>();
