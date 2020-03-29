@@ -38,14 +38,15 @@ public:
 
     PolyATTrim() {
         program_name = "hts_PolyATTrim";
-          "hts_PolyATTrim trims poly A and T sequences from a read.\n";
+        app_description =
+            "hts_PolyATTrim trims poly A and T sequences from a read.\n";
         app_description += "  The algorithm is borrowed from Fig 2, Bonfert et al. doi: 2017 10.1371/journal.pone.0170914\n";
         app_description += "  A sliding window of <window-size> (=6) is shifted from either end of the read\n";
         app_description += "  (adjustable with --no-left and --no-right) until the <max-mismatch-errorDensity> is\n";
         app_description += "  exceeded. The read is then trimmed as long as the following criteria are met:\n";
-        app_description += "\ta) at least <perfect-windows> (=1) were observed\n";
-        app_description += "\tb) at least <min-trim> (=5) bp will be trimmed\n";
-        app_description += "\tc) no more than <max-trim> (=30) bp will be trimmed\n";
+        app_description += "  \ta) at least <perfect-windows> (=1) were observed\n";
+        app_description += "  \tb) at least <min-trim> (=5) bp will be trimmed\n";
+        app_description += "  \tc) no more than <max-trim> (=30) bp will be trimmed\n";
         app_description += "  These settings may need to be adjusted depending on library type.";
     }
 
