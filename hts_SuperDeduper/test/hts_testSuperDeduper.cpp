@@ -17,7 +17,7 @@ TEST_F(SDTest, HashMapLoadTest) {
     size_t length = 5;
     double avg_auto_write = 100;
     BitMap read_map;
-    SuperDeduperCounters counter("/dev/null", true, false, "hts_SuperDeduper", "");
+    SuperDeduperCounters counter("hts_SuperDeduper", nullptr);
 
     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(in1, in2);
     std::shared_ptr<std::ostringstream> out1(new std::ostringstream);

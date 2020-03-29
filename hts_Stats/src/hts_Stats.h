@@ -40,7 +40,7 @@ public:
     uint64_t R2_BpLen = 0;
     uint64_t R2_bQ30 = 0;
 
-    StatsCounters(const std::string &statsFile, bool force, bool appendStats, const std::string &program_name, const std::string &notes) : Counters::Counters(statsFile, force, appendStats, program_name, notes) {
+    StatsCounters(const std::string &program_name, const po::variables_map &vm) : Counters::Counters(program_name, vm) {
         R1_Length.resize(1);
         R2_Length.resize(1);
         SE_Length.resize(1);
@@ -179,7 +179,7 @@ public:
 
     void add_extra_options(po::options_description &) {
     }
-    
+
     template <class T, class Impl>
     void do_app(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, StatsCounters& counters, const po::variables_map &) {
         while(reader.has_next()) {

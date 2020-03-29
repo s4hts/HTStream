@@ -14,7 +14,7 @@ TEST_F(StatsTest, BasicTrim) {
     std::istringstream in2(readData_2);
 
     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(in1, in2);
-    StatsCounters counters("/dev/null", true, false, "stats", "");
+    StatsCounters counters("stats", nullptr);
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());

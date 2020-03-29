@@ -31,7 +31,7 @@ public:
     uint64_t R2_Discarded = 0;
     uint64_t PE_Discarded = 0;
 
-    OverlappingCounters(const std::string &statsFile, bool force, bool appendStats, const std::string &program_name, const std::string &notes) : Counters::Counters(statsFile, force, appendStats, program_name, notes) {
+    OverlappingCounters(const std::string &program_name, const po::variables_map &vm) : Counters::Counters(program_name, vm) {
 
         insertLength.resize(1);
 
@@ -134,10 +134,10 @@ public:
         // no-orphans|n ; stranded|s ; min-length|m
         setDefaultParamsOverlapping(desc);
     }
-    
+
     Overlapper() {
         program_name = "hts_Overlapper";
-        app_description = 
+        app_description =
             "The hts_Overlapper application attempts to overlap paired end reads\n";
         app_description += "  to produce the original transcript, trim adapters, and in some\n";
         app_description += "  cases, correct sequencing errors.\n";

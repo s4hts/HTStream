@@ -40,7 +40,7 @@ public:
     uint64_t R2_Discarded = 0;
     uint64_t PE_Discarded = 0;
 
-    PrimerCounters(const std::string &statsFile, bool force, bool appendStats, const std::string &program_name, const std::string &notes) : Counters::Counters(statsFile, force, appendStats, program_name, notes) {
+    PrimerCounters(const std::string &program_name, const po::variables_map &vm) : Counters::Counters(program_name, vm) {
         generic.push_back(std::forward_as_tuple("Flipped", flipped));
         generic.push_back(std::forward_as_tuple("PrimersKeep", keep_primer));
 
@@ -165,7 +165,7 @@ public:
         desc.add_options()
             ("min_primer_matches,r", po::value<size_t>()->default_value(0)->notifier(boost::bind(&check_range<size_t>, "min_primer_matches", _1, 0, 2)), "Minimum number of primers to match to keep the fragment (0, keep all fragments, 1 must match either 5' or 3' primer, 2 must match both 5' and 3' primers)");
     }
-    
+
     SeqMap fasta2dict(std::string primers){
         SeqMap primerMap;
         bf::path p(primers);
@@ -456,12 +456,12 @@ public:
         if (vm.count("primers_5p")) {
             primer5p = fasta2dict(vm["primers_5p"].as<std::string>());
         }
-        
+
         SeqMap primer3p;
         if (vm.count("primers_3p")) {
             primer3p = fasta2dict(vm["primers_3p"].as<std::string>());
         }
-        
+
         counter.set_keep_primer(vm["keep"].as<bool>());
         counter.set_seqmap(primer5p, primer3p);
 

@@ -13,17 +13,21 @@
 #include "read.h"
 #include "typedefs.h"
 #include <boost/filesystem/path.hpp>
+#include <boost/program_options.hpp>
+
 
 namespace bf = boost::filesystem;
+namespace po = boost::program_options;
 
 class Counters {
 public:
     std::fstream outStats;
-    std::string fStats;
-    bool force;
-    bool aStats;
-    std::string pName;
-    std::string pNotes;
+    std::string fStats = "/dev/null";
+    bool force = false;
+    bool aStats = false;
+    std::string pName = "hts";
+    std::string pNotes = "";
+    const po::variables_map &vm;
 
     std::vector<Label> generic;
     std::vector<Label> se;
@@ -38,13 +42,15 @@ public:
     uint64_t PE_In = 0;
     uint64_t PE_Out = 0;
 
-    Counters(const std::string &statsFile, bool force_, bool appendStats, const std::string &program_name, const std::string &notes):
-            fStats(statsFile),
-            force(force_),
-            aStats(appendStats),
-            pName(program_name),
-            pNotes(notes) {
-
+    Counters(const std::string &program_name_, const po::variables_map &vm_):
+            pName(program_name_),
+             vm(vm_) {
+        if (vm.size()){
+          fStats = vm["stats-file"].as<std::string>();
+          force = vm["force"].as<bool>();
+          aStats = vm["append-stats-file"].as<bool>();
+          pNotes = vm["notes"].as<std::string>();
+        }
         check_write();
 
         generic.push_back(std::forward_as_tuple("totalFragmentsInput", TotalFragmentsInput));
@@ -86,7 +92,7 @@ public:
         ++SE_Out;
         ++TotalFragmentsOutput;
      }
-    
+
     virtual void output(ReadBase &read) {
         PairedEndRead *per = dynamic_cast<PairedEndRead *>(&read);
         if (per) {
@@ -209,7 +215,7 @@ public:
     uint64_t R2_Discarded = 0;
     uint64_t PE_Discarded = 0;
 
-    TrimmingCounters(const std::string &statsFile, bool force, bool appendStats, const std::string &program_name, const std::string &notes) : Counters::Counters(statsFile, force, appendStats, program_name, notes) {
+    TrimmingCounters(const std::string &program_name, const po::variables_map &vm ) : Counters::Counters(program_name, vm) {
         se.push_back(std::forward_as_tuple("SE_rightTrim", SE_Right_Trim));
         se.push_back(std::forward_as_tuple("SE_leftTrim", SE_Left_Trim));
         se.push_back(std::forward_as_tuple("SE_discarded", SE_Discarded));
