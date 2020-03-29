@@ -35,18 +35,30 @@ public:
     std::unordered_map < std::string, uint_fast64_t> primers_seen_counter;
 
     uint64_t SE_Discarded = 0;
+    uint64_t SE_Primer_Trim = 0;
+    uint64_t SE_Primer_BpTrim = 0;
 
     uint64_t R1_Discarded = 0;
+    uint64_t R1_Primer_Trim = 0;
+    uint64_t R1_Primer_BpTrim = 0;
     uint64_t R2_Discarded = 0;
+    uint64_t R2_Primer_Trim = 0;
+    uint64_t R2_Primer_BpTrim = 0;
     uint64_t PE_Discarded = 0;
 
     PrimerCounters(const std::string &program_name, const po::variables_map &vm) : Counters::Counters(program_name, vm) {
 
         fragment.push_back(std::forward_as_tuple("flipped", flipped));
 
+        se.push_back(std::forward_as_tuple("SE_primerTrim", SE_Primer_Trim));
+        se.push_back(std::forward_as_tuple("SE_primerBpTrim", SE_Primer_BpTrim));
         se.push_back(std::forward_as_tuple("SE_discarded", SE_Discarded));
 
+        pe.push_back(std::forward_as_tuple("R1_primerTrim", R1_Primer_Trim));
+        pe.push_back(std::forward_as_tuple("R1_primerBpTrim", R1_Primer_BpTrim));
         pe.push_back(std::forward_as_tuple("R1_discarded", R1_Discarded));
+        pe.push_back(std::forward_as_tuple("R2_primerTrim", R2_Primer_Trim));
+        pe.push_back(std::forward_as_tuple("R2_primerBpTrim", R2_Primer_BpTrim));
         pe.push_back(std::forward_as_tuple("R2_discarded", R2_Discarded));
         pe.push_back(std::forward_as_tuple("PE_discarded", PE_Discarded));
     }
@@ -80,6 +92,11 @@ public:
         if (ser.non_const_read_one().getDiscard()) {
             ++SE_Discarded;
         } else {
+            Read &one = ser.non_const_read_one();
+            if (one.getLengthTrue() < one.getLength()) {
+                ++SE_Primer_Trim;
+                SE_Primer_BpTrim += (one.getLength() - one.getLengthTrue());
+            }
             ++SE_Out;
             ++TotalFragmentsOutput;
         }
@@ -89,13 +106,29 @@ public:
         Read &one = per.non_const_read_one();
         Read &two = per.non_const_read_two();
         if (!one.getDiscard() && !two.getDiscard()) {
+            if (one.getLengthTrue() < one.getLength()){
+              ++R1_Primer_Trim;
+              R1_Primer_BpTrim += (one.getLength() - one.getLengthTrue());
+            }
+            if (two.getLengthTrue() < two.getLength()) {
+              ++R2_Primer_Trim;
+              R2_Primer_BpTrim += (two.getLength() - two.getLengthTrue());
+            }
             ++PE_Out;
             ++TotalFragmentsOutput;
         } else if (!one.getDiscard() && !no_orphans) { //if stranded RC
+            if (one.getLengthTrue() < one.getLength()) {
+                ++SE_Primer_Trim;
+                SE_Primer_BpTrim += (one.getLength() - one.getLengthTrue());
+            }
             ++SE_Out;
             ++R2_Discarded;
             ++TotalFragmentsOutput;
         } else if (!two.getDiscard() && !no_orphans) { // Will never be RC
+            if (two.getLengthTrue() < two.getLength()) {
+                ++SE_Primer_Trim;
+                SE_Primer_BpTrim += (two.getLength() - two.getLengthTrue());
+            }
             ++SE_Out;
             ++R1_Discarded;
             ++TotalFragmentsOutput;
@@ -532,6 +565,9 @@ public:
         const size_t pfloat = vm["float"].as<size_t>();
         const bool flip = vm["flip"].as<bool>();
         const bool keep = vm["keep"].as<bool>();
+        const bool stranded = vm["stranded"].as<bool>();
+        const size_t min_length = vm["min-length"].as<size_t>();
+        bool no_orphan = vm["no-orphans"].as<bool>();
 
         while(reader.has_next()) {
             auto i = reader.next();
@@ -539,15 +575,15 @@ public:
             if (per) {
                 counter.input(*per);
                 check_read_pe(*per, counter, primer5p, primer3p, pMismatches, pEndMismatches, pfloat, flip, keep, min_mprimers);
-                per->checkDiscarded(vm["min-length"].as<size_t>());
-                counter.output(*per, vm["no-orphans"].as<bool>());
-                writer_helper(per, pe, se, vm["stranded"].as<bool>(), vm["no-orphans"].as<bool>());
+                per->checkDiscarded(min_length);
+                counter.output(*per, no_orphan);
+                writer_helper(per, pe, se, stranded, no_orphan);
             } else {
                 SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
                 if (ser) {
                     counter.input(*ser);
                     check_read_se(*ser, counter, primer5p, primer3p, pMismatches, pEndMismatches, pfloat, flip, keep, min_mprimers);
-                    ser->checkDiscarded(vm["min-length"].as<size_t>());
+                    ser->checkDiscarded(min_length);
                     counter.output(*ser);
                     writer_helper(ser, pe, se);
                 } else {

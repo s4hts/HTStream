@@ -60,8 +60,8 @@ public:
         pd.push_back(std::forward_as_tuple("version", VERSION));
         pd.push_back(std::forward_as_tuple("notes", pNotes));
 
-        fragment.push_back(std::forward_as_tuple("totalFragmentsInput", TotalFragmentsInput));
-        fragment.push_back(std::forward_as_tuple("totalFragmentsOutput", TotalFragmentsOutput));
+        fragment.push_back(std::forward_as_tuple("fragments_in", TotalFragmentsInput));
+        fragment.push_back(std::forward_as_tuple("fragments_out", TotalFragmentsOutput));
 
         se.push_back(std::forward_as_tuple("SE_in", SE_In));
         se.push_back(std::forward_as_tuple("SE_out", SE_Out));

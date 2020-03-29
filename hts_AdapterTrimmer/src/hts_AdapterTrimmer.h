@@ -25,8 +25,6 @@ extern template class InputReader<ReadBase, TabReadImpl>;
 class AdapterCounters : public Counters {
 
 public:
-    uint64_t Fixbases = 1;
-
     uint64_t SE_Discarded = 0;
     uint64_t SE_Adapter_Trim = 0;
     uint64_t SE_Adapter_BpTrim = 0;
@@ -39,15 +37,15 @@ public:
 
     AdapterCounters(const std::string &program_name, const po::variables_map &vm) : Counters::Counters(program_name, vm) {
 
-        se.push_back(std::forward_as_tuple("SE_discarded", SE_Discarded));
         se.push_back(std::forward_as_tuple("SE_adapterTrim", SE_Adapter_Trim));
         se.push_back(std::forward_as_tuple("SE_adapterBpTrim", SE_Adapter_BpTrim));
+        se.push_back(std::forward_as_tuple("SE_discarded", SE_Discarded));
 
         pe.push_back(std::forward_as_tuple("R1_discarded", R1_Discarded));
         pe.push_back(std::forward_as_tuple("R2_discarded", R2_Discarded));
-        pe.push_back(std::forward_as_tuple("PE_discarded", PE_Discarded));
         pe.push_back(std::forward_as_tuple("PE_adapterTrim", PE_Adapter_Trim));
         pe.push_back(std::forward_as_tuple("PE_adapterBpTrim", PE_Adapter_BpTrim));
+        pe.push_back(std::forward_as_tuple("PE_discarded", PE_Discarded));
     }
 
     using Counters::output;
