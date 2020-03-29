@@ -86,7 +86,7 @@ public:
         ++SE_Out;
         ++TotalFragmentsOutput;
      }
-    
+
     virtual void output(ReadBase &read) {
         PairedEndRead *per = dynamic_cast<PairedEndRead *>(&read);
         if (per) {
@@ -145,16 +145,27 @@ public:
         outStats << "\n" << pad << "},\n"; // finish off histogram
     }
 
+    virtual void start_sublabel(const std::string &labelStr, const unsigned int indent = 1) {
+        std::string pad(4 * indent, ' ');
+        outStats << pad << "\"" << labelStr << "\": {\n";
+    }
+
+    virtual void end_sublabel(const unsigned int indent = 1) {
+        std::string pad(4 * indent, ' ');
+        outStats.seekp(-2, std::ios::end );
+        outStats << "\n" << pad << "},\n"; // finish off histogram
+    }
+
     template <class T>
     void write_vector(const std::string &name, T &tuple, const unsigned int indent = 1) {
         std::string pad(4 * indent, ' ');
         if (tuple.size() == 0) return;
         size_t i;
         outStats << pad << "\"" << name << "\": [";
-        for (i=0 ; i < tuple.size()-1; ++i) {
-            outStats << " [" << std::get<0>(tuple[i]) << "," << std::get<1>(tuple[i]) << "],"; //make sure json format is kept
+        for (i=0 ; i < tuple.size(); ++i) {
+            outStats << " [" << std::get<0>(tuple[i]) << "," << std::get<1>(tuple[i]) << "]"; //make sure json format is kept
+            if (i < tuple.size()-1) outStats << ",";
         }
-        outStats << " [" << std::get<0>(tuple[i]) << "," << std::get<1>(tuple[i]) << "]";  // first, so as to keep the json comma convention
         outStats << " ],\n"; // finish off histogram
     }
 
@@ -163,11 +174,64 @@ public:
         if (labeltuple.size() == 0) return;
         size_t i;
         outStats << pad << "\"" << vector_name << "\": [";
-        for (i=0 ; i < labeltuple.size()-1; ++i) {
-            outStats << " [\"" << std::get<0>(labeltuple[i]) << "\",\"" << std::get<1>(labeltuple[i]) << "\"],"; //make sure json format is kept
+        for (i=0 ; i < labeltuple.size(); ++i) {
+            outStats << " [\"" << std::get<0>(labeltuple[i]) << "\",\"" << std::get<1>(labeltuple[i]) << "\"]"; //make sure json format is kept
+            if (i < labeltuple.size()-1) outStats << ",";
         }
-        outStats << " [\"" << std::get<0>(labeltuple[i]) << "\",\"" << std::get<1>(labeltuple[i]) << "\"]";  // first, so as to keep the json comma convention
         outStats << " ],\n"; // finish off
+    }
+
+    virtual void write_matrix(const std::string &matrix_name, const Mat &data, const std::vector<std::string> &row_name, const std::vector<std::string> &col_name, const bool sparse = 0, const unsigned int indent = 1) {
+        std::string pad(4 * indent, ' ');
+        std::string pad2(4 * (indent + 1), ' ');
+        if (data.size() == 0) return;
+
+        if (data.size() < col_name.size()) throw std::runtime_error("In counters.h output: data matrix column size less than col_names size");
+        if (data[0].size() < row_name.size()) throw std::runtime_error("In counters.h output: data matrix row size less than row_names size");
+
+        outStats << pad << "\"" << matrix_name << "\": {\n";
+
+        outStats << pad2 << "\"matrix_type\": \"" << ((sparse) ? "sparse" : "dense") << "\",\n";
+        outStats << pad2 << "\"matrix_element_type\": \"int\",\n";
+        outStats << pad2 << "\"shape\": [" << row_name.size() << ", " << col_name.size() << "],\n";
+        outStats << pad2 << "\"row_names\": [";
+        for (size_t i=0 ; i < row_name.size(); ++i) {
+            outStats << " \"" << row_name[i] << "\""; //make sure json format is kept
+            if (i < row_name.size()-1) outStats << ",";
+        }
+        outStats << " ],\n"; // finish off
+        outStats << pad2 << "\"col_names\": [";
+        for (size_t i=0 ; i < col_name.size(); ++i) {
+            outStats << " \"" << col_name[i] << "\""; //make sure json format is kept
+            if (i < col_name.size()-1) outStats << ",";
+        }
+        outStats << " ],\n"; // finish off
+        outStats << pad2 << "\"" << "data" << "\": [";
+        // sparse matrix
+        if (sparse){
+          bool first = 1;
+          for (size_t i = 0 ; i < row_name.size(); ++i) {
+              for (size_t j=0 ; j < col_name.size(); ++j ) {
+                  if (data[j][i] != 0){
+                      if (!first) outStats << ",";
+                      outStats << " [" << i << "," << j << "," << data[j][i] << "]"; //make sure json format is kept
+                      first = 0;
+                  }
+              }
+          }
+        } else {
+          for (size_t i = 0 ; i < row_name.size(); ++i) {
+              outStats << " [";
+              for (size_t j=0 ; j < col_name.size(); ++j ) {
+                  outStats << " " << data[j][i]; //make sure json format is kept
+                  if (j < col_name.size()-1) outStats << ",";
+              }
+              outStats << " ]";
+              if (i < row_name.size()-1) outStats << ",";
+          }
+        }
+          outStats << " ]\n"; // finish off
+        outStats << pad << "},\n";
     }
 
     virtual void finalize_json() {
