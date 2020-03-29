@@ -10,11 +10,11 @@
 #include <fstream>
 #include <vector>
 #include <tuple>
+#include "version.h"
 #include "read.h"
 #include "typedefs.h"
 #include <boost/filesystem/path.hpp>
 #include <boost/program_options.hpp>
-
 
 namespace bf = boost::filesystem;
 namespace po = boost::program_options;
@@ -25,13 +25,15 @@ public:
     std::string fStats = "/dev/null";
     bool force = false;
     bool aStats = false;
+
     std::string pName = "hts";
-    std::string pNotes = "";
-    const po::variables_map &vm;
+    std::string pNotes = "hts";
+    po::variables_map vm;
 
     std::vector<Label> generic;
     std::vector<Label> se;
     std::vector<Label> pe;
+    std::vector<sLabel> pd;
 
     uint64_t TotalFragmentsInput = 0;
     uint64_t TotalFragmentsOutput = 0;
@@ -42,9 +44,10 @@ public:
     uint64_t PE_In = 0;
     uint64_t PE_Out = 0;
 
-    Counters(const std::string &program_name_, const po::variables_map &vm_):
+    Counters(const std::string &program_name_, po::variables_map vm_):
             pName(program_name_),
-             vm(vm_) {
+            vm(vm_) {
+
         if (vm.size()){
           fStats = vm["stats-file"].as<std::string>();
           force = vm["force"].as<bool>();
@@ -52,6 +55,10 @@ public:
           pNotes = vm["notes"].as<std::string>();
         }
         check_write();
+
+        pd.push_back(std::forward_as_tuple("program", pName));
+        pd.push_back(std::forward_as_tuple("version", VERSION));
+        pd.push_back(std::forward_as_tuple("notes", pNotes));
 
         generic.push_back(std::forward_as_tuple("totalFragmentsInput", TotalFragmentsInput));
         generic.push_back(std::forward_as_tuple("totalFragmentsOutput", TotalFragmentsOutput));
@@ -111,9 +118,19 @@ public:
 
         initialize_json();
 
+        start_sublabel("Program_details");
+        write_slabels(pd, 2);
+        end_sublabel();
+
         write_labels(generic);
-        write_sublabels("Single_end", se);
-        write_sublabels("Paired_end", pe);
+
+        start_sublabel("Single_end");
+        write_labels(se, 2);
+        end_sublabel();
+
+        start_sublabel("Paired_end");
+        write_labels(pe, 2);
+        end_sublabel();
 
         finalize_json();
     }
@@ -131,15 +148,19 @@ public:
             outStats.open(fStats, std::ios::out | std::ios::trunc); //overwrite
             outStats << "{ \"" << pName << "_" << getpid() <<  "\": {\n";
         }
-
-        outStats << "    \"Notes\": \"" << pNotes << "\",\n";
-        // initialize should always be followed by finalize_json()
     }
 
     virtual void write_labels(const std::vector<Label> &labels, const unsigned int indent = 1) {
         std::string pad(4 * indent, ' ');
         for (auto& label : labels) {
             outStats << pad << "\"" << std::get<0>(label) << "\": " << std::get<1>(label) << ",\n";
+        }
+    }
+
+    virtual void write_slabels(const std::vector<sLabel> &labels, const unsigned int indent = 1) {
+        std::string pad(4 * indent, ' ');
+        for (auto& label : labels) {
+            outStats << pad << "\"" << std::get<0>(label) << "\": \"" << std::get<1>(label) << "\",\n";
         }
     }
 

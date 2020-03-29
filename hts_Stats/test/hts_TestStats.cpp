@@ -1,10 +1,14 @@
 #include "gtest/gtest.h"
 #include <sstream>
 #include <iostream>
+#include <boost/program_options.hpp>
 #include "hts_Stats.h"
+
+namespace po = boost::program_options;
 
 class StatsTest : public ::testing::Test {
     public:
+        po::variables_map vm;
         const std::string readData_1 = "@Read1\nACTGAC\n+\nI#I#AH\n";
         const std::string readData_2 = "@Read2\nACTGAC\n+\nI#IIDH\n";
 };
@@ -14,7 +18,7 @@ TEST_F(StatsTest, BasicTrim) {
     std::istringstream in2(readData_2);
 
     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(in1, in2);
-    StatsCounters counters("stats", nullptr);
+    StatsCounters counters("hts_Stats", vm);
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
