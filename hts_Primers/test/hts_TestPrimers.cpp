@@ -37,7 +37,7 @@ TEST_F(Primer, test_pairs_both_match) {
     SeqMap primer5p = p.fasta2dict(primer_5p);
     SeqMap primer3p = p.fasta2dict(primer_3p);
 
-    PrimerCounters counter("/dev/null", true, false, "hts_Primers", "");
+    PrimerCounters counter("hts_Primers", nullptr);
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
@@ -60,7 +60,7 @@ TEST_F(Primer, test_pairs_flipped) {
     SeqMap primer5p = p.fasta2dict(primer_5p);
     SeqMap primer3p = p.fasta2dict(primer_3p);
 
-    PrimerCounters counter("/dev/null", true, false, "hts_Primers", "");
+    PrimerCounters counter("hts_Primers", nullptr);
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
@@ -83,7 +83,7 @@ TEST_F(Primer, test_pairs_one_fail) {
     SeqMap primer5p = p.fasta2dict(primer_5p);
     SeqMap primer3p = p.fasta2dict(primer_3p);
 
-    PrimerCounters counter("/dev/null", true, false, "hts_Primers", "");
+    PrimerCounters counter("hts_Primers", nullptr);
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
@@ -106,7 +106,7 @@ TEST_F(Primer, test_pairs_one_fail_ok) {
     SeqMap primer5p = p.fasta2dict(primer_5p);
     SeqMap primer3p = p.fasta2dict(primer_3p);
 
-    PrimerCounters counter("/dev/null", true, false, "hts_Primers", "");
+    PrimerCounters counter("hts_Primers", nullptr);
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
@@ -131,7 +131,7 @@ TEST_F(Primer, test_pairs_flipped_5p_match_only) {
     SeqMap primer5p = p.fasta2dict(primer_5p);
     SeqMap primer3p;
 
-    PrimerCounters counter("/dev/null", true, false, "hts_Primers", "");
+    PrimerCounters counter("hts_Primers", nullptr);
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
@@ -154,7 +154,7 @@ TEST_F(Primer, test_pairs_flipped_3p_match_only) {
     SeqMap primer5p;
     SeqMap primer3p = p.fasta2dict(primer_3p);
 
-    PrimerCounters counter("/dev/null", true, false, "hts_Primers", "");
+    PrimerCounters counter("hts_Primers", nullptr);
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
@@ -176,7 +176,7 @@ TEST_F(Primer, test_single_match_only) {
     SeqMap primer5p = p.fasta2dict(primer_5p);
     SeqMap primer3p = p.fasta2dict(primer_3p);
 
-    PrimerCounters counter("/dev/null", true, false, "hts_Primers", "");
+    PrimerCounters counter("hts_Primers", nullptr);
     while(ifs.has_next()) {
         auto i = ifs.next();
         SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
@@ -197,7 +197,7 @@ TEST_F(Primer, test_single_match_flip) {
     SeqMap primer3p = p.fasta2dict(primer_5p);
     SeqMap primer5p = p.fasta2dict(primer_3p);
 
-    PrimerCounters counter("/dev/null", true, false, "hts_Primers", "");
+    PrimerCounters counter("hts_Primers", nullptr);
     while(ifs.has_next()) {
         auto i = ifs.next();
         SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
@@ -218,7 +218,7 @@ TEST_F(Primer, test_single_match_flip_5p_only) {
     SeqMap primer3p;
     SeqMap primer5p = p.fasta2dict(primer_3p);
 
-    PrimerCounters counter("/dev/null", true, false, "hts_Primers", "");
+    PrimerCounters counter("hts_Primers", nullptr);
     while(ifs.has_next()) {
         auto i = ifs.next();
         SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
@@ -239,7 +239,7 @@ TEST_F(Primer, test_single_match_flip_3p_only) {
     SeqMap primer3p = p.fasta2dict(primer_5p);
     SeqMap primer5p;
 
-    PrimerCounters counter("/dev/null", true, false, "hts_Primers", "");
+    PrimerCounters counter("hts_Primers", nullptr);
     while(ifs.has_next()) {
         auto i = ifs.next();
         SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
