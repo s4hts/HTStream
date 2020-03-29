@@ -1,12 +1,29 @@
 cmake_minimum_required (VERSION 3.2)
 project (hts_common)
 
+add_custom_command(
+  OUTPUT 
+    ${CMAKE_BINARY_DIR}/common/version.h
+  COMMAND ${CMAKE_COMMAND} -D SRC_DIR=${CMAKE_SOURCE_DIR} -D BIN_DIR=${CMAKE_BINARY_DIR} -P ${CMAKE_SOURCE_DIR}/cmake/version.cmake
+  DEPENDS always_rebuild
+  COMMENT "Configuring version.h")
+
+add_custom_target(generateVersion ALL
+  DEPENDS ${CMAKE_BINARY_DIR}/common/version.h
+  COMMENT "generateVersion target")
+
+# Dummy output which is never actually produced. Anything that depends on
+# this will always be rebuilt.
+add_custom_command(
+    OUTPUT always_rebuild
+    COMMAND cmake -E echo)  
+
 file(GLOB sources "src/*.cpp")
-message( status "sources: " ${sources})
+list(APPEND sources  ${CMAKE_BINARY_DIR}/common/version.h)
+message( "common sources: " ${sources})
 
 FIND_PACKAGE( Boost 1.56 COMPONENTS system program_options filesystem iostreams REQUIRED )
 
-set(COMMON_INCLUDES ${CMAKE_SOURCE_DIR}/common/src)
 include_directories(${GTEST_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} ${COMMON_INCLUDES} )
 
 add_library(${PROJECT_NAME} STATIC ${sources})
