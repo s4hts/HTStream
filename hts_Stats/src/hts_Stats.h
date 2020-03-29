@@ -56,10 +56,10 @@ public:
         se.push_back(std::forward_as_tuple("SE_bpLen", SE_BpLen));
         se.push_back(std::forward_as_tuple("SE_bQ30", SE_bQ30));
 
-        pe.push_back(std::forward_as_tuple("R1_bpLen", R1_BpLen));
-        pe.push_back(std::forward_as_tuple("R1_bQ30", R1_bQ30));
-        pe.push_back(std::forward_as_tuple("R2_bpLen", R2_BpLen));
-        pe.push_back(std::forward_as_tuple("R2_bQ30", R2_bQ30));
+        r1.push_back(std::forward_as_tuple("R1_bpLen", R1_BpLen));
+        r1.push_back(std::forward_as_tuple("R1_bQ30", R1_bQ30));
+        r2.push_back(std::forward_as_tuple("R2_bpLen", R2_BpLen));
+        r2.push_back(std::forward_as_tuple("R2_bQ30", R2_bQ30));
 
         bases.push_back(std::forward_as_tuple("A", A));
         bases.push_back(std::forward_as_tuple("C", C));
@@ -183,7 +183,7 @@ public:
 
         start_sublabel("Fragment");
         write_values(fragment, 2);
-        start_sublabel("Base_composition", 2);
+        start_sublabel("base_composition", 2);
         write_values(bases, 3);
         end_sublabel(2);
         end_sublabel();
@@ -191,18 +191,20 @@ public:
         start_sublabel("Single_end");
         write_values(se, 2);
         write_vector("SE_readlength_histogram",iSE_Length, 2);
-        write_matrix("SE_Base_by_Cycle",SE_bases, b, ind_se, 0, 2);
-        write_matrix("SE_Qualities_by_Cycle",SE_qualities, q, ind_se, 0, 2);
+        write_matrix("SE_base_by_cycle",SE_bases, b, ind_se, 0, 2);
+        write_matrix("SE_qualities_by_cycle",SE_qualities, q, ind_se, 0, 2);
         end_sublabel();
 
         start_sublabel("Paired_end");
         write_values(pe, 2);
+        write_values(r1, 2);
         write_vector("R1_readlength_histogram",iR1_Length, 2);
-        write_matrix("R1_Base_by_Cycle",R1_bases, b, ind_pe1, 0, 2);
-        write_matrix("R1_Qualities_by_Cycle",R1_qualities, q, ind_pe1, 0, 2);
+        write_matrix("R1_base_by_cycle",R1_bases, b, ind_pe1, 0, 2);
+        write_matrix("R1_qualities_by_cycle",R1_qualities, q, ind_pe1, 0, 2);
+        write_values(r2, 2);
         write_vector("R2_readlength_histogram",iR2_Length, 2);
-        write_matrix("R2_Base_by_Cycle",R2_bases, b, ind_pe2, 0, 2);
-        write_matrix("R2_Qualities_by_Cycle",R2_qualities, q, ind_pe2, 0, 2);
+        write_matrix("R2_base_by_cycle",R2_bases, b, ind_pe2, 0, 2);
+        write_matrix("R2_qualities_by_cycle",R2_qualities, q, ind_pe2, 0, 2);
         end_sublabel();
 
         finalize_json();

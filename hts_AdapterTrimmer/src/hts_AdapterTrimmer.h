@@ -41,8 +41,8 @@ public:
         se.push_back(std::forward_as_tuple("SE_adapterBpTrim", SE_Adapter_BpTrim));
         se.push_back(std::forward_as_tuple("SE_discarded", SE_Discarded));
 
-        pe.push_back(std::forward_as_tuple("R1_discarded", R1_Discarded));
-        pe.push_back(std::forward_as_tuple("R2_discarded", R2_Discarded));
+        r1.push_back(std::forward_as_tuple("R1_discarded", R1_Discarded));
+        r2.push_back(std::forward_as_tuple("R2_discarded", R2_Discarded));
         pe.push_back(std::forward_as_tuple("PE_adapterTrim", PE_Adapter_Trim));
         pe.push_back(std::forward_as_tuple("PE_adapterBpTrim", PE_Adapter_BpTrim));
         pe.push_back(std::forward_as_tuple("PE_discarded", PE_Discarded));

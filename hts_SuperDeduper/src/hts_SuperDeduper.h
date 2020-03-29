@@ -68,6 +68,8 @@ public:
 
         start_sublabel("Paired_end");
         write_values(pe, 2);
+        write_values(r1, 2);
+        write_values(r2, 2);
         end_sublabel();
 
         finalize_json();

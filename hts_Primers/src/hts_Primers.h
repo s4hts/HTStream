@@ -54,12 +54,12 @@ public:
         se.push_back(std::forward_as_tuple("SE_primerBpTrim", SE_Primer_BpTrim));
         se.push_back(std::forward_as_tuple("SE_discarded", SE_Discarded));
 
-        pe.push_back(std::forward_as_tuple("R1_primerTrim", R1_Primer_Trim));
-        pe.push_back(std::forward_as_tuple("R1_primerBpTrim", R1_Primer_BpTrim));
-        pe.push_back(std::forward_as_tuple("R1_discarded", R1_Discarded));
-        pe.push_back(std::forward_as_tuple("R2_primerTrim", R2_Primer_Trim));
-        pe.push_back(std::forward_as_tuple("R2_primerBpTrim", R2_Primer_BpTrim));
-        pe.push_back(std::forward_as_tuple("R2_discarded", R2_Discarded));
+        r1.push_back(std::forward_as_tuple("R1_primerTrim", R1_Primer_Trim));
+        r1.push_back(std::forward_as_tuple("R1_primerBpTrim", R1_Primer_BpTrim));
+        r1.push_back(std::forward_as_tuple("R1_discarded", R1_Discarded));
+        r2.push_back(std::forward_as_tuple("R2_primerTrim", R2_Primer_Trim));
+        r2.push_back(std::forward_as_tuple("R2_primerBpTrim", R2_Primer_BpTrim));
+        r2.push_back(std::forward_as_tuple("R2_discarded", R2_Discarded));
         pe.push_back(std::forward_as_tuple("PE_discarded", PE_Discarded));
     }
 
@@ -164,6 +164,8 @@ public:
 
         start_sublabel("Paired_end");
         write_values(pe, 2);
+        write_values(r1, 2);
+        write_values(r2, 2);
         end_sublabel();
 
         finalize_json();

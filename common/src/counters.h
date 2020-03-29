@@ -30,10 +30,12 @@ public:
     std::string pNotes = "hts";
     po::variables_map vm;
 
+    std::vector<sLabel> pd;
     std::vector<Label> fragment;
     std::vector<Label> se;
     std::vector<Label> pe;
-    std::vector<sLabel> pd;
+    std::vector<Label> r1;
+    std::vector<Label> r2;
 
     uint64_t TotalFragmentsInput = 0;
     uint64_t TotalFragmentsOutput = 0;
@@ -132,6 +134,8 @@ public:
 
         start_sublabel("Paired_end");
         write_values(pe, 2);
+        write_values(r1, 2);
+        write_values(r2, 2);
         end_sublabel();
 
         finalize_json();
@@ -297,12 +301,12 @@ public:
         se.push_back(std::forward_as_tuple("SE_leftTrim", SE_Left_Trim));
         se.push_back(std::forward_as_tuple("SE_discarded", SE_Discarded));
 
-        pe.push_back(std::forward_as_tuple("R1_leftTrim", R1_Left_Trim));
-        pe.push_back(std::forward_as_tuple("R1_rightTrim", R1_Right_Trim));
-        pe.push_back(std::forward_as_tuple("R2_leftTrim", R2_Left_Trim));
-        pe.push_back(std::forward_as_tuple("R2_rightTrim", R2_Right_Trim));
-        pe.push_back(std::forward_as_tuple("R1_discarded", R1_Discarded));
-        pe.push_back(std::forward_as_tuple("R2_discarded", R2_Discarded));
+        r1.push_back(std::forward_as_tuple("R1_leftTrim", R1_Left_Trim));
+        r1.push_back(std::forward_as_tuple("R1_rightTrim", R1_Right_Trim));
+        r1.push_back(std::forward_as_tuple("R1_discarded", R1_Discarded));
+        r2.push_back(std::forward_as_tuple("R2_leftTrim", R2_Left_Trim));
+        r2.push_back(std::forward_as_tuple("R2_rightTrim", R2_Right_Trim));
+        r2.push_back(std::forward_as_tuple("R2_discarded", R2_Discarded));
         pe.push_back(std::forward_as_tuple("PE_discarded", PE_Discarded));
     }
     virtual ~TrimmingCounters() {}

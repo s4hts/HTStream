@@ -35,16 +35,16 @@ public:
 
         insertLength.resize(1);
 
-        fragment.push_back(std::forward_as_tuple("sins", sins));
-        fragment.push_back(std::forward_as_tuple("mins", mins));
-        fragment.push_back(std::forward_as_tuple("lins", lins));
+        fragment.push_back(std::forward_as_tuple("short_inserts", sins));
+        fragment.push_back(std::forward_as_tuple("medium_inserts", mins));
+        fragment.push_back(std::forward_as_tuple("long_inserts", lins));
         fragment.push_back(std::forward_as_tuple("adapterTrim", Adapter_Trim));
         fragment.push_back(std::forward_as_tuple("adapterBpTrim", Adapter_BpTrim));
 
         se.push_back(std::forward_as_tuple("SE_discarded", SE_Discarded));
 
-        pe.push_back(std::forward_as_tuple("R1_discarded", R1_Discarded));
-        pe.push_back(std::forward_as_tuple("R2_discarded", R2_Discarded));
+        r1.push_back(std::forward_as_tuple("R1_discarded", R1_Discarded));
+        r2.push_back(std::forward_as_tuple("R2_discarded", R2_Discarded));
         pe.push_back(std::forward_as_tuple("PE_discarded", PE_Discarded));
     }
 
@@ -132,6 +132,8 @@ public:
 
         start_sublabel("Paired_end");
         write_values(pe, 2);
+        write_values(r1, 2);
+        write_values(r2, 2);
         end_sublabel();
 
         finalize_json();
