@@ -35,11 +35,11 @@ public:
 
         insertLength.resize(1);
 
-        generic.push_back(std::forward_as_tuple("sins", sins));
-        generic.push_back(std::forward_as_tuple("mins", mins));
-        generic.push_back(std::forward_as_tuple("lins", lins));
-        generic.push_back(std::forward_as_tuple("adapterTrim", Adapter_Trim));
-        generic.push_back(std::forward_as_tuple("adapterBpTrim", Adapter_BpTrim));
+        fragment.push_back(std::forward_as_tuple("sins", sins));
+        fragment.push_back(std::forward_as_tuple("mins", mins));
+        fragment.push_back(std::forward_as_tuple("lins", lins));
+        fragment.push_back(std::forward_as_tuple("adapterTrim", Adapter_Trim));
+        fragment.push_back(std::forward_as_tuple("adapterBpTrim", Adapter_BpTrim));
 
         se.push_back(std::forward_as_tuple("SE_discarded", SE_Discarded));
 
@@ -117,10 +117,22 @@ public:
 
         initialize_json();
 
-        write_labels(generic);
-        write_vector("readlength_histogram",iLength);
-        write_sublabels("Single_end", se);
-        write_sublabels("Paired_end", pe);
+        start_sublabel("Program_details");
+        write_values(pd, 2);
+        end_sublabel();
+
+        start_sublabel("Fragment");
+        write_values(fragment, 2);
+        write_vector("readlength_histogram",iLength, 2);
+        end_sublabel();
+
+        start_sublabel("Single_end");
+        write_values(se, 2);
+        end_sublabel();
+
+        start_sublabel("Paired_end");
+        write_values(pe, 2);
+        end_sublabel();
 
         finalize_json();
     }

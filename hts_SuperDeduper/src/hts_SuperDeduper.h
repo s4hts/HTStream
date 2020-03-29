@@ -26,8 +26,8 @@ public:
     uint64_t Duplicate = 0;
 
     SuperDeduperCounters(const std::string &program_name, const po::variables_map &vm) : Counters::Counters(program_name, vm) {
-        generic.push_back(std::forward_as_tuple("ignored", Ignored));
-        generic.push_back(std::forward_as_tuple("duplicate", Duplicate));
+        fragment.push_back(std::forward_as_tuple("ignored", Ignored));
+        fragment.push_back(std::forward_as_tuple("duplicate", Duplicate));
     }
 
     using Counters::input;
@@ -53,10 +53,22 @@ public:
 
         initialize_json();
 
-        write_labels(generic);
-        write_vector("duplicate_saturation",duplicateProportion);
-        write_sublabels("Single_end", se);
-        write_sublabels("Paired_end", pe);
+        start_sublabel("Program_details");
+        write_values(pd, 2);
+        end_sublabel();
+
+        start_sublabel("Fragment");
+        write_values(fragment, 2);
+        write_vector("duplicate_saturation",duplicateProportion, 2);
+        end_sublabel();
+
+        start_sublabel("Single_end");
+        write_values(se, 2);
+        end_sublabel();
+
+        start_sublabel("Paired_end");
+        write_values(pe, 2);
+        end_sublabel();
 
         finalize_json();
     }

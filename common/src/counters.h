@@ -30,7 +30,7 @@ public:
     std::string pNotes = "hts";
     po::variables_map vm;
 
-    std::vector<Label> generic;
+    std::vector<Label> fragment;
     std::vector<Label> se;
     std::vector<Label> pe;
     std::vector<sLabel> pd;
@@ -60,8 +60,8 @@ public:
         pd.push_back(std::forward_as_tuple("version", VERSION));
         pd.push_back(std::forward_as_tuple("notes", pNotes));
 
-        generic.push_back(std::forward_as_tuple("totalFragmentsInput", TotalFragmentsInput));
-        generic.push_back(std::forward_as_tuple("totalFragmentsOutput", TotalFragmentsOutput));
+        fragment.push_back(std::forward_as_tuple("totalFragmentsInput", TotalFragmentsInput));
+        fragment.push_back(std::forward_as_tuple("totalFragmentsOutput", TotalFragmentsOutput));
 
         se.push_back(std::forward_as_tuple("SE_in", SE_In));
         se.push_back(std::forward_as_tuple("SE_out", SE_Out));
@@ -119,17 +119,19 @@ public:
         initialize_json();
 
         start_sublabel("Program_details");
-        write_slabels(pd, 2);
+        write_values(pd, 2);
         end_sublabel();
 
-        write_labels(generic);
+        start_sublabel("Fragment");
+        write_values(fragment, 2);
+        end_sublabel();
 
         start_sublabel("Single_end");
-        write_labels(se, 2);
+        write_values(se, 2);
         end_sublabel();
 
         start_sublabel("Paired_end");
-        write_labels(pe, 2);
+        write_values(pe, 2);
         end_sublabel();
 
         finalize_json();
@@ -150,28 +152,6 @@ public:
         }
     }
 
-    virtual void write_labels(const std::vector<Label> &labels, const unsigned int indent = 1) {
-        std::string pad(4 * indent, ' ');
-        for (auto& label : labels) {
-            outStats << pad << "\"" << std::get<0>(label) << "\": " << std::get<1>(label) << ",\n";
-        }
-    }
-
-    virtual void write_slabels(const std::vector<sLabel> &labels, const unsigned int indent = 1) {
-        std::string pad(4 * indent, ' ');
-        for (auto& label : labels) {
-            outStats << pad << "\"" << std::get<0>(label) << "\": \"" << std::get<1>(label) << "\",\n";
-        }
-    }
-
-    virtual void write_sublabels(const std::string &labelStr, const std::vector<Label> &labels, const unsigned int indent = 1) {
-        std::string pad(4 * indent, ' ');
-        outStats << pad << "\"" << labelStr << "\": {\n";
-        write_labels(labels, indent+1);
-        outStats.seekp(-2, std::ios::end );
-        outStats << "\n" << pad << "},\n"; // finish off histogram
-    }
-
     virtual void start_sublabel(const std::string &labelStr, const unsigned int indent = 1) {
         std::string pad(4 * indent, ' ');
         outStats << pad << "\"" << labelStr << "\": {\n";
@@ -184,26 +164,38 @@ public:
     }
 
     template <class T>
+    void write_values(T &tuples, const unsigned int indent = 1) {
+        std::string pad(4 * indent, ' ');
+        for (auto& tuple : tuples) {
+            try
+            {
+                uint64_t value = boost::lexical_cast<uint64_t>(std::get<1>(tuple));
+                outStats << pad << "\"" << std::get<0>(tuple) << "\": " << value << ",\n";
+            }
+            catch(boost::bad_lexical_cast &)
+            {
+                outStats << pad << "\"" << std::get<0>(tuple) << "\": \"" << std::get<1>(tuple) << "\",\n";
+            }
+        }
+    }
+
+    template <class T>
     void write_vector(const std::string &name, T &tuple, const unsigned int indent = 1) {
         std::string pad(4 * indent, ' ');
         if (tuple.size() == 0) return;
         size_t i;
         outStats << pad << "\"" << name << "\": [";
         for (i=0 ; i < tuple.size(); ++i) {
-            outStats << " [" << std::get<0>(tuple[i]) << "," << std::get<1>(tuple[i]) << "]"; //make sure json format is kept
+            try
+            {
+                uint64_t value = boost::lexical_cast<uint64_t>(std::get<1>(tuple[i]));
+                outStats << " [" << std::get<0>(tuple[i]) << "," << value << "]"; //make sure json format is kept
+            }
+            catch(boost::bad_lexical_cast &)
+            {
+                outStats << " [\"" << std::get<0>(tuple[i]) << "\",\"" << std::get<1>(tuple[i]) << "\"]"; //make sure json format is kept
+            }
             if (i < tuple.size()-1) outStats << ",";
-        }
-        outStats << " ],\n"; // finish off histogram
-    }
-
-    virtual void write_vector_slabel(const std::string &vector_name, const std::vector<sLabel> &labeltuple, const unsigned int indent = 1) {
-        std::string pad(4 * indent, ' ');
-        if (labeltuple.size() == 0) return;
-        size_t i;
-        outStats << pad << "\"" << vector_name << "\": [";
-        for (i=0 ; i < labeltuple.size(); ++i) {
-            outStats << " [\"" << std::get<0>(labeltuple[i]) << "\",\"" << std::get<1>(labeltuple[i]) << "\"]"; //make sure json format is kept
-            if (i < labeltuple.size()-1) outStats << ",";
         }
         outStats << " ],\n"; // finish off
     }
@@ -300,7 +292,7 @@ public:
     uint64_t R2_Discarded = 0;
     uint64_t PE_Discarded = 0;
 
-    TrimmingCounters(const std::string &program_name, const po::variables_map &vm ) : Counters::Counters(program_name, vm) {
+    TrimmingCounters(const std::string &program_name, po::variables_map vm ) : Counters::Counters(program_name, vm) {
         se.push_back(std::forward_as_tuple("SE_rightTrim", SE_Right_Trim));
         se.push_back(std::forward_as_tuple("SE_leftTrim", SE_Left_Trim));
         se.push_back(std::forward_as_tuple("SE_discarded", SE_Discarded));

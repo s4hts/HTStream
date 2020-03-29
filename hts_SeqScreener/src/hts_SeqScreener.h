@@ -44,14 +44,11 @@ public:
     uint64_t PE_hits = 0;
 
     SeqScreenerCounters(const std::string &program_name, const po::variables_map &vm) : Counters::Counters(program_name, vm) {
-        generic.push_back(std::forward_as_tuple("inverse", Inverse));
-        generic.push_back(std::forward_as_tuple("record", Record));
 
         se.push_back(std::forward_as_tuple("SE_hits", SE_hits));
 
         pe.push_back(std::forward_as_tuple("PE_hits", PE_hits));
-        // Need to and in screen_file name, however its a string and the vector can't have mixed types.
-        //screened_info.push_back(std::forward_as_tuple("screenFile", screen_file));
+
         screened_info.push_back(std::forward_as_tuple("screenBP", screen_bp));
         screened_info.push_back(std::forward_as_tuple("lookupKmers", lookup_kmers));
 
@@ -62,26 +59,37 @@ public:
         screen_bp = sbp;
         lookup_kmers = lkmers;
     }
-    void set_inverse() {
-        Inverse = 1;
-    }
-    void set_record() {
-        Record = 1;
-    }
+
     void inc_SE_hits() {
         ++SE_hits;
     }
+
     void inc_PE_hits() {
         ++PE_hits;
     }
+
     virtual void write_out() {
 
         initialize_json();
 
-        write_labels(generic);
-        write_sublabels("Screen_info", screened_info);
-        write_sublabels("Single_end", se);
-        write_sublabels("Paired_end", pe);
+        start_sublabel("Program_details");
+        write_values(pd, 2);
+        start_sublabel("screen_info", 2);
+        write_values(screened_info, 3);
+        end_sublabel(2);
+        end_sublabel();
+
+        start_sublabel("Fragment");
+        write_values(fragment, 2);
+        end_sublabel();
+
+        start_sublabel("Single_end");
+        write_values(se, 2);
+        end_sublabel();
+
+        start_sublabel("Paired_end");
+        write_values(pe, 2);
+        end_sublabel();
 
         finalize_json();
     }
@@ -253,9 +261,6 @@ public:
     /*Particullary time consuming in each read*/
     boost::dynamic_bitset <> forwardLookup(bitKmer);
     boost::dynamic_bitset <> reverseLookup(bitKmer);
-
-    if (inverse && !record) counter.set_inverse();
-    if (record) counter.set_record();
 
     while(reader.has_next()) {
         auto i = reader.next();

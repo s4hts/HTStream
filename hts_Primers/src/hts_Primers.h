@@ -41,8 +41,8 @@ public:
     uint64_t PE_Discarded = 0;
 
     PrimerCounters(const std::string &program_name, const po::variables_map &vm) : Counters::Counters(program_name, vm) {
-        generic.push_back(std::forward_as_tuple("Flipped", flipped));
-        generic.push_back(std::forward_as_tuple("PrimersKeep", keep_primer));
+
+        fragment.push_back(std::forward_as_tuple("flipped", flipped));
 
         se.push_back(std::forward_as_tuple("SE_discarded", SE_Discarded));
 
@@ -61,9 +61,7 @@ public:
             primers.push_back(std::forward_as_tuple(pt.first, pt.second));
         }
     }
-    void set_keep_primer(bool keep) {
-        keep_primer = (uint64_t)keep;
-    }
+
     void increment_flipped() {
         flipped++;
     }
@@ -107,6 +105,7 @@ public:
     }
 
     virtual void write_out() {
+
         std::vector<Label> iPrimers;
         for (auto &it: primers_seen_counter) {
             if (it.second > 0) {
@@ -116,11 +115,23 @@ public:
 
         initialize_json();
 
-        write_labels(generic);
-        write_vector_slabel("Primers",primers);
-        write_vector("Primers_counts",iPrimers);
-        write_sublabels("Single_end", se);
-        write_sublabels("Paired_end", pe);
+        start_sublabel("Program_details");
+        write_values(pd, 2);
+        write_vector("primers",primers, 2);
+        end_sublabel();
+
+        start_sublabel("Fragment");
+        write_values(fragment, 2);
+        write_vector("primers_counts",iPrimers, 2);
+        end_sublabel();
+
+        start_sublabel("Single_end");
+        write_values(se, 2);
+        end_sublabel();
+
+        start_sublabel("Paired_end");
+        write_values(pe, 2);
+        end_sublabel();
 
         finalize_json();
     }
@@ -513,7 +524,6 @@ public:
             primer3p = fasta2dict(vm["primers_3p"].as<std::string>());
         }
 
-        counter.set_keep_primer(vm["keep"].as<bool>());
         counter.set_seqmap(primer5p, primer3p);
 
         const size_t pMismatches = vm["primer_mismatches"].as<size_t>();

@@ -177,16 +177,26 @@ public:
 
         initialize_json();
 
-        write_labels(generic);
-        write_sublabels("Base_composition", bases);
+        start_sublabel("Program_details");
+        write_values(pd, 2);
+        end_sublabel();
+
+        start_sublabel("Fragment");
+        write_values(fragment, 2);
+        start_sublabel("Base_composition", 2);
+        write_values(bases, 3);
+        end_sublabel(2);
+        end_sublabel();
+
         start_sublabel("Single_end");
-        write_labels(se, 2);
+        write_values(se, 2);
         write_vector("SE_readlength_histogram",iSE_Length, 2);
         write_matrix("SE_Base_by_Cycle",SE_bases, b, ind_se, 0, 2);
         write_matrix("SE_Qualities_by_Cycle",SE_qualities, q, ind_se, 0, 2);
         end_sublabel();
+
         start_sublabel("Paired_end");
-        write_labels(pe, 2);
+        write_values(pe, 2);
         write_vector("R1_readlength_histogram",iR1_Length, 2);
         write_matrix("R1_Base_by_Cycle",R1_bases, b, ind_pe1, 0, 2);
         write_matrix("R1_Qualities_by_Cycle",R1_qualities, q, ind_pe1, 0, 2);

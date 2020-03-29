@@ -39,8 +39,6 @@ public:
 
     AdapterCounters(const std::string &program_name, const po::variables_map &vm) : Counters::Counters(program_name, vm) {
 
-        generic.push_back(std::forward_as_tuple("fixbases", Fixbases));
-
         se.push_back(std::forward_as_tuple("SE_discarded", SE_Discarded));
         se.push_back(std::forward_as_tuple("SE_adapterTrim", SE_Adapter_Trim));
         se.push_back(std::forward_as_tuple("SE_adapterBpTrim", SE_Adapter_BpTrim));
@@ -50,10 +48,6 @@ public:
         pe.push_back(std::forward_as_tuple("PE_discarded", PE_Discarded));
         pe.push_back(std::forward_as_tuple("PE_adapterTrim", PE_Adapter_Trim));
         pe.push_back(std::forward_as_tuple("PE_adapterBpTrim", PE_Adapter_BpTrim));
-    }
-
-    void set_fixbases() {
-        Fixbases = 0;
     }
 
     using Counters::output;
@@ -101,17 +95,6 @@ public:
         } else {
             ++PE_Discarded;
         }
-    }
-
-    virtual void write_out() {
-
-        initialize_json();
-
-        write_labels(generic);
-        write_sublabels("Single_end", se);
-        write_sublabels("Paired_end", pe);
-
-        finalize_json();
     }
 };
 
@@ -387,9 +370,6 @@ public:
         thread_guard tg(output_thread);
 
         try {
-
-            if (noFixBases) counter.set_fixbases();
-
             while(reader.has_next()) {
                 auto i = reader.next();
                 PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
