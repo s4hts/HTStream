@@ -74,6 +74,7 @@ public:
                 std::shared_ptr<OutputWriter> se = nullptr;
                 outputWriters(pe, se, vm);
 
+                check_write(vm["stats-file"].as<std::string>());
                 CounterType counters(program_name, vm);
 
                 if(vm.count("read1-input")) {
@@ -137,9 +138,22 @@ public:
             return ERROR_UNHANDLED_EXCEPTION;
 
         }
-
         return SUCCESS;
+    }
+private:
+    virtual void check_write(std::string file) {
+        std::fstream out;
+        bf::path p(file);
+        out.open(file, std::ios::out | std::ios::app);
 
+        if(out.is_open())
+        {
+            out.close();
+        }
+        else
+        {
+            throw std::runtime_error("Error: Cannot write to " + file + ": " +  std::strerror( errno ) + '\n');
+        }
     }
 };
 
