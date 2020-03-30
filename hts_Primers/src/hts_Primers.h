@@ -50,17 +50,17 @@ public:
 
         fragment.push_back(std::forward_as_tuple("flipped", flipped));
 
-        se.push_back(std::forward_as_tuple("SE_primerTrim", SE_Primer_Trim));
-        se.push_back(std::forward_as_tuple("SE_primerBpTrim", SE_Primer_BpTrim));
-        se.push_back(std::forward_as_tuple("SE_discarded", SE_Discarded));
+        se.push_back(std::forward_as_tuple("primerTrim", SE_Primer_Trim));
+        se.push_back(std::forward_as_tuple("primerBpTrim", SE_Primer_BpTrim));
+        se.push_back(std::forward_as_tuple("discarded", SE_Discarded));
 
-        r1.push_back(std::forward_as_tuple("R1_primerTrim", R1_Primer_Trim));
-        r1.push_back(std::forward_as_tuple("R1_primerBpTrim", R1_Primer_BpTrim));
-        r1.push_back(std::forward_as_tuple("R1_discarded", R1_Discarded));
-        r2.push_back(std::forward_as_tuple("R2_primerTrim", R2_Primer_Trim));
-        r2.push_back(std::forward_as_tuple("R2_primerBpTrim", R2_Primer_BpTrim));
-        r2.push_back(std::forward_as_tuple("R2_discarded", R2_Discarded));
-        pe.push_back(std::forward_as_tuple("PE_discarded", PE_Discarded));
+        r1.push_back(std::forward_as_tuple("primerTrim", R1_Primer_Trim));
+        r1.push_back(std::forward_as_tuple("primerBpTrim", R1_Primer_BpTrim));
+        r1.push_back(std::forward_as_tuple("discarded", R1_Discarded));
+        r2.push_back(std::forward_as_tuple("primerTrim", R2_Primer_Trim));
+        r2.push_back(std::forward_as_tuple("primerBpTrim", R2_Primer_BpTrim));
+        r2.push_back(std::forward_as_tuple("discarded", R2_Discarded));
+        pe.push_back(std::forward_as_tuple("discarded", PE_Discarded));
     }
 
     void set_seqmap(SeqMap primerMap_5p, SeqMap primerMap_3p) {
@@ -164,8 +164,12 @@ public:
 
         start_sublabel("Paired_end");
         write_values(pe, 2);
-        write_values(r1, 2);
-        write_values(r2, 2);
+        start_sublabel("Read1",2);
+        write_values(r1, 3);
+        end_sublabel(2);
+        start_sublabel("Read2",2);
+        write_values(r2, 3);
+        end_sublabel(2);
         end_sublabel();
 
         finalize_json();

@@ -61,14 +61,14 @@ public:
         pd.push_back(std::forward_as_tuple("version", VERSION));
         pd.push_back(std::forward_as_tuple("notes", pNotes));
 
-        fragment.push_back(std::forward_as_tuple("fragments_in", TotalFragmentsInput));
-        fragment.push_back(std::forward_as_tuple("fragments_out", TotalFragmentsOutput));
+        fragment.push_back(std::forward_as_tuple("in", TotalFragmentsInput));
+        fragment.push_back(std::forward_as_tuple("out", TotalFragmentsOutput));
 
-        se.push_back(std::forward_as_tuple("SE_in", SE_In));
-        se.push_back(std::forward_as_tuple("SE_out", SE_Out));
+        se.push_back(std::forward_as_tuple("in", SE_In));
+        se.push_back(std::forward_as_tuple("out", SE_Out));
 
-        pe.push_back(std::forward_as_tuple("PE_in", PE_In));
-        pe.push_back(std::forward_as_tuple("PE_out", PE_Out));
+        pe.push_back(std::forward_as_tuple("in", PE_In));
+        pe.push_back(std::forward_as_tuple("out", PE_Out));
     }
 
     virtual ~Counters() {}
@@ -133,8 +133,12 @@ public:
 
         start_sublabel("Paired_end");
         write_values(pe, 2);
-        write_values(r1, 2);
-        write_values(r2, 2);
+        start_sublabel("Read1",2);
+        write_values(r1, 3);
+        end_sublabel(2);
+        start_sublabel("Read2",2);
+        write_values(r2, 3);
+        end_sublabel(2);
         end_sublabel();
 
         finalize_json();
@@ -282,17 +286,17 @@ public:
     uint64_t PE_Discarded = 0;
 
     TrimmingCounters(const std::string &program_name, po::variables_map vm ) : Counters::Counters(program_name, vm) {
-        se.push_back(std::forward_as_tuple("SE_rightTrim", SE_Right_Trim));
-        se.push_back(std::forward_as_tuple("SE_leftTrim", SE_Left_Trim));
-        se.push_back(std::forward_as_tuple("SE_discarded", SE_Discarded));
+        se.push_back(std::forward_as_tuple("rightTrim", SE_Right_Trim));
+        se.push_back(std::forward_as_tuple("leftTrim", SE_Left_Trim));
+        se.push_back(std::forward_as_tuple("discarded", SE_Discarded));
 
-        r1.push_back(std::forward_as_tuple("R1_leftTrim", R1_Left_Trim));
-        r1.push_back(std::forward_as_tuple("R1_rightTrim", R1_Right_Trim));
-        r1.push_back(std::forward_as_tuple("R1_discarded", R1_Discarded));
-        r2.push_back(std::forward_as_tuple("R2_leftTrim", R2_Left_Trim));
-        r2.push_back(std::forward_as_tuple("R2_rightTrim", R2_Right_Trim));
-        r2.push_back(std::forward_as_tuple("R2_discarded", R2_Discarded));
-        pe.push_back(std::forward_as_tuple("PE_discarded", PE_Discarded));
+        r1.push_back(std::forward_as_tuple("leftTrim", R1_Left_Trim));
+        r1.push_back(std::forward_as_tuple("rightTrim", R1_Right_Trim));
+        r1.push_back(std::forward_as_tuple("discarded", R1_Discarded));
+        r2.push_back(std::forward_as_tuple("leftTrim", R2_Left_Trim));
+        r2.push_back(std::forward_as_tuple("rightTrim", R2_Right_Trim));
+        r2.push_back(std::forward_as_tuple("discarded", R2_Discarded));
+        pe.push_back(std::forward_as_tuple("discarded", PE_Discarded));
     }
     virtual ~TrimmingCounters() {}
 

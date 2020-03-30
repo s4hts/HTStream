@@ -41,11 +41,11 @@ public:
         fragment.push_back(std::forward_as_tuple("adapterTrim", Adapter_Trim));
         fragment.push_back(std::forward_as_tuple("adapterBpTrim", Adapter_BpTrim));
 
-        se.push_back(std::forward_as_tuple("SE_discarded", SE_Discarded));
+        se.push_back(std::forward_as_tuple("discarded", SE_Discarded));
 
-        r1.push_back(std::forward_as_tuple("R1_discarded", R1_Discarded));
-        r2.push_back(std::forward_as_tuple("R2_discarded", R2_Discarded));
-        pe.push_back(std::forward_as_tuple("PE_discarded", PE_Discarded));
+        r1.push_back(std::forward_as_tuple("discarded", R1_Discarded));
+        r2.push_back(std::forward_as_tuple("discarded", R2_Discarded));
+        pe.push_back(std::forward_as_tuple("discarded", PE_Discarded));
     }
 
     using Counters::output;
@@ -132,8 +132,12 @@ public:
 
         start_sublabel("Paired_end");
         write_values(pe, 2);
-        write_values(r1, 2);
-        write_values(r2, 2);
+        start_sublabel("Read1",2);
+        write_values(r1, 3);
+        end_sublabel(2);
+        start_sublabel("Read2",2);
+        write_values(r2, 3);
+        end_sublabel(2);
         end_sublabel();
 
         finalize_json();

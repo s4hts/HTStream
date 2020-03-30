@@ -45,9 +45,9 @@ public:
 
     SeqScreenerCounters(const std::string &program_name, const po::variables_map &vm) : Counters::Counters(program_name, vm) {
 
-        se.push_back(std::forward_as_tuple("SE_hits", SE_hits));
+        se.push_back(std::forward_as_tuple("hits", SE_hits));
 
-        pe.push_back(std::forward_as_tuple("PE_hits", PE_hits));
+        pe.push_back(std::forward_as_tuple("hits", PE_hits));
 
         screened_info.push_back(std::forward_as_tuple("screenBP", screen_bp));
         screened_info.push_back(std::forward_as_tuple("lookupKmers", lookup_kmers));
