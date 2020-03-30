@@ -38,6 +38,8 @@ message( status "include dirs: " ${GTEST_INCLUDE_DIRS})
 
 enable_testing()
 
+set(COMMON_INCLUDES ${CMAKE_SOURCE_DIR}/common/src ${CMAKE_BINARY_DIR}/common)
+
 add_subdirectory(common)
 add_subdirectory(hts_AdapterTrimmer)
 add_subdirectory(hts_CutTrim)

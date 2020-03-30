@@ -5,8 +5,6 @@ file(GLOB sources "src/*.cpp")
 
 message( status "sources: " ${sources})
 
-set(COMMON_INCLUDES ${CMAKE_SOURCE_DIR}/common/src)
-
 set(PROJECT_LINK_LIBS hts_common)
 link_directories(${CMAKE_BINARY_DIR}/common)
 
