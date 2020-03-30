@@ -1,5 +1,5 @@
 #ifndef VERSION_H
 #define VERSION_H
 
-#define VERSION "@HTSTREAM_VERSION@"
+#define VERSION "1.2.0-release"
 #endif
