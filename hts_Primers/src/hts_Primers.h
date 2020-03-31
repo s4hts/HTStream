@@ -219,7 +219,7 @@ public:
             ("min_primer_matches,r", po::value<size_t>()->default_value(0)->notifier(boost::bind(&check_range<size_t>, "min_primer_matches", _1, 0, 2)), "Minimum number of primers to match to keep the fragment (0, keep all fragments, 1 must match either 5' or 3' primer, 2 must match both 5' and 3' primers)");
     }
 
-    SeqMap fasta2dict(std::string primers){
+    SeqMap fasta2dict(std::string primers, std::string prefix){
         SeqMap primerMap;
         bf::path p(primers);
         if (bf::exists(p)) {
@@ -234,7 +234,7 @@ public:
             }
         } else {
             // comma seperated
-            std::istringstream fa_to_read(string2fasta(primers));
+            std::istringstream fa_to_read(string2fasta(primers, prefix));
             InputReader<SingleEndRead, FastaReadImpl> fp(fa_to_read);
             while(fp.has_next()) {
                 auto i = fp.next();
@@ -558,12 +558,12 @@ public:
     void do_app(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, PrimerCounters &counter, const po::variables_map &vm) {
         SeqMap primer5p;
         if (vm.count("primers_5p")) {
-            primer5p = fasta2dict(vm["primers_5p"].as<std::string>());
+            primer5p = fasta2dict(vm["primers_5p"].as<std::string>(), "p5primer");
         }
 
         SeqMap primer3p;
         if (vm.count("primers_3p")) {
-            primer3p = fasta2dict(vm["primers_3p"].as<std::string>());
+            primer3p = fasta2dict(vm["primers_3p"].as<std::string>(), "p3primer");
         }
 
         counter.set_seqmap(primer5p, primer3p);

@@ -31,7 +31,7 @@ namespace bi = boost::iostreams;
 
 int check_open_r(const std::string& filename) ;
 int check_exists(const std::string& filename, bool force, bool gzip, bool std_out) ;
-std::string string2fasta(std::string seqstring, const char delim=',');
+std::string string2fasta(std::string seqstring, std::string prefix, const char delim=',');
 Read fasta_to_read(std::string fasta_file);
 
 class HtsOfstream {
@@ -160,8 +160,8 @@ private:
 
 public:
     inputReaders(std::vector<std::string> r1_input_, std::vector<std::string> r2_input_,
-                 std::vector<std::string> se_input_, 
-                 std::vector<std::string> interleaved_input_, 
+                 std::vector<std::string> se_input_,
+                 std::vector<std::string> interleaved_input_,
                  std::vector<std::string> tab_input_) :
         r1_input(r1_input_), r2_input(r2_input_), se_input(se_input_), interleaved_input(interleaved_input_), tab_input(tab_input_) { }
 

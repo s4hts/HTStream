@@ -139,7 +139,7 @@ TEST_F(ReadsTest, testInterWrite) {
 
 TEST_F(ReadsTest, testString2Fasta) {
 
-    std::istringstream fa_to_read(string2fasta(fastaString));
+    std::istringstream fa_to_read(string2fasta(fastaString, "seq"));
     InputReader<SingleEndRead, FastaReadImpl> faReader(fa_to_read);
 
     auto a = faReader.next();
