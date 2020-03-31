@@ -180,7 +180,7 @@ public:
             if (auto v = boost::any_cast<std::string>(&value))
                 outStats << "\"" << *v << "\"";
             else if (auto v = boost::any_cast<bool>(&value))
-                outStats << ((*v) ? "false" : "true");
+                outStats << ((*v) ? "true" : "false");
             else if (auto v = boost::any_cast<size_t>(&value))
                 outStats << *v;
             else if (auto v = boost::any_cast<double>(&value))
