@@ -174,7 +174,6 @@ public:
     virtual void write_options(const unsigned int indent = 1){
         std::string pad(4 * indent, ' ');
         for (const auto& it : vm) {
-            std::string no_result = "not converted";
             auto& value = it.second.value();
             outStats << pad << "\"" << it.first.c_str() << "\": ";
             if (auto v = boost::any_cast<std::string>(&value))
@@ -193,7 +192,8 @@ public:
                 outStats.seekp(-2, std::ios::end );
                 outStats << "]";
             } else
-                outStats << no_result;
+                throw std::runtime_error("In counters.h write_options: options type not seen in the switch, need to add new options type.");
+
             outStats << ",\n";
         }
     }
