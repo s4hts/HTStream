@@ -16,7 +16,8 @@ add_custom_target(generateVersion ALL
 # this will always be rebuilt.
 add_custom_command(
     OUTPUT always_rebuild
-    COMMAND cmake -E echo)  
+    COMMAND echo -n
+    )  
 
 file(GLOB sources "src/*.cpp")
 list(APPEND sources  ${CMAKE_BINARY_DIR}/common/version.h)
