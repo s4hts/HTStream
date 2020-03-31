@@ -54,12 +54,10 @@ public:
           fStats = vm["stats-file"].as<std::string>();
           force = vm["force"].as<bool>();
           aStats = vm["append-stats-file"].as<bool>();
-          pNotes = vm["notes"].as<std::string>();
         }
 
         pd.push_back(std::forward_as_tuple("program", pName));
         pd.push_back(std::forward_as_tuple("version", VERSION));
-        pd.push_back(std::forward_as_tuple("notes", pNotes));
 
         fragment.push_back(std::forward_as_tuple("in", TotalFragmentsInput));
         fragment.push_back(std::forward_as_tuple("out", TotalFragmentsOutput));
@@ -121,6 +119,9 @@ public:
 
         start_sublabel("Program_details");
         write_values(pd, 2);
+        start_sublabel("options", 2);
+        write_options(3);
+        end_sublabel(2);
         end_sublabel();
 
         start_sublabel("Fragment");
@@ -168,6 +169,33 @@ public:
         std::string pad(4 * indent, ' ');
         outStats.seekp(-2, std::ios::end );
         outStats << "\n" << pad << "},\n"; // finish off histogram
+    }
+
+    virtual void write_options(const unsigned int indent = 1){
+        std::string pad(4 * indent, ' ');
+        for (const auto& it : vm) {
+            std::string no_result = "not converted";
+            auto& value = it.second.value();
+            outStats << pad << "\"" << it.first.c_str() << "\": ";
+            if (auto v = boost::any_cast<std::string>(&value))
+                outStats << "\"" << *v << "\"";
+            else if (auto v = boost::any_cast<bool>(&value))
+                outStats << ((*v) ? "false" : "true");
+            else if (auto v = boost::any_cast<size_t>(&value))
+                outStats << *v;
+            else if (auto v = boost::any_cast<double>(&value))
+                outStats << *v ;
+            else if (auto v = boost::any_cast<std::vector<std::string>>(&value)){
+                outStats << "[ ";
+                for (std::vector<std::string>::const_iterator x = v->begin(); x != v->end(); x++){
+                    outStats << "\"" << *x << "\", ";
+                }
+                outStats.seekp(-2, std::ios::end );
+                outStats << "]";
+            } else
+                outStats << no_result;
+            outStats << ",\n";
+        }
     }
 
     template <class T>

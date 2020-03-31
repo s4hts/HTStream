@@ -74,6 +74,9 @@ public:
 
         start_sublabel("Program_details");
         write_values(pd, 2);
+        start_sublabel("options",2);
+        write_options(3);
+        end_sublabel(2);
         start_sublabel("screen_info", 2);
         write_values(screened_info, 3);
         end_sublabel(2);
