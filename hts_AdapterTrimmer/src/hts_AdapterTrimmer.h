@@ -25,8 +25,6 @@ extern template class InputReader<ReadBase, TabReadImpl>;
 class AdapterCounters : public Counters {
 
 public:
-    uint64_t Fixbases = 1;
-
     uint64_t SE_Discarded = 0;
     uint64_t SE_Adapter_Trim = 0;
     uint64_t SE_Adapter_BpTrim = 0;
@@ -37,23 +35,17 @@ public:
     uint64_t PE_Adapter_Trim = 0;
     uint64_t PE_Adapter_BpTrim = 0;
 
-    AdapterCounters(const std::string &statsFile, bool force, bool appendStats, const std::string &program_name, const std::string &notes) : Counters::Counters(statsFile, force, appendStats, program_name, notes) {
+    AdapterCounters(const std::string &program_name, const po::variables_map &vm) : Counters::Counters(program_name, vm) {
 
-        generic.push_back(std::forward_as_tuple("fixbases", Fixbases));
+        se.push_back(std::forward_as_tuple("adapterTrim", SE_Adapter_Trim));
+        se.push_back(std::forward_as_tuple("adapterBpTrim", SE_Adapter_BpTrim));
+        se.push_back(std::forward_as_tuple("discarded", SE_Discarded));
 
-        se.push_back(std::forward_as_tuple("SE_discarded", SE_Discarded));
-        se.push_back(std::forward_as_tuple("SE_adapterTrim", SE_Adapter_Trim));
-        se.push_back(std::forward_as_tuple("SE_adapterBpTrim", SE_Adapter_BpTrim));
-
-        pe.push_back(std::forward_as_tuple("R1_discarded", R1_Discarded));
-        pe.push_back(std::forward_as_tuple("R2_discarded", R2_Discarded));
-        pe.push_back(std::forward_as_tuple("PE_discarded", PE_Discarded));
-        pe.push_back(std::forward_as_tuple("PE_adapterTrim", PE_Adapter_Trim));
-        pe.push_back(std::forward_as_tuple("PE_adapterBpTrim", PE_Adapter_BpTrim));
-    }
-
-    void set_fixbases() {
-        Fixbases = 0;
+        r1.push_back(std::forward_as_tuple("discarded", R1_Discarded));
+        r2.push_back(std::forward_as_tuple("discarded", R2_Discarded));
+        pe.push_back(std::forward_as_tuple("adapterTrim", PE_Adapter_Trim));
+        pe.push_back(std::forward_as_tuple("adapterBpTrim", PE_Adapter_BpTrim));
+        pe.push_back(std::forward_as_tuple("discarded", PE_Discarded));
     }
 
     using Counters::output;
@@ -102,17 +94,6 @@ public:
             ++PE_Discarded;
         }
     }
-
-    virtual void write_out() {
-
-        initialize_json();
-
-        write_labels(generic);
-        write_sublabels("Single_end", se);
-        write_sublabels("Paired_end", pe);
-
-        finalize_json();
-    }
 };
 
 class AdapterTrimmer: public MainTemplate<AdapterCounters, AdapterTrimmer> {
@@ -126,7 +107,7 @@ public:
         // kmer|k ; kmer-offset|r ; max-mismatch-errorDensity|x
         // check-lengths|c ; min-overlap|o
         setThreadPoolParams(desc);
-        
+
         desc.add_options()
             ("no-fixbases,X", po::bool_switch()->default_value(false), "after trimming adapter, DO NOT use consensus sequence of paired reads, only trims adapter sequence");
         desc.add_options()
@@ -140,7 +121,7 @@ public:
         app_description += "  trimming off overhangs which by definition are adapter sequence in standard\n";
         app_description += "  libraries. SE Reads are trimmed by overlapping the adapter-sequence and trimming off the overlap.";
     }
-    
+
 /*If adapater trimming is turned on that means adapter trimming and do not overlap
  * so trim adapter, but don't worry about the overlap.
  * however we still need to change the overlap
@@ -379,7 +360,7 @@ public:
         bool noFixBases = vm["no-fixbases"].as<bool>();
         std::string adapter = vm["adapter-sequence"].as<std::string>();
         size_t num_threads = vm["number-of-threads"].as<size_t>();
-    
+
         threadsafe_queue<std::future<ReadBasePtr>> futures(50000);
         thread_pool threads(50000, num_threads);
 
@@ -387,9 +368,6 @@ public:
         thread_guard tg(output_thread);
 
         try {
-        
-            if (noFixBases) counter.set_fixbases();
-        
             while(reader.has_next()) {
                 auto i = reader.next();
                 PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
@@ -398,10 +376,10 @@ public:
                     counter.input(*sper);
                     futures.push(threads.submit([=]() mutable {
                                 return check_read_pe(sper, misDensity, mismatch, minOver, checkLengths, kmer, kmerOffset, noFixBases); }));
-                
+
                 } else {
                     SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
-                
+
                     if (ser) {
                         std::shared_ptr<SingleEndRead> sser = std::make_shared<SingleEndRead>(std::move(*ser));
                         counter.input(*sser);

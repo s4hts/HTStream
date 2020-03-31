@@ -31,21 +31,21 @@ public:
     uint64_t R2_Discarded = 0;
     uint64_t PE_Discarded = 0;
 
-    OverlappingCounters(const std::string &statsFile, bool force, bool appendStats, const std::string &program_name, const std::string &notes) : Counters::Counters(statsFile, force, appendStats, program_name, notes) {
+    OverlappingCounters(const std::string &program_name, const po::variables_map &vm) : Counters::Counters(program_name, vm) {
 
         insertLength.resize(1);
 
-        generic.push_back(std::forward_as_tuple("sins", sins));
-        generic.push_back(std::forward_as_tuple("mins", mins));
-        generic.push_back(std::forward_as_tuple("lins", lins));
-        generic.push_back(std::forward_as_tuple("adapterTrim", Adapter_Trim));
-        generic.push_back(std::forward_as_tuple("adapterBpTrim", Adapter_BpTrim));
+        fragment.push_back(std::forward_as_tuple("short_inserts", sins));
+        fragment.push_back(std::forward_as_tuple("medium_inserts", mins));
+        fragment.push_back(std::forward_as_tuple("long_inserts", lins));
+        fragment.push_back(std::forward_as_tuple("adapterTrim", Adapter_Trim));
+        fragment.push_back(std::forward_as_tuple("adapterBpTrim", Adapter_BpTrim));
 
-        se.push_back(std::forward_as_tuple("SE_discarded", SE_Discarded));
+        se.push_back(std::forward_as_tuple("discarded", SE_Discarded));
 
-        pe.push_back(std::forward_as_tuple("R1_discarded", R1_Discarded));
-        pe.push_back(std::forward_as_tuple("R2_discarded", R2_Discarded));
-        pe.push_back(std::forward_as_tuple("PE_discarded", PE_Discarded));
+        r1.push_back(std::forward_as_tuple("discarded", R1_Discarded));
+        r2.push_back(std::forward_as_tuple("discarded", R2_Discarded));
+        pe.push_back(std::forward_as_tuple("discarded", PE_Discarded));
     }
 
     using Counters::output;
@@ -117,10 +117,31 @@ public:
 
         initialize_json();
 
-        write_labels(generic);
-        write_vector("readlength_histogram",iLength);
-        write_sublabels("Single_end", se);
-        write_sublabels("Paired_end", pe);
+        start_sublabel("Program_details");
+        write_values(pd, 2);
+        start_sublabel("options",2);
+        write_options(3);
+        end_sublabel(2);
+        end_sublabel();
+
+        start_sublabel("Fragment");
+        write_values(fragment, 2);
+        write_vector("readlength_histogram",iLength, 2);
+        end_sublabel();
+
+        start_sublabel("Single_end");
+        write_values(se, 2);
+        end_sublabel();
+
+        start_sublabel("Paired_end");
+        write_values(pe, 2);
+        start_sublabel("Read1",2);
+        write_values(r1, 3);
+        end_sublabel(2);
+        start_sublabel("Read2",2);
+        write_values(r2, 3);
+        end_sublabel(2);
+        end_sublabel();
 
         finalize_json();
     }
@@ -134,10 +155,10 @@ public:
         // no-orphans|n ; stranded|s ; min-length|m
         setDefaultParamsOverlapping(desc);
     }
-    
+
     Overlapper() {
         program_name = "hts_Overlapper";
-        app_description = 
+        app_description =
             "The hts_Overlapper application attempts to overlap paired end reads\n";
         app_description += "  to produce the original transcript, trim adapters, and in some\n";
         app_description += "  cases, correct sequencing errors.\n";

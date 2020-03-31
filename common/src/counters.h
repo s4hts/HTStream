@@ -10,24 +10,32 @@
 #include <fstream>
 #include <vector>
 #include <tuple>
+#include "version.h"
 #include "read.h"
 #include "typedefs.h"
 #include <boost/filesystem/path.hpp>
+#include <boost/program_options.hpp>
 
 namespace bf = boost::filesystem;
+namespace po = boost::program_options;
 
 class Counters {
 public:
     std::fstream outStats;
-    std::string fStats;
-    bool force;
-    bool aStats;
-    std::string pName;
-    std::string pNotes;
+    std::string fStats = "/dev/null";
+    bool force = false;
+    bool aStats = false;
 
-    std::vector<Label> generic;
+    std::string pName = "hts";
+    std::string pNotes = "hts";
+    po::variables_map vm;
+
+    std::vector<sLabel> pd;
+    std::vector<Label> fragment;
     std::vector<Label> se;
     std::vector<Label> pe;
+    std::vector<Label> r1;
+    std::vector<Label> r2;
 
     uint64_t TotalFragmentsInput = 0;
     uint64_t TotalFragmentsOutput = 0;
@@ -38,23 +46,29 @@ public:
     uint64_t PE_In = 0;
     uint64_t PE_Out = 0;
 
-    Counters(const std::string &statsFile, bool force_, bool appendStats, const std::string &program_name, const std::string &notes):
-            fStats(statsFile),
-            force(force_),
-            aStats(appendStats),
-            pName(program_name),
-            pNotes(notes) {
+    Counters(const std::string &program_name_, po::variables_map vm_):
+            pName(program_name_),
+            vm(vm_) {
 
-        check_write();
+        if (vm.size()){
+          fStats = vm["stats-file"].as<std::string>();
+          force = vm["force"].as<bool>();
+          aStats = vm["append-stats-file"].as<bool>();
+        }
 
-        generic.push_back(std::forward_as_tuple("totalFragmentsInput", TotalFragmentsInput));
-        generic.push_back(std::forward_as_tuple("totalFragmentsOutput", TotalFragmentsOutput));
+        check_write(fStats);
 
-        se.push_back(std::forward_as_tuple("SE_in", SE_In));
-        se.push_back(std::forward_as_tuple("SE_out", SE_Out));
+        pd.push_back(std::forward_as_tuple("program", pName));
+        pd.push_back(std::forward_as_tuple("version", VERSION));
 
-        pe.push_back(std::forward_as_tuple("PE_in", PE_In));
-        pe.push_back(std::forward_as_tuple("PE_out", PE_Out));
+        fragment.push_back(std::forward_as_tuple("in", TotalFragmentsInput));
+        fragment.push_back(std::forward_as_tuple("out", TotalFragmentsOutput));
+
+        se.push_back(std::forward_as_tuple("in", SE_In));
+        se.push_back(std::forward_as_tuple("out", SE_Out));
+
+        pe.push_back(std::forward_as_tuple("in", PE_In));
+        pe.push_back(std::forward_as_tuple("out", PE_Out));
     }
 
     virtual ~Counters() {}
@@ -105,9 +119,30 @@ public:
 
         initialize_json();
 
-        write_labels(generic);
-        write_sublabels("Single_end", se);
-        write_sublabels("Paired_end", pe);
+        start_sublabel("Program_details");
+        write_values(pd, 2);
+        start_sublabel("options", 2);
+        write_options(3);
+        end_sublabel(2);
+        end_sublabel();
+
+        start_sublabel("Fragment");
+        write_values(fragment, 2);
+        end_sublabel();
+
+        start_sublabel("Single_end");
+        write_values(se, 2);
+        end_sublabel();
+
+        start_sublabel("Paired_end");
+        write_values(pe, 2);
+        start_sublabel("Read1",2);
+        write_values(r1, 3);
+        end_sublabel(2);
+        start_sublabel("Read2",2);
+        write_values(r2, 3);
+        end_sublabel(2);
+        end_sublabel();
 
         finalize_json();
     }
@@ -120,29 +155,11 @@ public:
         if (aStats && end != -1) {
             outStats.open(fStats, std::ios::in | std::ios::out); //append
             outStats.seekp(-6, std::ios::end );
-            outStats << "  }, \"" << pName << "_" << getpid()  << "\": {\n";
+            outStats << "  }, \"" << pName << "\": {\n";
         } else {
             outStats.open(fStats, std::ios::out | std::ios::trunc); //overwrite
-            outStats << "{ \"" << pName << "_" << getpid() <<  "\": {\n";
+            outStats << "{ \"" << pName << "\": {\n";
         }
-
-        outStats << "    \"Notes\": \"" << pNotes << "\",\n";
-        // initialize should always be followed by finalize_json()
-    }
-
-    virtual void write_labels(const std::vector<Label> &labels, const unsigned int indent = 1) {
-        std::string pad(4 * indent, ' ');
-        for (auto& label : labels) {
-            outStats << pad << "\"" << std::get<0>(label) << "\": " << std::get<1>(label) << ",\n";
-        }
-    }
-
-    virtual void write_sublabels(const std::string &labelStr, const std::vector<Label> &labels, const unsigned int indent = 1) {
-        std::string pad(4 * indent, ' ');
-        outStats << pad << "\"" << labelStr << "\": {\n";
-        write_labels(labels, indent+1);
-        outStats.seekp(-2, std::ios::end );
-        outStats << "\n" << pad << "},\n"; // finish off histogram
     }
 
     virtual void start_sublabel(const std::string &labelStr, const unsigned int indent = 1) {
@@ -156,6 +173,49 @@ public:
         outStats << "\n" << pad << "},\n"; // finish off histogram
     }
 
+    virtual void write_options(const unsigned int indent = 1){
+        std::string pad(4 * indent, ' ');
+        for (const auto& it : vm) {
+            auto& value = it.second.value();
+            outStats << pad << "\"" << it.first.c_str() << "\": ";
+            if (auto v = boost::any_cast<std::string>(&value))
+                outStats << "\"" << *v << "\"";
+            else if (auto v = boost::any_cast<bool>(&value))
+                outStats << ((*v) ? "true" : "false");
+            else if (auto v = boost::any_cast<size_t>(&value))
+                outStats << *v;
+            else if (auto v = boost::any_cast<double>(&value))
+                outStats << *v ;
+            else if (auto v = boost::any_cast<std::vector<std::string>>(&value)){
+                outStats << "[ ";
+                for (std::vector<std::string>::const_iterator x = v->begin(); x != v->end(); x++){
+                    outStats << "\"" << *x << "\", ";
+                }
+                outStats.seekp(-2, std::ios::end );
+                outStats << "]";
+            } else
+                throw std::runtime_error("In counters.h write_options: options type not seen in the switch, need to add new options type.");
+
+            outStats << ",\n";
+        }
+    }
+
+    template <class T>
+    void write_values(T &tuples, const unsigned int indent = 1) {
+        std::string pad(4 * indent, ' ');
+        for (auto& tuple : tuples) {
+            try
+            {
+                uint64_t value = boost::lexical_cast<uint64_t>(std::get<1>(tuple));
+                outStats << pad << "\"" << std::get<0>(tuple) << "\": " << value << ",\n";
+            }
+            catch(boost::bad_lexical_cast &)
+            {
+                outStats << pad << "\"" << std::get<0>(tuple) << "\": \"" << std::get<1>(tuple) << "\",\n";
+            }
+        }
+    }
+
     template <class T>
     void write_vector(const std::string &name, T &tuple, const unsigned int indent = 1) {
         std::string pad(4 * indent, ' ');
@@ -163,20 +223,16 @@ public:
         size_t i;
         outStats << pad << "\"" << name << "\": [";
         for (i=0 ; i < tuple.size(); ++i) {
-            outStats << " [" << std::get<0>(tuple[i]) << "," << std::get<1>(tuple[i]) << "]"; //make sure json format is kept
+            try
+            {
+                uint64_t value = boost::lexical_cast<uint64_t>(std::get<1>(tuple[i]));
+                outStats << " [" << std::get<0>(tuple[i]) << "," << value << "]"; //make sure json format is kept
+            }
+            catch(boost::bad_lexical_cast &)
+            {
+                outStats << " [\"" << std::get<0>(tuple[i]) << "\",\"" << std::get<1>(tuple[i]) << "\"]"; //make sure json format is kept
+            }
             if (i < tuple.size()-1) outStats << ",";
-        }
-        outStats << " ],\n"; // finish off histogram
-    }
-
-    virtual void write_vector_slabel(const std::string &vector_name, const std::vector<sLabel> &labeltuple, const unsigned int indent = 1) {
-        std::string pad(4 * indent, ' ');
-        if (labeltuple.size() == 0) return;
-        size_t i;
-        outStats << pad << "\"" << vector_name << "\": [";
-        for (i=0 ; i < labeltuple.size(); ++i) {
-            outStats << " [\"" << std::get<0>(labeltuple[i]) << "\",\"" << std::get<1>(labeltuple[i]) << "\"]"; //make sure json format is kept
-            if (i < labeltuple.size()-1) outStats << ",";
         }
         outStats << " ],\n"; // finish off
     }
@@ -242,17 +298,18 @@ public:
     }
 
 private:
-    virtual void check_write() {
-        bf::path p(fStats);
-        outStats.open(fStats, std::ios::out | std::ios::app);
+    virtual void check_write(std::string file) {
+        std::fstream out;
+        bf::path p(file);
+        out.open(file, std::ios::out | std::ios::app);
 
-        if(outStats.is_open())
+        if(out.is_open())
         {
-            outStats.close();
+            out.close();
         }
         else
         {
-            throw std::runtime_error("Error: Cannot write to " + fStats + ": " +  std::strerror( errno ) + '\n');
+            throw std::runtime_error("Error: Cannot write to " + file + ": " +  std::strerror( errno ) + '\n');
         }
     }
 
@@ -273,18 +330,18 @@ public:
     uint64_t R2_Discarded = 0;
     uint64_t PE_Discarded = 0;
 
-    TrimmingCounters(const std::string &statsFile, bool force, bool appendStats, const std::string &program_name, const std::string &notes) : Counters::Counters(statsFile, force, appendStats, program_name, notes) {
-        se.push_back(std::forward_as_tuple("SE_rightTrim", SE_Right_Trim));
-        se.push_back(std::forward_as_tuple("SE_leftTrim", SE_Left_Trim));
-        se.push_back(std::forward_as_tuple("SE_discarded", SE_Discarded));
+    TrimmingCounters(const std::string &program_name, po::variables_map vm ) : Counters::Counters(program_name, vm) {
+        se.push_back(std::forward_as_tuple("rightTrim", SE_Right_Trim));
+        se.push_back(std::forward_as_tuple("leftTrim", SE_Left_Trim));
+        se.push_back(std::forward_as_tuple("discarded", SE_Discarded));
 
-        pe.push_back(std::forward_as_tuple("R1_leftTrim", R1_Left_Trim));
-        pe.push_back(std::forward_as_tuple("R1_rightTrim", R1_Right_Trim));
-        pe.push_back(std::forward_as_tuple("R2_leftTrim", R2_Left_Trim));
-        pe.push_back(std::forward_as_tuple("R2_rightTrim", R2_Right_Trim));
-        pe.push_back(std::forward_as_tuple("R1_discarded", R1_Discarded));
-        pe.push_back(std::forward_as_tuple("R2_discarded", R2_Discarded));
-        pe.push_back(std::forward_as_tuple("PE_discarded", PE_Discarded));
+        r1.push_back(std::forward_as_tuple("leftTrim", R1_Left_Trim));
+        r1.push_back(std::forward_as_tuple("rightTrim", R1_Right_Trim));
+        r1.push_back(std::forward_as_tuple("discarded", R1_Discarded));
+        r2.push_back(std::forward_as_tuple("leftTrim", R2_Left_Trim));
+        r2.push_back(std::forward_as_tuple("rightTrim", R2_Right_Trim));
+        r2.push_back(std::forward_as_tuple("discarded", R2_Discarded));
+        pe.push_back(std::forward_as_tuple("discarded", PE_Discarded));
     }
     virtual ~TrimmingCounters() {}
 

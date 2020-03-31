@@ -8,3 +8,4 @@ build
 *.swp
 .Rproj.user
 .DS_Store
+/ext/googletest/*

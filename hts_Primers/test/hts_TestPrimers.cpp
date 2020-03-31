@@ -1,10 +1,14 @@
 #include "gtest/gtest.h"
 #include <sstream>
 #include <iostream>
+#include <boost/program_options.hpp>
 #include "hts_Primers.h"
+
+namespace po = boost::program_options;
 
 class Primer : public ::testing::Test {
 public:
+    po::variables_map vm;
     const std::string primer_1 = "TTCATTAAAAATTGAATTGACATTAACCT";
     const std::string read_seq_1 = "CGGGTTTCATTAAAAATTGAATTGACATTAACCTATAAAAATAGGCGTCGAGGCCCTTTCGTCTTCTATCGGAGCTCCAAGACCGCCTCGGCGTGAAGGTGGTGATAGCGCCCGGAAGAGAGTCAATTCAGGGTGGTGAATACTCTAGATC";
 
@@ -31,13 +35,15 @@ TEST_F(Primer, test_bounded_edit_distance) {
 };
 
 TEST_F(Primer, test_pairs_both_match) {
+    po::variables_map vm;
+
     std::istringstream in1(read_seq_1f);
     std::istringstream in2(read_seq_1r);
     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(in1, in2);
-    SeqMap primer5p = p.fasta2dict(primer_5p);
-    SeqMap primer3p = p.fasta2dict(primer_3p);
+    SeqMap primer5p = p.fasta2dict(primer_5p, "seq");
+    SeqMap primer3p = p.fasta2dict(primer_3p, "seq");
 
-    PrimerCounters counter("/dev/null", true, false, "hts_Primers", "");
+    PrimerCounters counter("hts_Primers", vm);
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
@@ -57,10 +63,10 @@ TEST_F(Primer, test_pairs_flipped) {
     std::istringstream in1(read_seq_3f);
     std::istringstream in2(read_seq_3r);
     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(in1, in2);
-    SeqMap primer5p = p.fasta2dict(primer_5p);
-    SeqMap primer3p = p.fasta2dict(primer_3p);
+    SeqMap primer5p = p.fasta2dict(primer_5p, "seq");
+    SeqMap primer3p = p.fasta2dict(primer_3p, "seq");
 
-    PrimerCounters counter("/dev/null", true, false, "hts_Primers", "");
+    PrimerCounters counter("hts_Primers", vm);
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
@@ -80,10 +86,10 @@ TEST_F(Primer, test_pairs_one_fail) {
     std::istringstream in1(read_seq_2f);
     std::istringstream in2(read_seq_2r);
     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(in1, in2);
-    SeqMap primer5p = p.fasta2dict(primer_5p);
-    SeqMap primer3p = p.fasta2dict(primer_3p);
+    SeqMap primer5p = p.fasta2dict(primer_5p, "seq");
+    SeqMap primer3p = p.fasta2dict(primer_3p, "seq");
 
-    PrimerCounters counter("/dev/null", true, false, "hts_Primers", "");
+    PrimerCounters counter("hts_Primers", vm);
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
@@ -103,10 +109,10 @@ TEST_F(Primer, test_pairs_one_fail_ok) {
     std::istringstream in1(read_seq_2f);
     std::istringstream in2(read_seq_2r);
     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(in1, in2);
-    SeqMap primer5p = p.fasta2dict(primer_5p);
-    SeqMap primer3p = p.fasta2dict(primer_3p);
+    SeqMap primer5p = p.fasta2dict(primer_5p, "seq");
+    SeqMap primer3p = p.fasta2dict(primer_3p, "seq");
 
-    PrimerCounters counter("/dev/null", true, false, "hts_Primers", "");
+    PrimerCounters counter("hts_Primers", vm);
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
@@ -128,10 +134,10 @@ TEST_F(Primer, test_pairs_flipped_5p_match_only) {
     std::istringstream in1(read_seq_3f);
     std::istringstream in2(read_seq_3r);
     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(in1, in2);
-    SeqMap primer5p = p.fasta2dict(primer_5p);
+    SeqMap primer5p = p.fasta2dict(primer_5p, "seq");
     SeqMap primer3p;
 
-    PrimerCounters counter("/dev/null", true, false, "hts_Primers", "");
+    PrimerCounters counter("hts_Primers", vm);
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
@@ -152,9 +158,9 @@ TEST_F(Primer, test_pairs_flipped_3p_match_only) {
     std::istringstream in2(read_seq_3r);
     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(in1, in2);
     SeqMap primer5p;
-    SeqMap primer3p = p.fasta2dict(primer_3p);
+    SeqMap primer3p = p.fasta2dict(primer_3p, "seq");
 
-    PrimerCounters counter("/dev/null", true, false, "hts_Primers", "");
+    PrimerCounters counter("hts_Primers", vm);
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
@@ -173,10 +179,10 @@ TEST_F(Primer, test_pairs_flipped_3p_match_only) {
 TEST_F(Primer, test_single_match_only) {
     std::istringstream in1(read_seq_se);
     InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(in1);
-    SeqMap primer5p = p.fasta2dict(primer_5p);
-    SeqMap primer3p = p.fasta2dict(primer_3p);
+    SeqMap primer5p = p.fasta2dict(primer_5p, "seq");
+    SeqMap primer3p = p.fasta2dict(primer_3p, "seq");
 
-    PrimerCounters counter("/dev/null", true, false, "hts_Primers", "");
+    PrimerCounters counter("hts_Primers", vm);
     while(ifs.has_next()) {
         auto i = ifs.next();
         SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
@@ -194,10 +200,10 @@ TEST_F(Primer, test_single_match_only) {
 TEST_F(Primer, test_single_match_flip) {
     std::istringstream in1(read_seq_se);
     InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(in1);
-    SeqMap primer3p = p.fasta2dict(primer_5p);
-    SeqMap primer5p = p.fasta2dict(primer_3p);
+    SeqMap primer3p = p.fasta2dict(primer_5p, "seq");
+    SeqMap primer5p = p.fasta2dict(primer_3p, "seq");
 
-    PrimerCounters counter("/dev/null", true, false, "hts_Primers", "");
+    PrimerCounters counter("hts_Primers", vm);
     while(ifs.has_next()) {
         auto i = ifs.next();
         SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
@@ -216,9 +222,9 @@ TEST_F(Primer, test_single_match_flip_5p_only) {
     std::istringstream in1(read_seq_se);
     InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(in1);
     SeqMap primer3p;
-    SeqMap primer5p = p.fasta2dict(primer_3p);
+    SeqMap primer5p = p.fasta2dict(primer_3p, "seq");
 
-    PrimerCounters counter("/dev/null", true, false, "hts_Primers", "");
+    PrimerCounters counter("hts_Primers", vm);
     while(ifs.has_next()) {
         auto i = ifs.next();
         SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
@@ -236,10 +242,10 @@ TEST_F(Primer, test_single_match_flip_5p_only) {
 TEST_F(Primer, test_single_match_flip_3p_only) {
     std::istringstream in1(read_seq_se);
     InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(in1);
-    SeqMap primer3p = p.fasta2dict(primer_5p);
+    SeqMap primer3p = p.fasta2dict(primer_5p, "seq");
     SeqMap primer5p;
 
-    PrimerCounters counter("/dev/null", true, false, "hts_Primers", "");
+    PrimerCounters counter("hts_Primers", vm);
     while(ifs.has_next()) {
         auto i = ifs.next();
         SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());

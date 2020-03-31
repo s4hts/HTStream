@@ -25,9 +25,9 @@ public:
     uint64_t Ignored = 0;
     uint64_t Duplicate = 0;
 
-    SuperDeduperCounters(const std::string &statsFile, bool force, bool appendStats, const std::string &program_name, const std::string &notes) : Counters::Counters(statsFile, force, appendStats, program_name, notes) {
-        generic.push_back(std::forward_as_tuple("ignored", Ignored));
-        generic.push_back(std::forward_as_tuple("duplicate", Duplicate));
+    SuperDeduperCounters(const std::string &program_name, const po::variables_map &vm) : Counters::Counters(program_name, vm) {
+        fragment.push_back(std::forward_as_tuple("ignored", Ignored));
+        fragment.push_back(std::forward_as_tuple("duplicate", Duplicate));
     }
 
     using Counters::input;
@@ -53,10 +53,25 @@ public:
 
         initialize_json();
 
-        write_labels(generic);
-        write_vector("duplicate_saturation",duplicateProportion);
-        write_sublabels("Single_end", se);
-        write_sublabels("Paired_end", pe);
+        start_sublabel("Program_details");
+        write_values(pd, 2);
+        start_sublabel("options",2);
+        write_options(3);
+        end_sublabel(2);
+        end_sublabel();
+
+        start_sublabel("Fragment");
+        write_values(fragment, 2);
+        write_vector("duplicate_saturation",duplicateProportion, 2);
+        end_sublabel();
+
+        start_sublabel("Single_end");
+        write_values(se, 2);
+        end_sublabel();
+
+        start_sublabel("Paired_end");
+        write_values(pe, 2);
+        end_sublabel();
 
         finalize_json();
     }
@@ -75,7 +90,7 @@ class SuperDeduper: public MainTemplate<SuperDeduperCounters, SuperDeduper> {
 public:
 
     BitMap read_map;
-    
+
     SuperDeduper() {
         program_name = "hts_SuperDeduper";
         app_description =
@@ -94,7 +109,7 @@ public:
             ("inform-avg-qual-score,a", po::value<double>()->default_value(5)->notifier(boost::bind(&check_range<double>, "inform-avg-qual-score", _1, 1, 10000)), "Avg quality score to consider a read informative (min 1, max 10000)") //I know this says user input is a int, but is actually a double
             ("log_freq,e", po::value<size_t>()->default_value(1000000)->notifier(boost::bind(&check_range<size_t>, "log_freq", _1, 0, 1000000000)), "Frequency in which to log duplicates in reads, can be used to create a saturation plot (0 turns off).");
     }
-    
+
     template <class T, class Impl>
     void load_map(InputReader<T, Impl> &reader, SuperDeduperCounters& counters, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, double avg_automatic_write, double discard_qual, size_t start, size_t length, size_t log_freq ){
         double tmpAvg;

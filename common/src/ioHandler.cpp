@@ -44,7 +44,7 @@ void  __attribute__ ((noreturn)) throw_error(const std::string& filename) {
 /*
 takes a delimited string and converts to fasta format for reading in
 */
-std::string string2fasta(std::string seqstring, const char delim) {
+std::string string2fasta(std::string seqstring,  std::string prefix, const char delim) {
   std::string newfa;
   int index=1;
   std::stringstream ss( seqstring );
@@ -53,7 +53,8 @@ std::string string2fasta(std::string seqstring, const char delim) {
   {
       std::string substr;
       getline( ss, substr, delim );
-      newfa.append(">seq");
+      newfa.append(">");
+      newfa.append(prefix);
       newfa.append( std::to_string(index) );
       newfa.append( "\n" );
       newfa.append( substr );

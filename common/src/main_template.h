@@ -42,7 +42,7 @@ public:
     int main_func(int argc, char** argv) {
         try
         {
-            /** Define and parse the program options 
+            /** Define and parse the program options
              */
             po::options_description standard = setStandardOptions();
             // version|v ; help|h ; notes|N ; stats-file|L ; append-stats-file|A
@@ -74,7 +74,7 @@ public:
                 std::shared_ptr<OutputWriter> se = nullptr;
                 outputWriters(pe, se, vm);
 
-                CounterType counters(vm["stats-file"].as<std::string>(), vm["force"].as<bool>(), vm["append-stats-file"].as<bool>(), program_name, vm["notes"].as<std::string>());
+                CounterType counters(program_name, vm);
 
                 if(vm.count("read1-input")) {
                     if (!vm.count("read2-input")) {
@@ -137,10 +137,8 @@ public:
             return ERROR_UNHANDLED_EXCEPTION;
 
         }
-
         return SUCCESS;
-
     }
 };
-    
+
 #endif
