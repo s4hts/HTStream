@@ -56,6 +56,8 @@ public:
           aStats = vm["append-stats-file"].as<bool>();
         }
 
+        check_write(fStats);
+
         pd.push_back(std::forward_as_tuple("program", pName));
         pd.push_back(std::forward_as_tuple("version", VERSION));
 
@@ -295,6 +297,21 @@ public:
         outStats.close();
     }
 
+private:
+    virtual void check_write(std::string file) {
+        std::fstream out;
+        bf::path p(file);
+        out.open(file, std::ios::out | std::ios::app);
+
+        if(out.is_open())
+        {
+            out.close();
+        }
+        else
+        {
+            throw std::runtime_error("Error: Cannot write to " + file + ": " +  std::strerror( errno ) + '\n');
+        }
+    }
 
 };
 
