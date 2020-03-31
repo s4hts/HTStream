@@ -16,4 +16,3 @@ else()
   configure_file(${SRC_DIR}/common/src/version.h.release
     ${BIN_DIR}/common/version.h COPYONLY)
 endif()
-  
