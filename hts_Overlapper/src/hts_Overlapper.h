@@ -324,6 +324,7 @@ public:
                 counters.input(*per);
                 SingleEndReadPtr overlapped = check_read(*per, misDensity, mismatch, minOver, checkLengths, kmer, kmerOffset);
                 if (!overlapped) {
+                    overlapped->checkDiscarded(min_length);
                     counters.output(*per, no_orphan);
                     writer_helper(per, pe, se, stranded, no_orphan); //write out as is
                 } else if (overlapped) { //if there is an overlap
