@@ -10,6 +10,7 @@ set(PROJECT_LINK_LIBS hts_common)
 link_directories(${CMAKE_BINARY_DIR}/common)
 
 FIND_PACKAGE( Boost 1.56 COMPONENTS system program_options iostreams filesystem REQUIRED )
+find_package(Threads REQUIRED)
 include_directories(${COMMON_INCLUDES} ${Boost_INCLUDE_DIR} )
 
 
