@@ -1,6 +1,7 @@
-
+uncompressed
 /* input/options parameter characters used
 
+  number-of-threads                               AdapterTrimmer
   read1-input                 1   Input           All
   read2-input                 2   Input           All
 
@@ -15,11 +16,16 @@ C
   r2-cut-left                 c                   CutTrim
   check-lengths               c   Overlapping     AdapterTrimmer,Overlapper
   check-read-2                C                   SeqScreener
+  perfect-windows             c                   PolyATTrim
 D
   r2-cut-right                d                   CutTrim
+  primer_mismatches           d                   Primers
 E
   max-mismatch-errorDensity   e   Overlapping     AdapterTrimmer,Overlapper
+  max-mismatch-errorDensity   e                   PolyATTrim
   log_freq                    e                   SuperDeduper
+  exclude                     e                   NTrimmer
+  primer_end_mismatches       e                   Primers
 F
   fastq-output                f   Output          All
   force                       F   Output          All
@@ -31,16 +37,20 @@ I
   interleaved-input           I   Input           All
   interleaved-output          i   Output          All
 J
+  skip_polyA                  j                   PolyATTrim
 K
   kmer                        k   Overlapping     AdapterTrimmer,Overlapper
   kmer                        k                   SeqScreener
+  skip_polyT                  k                   PolyATTrim
+  keep                        k                   Primers
 L
   no-left                     l   Trim            PolyATTrim, QWindowTrim
   length                      l                   SuperDeduper
+  float                       l                   float
   stats-file                  L   Standard        All
 M
   min-length                  m   Cutting         AdapterTrimmer, CutTrim, NTrimmer, Overlapper, PolyATTrim, QWindowTrim
-  min-trim                    M                   PolyATtrim
+  min-trim                    M                   PolyATTrim
   max-length                  M                   CutTrim
 N
   no-orphans                  n   Cutting         AdapterTrimmer, CutTrim, NTrimmer, Overlapper, PolyATTrim, QWindowTrim
@@ -52,13 +62,16 @@ O
   to-stdout                   O   Output          All <-- DEPRECATED
 P
   prefix                      p   Output          All <-- DEPRECATED
+  primers_5p                  P                   Primers
 Q
   avg-qual-score              q                   QWindowTrim
   avg-qual-score              q                   SuperDeduper
+  primers_3p                  Q                   Primers
 R
   no-right                    r   Trim            PolyATTrim, QWindowTrim
   kmer-offset                 r   Overlapping     AdapterTrimmer,Overlapper
   record                      r                   SeqScreener
+  min_primer_matches          r                   Primers
 S
   stranded                    s   Cutting         AdapterTrimmer, CutTrim, NTrimmer, Overlapper, PolyATTrim, QWindowTrim
   seq                         s                   SeqScreener
@@ -74,13 +87,15 @@ V
   version                     v   Standard        All
 W
   window-size                 w                   QWindowTrim
+  window-size                 w                   PolyATTrim
 X
   max-mismatch                x   Overlapping     AdapterTrimmer,Overlapper
-  max-mismatch                x                   PolyATTrim
+  max-trim                    x                   PolyATTrim
   percentage-hits             x                   SeqScreener
+  flip                        x                   Primers
   no-fixbases                 X                   AdapterTrimmer
 Y
 Z
-  unmapped-output               z   Output          All
-
+  unmapped-output             z   Output          All
+  unmapped-Input              Z   input           All (FUTURE)
 */
