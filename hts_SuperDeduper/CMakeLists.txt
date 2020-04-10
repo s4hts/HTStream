@@ -20,19 +20,7 @@ endif()
 
 target_link_libraries(${PROJECT_NAME} ${EXTRA_BUILD_FLAGS} ${PROJECT_LINK_LIBS} ${Boost_LIBRARIES})
 
-add_custom_target(hts_pytest_${PROJECT_NAME}
-  DEPENDS ${PROJECT_NAME}
-  COMMAND ${CMAKE_COMMAND} -E env "PATH=$ENV{PATH}:${CMAKE_BINARY_DIR}/${PROJECT_NAME}" python ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/test_suite/${PROJECT_NAME}.py
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/test_suite
-)
-
-add_custom_target(valgrind_${PROJECT_NAME}
-  DEPENDS ${PROJECT_NAME}
-  COMMAND valgrind ./${PROJECT_NAME} -F -1 ${CMAKE_SOURCE_DIR}/test_suite/fastqFiles/testCase_1X_R1.fastq -2 ${CMAKE_SOURCE_DIR}/test_suite/fastqFiles/testCase_1X_R1.fastq -O
-)
-
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
-
 
 ## test
 set(PROJECT_TEST_NAME ${PROJECT_NAME}_test)

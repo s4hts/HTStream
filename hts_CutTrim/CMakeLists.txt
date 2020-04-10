@@ -9,6 +9,7 @@ set(PROJECT_LINK_LIBS hts_common)
 link_directories(${CMAKE_BINARY_DIR}/common)
 
 FIND_PACKAGE( Boost 1.56 COMPONENTS system program_options iostreams filesystem REQUIRED )
+find_package(Threads REQUIRED)
 include_directories(${COMMON_INCLUDES} ${Boost_INCLUDE_DIR} )
 
 
@@ -19,18 +20,13 @@ if (BUILD_STATIC_BIN)
 endif()
 target_link_libraries(${PROJECT_NAME} ${EXTRA_BUILD_FLAGS} ${PROJECT_LINK_LIBS} ${Boost_LIBRARIES})
 
-add_custom_target(valgrind_cut_trim
-  DEPENDS ${PROJECT_NAME}
-  COMMAND valgrind ./${PROJECT_NAME} -F -1 ${CMAKE_SOURCE_DIR}/test_suite/fastqFiles/testCase_1X_R1.fastq -2 ${CMAKE_SOURCE_DIR}/test_suite/fastqFiles/testCase_1X_R1.fastq -O
-)
-
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
 
 ## test
 set(PROJECT_TEST_NAME ${PROJECT_NAME}_test)
 find_package(Threads REQUIRED)
 include_directories(${GTEST_INCLUDE_DIRS} ${Boost_INCLUDE_DIR}
-    ${COMMON_INCLUDES} ${CMAKE_SOURCE_DIR}/hts_CutTrim/src)
+    ${COMMON_INCLUDES} ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/src)
 
 file(GLOB TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/test/*.cpp)
 link_directories(${GTEST_LIBS_DIR})
