@@ -19,11 +19,6 @@ if (BUILD_STATIC_BIN)
 endif()
 target_link_libraries(${PROJECT_NAME} ${EXTRA_BUILD_FLAGS} ${PROJECT_LINK_LIBS} ${Boost_LIBRARIES})
 
-add_custom_target(valgrind_${PROJECT_NAME}
-  DEPENDS ${PROJECT_NAME}
-  COMMAND valgrind ./${PROJECT_NAME} -F -1 ${CMAKE_SOURCE_DIR}/test_suite/fastqFiles/testCase_1X_R1.fastq -2 ${CMAKE_SOURCE_DIR}/test_suite/fastqFiles/testCase_1X_R1.fastq -O
-)
-
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
 
 ## test
