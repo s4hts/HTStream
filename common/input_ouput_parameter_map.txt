@@ -30,7 +30,6 @@ F
   fastq-output                f   Output          All
   force                       F   Output          All
 G
-  gzip-output                 g   Output          All <-- DEPRECATED
 H
   help                        h   Standard        All
 I
@@ -59,9 +58,8 @@ N
 O
   qual-offset                 o                   QWindowTrim
   min-overlap                 o   Overlapping     AdapterTrimmer,Overlapper
-  to-stdout                   O   Output          All <-- DEPRECATED
 P
-  prefix                      p   Output          All <-- DEPRECATED
+  number-of-threads           p                   Reserved for All
   primers_5p                  P                   Primers
 Q
   avg-qual-score              q                   QWindowTrim
@@ -76,7 +74,6 @@ S
   stranded                    s   Cutting         AdapterTrimmer, CutTrim, NTrimmer, Overlapper, PolyATTrim, QWindowTrim
   seq                         s                   SeqScreener
   start                       s                   SuperDeduper
-  from-stdin                  S   Output          All <-- DEPRECATED
 T
   tab-output                  t   Output          All
   tab-input                   T   Input           All

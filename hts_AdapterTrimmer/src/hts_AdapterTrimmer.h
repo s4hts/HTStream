@@ -100,13 +100,16 @@ class AdapterTrimmer: public MainTemplate<AdapterCounters, AdapterTrimmer> {
 public:
 
     void add_extra_options(po::options_description &desc) {
+
+        setThreadPoolParams(desc);
+        // number-of-threads|p
+
         setDefaultParamsCutting(desc);
         // no-orphans|n ; stranded|s ; min-length|m
 
         setDefaultParamsOverlapping(desc);
         // kmer|k ; kmer-offset|r ; max-mismatch-errorDensity|x
         // check-lengths|c ; min-overlap|o
-        setThreadPoolParams(desc);
 
         desc.add_options()
             ("no-fixbases,X", po::bool_switch()->default_value(false), "after trimming adapter, DO NOT use consensus sequence of paired reads, only trims adapter sequence");

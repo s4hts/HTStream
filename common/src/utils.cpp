@@ -102,11 +102,10 @@ po::options_description setInputOptions(){
                                            "Read 2 paired end fastq input <space separated for multiple files>")
             ("singleend-input,U", po::value< std::vector<std::string> >()->multitoken(),
                                            "Single end read fastq input <space separated for multiple files>")
-            ("tab-input,T", po::value< std::vector<std::string> >()->multitoken(),
-                                           "Tab-delimited (tab6) input <space separated for multiple files>")
             ("interleaved-input,I", po::value< std::vector<std::string> >()->multitoken(),
                                            "Interleaved fastq input <space separated for multiple files>")
-            ("from-stdin,S", "DEPRECATED PARAMETER");
+            ("tab-input,T", po::value< std::vector<std::string> >()->multitoken(),
+                                           "Tab-delimited (tab6) input <space separated for multiple files>");
     return input;
 }
 
@@ -119,10 +118,7 @@ po::options_description setOutputOptions(const std::string& program_name){
             ("fastq-output,f", po::value<std::string>(), "Output to Fastq files <PE AND/OR SE files>")
             ("interleaved-output,i", po::value<std::string>(),     "Output to interleaved fastq files <INTERLEAVED PE AND/OR SE files>")
             ("tab-output,t", po::value<std::string>(),   "Output to tab-delimited (tab6) file")
-            ("unmapped-output,z", po::value<std::string>(),   "Output to unmapped sam file")
-            ("prefix,p", "DEPRECATED PARAMETER")
-            ("gzip-output,g", "DEPRECATED PARAMETER")
-            ("to-stdout,O", "DEPRECATED PARAMETER");
+            ("unmapped-output,z", po::value<std::string>(),   "Output to unmapped sam file");
     return output;
 }
 
@@ -134,8 +130,8 @@ po::options_description setStandardOptions(){
             ("help,h",  "Prints help documentation")
             ("notes,N", po::value<std::string>()->default_value(""),  "Notes for the stats JSON")
             //stats file
-            ("stats-file,L", po::value<std::string>()->default_value("stats.log") , "String for output stats file name")
-            ("append-stats-file,A", po::bool_switch()->default_value(false),  "Append to stats file");
+            ("stats-file,L", po::value<std::string>()->default_value("stats.log") , "Write to stats file name")
+            ("append-stats-file,A", po::value<std::string>() , "Append to stats file name");
     return standard;
 }
 
@@ -167,7 +163,7 @@ void setThreadPoolParams(po::options_description &desc) {
     size_t min = 1;
     size_t max = std::max(std::thread::hardware_concurrency(), static_cast<unsigned int>(min));
     desc.add_options()
-        ("number-of-threads", po::value<size_t>()->default_value(min)->notifier(boost::bind(&check_range<size_t>, "number-of-threads", _1, min, max)), boost::str(boost::format("Number of worker threads (min 2, max %d)") % max).c_str());
+        ("number-of-threads,p", po::value<size_t>()->default_value(min)->notifier(boost::bind(&check_range<size_t>, "number-of-threads", _1, min, max)), boost::str(boost::format("Number of worker threads (min 1, max %d)") % max).c_str());
 }
 
 void version_or_help(std::string program_name, std::string app_description, po::options_description &desc, po::variables_map vm, bool error) {
@@ -186,18 +182,6 @@ void version_or_help(std::string program_name, std::string app_description, po::
         std::cout << desc << std::endl;
         std::cout << std::endl << epilog << std::endl;
         exit(SUCCESS); //success
-    } else if ( vm.count("from-stdin") | vm.count("to-stdout") | vm.count("gzip-output") | vm.count("prefix") ){
-        std::cerr << "ERROR: parameters -S --from-stdin, -O --to-stdout, -g --gzip-output, AND -p --prefix have been DEPRECATED" << std::endl
-                  << "  New defaults are to accept tab5/tab6 format on stdin and to output tab6 format on stdout" <<  std::endl
-                  << "  Making the parameters unnecesseary and should be removed from application calls and pipelines." <<  std::endl
-                  << "  prefix is now specified as part of the output file choice" << std::endl
-                  << "  gzipped output is now default, use -u, --uncompressed to not gzip output." << std::endl << std::endl;
-        std::cerr << prolog << std::endl;
-        std::cerr << "Version: " << VERSION << std::endl;
-        std::cerr << app_description << std::endl;
-        std::cerr << desc << std::endl;
-        std::cerr << std::endl << epilog << std::endl;
-        exit(FAILURE); //failure
     } else if ( (vm.count("fastq-output") + vm.count("tab-output") + vm.count("interleaved-output") + vm.count("unmapped-output")) > 1 ){
         std::cerr << "ERROR: More than 1 output file format option provided" << std::endl << std::endl;
         std::cerr << prolog << std::endl;
