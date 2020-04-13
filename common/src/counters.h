@@ -13,7 +13,7 @@
 #include "version.h"
 #include "read.h"
 #include "typedefs.h"
-#include <boost/filesystem/path.hpp>
+#include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 
 namespace bf = boost::filesystem;
@@ -23,7 +23,6 @@ class Counters {
 public:
     std::fstream outStats;
     std::string fStats = "/dev/null";
-    bool force = false;
     bool aStats = false;
 
     std::string pName = "hts";
@@ -51,12 +50,15 @@ public:
             vm(vm_) {
 
         if (vm.size()){
-          fStats = vm["stats-file"].as<std::string>();
-          force = vm["force"].as<bool>();
-          aStats = vm["append-stats-file"].as<bool>();
+          if (vm.count("append-stats-file")){
+              fStats = vm["append-stats-file"].as<std::string>();
+              aStats = true;
+          } else {
+              fStats = vm["stats-file"].as<std::string>();
+          }
         }
 
-        check_write(fStats);
+        check_write();
 
         pd.push_back(std::forward_as_tuple("program", pName));
         pd.push_back(std::forward_as_tuple("version", VERSION));
@@ -298,10 +300,9 @@ public:
     }
 
 private:
-    virtual void check_write(std::string file) {
+    virtual void check_write() {
         std::fstream out;
-        bf::path p(file);
-        out.open(file, std::ios::out | std::ios::app);
+        out.open(fStats, std::ios::out | std::ios::app);
 
         if(out.is_open())
         {
@@ -309,7 +310,7 @@ private:
         }
         else
         {
-            throw std::runtime_error("Error: Cannot write to " + file + ": " +  std::strerror( errno ) + '\n');
+            throw std::runtime_error("Error: Cannot write to " + fStats + ": " +  std::strerror( errno ) + '\n');
         }
     }
 
