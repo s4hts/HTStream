@@ -48,6 +48,7 @@ public:
                 insertLength.resize(one.getLength() + 1);
             }
             ++insertLength[one.getLength()];
+        }
     }
 
     virtual void output(PairedEndRead &per)  {
