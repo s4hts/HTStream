@@ -110,7 +110,7 @@ public:
         // check-lengths|c ; min-overlap|o
 
         desc.add_options()
-            ("force-pairs,X", po::bool_switch()->default_value(false), "after overlapping a paired end read, split reads in half to output paired end read.");
+            ("force-pairs,X", po::bool_switch()->default_value(false), "after overlapping a paired end read, split reads in half to output pairs.");
     }
 
     Overlapper() {
