@@ -36,9 +36,13 @@ public:
 
     using Counters::output;
 
-    void output(SingleEndRead &ser, uint_fast64_t origLength) {
-        ++SE_Out;
+    void output(SingleEndRead &ser, uint_fast64_t origLength, bool forcePair) {
         ++TotalFragmentsOutput;
+        if (forcePair){
+            ++PE_Out;
+        } else {
+            ++SE_Out;
+        }
         Read &one = ser.non_const_read_one();
         if (one.getLength() < origLength) {
             ++sins; //adapters must be had (short insert)
@@ -102,6 +106,11 @@ public:
 
     void add_extra_options(po::options_description &desc) {
         setDefaultParamsOverlapping(desc);
+        // kmer|k ; kmer-offset|r ; max-mismatch-errorDensity|x
+        // check-lengths|c ; min-overlap|o
+
+        desc.add_options()
+            ("force-pairs,X", po::bool_switch()->default_value(false), "after overlapping a paired end read, split reads in half to output paired end read.");
     }
 
     Overlapper() {
@@ -109,16 +118,16 @@ public:
         app_description =
             "The hts_Overlapper application attempts to overlap paired end reads\n";
         app_description += "  to produce the original transcript, trim adapters, and in some\n";
-        app_description += "  cases, correct sequencing errors.\n";
+        app_description += "  cases, correct sequencing errors. single end reads are passed through unchanged.\n";
         app_description += "Reads come in three flavors:\n";
-        app_description += "  sins: Reads produced from an insert shorter than the read length\n";
-        app_description += "        will result in a single read in the orientation of R1, and have the\n";
-        app_description += "        adapter bases trimmed to produce a SE read.\n";
-        app_description += "  mins: Reads produced from a medium-insert greater than read length, but\n";
+        app_description += "  short: Reads produced from an insert shorter than the longest read\n";
+        app_description += "        will result in a single read in the orientation of R1, and have overhanging\n";
+        app_description += "        bases (adapters) trimmed to produce a SE read.\n";
+        app_description += "  medium: Reads produced from a medium-insert greater than read length, but\n";
         app_description += "        somewhat shorter than 2x read length will produce a SE read in the\n";
         app_description += "        orientation of R1.\n";
-        app_description += "  lins: Reads produced from long-inserts which do not overlap\n";
-        app_description += "        significantly, resulting in a PE read.\n";
+        app_description += "  long: Reads produced from long-inserts which do not overlap\n";
+        app_description += "  by at least min overlap , resulting in a PE read.\n";
     }
 
 /* Within the overlap if they are the same bp, then add q scores
@@ -261,6 +270,7 @@ public:
         const size_t checkLengths = vm["check-lengths"].as<size_t>();
         const size_t kmer = vm["kmer"].as<size_t>();
         const size_t kmerOffset = vm["kmer-offset"].as<size_t>();
+        bool forcePair = vm["force-pairs"].as<bool>();
 
         while(reader.has_next()) {
             auto i = reader.next();
@@ -273,8 +283,17 @@ public:
                     writer_helper(per, pe, se); //write out as is
                 } else if (overlapped) { //if there is an overlap
                     unsigned int origLength = std::max(unsigned(per->non_const_read_one().getLength()),unsigned(per->non_const_read_two().getLength()));
-                    counters.output(*overlapped, origLength);
-                    writer_helper(overlapped.get(), pe, se);
+                    counters.output(*overlapped, origLength, forcePair);
+                    if (forcePair){
+                        Read overlappedRead = overlapped->non_const_read_one();
+                        double mid = ceil(overlappedRead.getLengthTrue() / 2.0);
+                        Read r1(overlappedRead.get_sub_seq().substr(0,mid),overlappedRead.get_sub_qual().substr(1,mid),overlappedRead.get_id());
+                        Read r2(overlappedRead.get_sub_seq().substr(mid,overlappedRead.getLengthTrue()),overlappedRead.get_sub_qual().substr(mid,overlappedRead.getLengthTrue()),overlappedRead.get_id());
+                        PairedEndRead newper(r1, r2);
+                        writer_helper(&newper, pe, se); //write out as is
+                    } else {
+                        writer_helper(overlapped.get(), pe, se);
+                    }
                 }
             } else {
                 SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
