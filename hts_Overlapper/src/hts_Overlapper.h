@@ -19,6 +19,8 @@ class OverlappingCounters : public Counters {
 public:
     std::vector<uint_fast64_t> insertLength;
 
+    std::vector<Label> overlapped;
+
     uint64_t sins = 0;
     uint64_t mins = 0;
     uint64_t lins = 0;
@@ -27,31 +29,31 @@ public:
 
         insertLength.resize(1);
 
-        fragment.push_back(std::forward_as_tuple("short_inserts", sins));
-        fragment.push_back(std::forward_as_tuple("medium_inserts", mins));
-        fragment.push_back(std::forward_as_tuple("long_inserts", lins));
+        overlapped.push_back(std::forward_as_tuple("short", sins));
+        overlapped.push_back(std::forward_as_tuple("medium", mins));
+        overlapped.push_back(std::forward_as_tuple("long", lins));
     }
 
     using Counters::output;
 
     void output(SingleEndRead &ser, uint_fast64_t origLength) {
-        Read &one = ser.non_const_read_one();
         ++SE_Out;
         ++TotalFragmentsOutput;
-        if (origLength) { // overlapped read
-            if (one.getLength() < origLength) {
-                ++sins; //adapters must be had (short insert)
-            } else {
-                ++mins; //must be a long insert
-            }
-            if ( one.getLength() + 1 > insertLength.size() ) {
-                insertLength.resize(one.getLength() + 1);
-            }
-            ++insertLength[one.getLength()];
+        Read &one = ser.non_const_read_one();
+        if (one.getLength() < origLength) {
+            ++sins; //adapters must be had (short insert)
+        } else {
+            ++mins; //must be a long insert
         }
+        if ( one.getLength() + 1 > insertLength.size() ) {
+            insertLength.resize(one.getLength() + 1);
+        }
+        ++insertLength[one.getLength()];
     }
 
-    virtual void output(PairedEndRead &per)  {
+    virtual void output(PairedEndRead &per, bool no_orphans = false)  {
+        (void)read;  //ignore unused variable warning
+        (void)no_orphans;  //ignore unused variable warning
         ++lins;
         ++PE_Out;
         ++TotalFragmentsOutput;
@@ -77,7 +79,10 @@ public:
 
         start_sublabel("Fragment");
         write_values(fragment, 2);
-        write_vector("readlength_histogram",iLength, 2);
+        start_sublabel("inserts",2);
+        write_values(overlapped, 3);
+        end_sublabel(2);
+        write_vector("overlap_histogram",iLength, 2);
         end_sublabel();
 
         start_sublabel("Single_end");
@@ -86,12 +91,6 @@ public:
 
         start_sublabel("Paired_end");
         write_values(pe, 2);
-        start_sublabel("Read1",2);
-        write_values(r1, 3);
-        end_sublabel(2);
-        start_sublabel("Read2",2);
-        write_values(r2, 3);
-        end_sublabel(2);
         end_sublabel();
 
         finalize_json();
@@ -270,7 +269,7 @@ public:
                 counters.input(*per);
                 SingleEndReadPtr overlapped = check_read(*per, misDensity, mismatch, minOver, checkLengths, kmer, kmerOffset);
                 if (!overlapped) {
-                    counters.output(*per);
+                    counters.output(*per, false);
                     writer_helper(per, pe, se); //write out as is
                 } else if (overlapped) { //if there is an overlap
                     unsigned int origLength = std::max(unsigned(per->non_const_read_one().getLength()),unsigned(per->non_const_read_two().getLength()));
