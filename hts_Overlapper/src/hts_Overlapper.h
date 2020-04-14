@@ -23,12 +23,6 @@ public:
     uint64_t mins = 0;
     uint64_t lins = 0;
 
-    uint64_t SE_Discarded = 0;
-
-    uint64_t R1_Discarded = 0;
-    uint64_t R2_Discarded = 0;
-    uint64_t PE_Discarded = 0;
-
     OverlappingCounters(const std::string &program_name, const po::variables_map &vm) : Counters::Counters(program_name, vm) {
 
         insertLength.resize(1);
@@ -36,22 +30,15 @@ public:
         fragment.push_back(std::forward_as_tuple("short_inserts", sins));
         fragment.push_back(std::forward_as_tuple("medium_inserts", mins));
         fragment.push_back(std::forward_as_tuple("long_inserts", lins));
-
-        se.push_back(std::forward_as_tuple("discarded", SE_Discarded));
-
-        r1.push_back(std::forward_as_tuple("discarded", R1_Discarded));
-        r2.push_back(std::forward_as_tuple("discarded", R2_Discarded));
-        pe.push_back(std::forward_as_tuple("discarded", PE_Discarded));
     }
 
     using Counters::output;
 
     void output(SingleEndRead &ser, uint_fast64_t origLength) {
         Read &one = ser.non_const_read_one();
-        if (!one.getDiscard() && !origLength) { // original SE read, passed through
-            ++SE_Out;
-            ++TotalFragmentsOutput;
-        } else if (!one.getDiscard() && origLength) { // overlapped read
+        ++SE_Out;
+        ++TotalFragmentsOutput;
+        if (origLength) { // overlapped read
             if (one.getLength() < origLength) {
                 ++sins; //adapters must be had (short insert)
             } else {
@@ -61,43 +48,12 @@ public:
                 insertLength.resize(one.getLength() + 1);
             }
             ++insertLength[one.getLength()];
-            ++SE_Out;
-            ++TotalFragmentsOutput;
-        } else {
-            ++SE_Discarded;
-        }
     }
 
-    virtual void output(PairedEndRead &per, bool no_orphans = false)  {
-        Read &one = per.non_const_read_one();
-        Read &two = per.non_const_read_two();
-        if (!one.getDiscard() && !two.getDiscard()) {
-            if ((one.getLengthTrue() < one.getLength()) || (two.getLengthTrue() < two.getLength())) {
-                // this should never be the case
-                std::cerr << "Should never see this 1\n";
-            }
-            ++lins;
-            ++PE_Out;
-            ++TotalFragmentsOutput;
-        } else if (!one.getDiscard() && !no_orphans) { //if stranded RC
-            if (one.getLengthTrue() < one.getLength()) {
-                // this should never be the case
-                std::cerr << "Should never see this 2\n";
-            }
-            ++SE_Out;
-            ++R2_Discarded;
-            ++TotalFragmentsOutput;
-        } else if (!two.getDiscard() && !no_orphans) { // Will never be RC
-            if (two.getLengthTrue() < two.getLength()) {
-                // this should never be the case
-                std::cerr << "Should never see this 3\n";
-            }
-            ++SE_Out;
-            ++R1_Discarded;
-            ++TotalFragmentsOutput;
-        } else {
-            ++PE_Discarded;
-        }
+    virtual void output(PairedEndRead &per)  {
+        ++lins;
+        ++PE_Out;
+        ++TotalFragmentsOutput;
     }
 
     virtual void write_out() {
@@ -145,8 +101,6 @@ class Overlapper: public MainTemplate<OverlappingCounters, Overlapper> {
 public:
 
     void add_extra_options(po::options_description &desc) {
-        setDefaultParamsCutting(desc);
-        // no-orphans|n ; stranded|s ; min-length|m
         setDefaultParamsOverlapping(desc);
     }
 
@@ -304,12 +258,9 @@ public:
         const double misDensity = vm["max-mismatch-errorDensity"].as<double>();
         const size_t mismatch = vm["max-mismatch"].as<size_t>();
         const size_t minOver = vm["min-overlap"].as<size_t>();
-        const bool stranded = vm["stranded"].as<bool>();
-        const size_t min_length = vm["min-length"].as<size_t>();
         const size_t checkLengths = vm["check-lengths"].as<size_t>();
         const size_t kmer = vm["kmer"].as<size_t>();
         const size_t kmerOffset = vm["kmer-offset"].as<size_t>();
-        bool no_orphan = vm["no-orphans"].as<bool>();
 
         while(reader.has_next()) {
             auto i = reader.next();
@@ -318,23 +269,20 @@ public:
                 counters.input(*per);
                 SingleEndReadPtr overlapped = check_read(*per, misDensity, mismatch, minOver, checkLengths, kmer, kmerOffset);
                 if (!overlapped) {
-                    per->checkDiscarded(min_length);
-                    counters.output(*per, no_orphan);
-                    writer_helper(per, pe, se, stranded, no_orphan); //write out as is
+                    counters.output(*per);
+                    writer_helper(per, pe, se); //write out as is
                 } else if (overlapped) { //if there is an overlap
-                    overlapped->checkDiscarded(min_length);
                     unsigned int origLength = std::max(unsigned(per->non_const_read_one().getLength()),unsigned(per->non_const_read_two().getLength()));
                     counters.output(*overlapped, origLength);
-                    writer_helper(overlapped.get(), pe, se, stranded);
+                    writer_helper(overlapped.get(), pe, se);
                 }
             } else {
                 SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
 
                 if (ser) {
                     counters.input(*ser);
-                    ser->checkDiscarded(min_length);
                     counters.output(*ser, 0);
-                    writer_helper(ser, pe, se, stranded);
+                    writer_helper(ser, pe, se);
                 } else {
                     throw std::runtime_error("Unknown read type");
                 }
