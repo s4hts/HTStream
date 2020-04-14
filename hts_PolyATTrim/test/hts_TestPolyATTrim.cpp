@@ -74,7 +74,7 @@ TEST_F(PolyATTail, AllTrim) {
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
         pa.trim_left(per->non_const_read_two(), 'A', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
         pa.trim_right(per->non_const_read_two(), 'A', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
-        ASSERT_EQ("", (per->non_const_read_two()).get_sub_seq());
+        ASSERT_EQ("N", (per->non_const_read_two()).get_sub_seq());
     }
 };
 

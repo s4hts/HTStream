@@ -288,7 +288,7 @@ public:
                         Read overlappedRead = overlapped->non_const_read_one();
                         double mid = ceil(overlappedRead.getLengthTrue() / 2.0);
                         Read r1(overlappedRead.get_sub_seq().substr(0,mid),overlappedRead.get_sub_qual().substr(0,mid),overlappedRead.get_id());
-                        Read r2(overlappedRead.get_sub_seq().substr(mid,overlappedRead.getLengthTrue()),overlappedRead.get_sub_qual().substr(mid,overlappedRead.getLengthTrue()),overlappedRead.get_id());
+                        Read r2(overlappedRead.get_sub_seq().substr(mid),overlappedRead.get_sub_qual().substr(mid),overlappedRead.get_id());
                         PairedEndRead newper(r1, r2);
                         writer_helper(&newper, pe, se); //write out as is
                     } else {

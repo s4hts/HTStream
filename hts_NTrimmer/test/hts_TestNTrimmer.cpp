@@ -28,7 +28,7 @@ TEST_F(TrimN, Exclude) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
         nt.trim_n(per->non_const_read_one(), true);
-        ASSERT_EQ("", (per->non_const_read_one()).get_sub_seq());
+        ASSERT_EQ("N", (per->non_const_read_one()).get_sub_seq());
     }
 };
 
