@@ -278,10 +278,9 @@ public:
                 }
             } else {
                 SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
-
                 if (ser) {
                     counters.input(*ser);
-                    counters.output(*ser, 0);
+                    counters.output(*ser);
                     writer_helper(ser, pe, se);
                 } else {
                     throw std::runtime_error("Unknown read type");
