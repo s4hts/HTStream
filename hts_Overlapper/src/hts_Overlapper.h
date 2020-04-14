@@ -22,8 +22,6 @@ public:
     uint64_t sins = 0;
     uint64_t mins = 0;
     uint64_t lins = 0;
-    uint64_t Adapter_Trim = 0;
-    uint64_t Adapter_BpTrim = 0;
 
     uint64_t SE_Discarded = 0;
 
@@ -38,8 +36,6 @@ public:
         fragment.push_back(std::forward_as_tuple("short_inserts", sins));
         fragment.push_back(std::forward_as_tuple("medium_inserts", mins));
         fragment.push_back(std::forward_as_tuple("long_inserts", lins));
-        fragment.push_back(std::forward_as_tuple("adapterTrim", Adapter_Trim));
-        fragment.push_back(std::forward_as_tuple("adapterBpTrim", Adapter_BpTrim));
 
         se.push_back(std::forward_as_tuple("discarded", SE_Discarded));
 
@@ -58,8 +54,6 @@ public:
         } else if (!one.getDiscard() && origLength) { // overlapped read
             if (one.getLength() < origLength) {
                 ++sins; //adapters must be had (short insert)
-                ++Adapter_Trim;
-                Adapter_BpTrim += (origLength - one.getLength());
             } else {
                 ++mins; //must be a long insert
             }
