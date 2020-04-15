@@ -25,73 +25,46 @@ extern template class InputReader<ReadBase, TabReadImpl>;
 class AdapterCounters : public Counters {
 
 public:
-    uint64_t SE_Discarded = 0;
     uint64_t SE_Adapter_Trim = 0;
     uint64_t SE_Adapter_BpTrim = 0;
 
-    uint64_t R1_Discarded = 0;
-    uint64_t R2_Discarded = 0;
-    uint64_t PE_Discarded = 0;
-    uint64_t PE_Adapter_Trim = 0;
-    uint64_t PE_Adapter_BpTrim = 0;
+    uint64_t R1_Adapter_Trim = 0;
+    uint64_t R1_Adapter_BpTrim = 0;
+    uint64_t R2_Adapter_Trim = 0;
+    uint64_t R2_Adapter_BpTrim = 0;
 
     AdapterCounters(const std::string &program_name, const po::variables_map &vm) : Counters::Counters(program_name, vm) {
 
         se.push_back(std::forward_as_tuple("adapterTrim", SE_Adapter_Trim));
         se.push_back(std::forward_as_tuple("adapterBpTrim", SE_Adapter_BpTrim));
-        se.push_back(std::forward_as_tuple("discarded", SE_Discarded));
 
-        r1.push_back(std::forward_as_tuple("discarded", R1_Discarded));
-        r2.push_back(std::forward_as_tuple("discarded", R2_Discarded));
-        pe.push_back(std::forward_as_tuple("adapterTrim", PE_Adapter_Trim));
-        pe.push_back(std::forward_as_tuple("adapterBpTrim", PE_Adapter_BpTrim));
-        pe.push_back(std::forward_as_tuple("discarded", PE_Discarded));
+        r1.push_back(std::forward_as_tuple("adapterTrim", R1_Adapter_Trim));
+        r1.push_back(std::forward_as_tuple("adapterBpTrim", R1_Adapter_BpTrim));
+        r2.push_back(std::forward_as_tuple("adapterTrim", R2_Adapter_Trim));
+        r2.push_back(std::forward_as_tuple("adapterBpTrim", R2_Adapter_BpTrim));
     }
 
     using Counters::output;
-
-    virtual void output(SingleEndRead &ser)  {
-        if (ser.non_const_read_one().getDiscard()) {
-            ++SE_Discarded;
-        } else {
-            Read &one = ser.non_const_read_one();
-            if (one.getLengthTrue() < one.getLength()) {
-                ++SE_Adapter_Trim;
-                SE_Adapter_BpTrim += (one.getLength() - one.getLengthTrue());
-            }
-            ++SE_Out;
-            ++TotalFragmentsOutput;
+    void output(SingleEndRead &ser)  {
+        Counters::output(ser);
+        Read &one = ser.non_const_read_one();
+        if (one.getLengthTrue() < one.getLength()) {
+            ++SE_Adapter_Trim;
+            SE_Adapter_BpTrim += (one.getLength() - one.getLengthTrue());
         }
     }
 
-    virtual void output(PairedEndRead &per, bool no_orphans = false)  {
+    void output(PairedEndRead &per)  {
+        Counters::output(per);
         Read &one = per.non_const_read_one();
         Read &two = per.non_const_read_two();
-        if (!one.getDiscard() && !two.getDiscard()) {
-            if ((one.getLengthTrue() < one.getLength()) || (two.getLengthTrue() < two.getLength())) {
-                ++PE_Adapter_Trim;
-                PE_Adapter_BpTrim += (one.getLength() - one.getLengthTrue()) + (two.getLength() - two.getLengthTrue());
-            }
-            ++PE_Out;
-            ++TotalFragmentsOutput;
-        } else if (!one.getDiscard() && !no_orphans) { //if stranded RC
-            if (one.getLengthTrue() < one.getLength()) {
-                ++SE_Adapter_Trim;
-                SE_Adapter_BpTrim += (one.getLength() - one.getLengthTrue());
-            }
-            ++SE_Out;
-            ++R2_Discarded;
-            ++TotalFragmentsOutput;
-        } else if (!two.getDiscard() && !no_orphans) { // Will never be RC
-            if (two.getLengthTrue() < two.getLength()) {
-                ++SE_Adapter_Trim;
-                SE_Adapter_BpTrim += (two.getLength() - two.getLengthTrue());
-            }
-            ++SE_Out;
-            ++R1_Discarded;
-            ++TotalFragmentsOutput;
-        } else {
-            ++PE_Discarded;
+        if (one.getLengthTrue() < one.getLength()){
+            ++R1_Adapter_Trim;
+            R1_Adapter_BpTrim += one.getLength() - one.getLengthTrue();
+        }
+        if (two.getLengthTrue() < two.getLength()) {
+            ++R2_Adapter_Trim;
+            R2_Adapter_BpTrim += two.getLength() - two.getLengthTrue();
         }
     }
 };
@@ -103,9 +76,6 @@ public:
 
         setThreadPoolParams(desc);
         // number-of-threads|p
-
-        setDefaultParamsCutting(desc);
-        // no-orphans|n ; stranded|s ; min-length|m
 
         setDefaultParamsOverlapping(desc);
         // kmer|k ; kmer-offset|r ; max-mismatch-errorDensity|x
@@ -120,7 +90,7 @@ public:
     AdapterTrimmer() {
         program_name = "hts_AdapterTrimmer";
         app_description =
-            "Adapter Trimmer, trims off adapters by first overlapping paired-end reads and\n";
+            "Adapter Trimmer, trims off adapters by overlapping paired-end reads and\n";
         app_description += "  trimming off overhangs which by definition are adapter sequence in standard\n";
         app_description += "  libraries. SE Reads are trimmed by overlapping the adapter-sequence and trimming off the overlap.";
     }
@@ -306,7 +276,7 @@ public:
         return std::dynamic_pointer_cast<ReadBase>(se);
     }
 
-    void writer_thread(std::shared_ptr<OutputWriter> pe,  std::shared_ptr<OutputWriter> se, AdapterCounters &counter, const bool stranded, const bool no_orphan, const size_t min_length, threadsafe_queue<std::future<ReadBasePtr>> &futures) {
+    void writer_thread(std::shared_ptr<OutputWriter> pe,  std::shared_ptr<OutputWriter> se, AdapterCounters &counter, threadsafe_queue<std::future<ReadBasePtr>> &futures) {
 
         while(!futures.is_done()) {
             std::future<ReadBasePtr> fread;
@@ -322,13 +292,11 @@ public:
 
             PairedEndReadPtr per = std::dynamic_pointer_cast<PairedEndRead>(rbase);
             if (per) {
-                per->checkDiscarded(min_length);
-                counter.output(*per, no_orphan);
-                writer_helper(per.get(), pe, se, stranded, no_orphan);
+                counter.output(*per);
+                writer_helper(per.get(), pe, se);
             } else {
                 SingleEndReadPtr ser = std::dynamic_pointer_cast<SingleEndRead>(rbase);
                 if (ser) {
-                    ser->checkDiscarded(min_length);
                     counter.output(*ser);
                     writer_helper(ser.get(), pe, se);
                 } else {
@@ -354,12 +322,9 @@ public:
         const double misDensity = vm["max-mismatch-errorDensity"].as<double>();
         const size_t mismatch = vm["max-mismatch"].as<size_t>();
         const size_t minOver = vm["min-overlap"].as<size_t>();
-        const bool stranded = vm["stranded"].as<bool>();
-        const size_t min_length = vm["min-length"].as<size_t>();
         const size_t checkLengths = vm["check-lengths"].as<size_t>();
         const size_t kmer = vm["kmer"].as<size_t>();
         const size_t kmerOffset = vm["kmer-offset"].as<size_t>();
-        bool no_orphan = vm["no-orphans"].as<bool>();
         bool noFixBases = vm["no-fixbases"].as<bool>();
         std::string adapter = vm["adapter-sequence"].as<std::string>();
         size_t num_threads = vm["number-of-threads"].as<size_t>();
@@ -367,7 +332,7 @@ public:
         threadsafe_queue<std::future<ReadBasePtr>> futures(50000);
         thread_pool threads(50000, num_threads);
 
-        std::thread output_thread([=, &counter, &futures]() mutable { writer_thread(pe, se, counter, stranded, no_orphan, min_length, futures); });
+        std::thread output_thread([=, &counter, &futures]() mutable { writer_thread(pe, se, counter, futures); });
         thread_guard tg(output_thread);
 
         try {
