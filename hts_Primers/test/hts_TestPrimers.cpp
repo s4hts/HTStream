@@ -92,16 +92,13 @@ TEST_F(Primer, test_pairs_one_fail) {
     PrimerCounters counter("hts_Primers", vm);
     while(ifp.has_next()) {
         auto i = ifp.next();
+        bool test;
         PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
         counter.input(*per);
         // check_read_pe(PairedEndRead &pe, PrimerCounters &counter, SeqMap &primer5p, SeqMap &primer3p, const size_t pMismatches, const size_t pEndMismatches, const size_t pfloat, const size_t flip, const size_t keep, const size_t mpmatches
-        p.check_read_pe(*per, counter, primer5p, primer3p, 4, 4, 5, true, false, 2);
-        counter.output(*per);
-        ASSERT_EQ("", (per->non_const_read_one()).get_sub_seq());
-        ASSERT_EQ(301u, (per->non_const_read_one()).getRTrim());
-        ASSERT_EQ("N", (per->non_const_read_two()).get_sub_seq());
-        ASSERT_EQ(301u, (per->non_const_read_two()).getRTrim());
-        ASSERT_EQ(0u, counter.flipped);
+        test = p.check_read_pe(*per, counter, primer5p, primer3p, 4, 4, 5, true, false, 2);
+        ASSERT_EQ(false, test);
+        ASSERT_EQ(1u, counter.PE_Discarded);
     }
 };
 

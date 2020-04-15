@@ -326,79 +326,50 @@ class TrimmingCounters : public Counters {
 public:
     uint64_t SE_Right_Trim = 0;
     uint64_t SE_Left_Trim = 0;
-    uint64_t SE_Discarded = 0;
 
     uint64_t R1_Left_Trim = 0;
     uint64_t R1_Right_Trim = 0;
     uint64_t R2_Left_Trim = 0;
     uint64_t R2_Right_Trim = 0;
-    uint64_t R1_Discarded = 0;
-    uint64_t R2_Discarded = 0;
-    uint64_t PE_Discarded = 0;
 
     TrimmingCounters(const std::string &program_name, po::variables_map vm ) : Counters::Counters(program_name, vm) {
         se.push_back(std::forward_as_tuple("rightTrim", SE_Right_Trim));
         se.push_back(std::forward_as_tuple("leftTrim", SE_Left_Trim));
-        se.push_back(std::forward_as_tuple("discarded", SE_Discarded));
 
         r1.push_back(std::forward_as_tuple("leftTrim", R1_Left_Trim));
         r1.push_back(std::forward_as_tuple("rightTrim", R1_Right_Trim));
-        r1.push_back(std::forward_as_tuple("discarded", R1_Discarded));
         r2.push_back(std::forward_as_tuple("leftTrim", R2_Left_Trim));
         r2.push_back(std::forward_as_tuple("rightTrim", R2_Right_Trim));
-        r2.push_back(std::forward_as_tuple("discarded", R2_Discarded));
-        pe.push_back(std::forward_as_tuple("discarded", PE_Discarded));
     }
 
-    virtual ~TrimmingCounters() {}
-
-    void R1_stats(Read &one) {
+    virtual void R1_stats(Read &one) {
         R1_Left_Trim += one.getLTrim();
         R1_Right_Trim += one.getRTrim();
     }
 
-    void R2_stats(Read &two) {
+    virtual void R2_stats(Read &two) {
         R2_Left_Trim += two.getLTrim();
         R2_Right_Trim += two.getRTrim();
     }
 
-    void SE_stats(Read &se) {
+    virtual void SE_stats(Read &se) {
         SE_Left_Trim += se.getLTrim();
         SE_Right_Trim += se.getRTrim();
     }
 
-    void output(PairedEndRead &per, bool no_orphans) {
+    using Counters::output;
+    virtual void output(PairedEndRead &per) {
+        Counters::output(per);
         Read &one = per.non_const_read_one();
         Read &two = per.non_const_read_two();
-        if (!one.getDiscard() && !two.getDiscard()) {
-            ++TotalFragmentsOutput;
-            ++PE_Out;
-            R1_stats(one);
-            R2_stats(two);
-        } else if (!one.getDiscard() && !no_orphans) {
-            ++TotalFragmentsOutput;
-            ++SE_Out;
-            ++R2_Discarded;
-            SE_stats(one);
-        } else if (!two.getDiscard() && !no_orphans) {
-            ++TotalFragmentsOutput;
-            ++SE_Out;
-            ++R1_Discarded;
-            SE_stats(two);
-        } else {
-            ++PE_Discarded;
-        }
+        R1_stats(one);
+        R2_stats(two);
     }
 
-    void output(SingleEndRead &ser) {
+    virtual void output(SingleEndRead &ser) {
+        Counters::output(ser);
         Read &one = ser.non_const_read_one();
-        if (!one.getDiscard()) {
-            ++TotalFragmentsOutput;
-            ++SE_Out;
-            SE_stats(one);
-        } else {
-            ++SE_Discarded;
-        }
+        SE_stats(one);
     }
 
 };

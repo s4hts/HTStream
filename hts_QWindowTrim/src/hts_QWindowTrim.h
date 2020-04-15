@@ -32,8 +32,6 @@ public:
     }
 
     void add_extra_options(po::options_description &desc) {
-        setDefaultParamsCutting(desc);
-        // no-orphans|n ; stranded|s ; min-length|m
         setDefaultParamsTrim(desc);
         // no-left|l ; no-right|r
 
@@ -116,9 +114,6 @@ public:
     template <class T, class Impl>
     void do_app(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, TrimmingCounters &counters, const po::variables_map &vm) {
 
-        size_t min_length = vm["min-length"].as<size_t>() ;
-        bool stranded = vm["stranded"].as<bool>();
-        bool no_orphans = vm["no-orphans"].as<bool>();
         size_t qual_threshold = vm["avg-qual-score"].as<size_t>() + vm["qual-offset"].as<size_t>() ;
         size_t window_size = vm["window-size"].as<size_t>();
         bool no_left = vm["no-left"].as<bool>();
@@ -137,9 +132,8 @@ public:
                     trim_right(per->non_const_read_one(), qual_threshold, window_size);
                     trim_right(per->non_const_read_two(), qual_threshold, window_size);
                 }
-                per->checkDiscarded(min_length);
-                writer_helper(per, pe, se, stranded, no_orphans);
-                counters.output(*per, no_orphans);
+                writer_helper(per, pe, se);
+                counters.output(*per);
             } else {
                 SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
 
@@ -151,8 +145,7 @@ public:
                     if (!no_right) {
                         trim_right(ser->non_const_read_one(), qual_threshold, window_size);
                     }
-                    ser->checkDiscarded(min_length);
-                    writer_helper(ser, pe, se, false, false);
+                    writer_helper(ser, pe, se);
                     counters.output(*ser);
                 } else {
                     throw std::runtime_error("Unknow read type");

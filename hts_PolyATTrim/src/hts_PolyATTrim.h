@@ -21,8 +21,6 @@ class PolyATTrim: public MainTemplate<TrimmingCounters, PolyATTrim> {
 public:
 
     void add_extra_options(po::options_description &desc) {
-        setDefaultParamsCutting(desc);
-            // no-orphans|n ; stranded|s ; min-length|m
         setDefaultParamsTrim(desc);
             // no-left|l ; no-right|r
 
@@ -57,13 +55,7 @@ public:
 
         std::string seq = rb.get_seq();
         std::string::iterator current_loc, tmp_loc, trim_loc = seq.begin();
-/*
-  for ( trim_loc = seq.begin(), i = 0; i < window_size ; ++trim_loc, ++i ){
-  if ( *trim_loc != ccheck ) {
-  break;
-  }
-  }
-*/
+
         for ( current_loc = seq.begin() + (window_size-1); current_loc < seq.end() ; ++current_loc ) {
             mismatch=0;
             for (tmp_loc = current_loc, i=window_size; i > 0; --tmp_loc, --i) {
@@ -96,13 +88,7 @@ public:
 
         std::string seq = rb.get_seq();
         std::string::reverse_iterator current_loc, tmp_loc, trim_loc = seq.rbegin();
-/*
-  for ( trim_loc = seq.rbegin(), i = 0; i < window_size ; ++trim_loc, ++i ){
-  if ( *trim_loc != ccheck ) {
-  break;
-  }
-  }
-*/
+
         for ( current_loc = seq.rbegin() + (window_size-1); current_loc < seq.rend() ; ++current_loc ) {
             mismatch=0;
             for (tmp_loc = current_loc, i=window_size; i > 0; --tmp_loc, --i) {
@@ -138,7 +124,6 @@ public:
     template <class T, class Impl>
     void do_app(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, TrimmingCounters& counters, const po::variables_map &vm) {
 
-        size_t min_length = vm["min-length"].as<std::size_t>();
         bool no_pA = vm["skip_polyA"].as<bool>();
         bool no_pT = vm["skip_polyT"].as<bool>();
         size_t min_trim = vm["min-trim"].as<std::size_t>();
@@ -146,10 +131,8 @@ public:
         size_t perfect_windows = vm["perfect-windows"].as<std::size_t>();
         size_t max_trim = vm["max-trim"].as<std::size_t>();
         double max_mismatch_errorDensity = vm["max-mismatch-errorDensity"].as<double>();
-        bool stranded = vm["stranded"].as<bool>();
         bool no_left = vm["no-left"].as<bool>();
         bool no_right = vm["no-right"].as<bool>();
-        bool no_orphans = vm["no-orphans"].as<bool>();
 
         bool r1fA = false, r1fT = false, r2fA = false, r1rA = false;
         while(reader.has_next()) {
@@ -166,9 +149,8 @@ public:
                     if (!no_pT && !r2fA) trim_left(per->non_const_read_two(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
                 }
                 // polyAT must be on one of the two fragment ends (when PE), don't bother checking read ends, reads should be overlapped otherwise.
-                per->checkDiscarded(min_length);
-                writer_helper(per, pe, se, stranded, no_orphans);
-                counters.output(*per, no_orphans);
+                writer_helper(per, pe, se);
+                counters.output(*per);
             } else {
                 SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
                 if (ser) {
@@ -181,8 +163,7 @@ public:
                         if (!no_pA) r1rA = trim_right(ser->non_const_read_one(), 'A', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
                         if (!no_pT && ! r1rA) trim_right(ser->non_const_read_one(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
                     }
-                    ser->checkDiscarded(min_length);
-                    writer_helper(ser, pe, se, false, false);
+                    writer_helper(ser, pe, se);
                     counters.output(*ser);
                 } else {
                     throw std::runtime_error("Unknown read type");

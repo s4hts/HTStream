@@ -18,7 +18,28 @@ extern template class InputReader<PairedEndRead, PairedEndReadFastqImpl>;
 extern template class InputReader<PairedEndRead, InterReadImpl>;
 extern template class InputReader<ReadBase, TabReadImpl>;
 
-class NTrimmer: public MainTemplate<TrimmingCounters, NTrimmer> {
+class NTrimCounters : public TrimmingCounters {
+
+public:
+
+    uint64_t SE_Discarded = 0;
+    uint64_t PE_Discarded = 0;
+
+    NTrimCounters(const std::string &program_name, const po::variables_map &vm) : TrimmingCounters::TrimmingCounters(program_name, vm) {
+        se.push_back(std::forward_as_tuple("discarded", SE_Discarded));
+        pe.push_back(std::forward_as_tuple("discarded", PE_Discarded));
+    }
+
+    void increment_discard_se(){
+        SE_Discarded++;
+    }
+
+    void increment_discard_pe(){
+        PE_Discarded++;
+    }
+};
+
+class NTrimmer: public MainTemplate<NTrimCounters, NTrimmer> {
 public:
 
     NTrimmer() {
@@ -29,13 +50,10 @@ public:
     }
 
     void add_extra_options(po::options_description &desc) {
-        setDefaultParamsCutting(desc);
-            // no-orphans|n ; stranded|s ; min-length|m
-
         desc.add_options()
             ("exclude,e", po::bool_switch()->default_value(false), "Exclude any sequence with an N character");
     }
-    
+
     size_t dist(size_t x, size_t y) {
         assert(x <= y);
         return y - x;
@@ -44,7 +62,7 @@ public:
 /*This is a O(N) time algorithm
  * it will search for the longest base pair segment that has
  * no N's within it*/
-    void trim_n(Read &rb, bool exclude) {
+    bool trim_n(Read &rb, bool exclude) {
 
         std::string seq = rb.get_seq();
         size_t bestLeft = 0, currentLeft = 0, bestRight = 0;
@@ -55,9 +73,7 @@ public:
 
             if (*it == 'N') {
                 if (exclude) {
-                    rb.setLCut(1);
-                    rb.setRCut(0);
-                    return;
+                    return false;
                 } else {
                     currentLeft = i + 1;
                 }
@@ -68,38 +84,43 @@ public:
         }
         rb.setLCut(bestLeft);
         rb.setRCut(bestRight+1);
+        return true;
     }
 
 
 /*Removes all Ns (ambiguity base) from a read*/
     template <class T, class Impl>
-    void do_app(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, TrimmingCounters& counter, const po::variables_map &vm) {
+    void do_app(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, NTrimCounters& counter, const po::variables_map &vm) {
 
-        const size_t min_length = vm["min-length"].as<size_t>();
-        bool stranded = vm["stranded"].as<bool>();
-        bool no_orphans = vm["no-orphans"].as<bool>();
         bool exclude = vm["exclude"].as<bool>();
-        
+
         while(reader.has_next()) {
             auto i = reader.next();
             PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
             if (per) {
                 counter.input(*per);
-                trim_n(per->non_const_read_one(), exclude);
-                trim_n(per->non_const_read_two(), exclude);
-                per->checkDiscarded(min_length);
-                writer_helper(per, pe, se, stranded, no_orphans);
-                counter.output(*per, no_orphans);
+                if (trim_n(per->non_const_read_one(), exclude)){
+                    if (trim_n(per->non_const_read_two(), exclude)){
+                        writer_helper(per, pe, se);
+                        counter.output(*per);
+                    } else {
+                        counter.increment_discard_pe();
+                    }
+                } else {
+                    counter.increment_discard_pe();
+                }
             } else {
                 SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
                 if (ser) {
                     counter.input(*ser);
-                    trim_n(ser->non_const_read_one(), exclude);
-                    ser->checkDiscarded(min_length);
-                    writer_helper(ser, pe, se, false, false);
-                    counter.output(*ser);
+                    if (trim_n(ser->non_const_read_one(), exclude)){
+                        writer_helper(ser, pe, se);
+                        counter.output(*ser);
+                    } else {
+                        counter.increment_discard_se();
+                    }
                 } else {
-                    throw std::runtime_error("Unknow read type");
+                    throw std::runtime_error("Unknown read type");
                 }
             }
         }
