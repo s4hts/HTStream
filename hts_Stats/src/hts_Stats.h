@@ -124,7 +124,7 @@ public:
     }
 
     using Counters::output;
-    virtual void output(PairedEndRead &per, bool no_orphans = false) {
+    virtual void output(PairedEndRead &per) {
         Counters::output(per, no_orphans);
         read_stats(per.non_const_read_one(), R1_BpLen, R1_Length, R1_bases, R1_qualities, R1_bQ30);
         read_stats(per.non_const_read_two(), R2_BpLen, R2_Length, R2_bases, R2_qualities, R2_bQ30);
