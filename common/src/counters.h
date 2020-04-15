@@ -90,9 +90,8 @@ public:
         ++TotalFragmentsInput;
     }
 
-    virtual void output(PairedEndRead &read, bool no_orphans = false) {
+    virtual void output(PairedEndRead &read) {
         (void)read;  //ignore unused variable warning
-        (void)no_orphans;  //ignore unused variable warning
         ++PE_Out;
         ++TotalFragmentsOutput;
      }
@@ -149,7 +148,7 @@ public:
         finalize_json();
     }
 
-    virtual void initialize_json() {
+    void initialize_json() {
         std::ifstream testEnd(fStats);
         int end = testEnd.peek();
         testEnd.close();
@@ -164,18 +163,18 @@ public:
         }
     }
 
-    virtual void start_sublabel(const std::string &labelStr, const unsigned int indent = 1) {
+    void start_sublabel(const std::string &labelStr, const unsigned int indent = 1) {
         std::string pad(4 * indent, ' ');
         outStats << pad << "\"" << labelStr << "\": {\n";
     }
 
-    virtual void end_sublabel(const unsigned int indent = 1) {
+    void end_sublabel(const unsigned int indent = 1) {
         std::string pad(4 * indent, ' ');
         outStats.seekp(-2, std::ios::end );
         outStats << "\n" << pad << "},\n"; // finish off histogram
     }
 
-    virtual void write_options(const unsigned int indent = 1){
+    void write_options(const unsigned int indent = 1){
         std::string pad(4 * indent, ' ');
         for (const auto& it : vm) {
             auto& value = it.second.value();
@@ -241,7 +240,7 @@ public:
         outStats << " ],\n"; // finish off
     }
 
-    virtual void write_matrix(const std::string &matrix_name, const Mat &data, const std::vector<std::string> &row_name, const std::vector<std::string> &col_name, const bool sparse = 0, const unsigned int indent = 1) {
+    void write_matrix(const std::string &matrix_name, const Mat &data, const std::vector<std::string> &row_name, const std::vector<std::string> &col_name, const bool sparse = 0, const unsigned int indent = 1) {
         std::string pad(4 * indent, ' ');
         std::string pad2(4 * (indent + 1), ' ');
         if (data.size() == 0) return;
@@ -294,7 +293,7 @@ public:
         outStats << pad << "},\n";
     }
 
-    virtual void finalize_json() {
+    void finalize_json() {
         outStats.seekp(-2, std::ios::end );
         outStats << "\n  }\n}\n";
         outStats.flush();
@@ -302,7 +301,7 @@ public:
     }
 
 private:
-    virtual void check_write() {
+    void check_write() {
         std::fstream out;
         out.open(fStats, std::ios::out | std::ios::app);
 
@@ -346,6 +345,7 @@ public:
         r2.push_back(std::forward_as_tuple("discarded", R2_Discarded));
         pe.push_back(std::forward_as_tuple("discarded", PE_Discarded));
     }
+
     virtual ~TrimmingCounters() {}
 
     void R1_stats(Read &one) {
@@ -363,8 +363,7 @@ public:
         SE_Right_Trim += se.getRTrim();
     }
 
-    using Counters::output;
-    virtual void output(PairedEndRead &per, bool no_orphans = false) {
+    void output(PairedEndRead &per, bool no_orphans) {
         Read &one = per.non_const_read_one();
         Read &two = per.non_const_read_two();
         if (!one.getDiscard() && !two.getDiscard()) {
@@ -387,7 +386,7 @@ public:
         }
     }
 
-    virtual void output(SingleEndRead &ser) {
+    void output(SingleEndRead &ser) {
         Read &one = ser.non_const_read_one();
         if (!one.getDiscard()) {
             ++TotalFragmentsOutput;

@@ -68,7 +68,7 @@ public:
         ++PE_hits;
     }
 
-    virtual void write_out() {
+    void write_out() {
 
         initialize_json();
 
