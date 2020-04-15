@@ -35,7 +35,6 @@ public:
     }
 
     using Counters::output;
-
     void output(SingleEndRead &ser, uint_fast64_t origLength, bool forcePair) {
         ++TotalFragmentsOutput;
         if (forcePair){
@@ -55,15 +54,12 @@ public:
         ++insertLength[one.getLength()];
     }
 
-    virtual void output(PairedEndRead &per, bool no_orphans = false)  {
-        (void)read;  //ignore unused variable warning
-        (void)no_orphans;  //ignore unused variable warning
+    void output(PairedEndRead &per)  {
+        Counters::output(per);
         ++lins;
-        ++PE_Out;
-        ++TotalFragmentsOutput;
     }
 
-    virtual void write_out() {
+    void write_out() {
 
         std::vector<Vector> iLength;
         for (size_t i = 1; i < insertLength.size(); ++i) {
@@ -279,7 +275,7 @@ public:
                 counters.input(*per);
                 SingleEndReadPtr overlapped = check_read(*per, misDensity, mismatch, minOver, checkLengths, kmer, kmerOffset);
                 if (!overlapped) {
-                    counters.output(*per, false);
+                    counters.output(*per);
                     writer_helper(per, pe, se); //write out as is
                 } else if (overlapped) { //if there is an overlap
                     unsigned int origLength = std::max(unsigned(per->non_const_read_one().getLength()),unsigned(per->non_const_read_two().getLength()));
