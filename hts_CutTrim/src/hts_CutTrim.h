@@ -121,11 +121,9 @@ public:
             r.setRCut(r.getLength() - cut_right);
         }
         if (max_length && max_length < r.getLengthTrue()) {
-            std::cout << "max_length:" << max_length << " length:" << r.getLengthTrue() << "\n";
             r.setDiscard();
         }
         if (min_length && min_length > r.getLengthTrue()) {
-            std::cout << "min_length:" << min_length << " length:" << r.getLengthTrue() << "\n";
             r.setDiscard();
         }
     }
