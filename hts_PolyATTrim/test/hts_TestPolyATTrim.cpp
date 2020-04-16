@@ -93,32 +93,6 @@ TEST_F(PolyATTail, NoTrim) {
     }
 };
 
-TEST_F(PolyATTail, Stranded) {
-    std::istringstream in1(readData_2); //REverse these two so R1 is discarded and R2 is RCed
-    std::istringstream in2(readData_1);
-
-    InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(in1, in2);
-    std::shared_ptr<std::ostringstream> out1(new std::ostringstream);
-    {
-        std::shared_ptr<HtsOfstream> hts_of(new HtsOfstream(out1));
-        std::shared_ptr<OutputWriter> tab(new ReadBaseOutTab(hts_of));
-        while(ifp.has_next()) {
-            auto i = ifp.next();
-            PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-            pa.trim_right(per->non_const_read_one(), 'A', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
-            pa.trim_left(per->non_const_read_one(), 'A', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
-            pa.trim_right(per->non_const_read_two(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
-            pa.trim_left(per->non_const_read_two(),'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
-            per->checkDiscarded(min_length);
-            //per->checkDiscarded(min_length);
-            //stranded (R2 will be RCed)
-            writer_helper(per, tab, tab, true);
-        }
-    }
-    ASSERT_EQ("Read1\tCTTTTTTTTTCC\t############\n", out1->str());
-};
-
-
 TEST_F(PolyATTail, closebutno) {
     std::istringstream in1(readData_4);
 
@@ -132,7 +106,6 @@ TEST_F(PolyATTail, closebutno) {
             SingleEndRead *ser = dynamic_cast<SingleEndRead*>(i.get());
             pa.trim_left(ser->non_const_read_one(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
             pa.trim_right(ser->non_const_read_one(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
-            ser->checkDiscarded(min_length);
             writer_helper(ser, tab, tab, true);
         }
     }

@@ -92,9 +92,9 @@ public:
         desc.add_options()
             ("r2-cut-right,d", po::value<size_t>()->default_value(0)->notifier(boost::bind(&check_range<size_t>, "r2-cut-right", _1, 0, 10000)), "Cut length of sequence from read 2 right (3') end (min 0, max 10000)");
         desc.add_options()
-            ("min-length,m", po::value<size_t>()->default_value(1)->notifier(boost::bind(&check_range<size_t>, "min-length", _1, 1, 10000)), "Min length for acceptable output read (min 1, max 10000)");
+            ("min-length,m", po::value<size_t>()->default_value(0)->notifier(boost::bind(&check_range<size_t>, "min-length", _1, 0, 10000)), "Min length for acceptable output read (min 1, max 10000), default is unset");
         desc.add_options()
-            ("max-length,M", po::value<size_t>()->default_value(0)->notifier(boost::bind(&check_range<size_t>, "max-length", _1, 0, 10000)), "Maximum allowed length of read, effectively right trims to max-length (min 0, max 10000)");
+            ("max-length,M", po::value<size_t>()->default_value(0)->notifier(boost::bind(&check_range<size_t>, "max-length", _1, 0, 10000)), "Maximum allowed length of read, effectively right trims to max-length (min 1, max 10000), default is unset");
         desc.add_options()
             ("no-orphans,n", po::bool_switch()->default_value(false), "Orphaned SE reads will NOT be written out");
         desc.add_options()
@@ -113,7 +113,7 @@ public:
   additional cut to end of the read if applicable. If one wished to simulate smaller sized reads
   can run cut_trim with max_length (no cut to left or right) to effectively reduce the size of reads.
 */
-    void cut_trim(Read &r, size_t cut_left, size_t cut_right, size_t max_length) {
+    void cut_trim(Read &r, size_t cut_left, size_t cut_right, size_t min_length, size_t max_length) {
         if (cut_left) {
             r.setLCut(cut_left);
         }
@@ -121,7 +121,12 @@ public:
             r.setRCut(r.getLength() - cut_right);
         }
         if (max_length && max_length < r.getLengthTrue()) {
-            r.setRCut(max_length + r.getLTrim());
+            std::cout << "max_length:" << max_length << " length:" << r.getLengthTrue() << "\n";
+            r.setDiscard();
+        }
+        if (min_length && min_length > r.getLengthTrue()) {
+            std::cout << "min_length:" << min_length << " length:" << r.getLengthTrue() << "\n";
+            r.setDiscard();
         }
     }
 
@@ -143,17 +148,15 @@ public:
             PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
             if (per) {
                 counters.input(*per);
-                cut_trim( per->non_const_read_one(), r1_cut_left, r1_cut_right, max_length);
-                cut_trim( per->non_const_read_two(), r2_cut_left, r2_cut_right, max_length);
-                per->checkDiscarded(min_length);
+                cut_trim( per->non_const_read_one(), r1_cut_left, r1_cut_right, min_length, max_length);
+                cut_trim( per->non_const_read_two(), r2_cut_left, r2_cut_right, min_length, max_length);
                 writer_helper(per, pe, se, stranded, no_orphans);
                 counters.output(*per, no_orphans);
             } else {
                 SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
                 if (ser) {
                     counters.input(*ser);
-                    cut_trim( ser->non_const_read_one(), r1_cut_left, r1_cut_right, max_length);
-                    ser->checkDiscarded(min_length);
+                    cut_trim( ser->non_const_read_one(), r1_cut_left, r1_cut_right, min_length, max_length);
                     writer_helper(ser, pe, se, false, false);
                     counters.output(*ser);
                 } else {
