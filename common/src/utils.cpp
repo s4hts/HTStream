@@ -141,14 +141,6 @@ void setDefaultParamsTrim(po::options_description &desc) {
             ("no-right,r", po::bool_switch()->default_value(false),    "Turns off trimming of the right side of the read");
 }
 
-void setDefaultParamsCutting(po::options_description &desc) {
-
-    desc.add_options()
-            ("no-orphans,n", po::bool_switch()->default_value(false), "Orphaned SE reads will NOT be written out")
-            ("stranded,s", po::bool_switch()->default_value(false),    "If R1 is orphaned, R2 is output in RC (for stranded RNA)")
-            ("min-length,m", po::value<size_t>()->default_value(1)->notifier(boost::bind(&check_range<size_t>, "min-length", _1, 1, 10000)), "Min length for acceptable output read (min 1, max 10000)");
-}
-
 void setDefaultParamsOverlapping(po::options_description &desc) {
     desc.add_options()
             ("kmer,k", po::value<size_t>()->default_value(8)->notifier(boost::bind(&check_range<size_t>, "kmer", _1, 5, 64)), "Kmer size of the lookup table for the longer read (min 5, max 64)")
