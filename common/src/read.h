@@ -95,18 +95,18 @@ public:
     }
     static char complement(char bp);
 
-    const std::string get_sub_seq() const { return cut_R < cut_L ? "" : seq.substr(cut_L, cut_R - cut_L); }
-    const std::string get_sub_qual() const { return cut_R < cut_L ? "" : qual.substr(cut_L, cut_R - cut_L); }
+    const std::string get_sub_seq() const { return cut_R < cut_L ? "N" : seq.substr(cut_L, cut_R - cut_L); }
+    const std::string get_sub_qual() const { return cut_R < cut_L ? "#" : qual.substr(cut_L, cut_R - cut_L); }
 
 
-    const std::string get_seq_rc() const { if (cut_R < cut_L) { return ""; }
+    const std::string get_seq_rc() const { if (cut_R < cut_L) { return "N"; }
                                            std::string s = seq.substr(cut_L, cut_R - cut_L) ;
                                            std::transform(begin(s), end(s), begin(s), complement);
                                            std::reverse(begin(s), end(s));
                                            return s; }
 
 
-    const std::string get_qual_rc() const { if (cut_R < cut_L) { return ""; }
+    const std::string get_qual_rc() const { if (cut_R < cut_L) { return "#"; }
                                             std::string q = qual.substr(cut_L, cut_R - cut_L);
                                             std::reverse(begin(q), end(q));
                                             return q;  }

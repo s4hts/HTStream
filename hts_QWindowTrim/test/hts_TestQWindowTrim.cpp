@@ -86,7 +86,7 @@ TEST_F(QTrimTest, AllTrim) {
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
         qt.trim_left(per->non_const_read_two(), sum_qual, window_size);
         qt.trim_right(per->non_const_read_two(), sum_qual, window_size);
-        ASSERT_EQ("", (per->non_const_read_two()).get_sub_qual());
+        ASSERT_EQ("#", (per->non_const_read_two()).get_sub_qual());
     }
 };
 
@@ -114,4 +114,3 @@ TEST_F(QTrimTest, Stranded) {
     }
     ASSERT_EQ("Read1\tGACTTTTTTTTT\tAAAAAAAAAAAA\n", out1->str());
 };
-

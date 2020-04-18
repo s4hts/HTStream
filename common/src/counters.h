@@ -179,6 +179,8 @@ public:
         std::string pad(4 * indent, ' ');
         for (const auto& it : vm) {
             auto& value = it.second.value();
+            //unfortunate hack
+            if ((it.first == "stats-file") & vm.count("append-stats-file")) continue;
             outStats << pad << "\"" << it.first.c_str() << "\": ";
             if (auto v = boost::any_cast<std::string>(&value))
                 outStats << "\"" << *v << "\"";

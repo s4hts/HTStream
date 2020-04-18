@@ -99,7 +99,7 @@ TEST_F(Primer, test_pairs_one_fail) {
         counter.output(*per);
         ASSERT_EQ("", (per->non_const_read_one()).get_sub_seq());
         ASSERT_EQ(301u, (per->non_const_read_one()).getRTrim());
-        ASSERT_EQ("", (per->non_const_read_two()).get_sub_seq());
+        ASSERT_EQ("N", (per->non_const_read_two()).get_sub_seq());
         ASSERT_EQ(301u, (per->non_const_read_two()).getRTrim());
         ASSERT_EQ(0u, counter.flipped);
     }
