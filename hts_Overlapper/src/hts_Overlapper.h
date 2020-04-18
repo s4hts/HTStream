@@ -192,8 +192,11 @@ public:
             finalQual += qual2.substr(maxLoop, r2_len - maxLoop);
         }
 
-        SingleEndReadPtr overlap(new SingleEndRead(Read(finalSeq, finalQual, r1.get_id())));
-        return overlap;
+        Read overlap(finalSeq, finalQual, r1.get_id_tab("1"));
+        overlap.join_comment(r1.get_comment());
+        overlap.join_comment(r2.get_comment());
+        SingleEndReadPtr overlap_se(new SingleEndRead(overlap));
+        return overlap_se;
     }
 
 /*Because of the way overlapping works, you only need to check the ends of the shorter read*/
@@ -286,9 +289,13 @@ public:
                     counters.output(*overlapped, origLength, forcePair);
                     if (forcePair){
                         Read overlappedRead = overlapped->non_const_read_one();
+                        Read &or1 = per->non_const_read_one();
+                        Read &or2 = per->non_const_read_two();
                         double mid = ceil(overlappedRead.getLengthTrue() / 2.0);
-                        Read r1(overlappedRead.get_sub_seq().substr(0,mid),overlappedRead.get_sub_qual().substr(0,mid),overlappedRead.get_id());
-                        Read r2(overlappedRead.get_sub_seq().substr(mid),overlappedRead.get_sub_qual().substr(mid),overlappedRead.get_id());
+                        Read r1(overlappedRead.get_sub_seq().substr(0,mid),overlappedRead.get_sub_qual().substr(0,mid),overlappedRead.get_id_tab("1"));
+                        r1.join_comment(or1.get_comment());
+                        Read r2(overlappedRead.get_sub_seq().substr(mid),overlappedRead.get_sub_qual().substr(mid),overlappedRead.get_id_tab("1"));
+                        r2.join_comment(or2.get_comment());
                         PairedEndRead newper(r1, r2);
                         writer_helper(&newper, pe, se); //write out as is
                     } else {

@@ -72,7 +72,7 @@ public:
            pos = id_orig.find_first_of(fastq_delimiter);
            if (pos != std::string::npos){
              id = id_orig.substr(0, pos);
-             id2 = id_orig.substr(pos+1, id_orig.size()-(pos+1));
+             id2 = id_orig.substr(pos+2, id_orig.size()-(pos+1));
            } else {
              id = id_orig;
              id2 = "";
@@ -85,14 +85,22 @@ public:
     std::string subseq(size_t _start, size_t _length);
     const std::string& get_seq() const  { return seq; }
     const std::string& get_qual() const { return qual; }
-    const std::string get_id() const { std::string tmp = (id2 == "") ? id : id + get_comment() + " " + id2; return tmp; }
-    const std::string get_id_first() const { return id; }
-    const std::string get_comment(bool sam=false) const {
-      std::string result = "";
-      const char delim = (sam) ? '\t' : '_';
-      for (auto const& s : comments) { result = result + delim + s; }
-      return result;
+    const std::string get_id_orig() const { return id_orig; }
+    const std::string get_id_fastq(std::string read="") const {
+        std::string sam_comment = "";
+        for (auto const& s : comments) { sam_comment = sam_comment + '|' + s; }
+        std::string tmp = id + sam_comment;
+        if (!(id2 == "")) tmp = tmp + ' ' + read + id2;
+        return tmp;
     }
+    const std::string get_id_tab(std::string read="") const {
+        std::string tmp = id;
+        if (!(id2 == "")) tmp = tmp + ' ' + read + id2;
+        return tmp;
+    }
+    const std::string get_id_first() const { return id; }
+    const std::string get_id_second() const { return id2; }
+    std::vector<std::string> get_comment() const { return comments;}
     static char complement(char bp);
 
     const std::string get_sub_seq() const { return cut_R < cut_L ? "N" : seq.substr(cut_L, cut_R - cut_L); }
@@ -112,7 +120,8 @@ public:
                                             return q;  }
 
 
-    void add_comment( std::string tag ) { comments.push_back(tag);}
+    void add_comment( std::string tag ) { if (tag != "") comments.push_back(tag);}
+    void join_comment( std::vector <std::string> new_comments ) { comments.insert(comments.end(), new_comments.begin(), new_comments.end()); }
     void set_read_rc() {
         if (cut_R < cut_L) {
             return;
