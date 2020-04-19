@@ -3,6 +3,7 @@
 
 #include <boost/dynamic_bitset.hpp>
 #include <boost/optional.hpp>
+#include <boost/algorithm/string.hpp>
 #include <memory>
 #include <iostream>
 #include <unordered_map>
@@ -72,11 +73,17 @@ public:
            pos = id_orig.find_first_of(fastq_delimiter);
            if (pos != std::string::npos){
              id = id_orig.substr(0, pos);
+             // id2 remove the read designation, add back in on write out
              id2 = id_orig.substr(pos+2, id_orig.size()-(pos+1));
            } else {
              id = id_orig;
              id2 = "";
            }
+           std::vector <std::string> comment_tmp;
+           boost::split(comment_tmp, id, boost::is_any_of("|"));
+           id = comment_tmp[0];
+           comment_tmp.erase(comment_tmp.begin());
+           join_comment(comment_tmp);
          }
     Read() :
         seq(""), qual(""), id_orig(""), id(""), id2(""), length(0), cut_R(seq.length()), cut_L(0), discard(false), minLength(1) {
