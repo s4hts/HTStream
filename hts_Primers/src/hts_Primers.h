@@ -38,10 +38,8 @@ public:
     uint64_t SE_Primer_Trim = 0;
     uint64_t SE_Primer_BpTrim = 0;
 
-    uint64_t R1_Discarded = 0;
     uint64_t R1_Primer_Trim = 0;
     uint64_t R1_Primer_BpTrim = 0;
-    uint64_t R2_Discarded = 0;
     uint64_t R2_Primer_Trim = 0;
     uint64_t R2_Primer_BpTrim = 0;
     uint64_t PE_Discarded = 0;
@@ -56,10 +54,8 @@ public:
 
         r1.push_back(std::forward_as_tuple("primerTrim", R1_Primer_Trim));
         r1.push_back(std::forward_as_tuple("primerBpTrim", R1_Primer_BpTrim));
-        r1.push_back(std::forward_as_tuple("discarded", R1_Discarded));
         r2.push_back(std::forward_as_tuple("primerTrim", R2_Primer_Trim));
         r2.push_back(std::forward_as_tuple("primerBpTrim", R2_Primer_BpTrim));
-        r2.push_back(std::forward_as_tuple("discarded", R2_Discarded));
         pe.push_back(std::forward_as_tuple("discarded", PE_Discarded));
     }
 
@@ -78,9 +74,12 @@ public:
         flipped++;
     }
 
-    using Counters::input;
-    virtual void input(const ReadBase &read) {
-        Counters::input(read);
+    void increment_discard_se(){
+        SE_Discarded++;
+    }
+
+    void increment_discard_pe(){
+        PE_Discarded++;
     }
 
     void primer_match_counter(std::string &p5primer, std::string &p3primer){
@@ -88,56 +87,31 @@ public:
         primers_seen_counter[primerPair]++;
     }
 
+    using Counters::output;
     virtual void output(SingleEndRead &ser)  {
-        if (ser.non_const_read_one().getDiscard()) {
-            ++SE_Discarded;
-        } else {
-            Read &one = ser.non_const_read_one();
-            if (one.getLengthTrue() < one.getLength()) {
-                ++SE_Primer_Trim;
-                SE_Primer_BpTrim += (one.getLength() - one.getLengthTrue());
-            }
-            ++SE_Out;
-            ++TotalFragmentsOutput;
+        Counters::output(ser);
+        Read &one = ser.non_const_read_one();
+        if (one.getLengthTrue() < one.getLength()) {
+            ++SE_Primer_Trim;
+            SE_Primer_BpTrim += (one.getLength() - one.getLengthTrue());
         }
     }
 
-    void output(PairedEndRead &per, bool no_orphans = false)  {
+    void output(PairedEndRead &per)  {
+        Counters::output(per);
         Read &one = per.non_const_read_one();
         Read &two = per.non_const_read_two();
-        if (!one.getDiscard() && !two.getDiscard()) {
-            if (one.getLengthTrue() < one.getLength()){
-              ++R1_Primer_Trim;
-              R1_Primer_BpTrim += (one.getLength() - one.getLengthTrue());
-            }
-            if (two.getLengthTrue() < two.getLength()) {
-              ++R2_Primer_Trim;
-              R2_Primer_BpTrim += (two.getLength() - two.getLengthTrue());
-            }
-            ++PE_Out;
-            ++TotalFragmentsOutput;
-        } else if (!one.getDiscard() && !no_orphans) { //if stranded RC
-            if (one.getLengthTrue() < one.getLength()) {
-                ++SE_Primer_Trim;
-                SE_Primer_BpTrim += (one.getLength() - one.getLengthTrue());
-            }
-            ++SE_Out;
-            ++R2_Discarded;
-            ++TotalFragmentsOutput;
-        } else if (!two.getDiscard() && !no_orphans) { // Will never be RC
-            if (two.getLengthTrue() < two.getLength()) {
-                ++SE_Primer_Trim;
-                SE_Primer_BpTrim += (two.getLength() - two.getLengthTrue());
-            }
-            ++SE_Out;
-            ++R1_Discarded;
-            ++TotalFragmentsOutput;
-        } else {
-            ++PE_Discarded;
+        if (one.getLengthTrue() < one.getLength()){
+          ++R1_Primer_Trim;
+          R1_Primer_BpTrim += (one.getLength() - one.getLengthTrue());
+        }
+        if (two.getLengthTrue() < two.getLength()) {
+          ++R2_Primer_Trim;
+          R2_Primer_BpTrim += (two.getLength() - two.getLengthTrue());
         }
     }
 
-    virtual void write_out() {
+    void write_out() {
 
         std::vector<Label> iPrimers;
         for (auto &it: primers_seen_counter) {
@@ -198,9 +172,6 @@ public:
     }
 
     void add_extra_options(po::options_description &desc) {
-        setDefaultParamsCutting(desc);
-        // no-orphans|n ; stranded|s ; min-length|m
-
         desc.add_options()
             ("primers_5p,P", po::value<std::string>(), "5' primers, comma separated list of sequences, or fasta file");
         desc.add_options()
@@ -364,7 +335,7 @@ public:
         return (val);
     }
 
-    void check_read_pe(PairedEndRead &pe, PrimerCounters &counter, SeqMap &primer5p, SeqMap &primer3p, const size_t pMismatches, const size_t pEndMismatches, const size_t pfloat, const size_t flip, const size_t keep, const size_t mpmatches) {
+    bool check_read_pe(PairedEndRead &pe, PrimerCounters &counter, SeqMap &primer5p, SeqMap &primer3p, const size_t pMismatches, const size_t pEndMismatches, const size_t pfloat, const size_t flip, const size_t keep, const size_t mpmatches) {
 
         ALIGNPOS test_val, best_val;
         std::string p5primer = "None", p3primer = "None";
@@ -446,8 +417,8 @@ public:
         }
         counter.primer_match_counter(p5primer,p3primer);
         if (pmatches < mpmatches) {
-            r1.setRCut(0);
-            r2.setRCut(0);
+            counter.increment_discard_pe();
+            return false;
         } else {
             if (flipped){
               counter.increment_flipped();
@@ -457,9 +428,10 @@ public:
             r1.add_comment("P5:Z:" + p5primer);
             r2.add_comment("P3:Z:" + p3primer);
         }
+        return true;
     }
 
-    void check_read_se(SingleEndRead &se, PrimerCounters &counter, SeqMap &primer5p, SeqMap &primer3p, const size_t pMismatches, const size_t pEndMismatches, const size_t pfloat, const size_t flip, const size_t keep, const size_t mpmatches) {
+    bool check_read_se(SingleEndRead &se, PrimerCounters &counter, SeqMap &primer5p, SeqMap &primer3p, const size_t pMismatches, const size_t pEndMismatches, const size_t pfloat, const size_t flip, const size_t keep, const size_t mpmatches) {
 
         ALIGNPOS test_val, best_val;
         std::string p5primer = "None", p3primer = "None";
@@ -540,7 +512,8 @@ public:
         }
         counter.primer_match_counter(p5primer,p3primer);
         if (pmatches < mpmatches) {
-            r1.setRCut(0);
+            counter.increment_discard_se();
+            return false;
         } else {
             if (flipped){
               counter.increment_flipped();
@@ -549,6 +522,7 @@ public:
             r1.add_comment("P5:Z:" + p5primer);
             r1.add_comment("P3:Z:" + p3primer);
         }
+        return true;
     }
 
 /* This is the helper class for Primer
@@ -574,27 +548,24 @@ public:
         const size_t pfloat = vm["float"].as<size_t>();
         const bool flip = vm["flip"].as<bool>();
         const bool keep = vm["keep"].as<bool>();
-        const bool stranded = vm["stranded"].as<bool>();
-        const size_t min_length = vm["min-length"].as<size_t>();
-        bool no_orphan = vm["no-orphans"].as<bool>();
 
         while(reader.has_next()) {
             auto i = reader.next();
             PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
             if (per) {
                 counter.input(*per);
-                check_read_pe(*per, counter, primer5p, primer3p, pMismatches, pEndMismatches, pfloat, flip, keep, min_mprimers);
-                per->checkDiscarded(min_length);
-                counter.output(*per, no_orphan);
-                writer_helper(per, pe, se, stranded, no_orphan);
+                if (check_read_pe(*per, counter, primer5p, primer3p, pMismatches, pEndMismatches, pfloat, flip, keep, min_mprimers)){
+                    counter.output(*per);
+                    writer_helper(per, pe, se);
+                }
             } else {
                 SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
                 if (ser) {
                     counter.input(*ser);
-                    check_read_se(*ser, counter, primer5p, primer3p, pMismatches, pEndMismatches, pfloat, flip, keep, min_mprimers);
-                    ser->checkDiscarded(min_length);
-                    counter.output(*ser);
-                    writer_helper(ser, pe, se);
+                    if (check_read_se(*ser, counter, primer5p, primer3p, pMismatches, pEndMismatches, pfloat, flip, keep, min_mprimers)){
+                        counter.output(*ser);
+                        writer_helper(ser, pe, se);
+                    }
                 } else {
                     throw std::runtime_error("Unknown read type");
                 }

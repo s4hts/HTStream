@@ -5,6 +5,7 @@
 
 class TrimN : public ::testing::Test {
 public:
+    po::variables_map vm;
     const std::string readData_1 = "@Read1\nTTTTTNGAAAAAAAAAGNTTTTT\n+\n#######################\n";
     const std::string readData_2 = "@Read1\nAAAAAAAAAAAAAAAAAAAAAAAA\n+\n########################\n";
     const std::string readData_3 = "@Read1\nTTTTTNGGNTTTTTTTTTTTTTN\n+\n#######################\n";
@@ -22,13 +23,17 @@ TEST_F(TrimN, Exclude) {
     std::istringstream in1(readData_1);
     std::istringstream in2(readData_5);
 
-    InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(in1, in2);
+    NTrimCounters counter("hts_NTrimmer", vm);
 
+    InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(in1, in2);
+    bool test;
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        nt.trim_n(per->non_const_read_one(), true);
-        ASSERT_EQ("N", (per->non_const_read_one()).get_sub_seq());
+        test = nt.trim_n(per->non_const_read_one(), true);
+        if (!test) counter.increment_discard_pe();
+        ASSERT_EQ(false, test);
+        ASSERT_EQ(1u, counter.PE_Discarded);
     }
 };
 

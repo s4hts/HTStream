@@ -67,7 +67,6 @@ public:
         bases.push_back(std::forward_as_tuple("T", T));
         bases.push_back(std::forward_as_tuple("N", N));
     }
-    virtual ~StatsCounters() {}
 
     void read_stats(Read &r, uint64_t &BpLen, Vec &Length, Mat &read_bases, Mat &read_qualities, uint64_t &read_bQ30) {
         // Total length of bases per read
@@ -124,8 +123,8 @@ public:
     }
 
     using Counters::output;
-    virtual void output(PairedEndRead &per, bool no_orphans = false) {
-        Counters::output(per, no_orphans);
+    void output(PairedEndRead &per) {
+        Counters::output(per);
         read_stats(per.non_const_read_one(), R1_BpLen, R1_Length, R1_bases, R1_qualities, R1_bQ30);
         read_stats(per.non_const_read_two(), R2_BpLen, R2_Length, R2_bases, R2_qualities, R2_bQ30);
     }
@@ -135,7 +134,7 @@ public:
         read_stats(ser.non_const_read_one(), SE_BpLen, SE_Length, SE_bases, SE_qualities, SE_bQ30);
     }
 
-    virtual void write_out() {
+    void write_out() {
         std::vector<Vector> iSE_Length;
         for (size_t i = 1; i < SE_Length.size(); ++i) {
             if (SE_Length[i] > 0) {

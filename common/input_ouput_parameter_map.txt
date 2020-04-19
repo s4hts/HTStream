@@ -48,11 +48,11 @@ L
   float                       l                   float
   stats-file                  L   Standard        All
 M
-  min-length                  m   Cutting         AdapterTrimmer, CutTrim, NTrimmer, PolyATTrim, QWindowTrim
+  min-length                  m                   CutTrim
   min-trim                    M                   PolyATTrim
   max-length                  M                   CutTrim
 N
-  no-orphans                  n   Cutting         AdapterTrimmer, CutTrim, NTrimmer, PolyATTrim, QWindowTrim
+  no-orphans                  n                   CutTrim
   inverse                     n                   SeqScreener
   notes                       N   Standard        All
 O
@@ -71,7 +71,7 @@ R
   record                      r                   SeqScreener
   min_primer_matches          r                   Primers
 S
-  stranded                    s   Cutting         AdapterTrimmer, CutTrim, NTrimmer, PolyATTrim, QWindowTrim
+  stranded                    s                   CutTrim
   seq                         s                   SeqScreener
   start                       s                   SuperDeduper
 T

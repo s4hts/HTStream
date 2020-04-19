@@ -31,7 +31,7 @@ public:
     }
 
     using Counters::input;
-    virtual void input(const ReadBase &read, size_t dup_freq) {
+    void input(const ReadBase &read, size_t dup_freq) {
         if (dup_freq > 0 && TotalFragmentsInput % dup_freq == 0 && TotalFragmentsInput != 0){
             duplicateProportion.push_back(std::forward_as_tuple(TotalFragmentsInput, Duplicate));
         }
@@ -46,7 +46,7 @@ public:
         ++Ignored;
     }
 
-    virtual void write_out() {
+    void write_out() {
 
         // record final input/dup
         duplicateProportion.push_back(std::forward_as_tuple(TotalFragmentsInput, Duplicate));
