@@ -1,5 +1,5 @@
-#ifndef CUT_TRIM_H
-#define CUT_TRIM_H
+#ifndef LENGTH_FILTER_H
+#define LENGTH_FILTER_H
 //  this is so we can implment hash function for dynamic_bitset
 #define BOOST_DYNAMIC_BITSET_DONT_USE_FRIENDS
 
@@ -18,7 +18,7 @@ extern template class InputReader<PairedEndRead, PairedEndReadFastqImpl>;
 extern template class InputReader<PairedEndRead, InterReadImpl>;
 extern template class InputReader<ReadBase, TabReadImpl>;
 
-class LengthFilterCounters : public FilterCounters {
+class LengthFilterCounters : public Counters {
 
 public:
 
@@ -27,22 +27,19 @@ public:
     uint64_t R1_Discarded = 0;
     uint64_t R2_Discarded = 0;
 
-    LengthFilterCounters(const std::string &program_name, const po::variables_map &vm) : FilterCounters::FilterCounters(program_name, vm) {
+    LengthFilterCounters(const std::string &program_name, const po::variables_map &vm) : Counters::Counters(program_name, vm) {
         se.push_back(std::forward_as_tuple("discarded", SE_Discarded));
         pe.push_back(std::forward_as_tuple("discarded", PE_Discarded));
         r1.push_back(std::forward_as_tuple("discarded", R1_Discarded));
         r2.push_back(std::forward_as_tuple("discarded", R2_Discarded));
     }
-    using FilterCounters::SE_stats;
-    using FilterCounters::R1_stats;
-    using FilterCounters::R2_stats;
 
     void output(SingleEndRead &ser)  {
         Read &one = ser.non_const_read_one();
         if (!one.getDiscard()) {
             ++TotalFragmentsOutput;
             ++SE_Out;
-            FilterCounters::SE_stats(one);
+//            Counters::SE_stats(one);
         } else {
             ++SE_Discarded;
         }
@@ -54,18 +51,14 @@ public:
         if (!one.getDiscard() && !two.getDiscard()) {
             ++TotalFragmentsOutput;
             ++PE_Out;
-            FilterCounters::R1_stats(one);
-            FilterCounters::R2_stats(two);
         } else if (!one.getDiscard() && !no_orphans) {
             ++TotalFragmentsOutput;
             ++SE_Out;
             ++R2_Discarded;
-            FilterCounters::SE_stats(one);
         } else if (!two.getDiscard() && !no_orphans) {
             ++TotalFragmentsOutput;
             ++SE_Out;
             ++R1_Discarded;
-            FilterCounters::SE_stats(two);
         } else {
             ++PE_Discarded;
         }
@@ -83,14 +76,7 @@ public:
     }
 
     void add_extra_options(po::options_description &desc) {
-//        desc.add_options()
-//            ("r1-cut-left,a", po::value<size_t>()->default_value(0)->notifier(boost::bind(&check_range<size_t>, "r1-cut-left", _1, 0, 10000)), "Cut length of sequence from read 1 left (5') end (min 0, max 10000)");
-//        desc.add_options()
-//            ("r1-cut-right,b", po::value<size_t>()->default_value(0)->notifier(boost::bind(&check_range<size_t>, "r1-cut-right", _1, 0, 10000)), "Cut length of sequence from read 1 right (3') end (min 0, max 10000)");
-//        desc.add_options()
-//            ("r2-cut-left,c", po::value<size_t>()->default_value(0)->notifier(boost::bind(&check_range<size_t>, "r2-cut-left", _1, 0, 10000)), "Cut length of sequence from read 2 left (5') end (min 0, max 10000)");
-//        desc.add_options()
-//            ("r2-cut-right,d", po::value<size_t>()->default_value(0)->notifier(boost::bind(&check_range<size_t>, "r2-cut-right", _1, 0, 10000)), "Cut length of sequence from read 2 right (3') end (min 0, max 10000)");
+
         desc.add_options()
             ("min-length,m", po::value<size_t>()->default_value(0)->notifier(boost::bind(&check_range<size_t>, "min-length", _1, 0, 10000)), "Min length for acceptable output read (min 1, max 10000), default is unset");
         desc.add_options()
@@ -114,12 +100,6 @@ public:
   can run cut_trim with max_length (no cut to left or right) to effectively reduce the size of reads.
 */
     void length_filter(Read &r, size_t min_length, size_t max_length) {
-//        if (cut_left) {
-//            r.setLCut(cut_left);
-//        }
-//        if (cut_right) {
-//            r.setRCut(r.getLength() - cut_right);
-//        }
         if (max_length && max_length < r.getLengthTrue()) {
             r.setDiscard();
         }
@@ -135,10 +115,6 @@ public:
         size_t min_length  = vm["min-length"].as<size_t>();
         bool stranded =  vm["stranded"].as<bool>();
         bool no_orphans = vm["no-orphans"].as<bool>();
-//        size_t r1_cut_left = vm["r1-cut-left"].as<size_t>();
-//        size_t r1_cut_right = vm["r1-cut-right"].as<size_t>();
-//        size_t r2_cut_left = vm["r2-cut-left"].as<size_t>();
-//        size_t r2_cut_right = vm["r2-cut-right"].as<size_t>();
         size_t max_length = vm["max-length"].as<size_t>();
 
         while(reader.has_next()) {
