@@ -39,7 +39,7 @@ TEST_F(CutTrimTest, PETrim) {
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
         ct.cut_trim(per->non_const_read_one(), 5, 15);
         ct.cut_trim(per->non_const_read_two(), 5, 15);
-        writer_helper(per, tab, tab, false, false);
+        writer_helper(per, tab, tab);
     }
     ASSERT_EQ("Read2\tCTTGGGTCCTATGGTATCGGTACTGGTACT\t##############################\tRead1\tTGACATTAAGCAAGTACCAGTACCGATACC\t##############################\n", out1->str());
 };

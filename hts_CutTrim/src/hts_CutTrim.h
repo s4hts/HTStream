@@ -48,7 +48,7 @@ public:
         }
     }
 
-    void output(PairedEndRead &per, bool no_orphans) {
+    void output(PairedEndRead &per) {
         Read &one = per.non_const_read_one();
         Read &two = per.non_const_read_two();
         if (!one.getDiscard() && !two.getDiscard()) {
@@ -56,12 +56,12 @@ public:
             ++PE_Out;
             TrimmingCounters::R1_stats(one);
             TrimmingCounters::R2_stats(two);
-        } else if (!one.getDiscard() && !no_orphans) {
+        } else if (!one.getDiscard()) {
             ++TotalFragmentsOutput;
             ++SE_Out;
             ++R2_Discarded;
             TrimmingCounters::SE_stats(one);
-        } else if (!two.getDiscard() && !no_orphans) {
+        } else if (!two.getDiscard()) {
             ++TotalFragmentsOutput;
             ++SE_Out;
             ++R1_Discarded;
@@ -91,10 +91,6 @@ public:
             ("r2-cut-left,c", po::value<size_t>()->default_value(0)->notifier(boost::bind(&check_range<size_t>, "r2-cut-left", _1, 0, 10000)), "Cut length of sequence from read 2 left (5') end (min 0, max 10000)");
         desc.add_options()
             ("r2-cut-right,d", po::value<size_t>()->default_value(0)->notifier(boost::bind(&check_range<size_t>, "r2-cut-right", _1, 0, 10000)), "Cut length of sequence from read 2 right (3') end (min 0, max 10000)");
-        desc.add_options()
-            ("no-orphans,n", po::bool_switch()->default_value(false), "Orphaned SE reads will NOT be written out");
-        desc.add_options()
-            ("stranded,s", po::bool_switch()->default_value(false),    "If R1 is orphaned, R2 is output in RC (for stranded RNA)");
     }
 
 
@@ -121,8 +117,6 @@ public:
 
     template <class T, class Impl>
     void do_app(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, CutTrimCounters& counters, const po::variables_map &vm) {
-        bool stranded =  vm["stranded"].as<bool>();
-        bool no_orphans = vm["no-orphans"].as<bool>();
         size_t r1_cut_left = vm["r1-cut-left"].as<size_t>();
         size_t r1_cut_right = vm["r1-cut-right"].as<size_t>();
         size_t r2_cut_left = vm["r2-cut-left"].as<size_t>();
@@ -135,14 +129,14 @@ public:
                 counters.input(*per);
                 cut_trim( per->non_const_read_one(), r1_cut_left, r1_cut_right);
                 cut_trim( per->non_const_read_two(), r2_cut_left, r2_cut_right);
-                writer_helper(per, pe, se, stranded, no_orphans);
-                counters.output(*per, no_orphans);
+                writer_helper(per, pe, se);
+                counters.output(*per);
             } else {
                 SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
                 if (ser) {
                     counters.input(*ser);
                     cut_trim( ser->non_const_read_one(), r1_cut_left, r1_cut_right);
-                    writer_helper(ser, pe, se, false, false);
+                    writer_helper(ser, pe, se);
                     counters.output(*ser);
                 } else {
                     throw std::runtime_error("Unknown read type");

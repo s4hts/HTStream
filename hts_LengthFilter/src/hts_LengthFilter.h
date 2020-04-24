@@ -89,15 +89,6 @@ public:
 
 
 /* TODO update the comments here
-  cut_trim expected behavior:
-  cut_trim is expected to be one of the first apps used in a preprocessing pipeline
-  such as when you want to statically trim off X bases from the end of a read (cut_right), due to
-  quality, and/or to trim off primer sequence from the beginning of a read (cut_left). As such both
-  cut_left and cut_right should act on the original length of the read.
-
-  max_length then prevents the final cut length from being greater than max_length applying an
-  additional cut to end of the read if applicable. If one wished to simulate smaller sized reads
-  can run cut_trim with max_length (no cut to left or right) to effectively reduce the size of reads.
 */
     void length_filter(Read &r, size_t min_length, size_t max_length) {
         if (max_length && max_length < r.getLengthTrue()) {
