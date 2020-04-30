@@ -27,6 +27,7 @@ public:
     uint64_t R1_Discarded = 0;
     uint64_t R2_Discarded = 0;
 
+
     LengthFilterCounters(const std::string &program_name, const po::variables_map &vm) : Counters::Counters(program_name, vm) {
         se.push_back(std::forward_as_tuple("discarded", SE_Discarded));
         pe.push_back(std::forward_as_tuple("discarded", PE_Discarded));
@@ -39,7 +40,6 @@ public:
         if (!one.getDiscard()) {
             ++TotalFragmentsOutput;
             ++SE_Out;
-//            Counters::SE_stats(one);
         } else {
             ++SE_Discarded;
         }

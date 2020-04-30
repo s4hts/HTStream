@@ -48,11 +48,11 @@ L
   float                       l                   float
   stats-file                  L   Standard        All
 M
-  min-length                  m                   CutTrim
+  min-length                  m                   LengthFilter
   min-trim                    M                   PolyATTrim
-  max-length                  M                   CutTrim
+  max-length                  M                   LengthFilter
 N
-  no-orphans                  n                   CutTrim
+  no-orphans                  n                   LengthFilter
   inverse                     n                   SeqScreener
   notes                       N   Standard        All
 O
@@ -71,7 +71,7 @@ R
   record                      r                   SeqScreener
   min_primer_matches          r                   Primers
 S
-  stranded                    s                   CutTrim
+  stranded                    s                   LengthFilter
   seq                         s                   SeqScreener
   start                       s                   SuperDeduper
 T

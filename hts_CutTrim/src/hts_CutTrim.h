@@ -18,61 +18,8 @@ extern template class InputReader<PairedEndRead, PairedEndReadFastqImpl>;
 extern template class InputReader<PairedEndRead, InterReadImpl>;
 extern template class InputReader<ReadBase, TabReadImpl>;
 
-class CutTrimCounters : public TrimmingCounters {
 
-public:
-
-    uint64_t SE_Discarded = 0;
-    uint64_t PE_Discarded = 0;
-    uint64_t R1_Discarded = 0;
-    uint64_t R2_Discarded = 0;
-
-    CutTrimCounters(const std::string &program_name, const po::variables_map &vm) : TrimmingCounters::TrimmingCounters(program_name, vm) {
-        se.push_back(std::forward_as_tuple("discarded", SE_Discarded));
-        pe.push_back(std::forward_as_tuple("discarded", PE_Discarded));
-        r1.push_back(std::forward_as_tuple("discarded", R1_Discarded));
-        r2.push_back(std::forward_as_tuple("discarded", R2_Discarded));
-    }
-    using TrimmingCounters::SE_stats;
-    using TrimmingCounters::R1_stats;
-    using TrimmingCounters::R2_stats;
-
-    void output(SingleEndRead &ser)  {
-        Read &one = ser.non_const_read_one();
-        if (!one.getDiscard()) {
-            ++TotalFragmentsOutput;
-            ++SE_Out;
-            TrimmingCounters::SE_stats(one);
-        } else {
-            ++SE_Discarded;
-        }
-    }
-
-    void output(PairedEndRead &per) {
-        Read &one = per.non_const_read_one();
-        Read &two = per.non_const_read_two();
-        if (!one.getDiscard() && !two.getDiscard()) {
-            ++TotalFragmentsOutput;
-            ++PE_Out;
-            TrimmingCounters::R1_stats(one);
-            TrimmingCounters::R2_stats(two);
-        } else if (!one.getDiscard()) {
-            ++TotalFragmentsOutput;
-            ++SE_Out;
-            ++R2_Discarded;
-            TrimmingCounters::SE_stats(one);
-        } else if (!two.getDiscard()) {
-            ++TotalFragmentsOutput;
-            ++SE_Out;
-            ++R1_Discarded;
-            TrimmingCounters::SE_stats(two);
-        } else {
-            ++PE_Discarded;
-        }
-    }
-};
-
-class CutTrim: public MainTemplate<CutTrimCounters, CutTrim> {
+class CutTrim: public MainTemplate<TrimmingCounters, CutTrim> {
 public:
 
     CutTrim() {
@@ -116,7 +63,7 @@ public:
 
 
     template <class T, class Impl>
-    void do_app(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, CutTrimCounters& counters, const po::variables_map &vm) {
+    void do_app(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, TrimmingCounters& counters, const po::variables_map &vm) {
         size_t r1_cut_left = vm["r1-cut-left"].as<size_t>();
         size_t r1_cut_right = vm["r1-cut-right"].as<size_t>();
         size_t r2_cut_left = vm["r2-cut-left"].as<size_t>();
