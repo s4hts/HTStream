@@ -41,9 +41,12 @@ public:
 
     uint64_t SE_In = 0;
     uint64_t SE_Out = 0;
+    uint64_t SE_BpLen = 0;
 
     uint64_t PE_In = 0;
     uint64_t PE_Out = 0;
+    uint64_t R1_BpLen = 0;
+    uint64_t R2_BpLen = 0;
 
     Counters(const std::string &program_name_, po::variables_map vm_):
             pName(program_name_),
@@ -68,6 +71,10 @@ public:
 
         se.push_back(std::forward_as_tuple("in", SE_In));
         se.push_back(std::forward_as_tuple("out", SE_Out));
+        se.push_back(std::forward_as_tuple("total_basepairs", SE_BpLen));
+
+        r1.push_back(std::forward_as_tuple("total_basepairs", R1_BpLen));
+        r2.push_back(std::forward_as_tuple("total_basepairs", R2_BpLen));
 
         pe.push_back(std::forward_as_tuple("in", PE_In));
         pe.push_back(std::forward_as_tuple("out", PE_Out));
@@ -91,13 +98,17 @@ public:
     }
 
     virtual void output(PairedEndRead &read) {
-        (void)read;  //ignore unused variable warning
+        Read &one = read.non_const_read_one();
+        Read &two = read.non_const_read_two();
+        R1_BpLen += one.getLength();
+        R2_BpLen += two.getLength();
         ++PE_Out;
         ++TotalFragmentsOutput;
      }
 
     virtual void output(SingleEndRead &read) {
-        (void)read;  //ignore unused variable warning
+        Read &one = read.non_const_read_one();
+        SE_BpLen += one.getLength();
         ++SE_Out;
         ++TotalFragmentsOutput;
      }

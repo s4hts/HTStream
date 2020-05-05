@@ -40,6 +40,7 @@ public:
         if (!one.getDiscard()) {
             ++TotalFragmentsOutput;
             ++SE_Out;
+            SE_BpLen += one.getLength();
         } else {
             ++SE_Discarded;
         }
@@ -51,13 +52,17 @@ public:
         if (!one.getDiscard() && !two.getDiscard()) {
             ++TotalFragmentsOutput;
             ++PE_Out;
+            R1_BpLen += one.getLength();
+            R2_BpLen += two.getLength();
         } else if (!one.getDiscard() && !no_orphans) {
             ++TotalFragmentsOutput;
             ++SE_Out;
+            SE_BpLen += one.getLength();
             ++R2_Discarded;
         } else if (!two.getDiscard() && !no_orphans) {
             ++TotalFragmentsOutput;
             ++SE_Out;
+            SE_BpLen += two.getLength();
             ++R1_Discarded;
         } else {
             ++PE_Discarded;
