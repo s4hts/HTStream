@@ -40,7 +40,8 @@ public:
         if (!one.getDiscard()) {
             ++TotalFragmentsOutput;
             ++SE_Out;
-            SE_BpLen += one.getLength();
+            SE_BpLen_Out += one.getLength();
+            TotalBasepairsOutput += one.getLength();
         } else {
             ++SE_Discarded;
         }
@@ -52,17 +53,21 @@ public:
         if (!one.getDiscard() && !two.getDiscard()) {
             ++TotalFragmentsOutput;
             ++PE_Out;
-            R1_BpLen += one.getLength();
-            R2_BpLen += two.getLength();
+            R1_BpLen_Out += one.getLengthTrue();
+            R2_BpLen_Out += two.getLengthTrue();
+            TotalBasepairsOutput += one.getLengthTrue();
+            TotalBasepairsOutput += two.getLengthTrue();
         } else if (!one.getDiscard() && !no_orphans) {
             ++TotalFragmentsOutput;
             ++SE_Out;
-            SE_BpLen += one.getLength();
+            SE_BpLen_Out += one.getLengthTrue();
+            TotalBasepairsOutput += one.getLengthTrue();
             ++R2_Discarded;
         } else if (!two.getDiscard() && !no_orphans) {
             ++TotalFragmentsOutput;
             ++SE_Out;
-            SE_BpLen += two.getLength();
+            SE_BpLen_Out += two.getLengthTrue();
+            TotalBasepairsOutput += two.getLengthTrue();
             ++R1_Discarded;
         } else {
             ++PE_Discarded;
