@@ -38,15 +38,20 @@ public:
 
     uint64_t TotalFragmentsInput = 0;
     uint64_t TotalFragmentsOutput = 0;
+    uint64_t TotalBasepairsInput = 0;
+    uint64_t TotalBasepairsOutput = 0;
 
     uint64_t SE_In = 0;
     uint64_t SE_Out = 0;
-    uint64_t SE_BpLen = 0;
+    uint64_t SE_BpLen_In = 0;
+    uint64_t SE_BpLen_Out = 0;
 
     uint64_t PE_In = 0;
     uint64_t PE_Out = 0;
-    uint64_t R1_BpLen = 0;
-    uint64_t R2_BpLen = 0;
+    uint64_t R1_BpLen_In = 0;
+    uint64_t R1_BpLen_Out = 0;
+    uint64_t R2_BpLen_In = 0;
+    uint64_t R2_BpLen_Out = 0;
 
     Counters(const std::string &program_name_, po::variables_map vm_):
             pName(program_name_),
@@ -68,13 +73,18 @@ public:
 
         fragment.push_back(std::forward_as_tuple("in", TotalFragmentsInput));
         fragment.push_back(std::forward_as_tuple("out", TotalFragmentsOutput));
+        fragment.push_back(std::forward_as_tuple("basepairs_in", TotalBasepairsInput));
+        fragment.push_back(std::forward_as_tuple("basepairs_out", TotalBasepairsOutput));
 
         se.push_back(std::forward_as_tuple("in", SE_In));
         se.push_back(std::forward_as_tuple("out", SE_Out));
-        se.push_back(std::forward_as_tuple("total_basepairs", SE_BpLen));
+        se.push_back(std::forward_as_tuple("basepairs_in", SE_BpLen_In));
+        se.push_back(std::forward_as_tuple("basepairs_out", SE_BpLen_Out));
 
-        r1.push_back(std::forward_as_tuple("total_basepairs", R1_BpLen));
-        r2.push_back(std::forward_as_tuple("total_basepairs", R2_BpLen));
+        r1.push_back(std::forward_as_tuple("basepairs_in", R1_BpLen_In));
+        r1.push_back(std::forward_as_tuple("basepairs_out", R1_BpLen_Out));
+        r2.push_back(std::forward_as_tuple("basepairs_in", R2_BpLen_In));
+        r2.push_back(std::forward_as_tuple("basepairs_out", R2_BpLen_Out));
 
         pe.push_back(std::forward_as_tuple("in", PE_In));
         pe.push_back(std::forward_as_tuple("out", PE_Out));
@@ -82,14 +92,23 @@ public:
 
     virtual ~Counters() {}
 
-    virtual void input(const ReadBase &read) {
-        const PairedEndRead *per = dynamic_cast<const PairedEndRead *>(&read);
+    virtual void input(ReadBase &read) {
+        PairedEndRead *per = dynamic_cast<PairedEndRead *>(&read);
         if (per) {
             ++PE_In;
+            Read &one = per->non_const_read_one();
+            Read &two = per->non_const_read_two();
+            R1_BpLen_In += one.getLength();
+            R2_BpLen_In += two.getLength();
+            TotalBasepairsInput += one.getLength();
+            TotalBasepairsInput += two.getLength();
         } else {
-            const SingleEndRead *ser = dynamic_cast<const SingleEndRead *>(&read);
+            SingleEndRead *ser = dynamic_cast<SingleEndRead *>(&read);
             if (ser) {
                 ++SE_In;
+                Read &one = ser->non_const_read_one();
+                SE_BpLen_In += one.getLength();
+                TotalBasepairsInput += one.getLength();
             } else {
                 throw std::runtime_error("In utils.h output: read type not valid");
             }
@@ -100,15 +119,18 @@ public:
     virtual void output(PairedEndRead &read) {
         Read &one = read.non_const_read_one();
         Read &two = read.non_const_read_two();
-        R1_BpLen += one.getLength();
-        R2_BpLen += two.getLength();
+        R1_BpLen_Out += one.getLengthTrue();
+        R2_BpLen_Out += two.getLengthTrue();
+        TotalBasepairsOutput += one.getLengthTrue();
+        TotalBasepairsOutput += two.getLengthTrue();
         ++PE_Out;
         ++TotalFragmentsOutput;
      }
 
     virtual void output(SingleEndRead &read) {
         Read &one = read.non_const_read_one();
-        SE_BpLen += one.getLength();
+        SE_BpLen_Out += one.getLengthTrue();
+        TotalBasepairsOutput += one.getLengthTrue();
         ++SE_Out;
         ++TotalFragmentsOutput;
      }
