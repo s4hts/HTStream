@@ -8,7 +8,7 @@ Before sending your pull requests, make sure you followed this list.
 
 - Read [Contributing Guidelines](CONTRIBUTING.md).
 - Read [Code of Conduct](CODE_OF_CONDUCT.md).
-- Check if my changes are consistent with the [guidelines](#contributing-code).
+- Check if my changes are consistent with the [guidelines](#general-guidelines-and-philosophy-for-contribution).
 - Run 'make test' and ensure all the Unit tests pass.
 
 ## How to become a contributor and submit your own code
