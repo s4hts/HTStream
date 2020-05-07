@@ -26,3 +26,22 @@ jobs:
     - name: test
       working-directory: ./build
       run: make test
+
+  clang_build_and_test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+    - name: install boost libs
+      run: sudo apt-get install libboost-dev libboost-system-dev libboost-program-options-dev libboost-iostreams-dev libboost-filesystem-dev clang
+    - name: make build dir
+      run: mkdir build&&cd build
+    - name: cmake
+      working-directory: ./build
+      run: export CC=clang && export CXX=clang++ && cmake -DCMAKE_BUILD_TYPE=Debug ..
+    - name: make
+      working-directory: ./build
+      run: make all
+    - name: test
+      working-directory: ./build
+      run: make test
