@@ -62,11 +62,9 @@ private:
     size_t cut_R;
     size_t cut_L;
     bool discard;
-    size_t minLength;
-    size_t maxLength;
 public:
     Read(const std::string& seq_, const std::string& qual_, const std::string& id_) :
-        seq(seq_), qual(qual_), id_orig(id_), length(seq_.length()), cut_R(seq_.length()), cut_L(0), discard(false), minLength(1) {
+        seq(seq_), qual(qual_), id_orig(id_), length(seq_.length()), cut_R(seq_.length()), cut_L(0), discard(false) {
            std::string fastq_delimiter =  " \t\f\n\r\v";
            // split the id into 2 delimited on the first space
            size_t pos = 0;
@@ -80,7 +78,7 @@ public:
            }
          }
     Read() :
-        seq(""), qual(""), id_orig(""), id(""), id2(""), length(0), cut_R(seq.length()), cut_L(0), discard(false), minLength(1) {
+        seq(""), qual(""), id_orig(""), id(""), id2(""), length(0), cut_R(seq.length()), cut_L(0), discard(false) {
         }
     Read subread(size_t _start, size_t _length);
     std::string subseq(size_t _start, size_t _length);

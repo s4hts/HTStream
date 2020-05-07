@@ -73,6 +73,9 @@ public:
             ++PE_Discarded;
         }
     }
+
+private:
+    using Counters::output;  // overload the base class and ignore warnings
 };
 
 class LengthFilter: public MainTemplate<LengthFilterCounters, LengthFilter> {
