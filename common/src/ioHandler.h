@@ -374,5 +374,6 @@ protected:
 };
 
 void writer_helper(ReadBase *r, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, bool stranded = false, bool no_orphans = false);
-
+void writer_helper(PairedEndRead *r, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, bool stranded = false, bool no_orphans = false);
+void writer_helper(SingleEndRead *r, std::shared_ptr<OutputWriter> se);
 #endif

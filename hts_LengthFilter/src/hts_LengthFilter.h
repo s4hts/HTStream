@@ -113,8 +113,8 @@ public:
     }
 
 
-    template <class T, class Impl>
-    void do_app(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, LengthFilterCounters& counters, const po::variables_map &vm) {
+    template <class Impl>
+    void do_app(InputReader<ReadBase, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, LengthFilterCounters& counters, const po::variables_map &vm) {
 
         size_t min_length  = vm["min-length"].as<size_t>();
         bool stranded =  vm["stranded"].as<bool>();
@@ -122,13 +122,13 @@ public:
         size_t max_length = vm["max-length"].as<size_t>();
 
         while(reader.has_next()) {
-            auto i = reader.next();
-            PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
+            ReadBasePtr i = reader.next();
+            PairedEndReadPtr per = std::dynamic_pointer_cast<PairedEndRead>(i);
             if (per) {
                 counters.input(*per);
-                length_filter( per->non_const_read_one(), min_length, max_length);
-                length_filter( per->non_const_read_two(), min_length, max_length);
-                writer_helper(per, pe, se, stranded, no_orphans);
+                length_filter(per->non_const_read_one(), min_length, max_length);
+                length_filter(per->non_const_read_two(), min_length, max_length);
+                writer_helper(per.get(), pe, se, stranded, no_orphans);
                 counters.output(*per, no_orphans);
             } else {
                 SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
@@ -141,6 +141,38 @@ public:
                     throw std::runtime_error("Unknown read type");
                 }
             }
+        }
+    }
+    template <class Impl>
+    void do_app(InputReader<PairedEndRead, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, LengthFilterCounters& counters, const po::variables_map &vm) {
+
+        size_t min_length  = vm["min-length"].as<size_t>();
+        bool stranded =  vm["stranded"].as<bool>();
+        bool no_orphans = vm["no-orphans"].as<bool>();
+        size_t max_length = vm["max-length"].as<size_t>();
+
+        while(reader.has_next()) {
+            PairedEndReadPtr per = reader.next();
+            counters.input(*per);
+            length_filter( per->non_const_read_one(), min_length, max_length);
+            length_filter( per->non_const_read_two(), min_length, max_length);
+            writer_helper(per.get(), pe, se, stranded, no_orphans);
+            counters.output(*per, no_orphans);
+        }
+    }
+    template <class Impl>
+    void do_app(InputReader<SingleEndRead, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, LengthFilterCounters& counters, const po::variables_map &vm) {
+        (void)pe;
+
+        size_t min_length  = vm["min-length"].as<size_t>();
+        size_t max_length = vm["max-length"].as<size_t>();
+
+        while(reader.has_next()) {
+            SingleEndReadPtr ser = reader.next();
+            counters.input(*ser);
+            length_filter( ser->non_const_read_one(), min_length, max_length);
+            writer_helper(ser.get(), se);
+            counters.output(*ser);
         }
     }
 };
