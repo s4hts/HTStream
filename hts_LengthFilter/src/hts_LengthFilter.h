@@ -35,42 +35,40 @@ public:
         r2.push_back(std::forward_as_tuple("discarded", R2_Discarded));
     }
 
-    void output(SingleEndRead &ser)  {
-        Read &one = ser.non_const_read_one();
-        if (!one.getDiscard()) {
-            ++TotalFragmentsOutput;
-            ++SE_Out;
-            SE_BpLen_Out += one.getLength();
-            TotalBasepairsOutput += one.getLength();
-        } else {
-            ++SE_Discarded;
+    void output(const Reads& reads, bool no_orphans) {
+        if (reads.size() == 1) {  // single end
+            if (!reads[0].getDiscard()) {
+                ++TotalFragmentsOutput;
+                ++SE_Out;
+                SE_BpLen_Out += reads[0].getLength();
+                TotalBasepairsOutput += reads[0].getLength();
+            } else {
+                ++SE_Discarded;
+            }
         }
-    }
-
-    void output(PairedEndRead &per, bool no_orphans) {
-        Read &one = per.non_const_read_one();
-        Read &two = per.non_const_read_two();
-        if (!one.getDiscard() && !two.getDiscard()) {
-            ++TotalFragmentsOutput;
-            ++PE_Out;
-            R1_BpLen_Out += one.getLengthTrue();
-            R2_BpLen_Out += two.getLengthTrue();
-            TotalBasepairsOutput += one.getLengthTrue();
-            TotalBasepairsOutput += two.getLengthTrue();
-        } else if (!one.getDiscard() && !no_orphans) {
-            ++TotalFragmentsOutput;
-            ++SE_Out;
-            SE_BpLen_Out += one.getLengthTrue();
-            TotalBasepairsOutput += one.getLengthTrue();
-            ++R2_Discarded;
-        } else if (!two.getDiscard() && !no_orphans) {
-            ++TotalFragmentsOutput;
-            ++SE_Out;
-            SE_BpLen_Out += two.getLengthTrue();
-            TotalBasepairsOutput += two.getLengthTrue();
-            ++R1_Discarded;
-        } else {
-            ++PE_Discarded;
+        else {  //paired end
+            if (!reads[0].getDiscard() && !reads[1].getDiscard()) {
+                ++TotalFragmentsOutput;
+                ++PE_Out;
+                R1_BpLen_Out += reads[0].getLengthTrue();
+                R2_BpLen_Out += reads[1].getLengthTrue();
+                TotalBasepairsOutput += reads[0].getLengthTrue();
+                TotalBasepairsOutput += reads[1].getLengthTrue();
+            } else if (!reads[0].getDiscard() && !no_orphans) {
+                ++TotalFragmentsOutput;
+                ++SE_Out;
+                SE_BpLen_Out += reads[0].getLengthTrue();
+                TotalBasepairsOutput += reads[0].getLengthTrue();
+                ++R2_Discarded;
+            } else if (!reads[1].getDiscard() && !no_orphans) {
+                ++TotalFragmentsOutput;
+                ++SE_Out;
+                SE_BpLen_Out += reads[1].getLengthTrue();
+                TotalBasepairsOutput += reads[1].getLengthTrue();
+                ++R1_Discarded;
+            } else {
+                ++PE_Discarded;
+            }
         }
     }
 
@@ -122,25 +120,10 @@ public:
         size_t max_length = vm["max-length"].as<size_t>();
 
         while(reader.has_next()) {
-            ReadBasePtr i = std::static_pointer_cast<ReadBase>(std::shared_ptr<T>(reader.next()));
-            PairedEndReadPtr per = std::dynamic_pointer_cast<PairedEndRead>(i);
-            if (per) {
-                counters.input(*per);
-                length_filter(per->non_const_read_one(), min_length, max_length);
-                length_filter(per->non_const_read_two(), min_length, max_length);
-                writer_helper(per.get(), pe, se, stranded, no_orphans);
-                counters.output(*per, no_orphans);
-            } else {
-                SingleEndReadPtr ser = std::dynamic_pointer_cast<SingleEndRead>(i);
-                if (ser) {
-                    counters.input(*ser);
-                    length_filter(ser->non_const_read_one(), min_length, max_length);
-                    writer_helper(ser.get(), se);
-                    counters.output(*ser);
-                } else {
-                    throw std::runtime_error("Unknown read type");
-                }
-            }
+            auto i = reader.next();
+            std::for_each(i->get_reads_non_const().begin(), i->get_reads_non_const().end(), ([=](Read &read) { return length_filter(read, min_length, max_length); }));
+            writer_helper(i.get(), pe, se, stranded, no_orphans);
+            counters.output(i->get_reads(), no_orphans);
         }
     }
 };

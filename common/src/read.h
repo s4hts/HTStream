@@ -10,46 +10,6 @@
 
 typedef boost::dynamic_bitset<> BitSet;
 
-class ReadBase {
-public:
-    virtual ~ReadBase() {}
-    ReadBase(ReadBase const&) = default;
-    ReadBase() = default;
-    virtual boost::optional<boost::dynamic_bitset<>> get_key(size_t start, size_t length) = 0;
-    static boost::optional<BitSet> str_to_bit(const std::string& StrKey) {
-          // converts a string to a 2bit representation: A:00, T:11, C:01, G:10
-        // ~ will then convert to the complimentary bp
-        BitSet bit(2 * StrKey.length());
-        size_t i = (2 * StrKey.length()) -1;
-        for (const char &c : StrKey) {
-            switch(c) {
-            case 'A':
-                break;
-            case 'C':
-                bit[i-1] = 1;
-                break;
-            case 'G':
-                bit[i] = 1;
-                break;
-            case 'T':
-                bit[i] = 1;
-                bit[i-1] = 1;
-                break;
-            case 'N':
-                return boost::none;
-                break;
-            }
-            i -= 2;
-        }
-        return bit;
-    }
-    static std::string bit_to_str(const BitSet &bits);
-    static boost::optional<BitSet> reverse_complement(const std::string& str, int start, int length);
-    virtual double avg_q_score() = 0;
-    bool rc;
-};
-typedef std::shared_ptr<ReadBase> ReadBasePtr;
-
 class Read {
 private:
     std::string seq;
@@ -130,26 +90,73 @@ public:
 
     void setRCut( size_t cut_R_ ) { cut_R = cut_R_;}
     void setLCut( size_t cut_L_ ) { cut_L = cut_L_; }
-    bool getDiscard() { return discard; }
+    bool getDiscard() const { return discard; }
     void setDiscard() { discard = true; }
     size_t getLength() const { return length; }
-    size_t getLengthTrue() { return cut_R < cut_L ? 0 : cut_R - cut_L; }
-    size_t getLTrim() { return cut_L; }
-    size_t getRTrim() { return length - cut_R; }
+    size_t getLengthTrue() const { return cut_R < cut_L ? 0 : cut_R - cut_L; }
+    size_t getLTrim() const { return cut_L; }
+    size_t getRTrim() const { return length - cut_R; }
 };
+typedef std::vector<Read> Reads;
+
+class ReadBase {
+public:
+    virtual ~ReadBase() {}
+    ReadBase(ReadBase const&) = default;
+    ReadBase() = default;
+
+    Reads& get_reads_non_const() { return reads; }
+    const Reads& get_reads() const { return reads; }
+    
+    virtual boost::optional<boost::dynamic_bitset<>> get_key(size_t start, size_t length) = 0;
+    static boost::optional<BitSet> str_to_bit(const std::string& StrKey) {
+          // converts a string to a 2bit representation: A:00, T:11, C:01, G:10
+        // ~ will then convert to the complimentary bp
+        BitSet bit(2 * StrKey.length());
+        size_t i = (2 * StrKey.length()) -1;
+        for (const char &c : StrKey) {
+            switch(c) {
+            case 'A':
+                break;
+            case 'C':
+                bit[i-1] = 1;
+                break;
+            case 'G':
+                bit[i] = 1;
+                break;
+            case 'T':
+                bit[i] = 1;
+                bit[i-1] = 1;
+                break;
+            case 'N':
+                return boost::none;
+                break;
+            }
+            i -= 2;
+        }
+        return bit;
+    }
+    static std::string bit_to_str(const BitSet &bits);
+    static boost::optional<BitSet> reverse_complement(const std::string& str, int start, int length);
+    virtual double avg_q_score() = 0;
+    bool rc;
+    Reads reads;
+};
+typedef std::shared_ptr<ReadBase> ReadBasePtr;
 
 class PairedEndRead: public ReadBase {
-private:
-    Read one;
-    Read two;
 public:
-    PairedEndRead(const Read& one_, const Read& two_) :
-        one(one_), two(two_) { }
-    boost::optional<BitSet> get_key(size_t start, size_t length);
-    Read& non_const_read_one() { return one; }
-    Read& non_const_read_two() { return two; }
-    const Read& get_read_one() const { return one; }
-    const Read& get_read_two() const { return two; }
+    PairedEndRead() { reads.resize(2); }
+    PairedEndRead(const Read& one_, const Read& two_) : PairedEndRead() {
+        reads[0] = one_;
+        reads[1] = two_;
+    }
+    
+    virtual boost::optional<BitSet> get_key(size_t start, size_t length);
+    Read& non_const_read_one() { return reads[0]; }
+    Read& non_const_read_two() { return reads[1]; }
+    const Read& get_read_one() const { return reads[0]; }
+    const Read& get_read_two() const { return reads[1]; }
     double avg_q_score();
 
     std::shared_ptr<ReadBase> convert(bool stranded);
@@ -158,17 +165,17 @@ typedef std::shared_ptr<PairedEndRead> PairedEndReadPtr;
 
 /* start, finish, discarded */
 class SingleEndRead: public ReadBase {
-private:
-    Read one;
 public:
-    SingleEndRead(const Read& one_) :
-        one(one_) { }
+    SingleEndRead() { reads.resize(1); }
+    SingleEndRead(const Read& one_) : SingleEndRead() {
+        reads[0] = one_;
+    }              
     boost::optional<BitSet> get_key(size_t start, size_t length);
-    Read& non_const_read_one() { return one; }
-    const Read& get_read() const { return one; }
+    Read& non_const_read_one() { return reads[0]; }
+    const Read& get_read() const { return reads[0]; }
     double avg_q_score();
     std::shared_ptr<ReadBase> convert(bool stranded);
-    void set_read_rc() { one.set_read_rc();}
+    void set_read_rc() { reads[0].set_read_rc();}
 };
 typedef std::shared_ptr<SingleEndRead> SingleEndReadPtr;
 
