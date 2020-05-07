@@ -2,32 +2,35 @@
 #include <exception>
 #include <cerrno>
 #include <sstream>
+void writer_helper(PairedEndRead *per, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, bool stranded, bool no_orphans ) { //class writer
+    Read &one = per->non_const_read_one();
+    Read &two = per->non_const_read_two();
+
+    if (!one.getDiscard() && !two.getDiscard()) {
+        pe->write(*per);
+    } else if (!one.getDiscard() && !no_orphans) { // Will never be RC
+        se->write_read(one, false);
+    } else if (!two.getDiscard() && !no_orphans) { // if stranded RC
+        se->write_read((per->get_read_two()), stranded);
+    }
+}
+void writer_helper(SingleEndRead *ser, std::shared_ptr<OutputWriter> se) { //class writer
+    if (! (ser->non_const_read_one()).getDiscard() ) {
+        se->write(*ser);
+    } 
+}
 
 void writer_helper(ReadBase *r, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, bool stranded, bool no_orphans ) { //class writer
     PairedEndRead *per = dynamic_cast<PairedEndRead*>(r);
     if (per) {
-        Read &one = per->non_const_read_one();
-        Read &two = per->non_const_read_two();
-
-        if (!one.getDiscard() && !two.getDiscard()) {
-            pe->write(*per);
-        } else if (!one.getDiscard() && !no_orphans) { // Will never be RC
-            se->write_read(one, false);
-        } else if (!two.getDiscard() && !no_orphans) { // if stranded RC
-            se->write_read((per->get_read_two()), stranded);
-        } else {
-
-        }
+        return writer_helper(per, pe, se, stranded, no_orphans);
     } else {
         SingleEndRead *ser = dynamic_cast<SingleEndRead*>(r);
         if (!ser) {
             throw std::runtime_error("Unknown read found");
         }
-        if (! (ser->non_const_read_one()).getDiscard() ) {
-            se->write(*ser);
-        } else {
+        return writer_helper(ser, se);
 
-        }
     }
 }
 

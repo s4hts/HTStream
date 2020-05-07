@@ -298,7 +298,7 @@ public:
                 SingleEndReadPtr ser = std::dynamic_pointer_cast<SingleEndRead>(rbase);
                 if (ser) {
                     counter.output(*ser);
-                    writer_helper(ser.get(), pe, se);
+                    writer_helper(ser.get(), se);
                 } else {
                     throw std::runtime_error("Unknown read type");
                 }
