@@ -26,6 +26,9 @@ jobs:
     - name: test
       working-directory: ./build
       run: make test
+    - name: regression
+      working-directory: ./regression
+      run: ./regression.sh ../build test
 
   clang_build_and_test:
     runs-on: ubuntu-latest
