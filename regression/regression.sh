@@ -23,7 +23,7 @@ testrun() {
         echo running $prog output to $out
         $prog -1 $fastqr1 -2 $fastqr2 -t $out -F
         echo zdiff $out.tab6.gz ${out%%.*}.tab6.gz
-        zdiff -q $out.tab6.gz ${out%%.*}.tab6.gz
+        zdiff $out.tab6.gz ${out%%.*}.tab6.gz
         rm $out.tab6.gz
     done
 }

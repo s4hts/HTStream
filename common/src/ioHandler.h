@@ -23,6 +23,7 @@
 
 #include <iostream>
 #include <string>
+#include <cstdio>
 
 #include "counters.h"
 
@@ -30,7 +31,6 @@ namespace bf = boost::filesystem;
 namespace bi = boost::iostreams;
 
 int check_open_r(const std::string& filename) ;
-int check_exists(const std::string& filename, bool force, bool gzip, bool std_out) ;
 std::string string2fasta(std::string seqstring, std::string prefix, const char delim=',');
 Read fasta_to_read(std::string fasta_file);
 
@@ -41,19 +41,22 @@ private:
     bool gzip;
     bool std_out;
     std::shared_ptr<std::ostream> out = nullptr;
+    FILE* gzfile = 0;
+
+    int check_exists(const std::string& filename, bool force, bool gzip, bool std_out) ;
 
     void create_out() {
-        out.reset(new bi::stream<bi::file_descriptor_sink> {check_exists(filename, force, gzip, std_out), bi::close_handle});
+        out.reset(new bi::stream<bi::file_descriptor_sink> (
+                check_exists(filename, force, gzip, std_out), bi::close_handle));
     }
 
 public:
     ~HtsOfstream() {
-        if (out) {
-            std::flush(*out);
-        }
+        flush();
     }
 
-    HtsOfstream(std::string filename_, bool force_, bool gzip_, bool stdout_) : filename(filename_), force(force_), gzip(gzip_), std_out(stdout_)  { }
+    HtsOfstream(std::string filename_, bool force_, bool gzip_, bool stdout_) :
+        filename(filename_), force(force_), gzip(gzip_), std_out(stdout_)  { }
 
     HtsOfstream(std::shared_ptr<std::ostream> out_) : out(out_) { }
 
@@ -69,6 +72,10 @@ public:
     void flush() {
         if (out) {
             std::flush(*out);
+            if (gzfile) {
+                pclose(gzfile);
+            }
+            out.reset();
         }
     }
 };
