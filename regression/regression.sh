@@ -22,6 +22,14 @@ testrun() {
         out=${prog##*/}.test
         echo running $prog output to $out
         $prog -1 $fastqr1 -2 $fastqr2 -t $out -F
+
+        if [ ${prog##*/} == 'hts_SuperDeduper' ]
+        then
+            echo sorting superDeduper because its output is non-deterministic
+            mv $out $out.tmp && zcat $out.tmp | sort | gzip -c > $out
+            rm $out.tmp
+        fi
+
         echo zdiff $out.tab6.gz ${out%%.*}.tab6.gz
         zdiff $out.tab6.gz ${out%%.*}.tab6.gz
         rm $out.tab6.gz
