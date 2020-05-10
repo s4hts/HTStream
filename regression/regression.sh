@@ -26,15 +26,16 @@ testrun() {
         if [ ${prog##*/} == 'hts_SuperDeduper' ]
         then
             echo sorting superDeduper because its output is non-deterministic
-            mv $out.tab6.gz $out.tmp && zcat $out.tmp | sort | gzip -c > $out.tab6.gz
+            mv $out.tab6.gz $out.tmp && zcat $out.tmp | sort > $out.tab6
             rm $out.tmp
 
             orig=${out%%.*}
-            zcat $orig.tab6.gz | sort | gzip -c > $orig.sorted.tab6.gz
-            echo zdiff $out.tab6.gz $orig.sorted.tab6.gz
-            zdiff $out.tab6.gz $orig.sorted.tab6.gz
-            rm $out.tab6.gz
-            rm $orig.sorted.tab6.gz
+
+            zcat $orig.tab6.gz | sort > $orig.sorted.tab6
+            echo diff $out.tab6 $orig.sorted.tab6
+            diff $out.tab6 $orig.sorted.tab6
+            rm $out.tab6
+            rm $orig.sorted.tab6
         else
             echo zdiff $out.tab6.gz ${out%%.*}.tab6.gz
             zdiff $out.tab6.gz ${out%%.*}.tab6.gz
