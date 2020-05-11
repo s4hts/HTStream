@@ -181,6 +181,7 @@ public:
 class SingleEndReadOutFastq : public OutputWriter {
 public:
     SingleEndReadOutFastq(std::shared_ptr<HtsOfstream> &out_) : output(out_) { }
+    virtual ~SingleEndReadOutFastq() {};
     void write(const SingleEndRead &read) { format_writer(read.get_read()); }
     void write_read(const Read &read, bool rc) { if (rc) { format_writer_rc(read); } else { format_writer(read); } }
     void write(const ReadBase &read) {
@@ -206,6 +207,7 @@ protected:
 class PairedEndReadOutFastq : public OutputWriter {
 public:
     PairedEndReadOutFastq(std::shared_ptr<HtsOfstream> &out1_, std::shared_ptr<HtsOfstream> &out2_) : out1(out1_), out2(out2_) { }
+    virtual ~PairedEndReadOutFastq() {};
     void write(const PairedEndRead &read) { format_writer(read.get_read_one(), read.get_read_two()); }
     void write(const ReadBase &read) {
         const PairedEndRead *per = dynamic_cast<const PairedEndRead*>(&read);
@@ -227,6 +229,7 @@ protected:
 class PairedEndReadOutInter : public OutputWriter {
 public:
     PairedEndReadOutInter(std::shared_ptr<HtsOfstream> &out_) : out1(out_) { }
+    virtual ~PairedEndReadOutInter() {};
     void write(const PairedEndRead &read) { format_writer(read.get_read_one(), read.get_read_two()); }
     void write(const ReadBase &read) {
         const PairedEndRead *per = dynamic_cast<const PairedEndRead*>(&read);
@@ -248,6 +251,7 @@ protected:
 class ReadBaseOutUnmapped : public OutputWriter {
 public:
     ReadBaseOutUnmapped(std::shared_ptr<HtsOfstream> &out_) : output(out_) { }
+    virtual ~ReadBaseOutUnmapped() {};
     void write(const PairedEndRead &read) { format_writer(read.get_read_one(), read.get_read_two()); }
     void write(const SingleEndRead &read) { format_writer(read.get_read()); }
     void write_read(const Read &read, bool rc) { if (rc) { format_writer_rc(read); } else { format_writer(read); } }
@@ -335,6 +339,7 @@ protected:
 class ReadBaseOutTab : public OutputWriter {
 public:
     ReadBaseOutTab(std::shared_ptr<HtsOfstream> &out_) : output(out_) { }
+    virtual ~ReadBaseOutTab() {};
     void write(const PairedEndRead &read) { format_writer(read.get_read_one(), read.get_read_two()); }
     void write(const SingleEndRead &read) { format_writer(read.get_read()); }
     void write_read(const Read &read, bool rc) { if (rc) { format_writer_rc(read); } else { format_writer(read); } }
