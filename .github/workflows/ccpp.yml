@@ -30,6 +30,7 @@ jobs:
       working-directory: ./regression
       run: ./regression.sh ../build test
     - uses: actions/upload-artifact@v2
+      if: always()
       with:
         name: regression_data
         path: regression/*.test.tab6.gz
@@ -52,3 +53,11 @@ jobs:
     - name: test
       working-directory: ./build
       run: make test
+    - name: regression
+      working-directory: ./regression
+      run: ./regression.sh ../build test
+    - uses: actions/upload-artifact@v2
+      if: always()
+      with:
+        name: regression_data_clang
+        path: regression/*.test.tab6.gz
