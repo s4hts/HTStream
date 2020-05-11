@@ -172,6 +172,7 @@ public:
                 writer_helper(i.second.get(), pe, se, false, false);
             }
         }
+        read_map.clear();
     }
 };
 #endif

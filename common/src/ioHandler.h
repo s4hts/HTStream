@@ -71,9 +71,10 @@ public:
 
     void flush() {
         if (out) {
-            std::flush(*out);
             if (gzfile) {
                 pclose(gzfile);
+            } else {
+                std::flush(*out);
             }
             out.reset();
         }
