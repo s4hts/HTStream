@@ -31,8 +31,8 @@ jobs:
       run: ./regression.sh ../build test
     - uses: actions/upload-artifact@v2
       with:
-        name: superd-regression
-        path: regression/hts_SuperDeduper.test.tab6.gz
+        name: regression_data
+        path: regression/*.test.tab6.gz
 
   clang_build_and_test:
     runs-on: ubuntu-latest
