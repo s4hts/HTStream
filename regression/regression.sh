@@ -25,7 +25,7 @@ testrun() {
 
         if [ ${prog##*/} == 'hts_SuperDeduper' ]
         then
-            # echo sorting superDeduper because its output is non-deterministic
+            echo sorting superDeduper because its output is non-deterministic
             cp $out.tab6.gz $out.tmp && zcat $out.tmp | sort > $out.tab6
             rm $out.tmp
 
@@ -36,7 +36,7 @@ testrun() {
             diff $out.tab6 $orig.sorted.tab6
             rm $out.tab6
             rm $orig.sorted.tab6
-            echo skipping superd for now
+            #echo skipping superd for now
         else
             echo zdiff $out.tab6.gz ${out%%.*}.tab6.gz
             zdiff $out.tab6.gz ${out%%.*}.tab6.gz

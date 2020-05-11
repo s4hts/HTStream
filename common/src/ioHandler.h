@@ -52,7 +52,12 @@ private:
 
 public:
     ~HtsOfstream() {
-        flush();
+        if (out) {
+            if (gzfile) {
+                pclose(gzfile);
+            }
+            out.reset();
+        }
     }
 
     HtsOfstream(std::string filename_, bool force_, bool gzip_, bool stdout_) :
@@ -67,17 +72,6 @@ public:
         }
         *out << s;
         return *this;
-    }
-
-    void flush() {
-        if (out) {
-            if (gzfile) {
-                pclose(gzfile);
-            } else {
-                std::flush(*out);
-            }
-            out.reset();
-        }
     }
 };
 
@@ -187,7 +181,6 @@ public:
 class SingleEndReadOutFastq : public OutputWriter {
 public:
     SingleEndReadOutFastq(std::shared_ptr<HtsOfstream> &out_) : output(out_) { }
-    ~SingleEndReadOutFastq() { output->flush(); }
     void write(const SingleEndRead &read) { format_writer(read.get_read()); }
     void write_read(const Read &read, bool rc) { if (rc) { format_writer_rc(read); } else { format_writer(read); } }
     void write(const ReadBase &read) {
@@ -213,7 +206,6 @@ protected:
 class PairedEndReadOutFastq : public OutputWriter {
 public:
     PairedEndReadOutFastq(std::shared_ptr<HtsOfstream> &out1_, std::shared_ptr<HtsOfstream> &out2_) : out1(out1_), out2(out2_) { }
-    ~PairedEndReadOutFastq() { out1->flush(); out2->flush(); }
     void write(const PairedEndRead &read) { format_writer(read.get_read_one(), read.get_read_two()); }
     void write(const ReadBase &read) {
         const PairedEndRead *per = dynamic_cast<const PairedEndRead*>(&read);
@@ -235,7 +227,6 @@ protected:
 class PairedEndReadOutInter : public OutputWriter {
 public:
     PairedEndReadOutInter(std::shared_ptr<HtsOfstream> &out_) : out1(out_) { }
-    ~PairedEndReadOutInter() { out1->flush(); }
     void write(const PairedEndRead &read) { format_writer(read.get_read_one(), read.get_read_two()); }
     void write(const ReadBase &read) {
         const PairedEndRead *per = dynamic_cast<const PairedEndRead*>(&read);
@@ -257,7 +248,6 @@ protected:
 class ReadBaseOutUnmapped : public OutputWriter {
 public:
     ReadBaseOutUnmapped(std::shared_ptr<HtsOfstream> &out_) : output(out_) { }
-    ~ReadBaseOutUnmapped() { output->flush(); }
     void write(const PairedEndRead &read) { format_writer(read.get_read_one(), read.get_read_two()); }
     void write(const SingleEndRead &read) { format_writer(read.get_read()); }
     void write_read(const Read &read, bool rc) { if (rc) { format_writer_rc(read); } else { format_writer(read); } }
@@ -345,7 +335,6 @@ protected:
 class ReadBaseOutTab : public OutputWriter {
 public:
     ReadBaseOutTab(std::shared_ptr<HtsOfstream> &out_) : output(out_) { }
-    ~ReadBaseOutTab() { output->flush(); }
     void write(const PairedEndRead &read) { format_writer(read.get_read_one(), read.get_read_two()); }
     void write(const SingleEndRead &read) { format_writer(read.get_read()); }
     void write_read(const Read &read, bool rc) { if (rc) { format_writer_rc(read); } else { format_writer(read); } }
