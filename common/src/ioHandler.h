@@ -23,6 +23,7 @@
 
 #include <iostream>
 #include <string>
+#include <cstdio>
 
 #include "counters.h"
 
@@ -30,7 +31,6 @@ namespace bf = boost::filesystem;
 namespace bi = boost::iostreams;
 
 int check_open_r(const std::string& filename) ;
-int check_exists(const std::string& filename, bool force, bool gzip, bool std_out) ;
 std::string string2fasta(std::string seqstring, std::string prefix, const char delim=',');
 Read fasta_to_read(std::string fasta_file);
 
@@ -41,19 +41,28 @@ private:
     bool gzip;
     bool std_out;
     std::shared_ptr<std::ostream> out = nullptr;
+    FILE* gzfile = 0;
+
+    int check_exists(const std::string& filename, bool force, bool gzip, bool std_out) ;
 
     void create_out() {
-        out.reset(new bi::stream<bi::file_descriptor_sink> {check_exists(filename, force, gzip, std_out), bi::close_handle});
+        out.reset(new bi::stream<bi::file_descriptor_sink> (
+                check_exists(filename, force, gzip, std_out), bi::close_handle));
     }
 
 public:
     ~HtsOfstream() {
         if (out) {
-            std::flush(*out);
+            out->flush();
+            if (gzfile) {
+                pclose(gzfile);
+            }
+            out.reset();
         }
     }
 
-    HtsOfstream(std::string filename_, bool force_, bool gzip_, bool stdout_) : filename(filename_), force(force_), gzip(gzip_), std_out(stdout_)  { }
+    HtsOfstream(std::string filename_, bool force_, bool gzip_, bool stdout_) :
+        filename(filename_), force(force_), gzip(gzip_), std_out(stdout_)  { }
 
     HtsOfstream(std::shared_ptr<std::ostream> out_) : out(out_) { }
 
@@ -64,12 +73,6 @@ public:
         }
         *out << s;
         return *this;
-    }
-
-    void flush() {
-        if (out) {
-            std::flush(*out);
-        }
     }
 };
 
@@ -179,10 +182,10 @@ public:
 class SingleEndReadOutFastq : public OutputWriter {
 public:
     SingleEndReadOutFastq(std::shared_ptr<HtsOfstream> &out_) : output(out_) { }
-    ~SingleEndReadOutFastq() { output->flush(); }
-    void write(const SingleEndRead &read) { format_writer(read.get_read()); }
-    void write_read(const Read &read, bool rc) { if (rc) { format_writer_rc(read); } else { format_writer(read); } }
-    void write(const ReadBase &read) {
+    virtual ~SingleEndReadOutFastq() {};
+    virtual void write(const SingleEndRead &read) { format_writer(read.get_read()); }
+    virtual void write_read(const Read &read, bool rc) { if (rc) { format_writer_rc(read); } else { format_writer(read); } }
+    virtual void write(const ReadBase &read) {
         const SingleEndRead *ser = dynamic_cast<const SingleEndRead*>(&read);
         if (ser) {
             write(*ser);
@@ -205,9 +208,9 @@ protected:
 class PairedEndReadOutFastq : public OutputWriter {
 public:
     PairedEndReadOutFastq(std::shared_ptr<HtsOfstream> &out1_, std::shared_ptr<HtsOfstream> &out2_) : out1(out1_), out2(out2_) { }
-    ~PairedEndReadOutFastq() { out1->flush(); out2->flush(); }
-    void write(const PairedEndRead &read) { format_writer(read.get_read_one(), read.get_read_two()); }
-    void write(const ReadBase &read) {
+    virtual ~PairedEndReadOutFastq() {};
+    virtual void write(const PairedEndRead &read) { format_writer(read.get_read_one(), read.get_read_two()); }
+    virtual void write(const ReadBase &read) {
         const PairedEndRead *per = dynamic_cast<const PairedEndRead*>(&read);
         if (per) {
             write(*per);
@@ -227,9 +230,9 @@ protected:
 class PairedEndReadOutInter : public OutputWriter {
 public:
     PairedEndReadOutInter(std::shared_ptr<HtsOfstream> &out_) : out1(out_) { }
-    ~PairedEndReadOutInter() { out1->flush(); }
-    void write(const PairedEndRead &read) { format_writer(read.get_read_one(), read.get_read_two()); }
-    void write(const ReadBase &read) {
+    virtual ~PairedEndReadOutInter() {};
+    virtual void write(const PairedEndRead &read) { format_writer(read.get_read_one(), read.get_read_two()); }
+    virtual void write(const ReadBase &read) {
         const PairedEndRead *per = dynamic_cast<const PairedEndRead*>(&read);
         if (per) {
             write(*per);
@@ -249,12 +252,12 @@ protected:
 class ReadBaseOutUnmapped : public OutputWriter {
 public:
     ReadBaseOutUnmapped(std::shared_ptr<HtsOfstream> &out_) : output(out_) { }
-    ~ReadBaseOutUnmapped() { output->flush(); }
-    void write(const PairedEndRead &read) { format_writer(read.get_read_one(), read.get_read_two()); }
-    void write(const SingleEndRead &read) { format_writer(read.get_read()); }
-    void write_read(const Read &read, bool rc) { if (rc) { format_writer_rc(read); } else { format_writer(read); } }
+    virtual ~ReadBaseOutUnmapped() {};
+    virtual void write(const PairedEndRead &read) { format_writer(read.get_read_one(), read.get_read_two()); }
+    virtual void write(const SingleEndRead &read) { format_writer(read.get_read()); }
+    virtual void write_read(const Read &read, bool rc) { if (rc) { format_writer_rc(read); } else { format_writer(read); } }
 
-    void write(const ReadBase &read) {
+    virtual void write(const ReadBase &read) {
         const PairedEndRead *per = dynamic_cast<const PairedEndRead*>(&read);
         if (per) {
             format_writer(per->get_read_one(), per->get_read_two());
@@ -337,12 +340,12 @@ protected:
 class ReadBaseOutTab : public OutputWriter {
 public:
     ReadBaseOutTab(std::shared_ptr<HtsOfstream> &out_) : output(out_) { }
-    ~ReadBaseOutTab() { output->flush(); }
-    void write(const PairedEndRead &read) { format_writer(read.get_read_one(), read.get_read_two()); }
-    void write(const SingleEndRead &read) { format_writer(read.get_read()); }
-    void write_read(const Read &read, bool rc) { if (rc) { format_writer_rc(read); } else { format_writer(read); } }
+    virtual ~ReadBaseOutTab() {};
+    virtual void write(const PairedEndRead &read) { format_writer(read.get_read_one(), read.get_read_two()); }
+    virtual void write(const SingleEndRead &read) { format_writer(read.get_read()); }
+    virtual void write_read(const Read &read, bool rc) { if (rc) { format_writer_rc(read); } else { format_writer(read); } }
 
-    void write(const ReadBase &read) {
+    virtual void write(const ReadBase &read) {
         const PairedEndRead *per = dynamic_cast<const PairedEndRead*>(&read);
         if (per) {
             format_writer(per->get_read_one(), per->get_read_two());

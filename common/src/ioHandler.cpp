@@ -85,7 +85,7 @@ int check_open_r(const std::string& filename) {
 }
 
 
-int check_exists(const std::string& filename, bool force, bool gzip, bool std_out) {
+int HtsOfstream::check_exists(const std::string& filename, bool force, bool gzip, bool std_out) {
     FILE* f = NULL;
 
     if (std_out) {
@@ -98,6 +98,7 @@ int check_exists(const std::string& filename, bool force, bool gzip, bool std_ou
     if (force || !bf::exists(p)) {
         if (gzip) {
             f = popen(("gzip > '" + fname + "'").c_str(), "w");
+            gzfile = f;
         } else {
             f = fopen(fname.c_str(), "w");
         }

@@ -69,7 +69,7 @@ void outputWriters(std::shared_ptr<OutputWriter> &pe, std::shared_ptr<OutputWrit
         out_1= std::make_shared<HtsOfstream>(default_outfiles[0], vm["force"].as<bool>(), !vm["uncompressed"].as<bool>(), false);
 
         pe= std::make_shared<ReadBaseOutTab>(out_1);
-        se= std::make_shared<ReadBaseOutTab>(out_1);
+        se= pe;
     } else if (vm.count("unmapped-output")) {
         std::string prefix = vm["unmapped-output"].as<std::string>();
         for (auto& outfile: default_outfiles) {
@@ -82,12 +82,12 @@ void outputWriters(std::shared_ptr<OutputWriter> &pe, std::shared_ptr<OutputWrit
         }
 
         pe= std::make_shared<ReadBaseOutUnmapped>(out_1);
-        se= std::make_shared<ReadBaseOutUnmapped>(out_1);
+        se= pe;
     } else { // output to stdout
         out_1= std::make_shared<HtsOfstream>(default_outfiles[0], vm["force"].as<bool>(), !vm["uncompressed"].as<bool>(), true);
 
         pe= std::make_shared<ReadBaseOutTab>(out_1);
-        se= std::make_shared<ReadBaseOutTab>(out_1);
+        se= pe;
     }
 }
 
