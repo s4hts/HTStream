@@ -17,3 +17,4 @@ static-build
 release
 debug
 gprof
+compile_commands.json
