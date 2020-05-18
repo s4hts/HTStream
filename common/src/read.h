@@ -101,6 +101,8 @@ public:
 typedef std::shared_ptr<Read> ReadPtr;
 typedef std::vector<ReadPtr> Reads;
 
+class ReadVisitor;
+
 class ReadBase {
 public:
     virtual ~ReadBase() {}
@@ -141,6 +143,9 @@ public:
     static std::string bit_to_str(const BitSet &bits);
     static boost::optional<BitSet> reverse_complement(const std::string& str, int start, int length);
     virtual double avg_q_score() = 0;
+
+    virtual void accept(ReadVisitor &rv) = 0;
+
     bool rc;
     Reads reads;
 };
@@ -173,9 +178,9 @@ public:
     Read& non_const_read_two() { return *two; }
     const Read& get_read_one() const { return *one; }
     const Read& get_read_two() const { return *two; }
-    double avg_q_score();
-
+    virtual double avg_q_score();
     std::shared_ptr<ReadBase> convert(bool stranded);
+    virtual void accept(ReadVisitor &rv);
 
 private:
     ReadPtr one;
@@ -200,16 +205,24 @@ public:
         one = reads[0];
     }
     
-    boost::optional<BitSet> get_key(size_t start, size_t length);
+    virtual boost::optional<BitSet> get_key(size_t start, size_t length);
     Read& non_const_read_one() { return *one; }
     const Read& get_read() const { return *one; }
-    double avg_q_score();
+    virtual double avg_q_score();
     std::shared_ptr<ReadBase> convert(bool stranded);
     void set_read_rc() { one->set_read_rc();}
+    virtual void accept(ReadVisitor &rv);
 
 private:
     ReadPtr one;
 };
 typedef std::shared_ptr<SingleEndRead> SingleEndReadPtr;
+
+class ReadVisitor {
+public:
+    virtual ~ReadVisitor() {};
+    virtual void visit(SingleEndRead* ser) = 0;
+    virtual void visit(PairedEndRead* per) = 0;
+};
 
 #endif

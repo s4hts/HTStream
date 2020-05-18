@@ -94,3 +94,11 @@ char Read::complement(char bp) {
     }
     return 'N';
 }
+
+void SingleEndRead::accept(ReadVisitor &rv) {
+    rv.visit(this);
+}
+
+void PairedEndRead::accept(ReadVisitor &rv) {
+    rv.visit(this);
+}

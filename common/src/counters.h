@@ -19,7 +19,7 @@
 namespace bf = boost::filesystem;
 namespace po = boost::program_options;
 
-class Counters {
+class Counters : public ReadVisitor {
 public:
     std::fstream outStats;
     std::string fStats = "/dev/null";
@@ -136,17 +136,15 @@ public:
      }
 
     virtual void output(ReadBase &read) {
-        PairedEndRead *per = dynamic_cast<PairedEndRead *>(&read);
-        if (per) {
-            return output(*per);
-        } else {
-            SingleEndRead *ser = dynamic_cast<SingleEndRead *>(&read);
-            if (ser) {
-                return output(*ser);
-            } else {
-                throw std::runtime_error("In utils.h output: read type not valid");
-            }
-        }
+        read.accept(*this);
+    }
+
+    virtual void visit(PairedEndRead* per) {
+        output(*per);
+    }
+
+    virtual void visit(SingleEndRead* ser) {
+        output(*ser);
     }
 
     virtual void write_out() {
