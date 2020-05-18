@@ -97,7 +97,9 @@ public:
     size_t getLTrim() const { return cut_L; }
     size_t getRTrim() const { return length - cut_R; }
 };
-typedef std::vector<Read> Reads;
+
+typedef std::shared_ptr<Read> ReadPtr;
+typedef std::vector<ReadPtr> Reads;
 
 class ReadBase {
 public:
@@ -148,18 +150,36 @@ class PairedEndRead: public ReadBase {
 public:
     PairedEndRead() { reads.resize(2); }
     PairedEndRead(const Read& one_, const Read& two_) : PairedEndRead() {
-        reads[0] = one_;
-        reads[1] = two_;
+        one = std::make_shared<Read>(one_);
+        two = std::make_shared<Read>(two_);
+        reads[0] = one;
+        reads[1] = two;
     }
-    
+
+    PairedEndRead(const ReadPtr& one_, const ReadPtr& two_) : PairedEndRead() {
+        one = one_;
+        two = two_;
+        reads[0] = one;
+        reads[1] = two;
+    }
+    PairedEndRead(const std::vector<ReadPtr>& reads_) {
+        reads = reads_;
+        one = reads[0];
+        two = reads[1];
+    }
+
     virtual boost::optional<BitSet> get_key(size_t start, size_t length);
-    Read& non_const_read_one() { return reads[0]; }
-    Read& non_const_read_two() { return reads[1]; }
-    const Read& get_read_one() const { return reads[0]; }
-    const Read& get_read_two() const { return reads[1]; }
+    Read& non_const_read_one() { return *one; }
+    Read& non_const_read_two() { return *two; }
+    const Read& get_read_one() const { return *one; }
+    const Read& get_read_two() const { return *two; }
     double avg_q_score();
 
     std::shared_ptr<ReadBase> convert(bool stranded);
+
+private:
+    ReadPtr one;
+    ReadPtr two;
 };
 typedef std::shared_ptr<PairedEndRead> PairedEndReadPtr;
 
@@ -168,14 +188,27 @@ class SingleEndRead: public ReadBase {
 public:
     SingleEndRead() { reads.resize(1); }
     SingleEndRead(const Read& one_) : SingleEndRead() {
-        reads[0] = one_;
+        one = std::make_shared<Read>(one_);
+        reads[0] = one;
+    }
+    SingleEndRead(const ReadPtr& one_) : SingleEndRead() {
+        one = one_;
+        reads[0] = one;
     }              
+    SingleEndRead(const std::vector<ReadPtr> reads_) {
+        reads = reads_;
+        one = reads[0];
+    }
+    
     boost::optional<BitSet> get_key(size_t start, size_t length);
-    Read& non_const_read_one() { return reads[0]; }
-    const Read& get_read() const { return reads[0]; }
+    Read& non_const_read_one() { return *one; }
+    const Read& get_read() const { return *one; }
     double avg_q_score();
     std::shared_ptr<ReadBase> convert(bool stranded);
-    void set_read_rc() { reads[0].set_read_rc();}
+    void set_read_rc() { one->set_read_rc();}
+
+private:
+    ReadPtr one;
 };
 typedef std::shared_ptr<SingleEndRead> SingleEndReadPtr;
 

@@ -33,11 +33,11 @@ std::string Read::subseq(size_t _start, size_t _length){
 
 //PairedEndRead
 boost::optional<BitSet> PairedEndRead::get_key(size_t _start, size_t _length){
-    if (std::min(reads[0].getLength(), reads[1].getLength()) <= _start+_length){
+    if (std::min(one->getLength(), two->getLength()) <= _start+_length){
       return boost::none;
     } else {
-      return std::max(str_to_bit(reads[0].subseq(_start, _length) + reads[1].subseq(_start, _length)),
-                      str_to_bit(reads[1].subseq(_start, _length) + reads[0].subseq(_start, _length)));
+      return std::max(str_to_bit(one->subseq(_start, _length) + two->subseq(_start, _length)),
+                      str_to_bit(two->subseq(_start, _length) + one->subseq(_start, _length)));
     }
 }
 
@@ -55,10 +55,10 @@ boost::optional<BitSet> ReadBase::reverse_complement(const std::string& str, int
 //SingleEndRead
 boost::optional<BitSet> SingleEndRead::get_key(size_t _start, size_t _length){
     //The C ensures no PE and SE are mapped to the same location
-    if (reads[0].getLength() <= (_start+_length*2)){
+    if (one->getLength() <= (_start+_length*2)){
       return boost::none;
     } else {
-      return str_to_bit("C" + reads[0].subseq(_start, _length*2));
+      return str_to_bit("C" + one->subseq(_start, _length*2));
     }
 }
 
@@ -68,16 +68,16 @@ inline double qual_sum(double s, const char c) {
 
 double SingleEndRead::avg_q_score()
 {
-    double sum = std::accumulate(reads[0].get_qual().begin(), reads[0].get_qual().end(), double(0), qual_sum);
-    return sum/double(reads[0].get_qual().length());
+    double sum = std::accumulate(one->get_qual().begin(), one->get_qual().end(), double(0), qual_sum);
+    return sum/double(one->get_qual().length());
 
 }
 
 double PairedEndRead::avg_q_score()
 {
-    double sum = std::accumulate(reads[0].get_qual().begin(), reads[0].get_qual().end(), double(0), qual_sum);
-    sum += std::accumulate(reads[1].get_qual().begin(), reads[1].get_qual().end(), double(0), qual_sum);
-    return sum/double(reads[0].get_qual().length() + reads[1].get_qual().length());
+    double sum = std::accumulate(one->get_qual().begin(), one->get_qual().end(), double(0), qual_sum);
+    sum += std::accumulate(two->get_qual().begin(), two->get_qual().end(), double(0), qual_sum);
+    return sum/double(one->get_qual().length() + two->get_qual().length());
 }
 
 char Read::complement(char bp) {

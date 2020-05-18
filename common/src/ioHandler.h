@@ -89,14 +89,14 @@ public:
 
 class InputFastq {
 protected:
-    Read load_read(std::istream *input);
+    ReadPtr load_read(std::istream *input);
 
     std::string id, seq, id2, qual;
 };
 
 class InputFasta {
 protected:
-    Read load_read(std::istream *input);
+    ReadPtr load_read(std::istream *input);
     std::string id, seq;
     std::string tmpSeq;
 };
@@ -143,7 +143,7 @@ class TabReadImpl : public InputFastq {
 public:
     TabReadImpl(std::istream& in1_) : in1(&in1_) {}
     TabReadImpl(std::vector<std::string> in_) : fin(in_) {}
-    std::vector<Read> load_read(std::istream *input);
+    std::vector<ReadPtr> load_read(std::istream *input);
 protected:
     std::istream* in1;
     std::vector<std::string> fin;
