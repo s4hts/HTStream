@@ -118,11 +118,12 @@ public:
         bool no_orphans = vm["no-orphans"].as<bool>();
         size_t max_length = vm["max-length"].as<size_t>();
         counters.no_orphans = no_orphans;
-
+        WriterHelper writer(pe, se, stranded, no_orphans);
         while(reader.has_next()) {
             auto i = reader.next();
             std::for_each(i->get_reads_non_const().begin(), i->get_reads_non_const().end(), ([=](const ReadPtr &read) { return length_filter(*read, min_length, max_length); }));
-            writer_helper(i.get(), pe, se, stranded, no_orphans);
+
+            writer(*i);
             counters.output(*i);
         }
     }

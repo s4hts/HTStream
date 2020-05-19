@@ -548,6 +548,7 @@ public:
         const size_t pfloat = vm["float"].as<size_t>();
         const bool flip = vm["flip"].as<bool>();
         const bool keep = vm["keep"].as<bool>();
+        WriterHelper writer(pe, se);
 
         while(reader.has_next()) {
             auto i = reader.next();
@@ -556,7 +557,7 @@ public:
                 counter.input(*per);
                 if (check_read_pe(*per, counter, primer5p, primer3p, pMismatches, pEndMismatches, pfloat, flip, keep, min_mprimers)){
                     counter.output(*per);
-                    writer_helper(per, pe, se);
+                    writer(*per);
                 }
             } else {
                 SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
@@ -564,7 +565,7 @@ public:
                     counter.input(*ser);
                     if (check_read_se(*ser, counter, primer5p, primer3p, pMismatches, pEndMismatches, pfloat, flip, keep, min_mprimers)){
                         counter.output(*ser);
-                        writer_helper(ser, pe, se);
+                        writer(*ser);
                     }
                 } else {
                     throw std::runtime_error("Unknown read type");

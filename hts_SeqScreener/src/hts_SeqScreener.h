@@ -270,6 +270,7 @@ public:
     /*Particullary time consuming in each read*/
     boost::dynamic_bitset <> forwardLookup(bitKmer);
     boost::dynamic_bitset <> reverseLookup(bitKmer);
+    WriterHelper writer(pe, se, false);
 
     while(reader.has_next()) {
         auto i = reader.next();
@@ -291,13 +292,13 @@ public:
             }
             if (val <= hits && !inverse && !record) {
                 counter.output(*per);
-                writer_helper(per, pe, se, false);
+                writer(*per);
             } else if (val > hits && inverse && !record) {
                 counter.output(*per);
-                writer_helper(per, pe, se, false);
+                writer(*per);
             } else if (record) {
                 counter.output(*per);
-                writer_helper(per, pe, se, false);
+                writer(*per);
             }
 
         } else {
@@ -313,13 +314,13 @@ public:
                 }
                 if (val <= hits && !inverse && !record) {
                     counter.output(*ser);
-                    writer_helper(ser, pe, se, false);
+                    writer(*ser);
                 } else if (val > hits && inverse && !record) {
                     counter.output(*ser);
-                    writer_helper(ser, pe, se, false);
+                    writer(*ser);
                 } else if (record) {
                     counter.output(*ser);
-                    writer_helper(ser, pe, se, false);
+                    writer(*ser);
                 }
             } else {
                 throw std::runtime_error("Unknown read type");

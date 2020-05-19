@@ -135,6 +135,8 @@ public:
         bool no_right = vm["no-right"].as<bool>();
 
         bool r1fA = false, r1fT = false, r2fA = false, r1rA = false;
+        WriterHelper writer(pe, se);
+
         while(reader.has_next()) {
             auto i = reader.next();
             PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
@@ -149,7 +151,7 @@ public:
                     if (!no_pT && !r2fA) trim_left(per->non_const_read_two(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
                 }
                 // polyAT must be on one of the two fragment ends (when PE), don't bother checking read ends, reads should be overlapped otherwise.
-                writer_helper(per, pe, se);
+                writer(*per);
                 counters.output(*per);
             } else {
                 SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
@@ -163,7 +165,7 @@ public:
                         if (!no_pA) r1rA = trim_right(ser->non_const_read_one(), 'A', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
                         if (!no_pT && ! r1rA) trim_right(ser->non_const_read_one(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
                     }
-                    writer_helper(ser, pe, se);
+                    writer(*ser);
                     counters.output(*ser);
                 } else {
                     throw std::runtime_error("Unknown read type");

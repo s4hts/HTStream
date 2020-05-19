@@ -69,6 +69,7 @@ public:
         size_t r2_cut_left = vm["r2-cut-left"].as<size_t>();
         size_t r2_cut_right = vm["r2-cut-right"].as<size_t>();
 
+        WriterHelper writer(pe, se);
         while(reader.has_next()) {
             auto i = reader.next();
             PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
@@ -76,14 +77,14 @@ public:
                 counters.input(*per);
                 cut_trim( per->non_const_read_one(), r1_cut_left, r1_cut_right);
                 cut_trim( per->non_const_read_two(), r2_cut_left, r2_cut_right);
-                writer_helper(per, pe, se);
+                writer(*per);
                 counters.output(*per);
             } else {
                 SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
                 if (ser) {
                     counters.input(*ser);
                     cut_trim( ser->non_const_read_one(), r1_cut_left, r1_cut_right);
-                    writer_helper(ser, pe, se);
+                    writer(*ser);
                     counters.output(*ser);
                 } else {
                     throw std::runtime_error("Unknown read type");

@@ -93,6 +93,7 @@ public:
     void do_app(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, NTrimCounters& counter, const po::variables_map &vm) {
 
         bool exclude = vm["exclude"].as<bool>();
+        WriterHelper writer(pe, se);
 
         while(reader.has_next()) {
             auto i = reader.next();
@@ -101,7 +102,7 @@ public:
                 counter.input(*per);
                 if (trim_n(per->non_const_read_one(), exclude)){
                     if (trim_n(per->non_const_read_two(), exclude)){
-                        writer_helper(per, pe, se);
+                        writer(*per);
                         counter.output(*per);
                     } else {
                         counter.increment_discard_pe();
@@ -114,7 +115,7 @@ public:
                 if (ser) {
                     counter.input(*ser);
                     if (trim_n(ser->non_const_read_one(), exclude)){
-                        writer_helper(ser, pe, se);
+                        writer(*ser);
                         counter.output(*ser);
                     } else {
                         counter.increment_discard_se();

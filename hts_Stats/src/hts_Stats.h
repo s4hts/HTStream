@@ -224,19 +224,22 @@ public:
 
     template <class T, class Impl>
     void do_app(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, StatsCounters& counters, const po::variables_map &) {
+
+        WriterHelper writer(pe, se, false);
+
         while(reader.has_next()) {
             auto i = reader.next();
             PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
             if (per) {
                 counters.input(*per);
                 counters.output(*per);
-                writer_helper(per, pe, se, false);
+                writer(*per);
             } else {
                 SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
                 if (ser) {
                     counters.input(*ser);
                     counters.output(*ser);
-                    writer_helper(ser, pe, se, false);
+                    writer(*ser);
                 } else {
                     throw std::runtime_error("Unknown read type");
                 }

@@ -373,7 +373,50 @@ protected:
     }
 };
 
-void writer_helper(ReadBase *r, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, bool stranded = false, bool no_orphans = false);
-void writer_helper(PairedEndRead *r, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, bool stranded = false, bool no_orphans = false);
-void writer_helper(SingleEndRead *r, std::shared_ptr<OutputWriter> se);
+class WriterHelper : public ReadVisitor {
+public:
+    virtual ~WriterHelper() {}
+    WriterHelper(std::shared_ptr<OutputWriter> pe_, std::shared_ptr<OutputWriter> se_,
+                 bool stranded_ = false, bool no_orphans_ = false) :
+        stranded(stranded_), no_orphans(no_orphans_), pe(pe_), se(se_) {}
+
+    void operator() (ReadBase &read) {
+        read.accept(*this);
+    }
+
+    void operator() (SingleEndRead &read) {
+        visit(&read);
+    }
+
+    void operator() (PairedEndRead &read) {
+        visit(&read);
+    }
+
+    virtual void visit(PairedEndRead *per) {
+        Read &one = per->non_const_read_one();
+        Read &two = per->non_const_read_two();
+
+        if (!one.getDiscard() && !two.getDiscard()) {
+            pe->write(*per);
+        } else if (!one.getDiscard() && !no_orphans) { // Will never be RC
+            se->write_read(one, false);
+        } else if (!two.getDiscard() && !no_orphans) { // if stranded RC
+            se->write_read((per->get_read_two()), stranded);
+        }
+
+    }
+
+    virtual void visit(SingleEndRead *ser) {
+        if (! (ser->non_const_read_one()).getDiscard() ) {
+            se->write(*ser);
+        }
+    }
+
+private:
+    bool stranded;
+    bool no_orphans;
+    std::shared_ptr<OutputWriter> pe;
+    std::shared_ptr<OutputWriter> se;
+};
+
 #endif

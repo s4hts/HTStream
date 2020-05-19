@@ -118,6 +118,7 @@ public:
         size_t window_size = vm["window-size"].as<size_t>();
         bool no_left = vm["no-left"].as<bool>();
         bool no_right = vm["no-right"].as<bool>();
+        WriterHelper writer(pe, se);
 
         while(reader.has_next()) {
             auto i = reader.next();
@@ -132,7 +133,7 @@ public:
                     trim_right(per->non_const_read_one(), qual_threshold, window_size);
                     trim_right(per->non_const_read_two(), qual_threshold, window_size);
                 }
-                writer_helper(per, pe, se);
+                writer(*per);
                 counters.output(*per);
             } else {
                 SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
@@ -145,7 +146,7 @@ public:
                     if (!no_right) {
                         trim_right(ser->non_const_read_one(), qual_threshold, window_size);
                     }
-                    writer_helper(ser, pe, se);
+                    writer(*per);
                     counters.output(*ser);
                 } else {
                     throw std::runtime_error("Unknow read type");

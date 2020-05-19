@@ -119,6 +119,7 @@ public:
     template <class T, class Impl>
     void load_map(InputReader<T, Impl> &reader, SuperDeduperCounters& counters, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, double avg_automatic_write, double discard_qual, size_t start, size_t length, size_t log_freq ){
         double tmpAvg;
+        WriterHelper writer(pe, se, false);
 
         while(reader.has_next()) {
             auto i = reader.next();
@@ -131,7 +132,7 @@ public:
                 // find faster than count on some compilers, new key
                 if(read_map.find(*key) == read_map.end()) { // first time the key is seen
                     if ( tmpAvg >= avg_automatic_write ) { // if its greater than avg_automatic_write then write out
-                        writer_helper(i.get(), pe, se, false);
+                        writer(*i);
                         counters.output(*i);
                         read_map[*key] = nullptr;
                     } else {
@@ -141,7 +142,7 @@ public:
                     counters.increment_replace();
                 } else if( tmpAvg > read_map[*key]->avg_q_score()){ // new read is 'better' than old, key not yet read out
                     if (tmpAvg >= avg_automatic_write) { // read qualifies, write out
-                        writer_helper(i.get(), pe, se, false);
+                        writer(*i);
                         counters.output(*i);
                         read_map[*key] = nullptr;
                     } else if (tmpAvg > discard_qual) {
@@ -164,12 +165,12 @@ public:
         const size_t start = vm["start"].as<size_t>() - 1;
         const size_t length = vm["length"].as<size_t>();
         const size_t log_freq = vm["log_freq"].as<size_t>();
-
+        WriterHelper writer(pe, se, false, false);
         load_map(reader, counter, pe, se, avg_automatic_write, discard_qual, start, length, log_freq);
         for(auto const &i : read_map) {
             if (i.second.get() != nullptr) {
                 counter.output(*i.second.get());
-                writer_helper(i.second.get(), pe, se, false, false);
+                writer(*(i.second));
             }
         }
         read_map.clear();

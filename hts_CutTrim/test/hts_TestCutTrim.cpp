@@ -34,12 +34,14 @@ TEST_F(CutTrimTest, PETrim) {
     std::shared_ptr<std::ostringstream> out1(new std::ostringstream);
     std::shared_ptr<HtsOfstream> hts_of(new HtsOfstream(out1));
     std::shared_ptr<OutputWriter> tab(new ReadBaseOutTab(hts_of));
+
+    WriterHelper writer(tab, tab);
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
         ct.cut_trim(per->non_const_read_one(), 5, 15);
         ct.cut_trim(per->non_const_read_two(), 5, 15);
-        writer_helper(per, tab, tab);
+        writer(*per);
     }
     ASSERT_EQ("Read2\tCTTGGGTCCTATGGTATCGGTACTGGTACT\t##############################\tRead1\tTGACATTAAGCAAGTACCAGTACCGATACC\t##############################\n", out1->str());
 };

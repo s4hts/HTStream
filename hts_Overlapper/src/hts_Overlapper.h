@@ -267,6 +267,7 @@ public:
         const size_t kmer = vm["kmer"].as<size_t>();
         const size_t kmerOffset = vm["kmer-offset"].as<size_t>();
         bool forcePair = vm["force-pairs"].as<bool>();
+        WriterHelper writer(pe, se);
 
         while(reader.has_next()) {
             auto i = reader.next();
@@ -277,7 +278,7 @@ public:
                 if (!overlapped) {
                     counters.increment_lins();
                     counters.output(*per);
-                    writer_helper(per, pe, se); //write out as is
+                    writer(*per); //write out as is
                 } else if (overlapped) { //if there is an overlap
                     unsigned int origLength = std::max(unsigned(per->non_const_read_one().getLength()),unsigned(per->non_const_read_two().getLength()));
                     counters.overlap_stats(*overlapped, origLength);
@@ -288,10 +289,10 @@ public:
                         Read r2(overlappedRead.get_sub_seq().substr(mid),overlappedRead.get_sub_qual().substr(mid),overlappedRead.get_id());
                         PairedEndRead newper(r1, r2);
                         counters.output(newper);
-                        writer_helper(&newper, pe, se); //write out as is
+                        writer(newper); //write out as is
                     } else {
                         counters.output(*overlapped);
-                        writer_helper(overlapped.get(), pe, se);
+                        writer(*overlapped);
                     }
                 }
             } else {
@@ -299,7 +300,7 @@ public:
                 if (ser) {
                     counters.input(*ser);
                     counters.output(*ser);
-                    writer_helper(ser, pe, se);
+                    writer(*ser);
                 } else {
                     throw std::runtime_error("Unknown read type");
                 }

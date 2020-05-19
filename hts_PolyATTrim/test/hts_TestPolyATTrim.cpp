@@ -101,12 +101,13 @@ TEST_F(PolyATTail, closebutno) {
     {
         std::shared_ptr<HtsOfstream> hts_of(new HtsOfstream(out1));
         std::shared_ptr<OutputWriter> tab(new ReadBaseOutTab(hts_of));
+        WriterHelper writer(tab, tab, true);
         while(ifs.has_next()) {
             auto i = ifs.next();
             SingleEndRead *ser = dynamic_cast<SingleEndRead*>(i.get());
             pa.trim_left(ser->non_const_read_one(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
             pa.trim_right(ser->non_const_read_one(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
-            writer_helper(ser, tab, tab, true);
+            writer(*ser);
         }
     }
     ASSERT_EQ("Read1\tGNTTTTTTCATTGGATGCATTAATAACCCATGTTTTACCTTTTGAAAAAATAAATGAAGGATTTGACCTGCTTCACTCTGGGAAAAGGTAGATTTTTTAG\tA#AFFJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ\n", out1->str());

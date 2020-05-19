@@ -278,6 +278,7 @@ public:
 
     void writer_thread(std::shared_ptr<OutputWriter> pe,  std::shared_ptr<OutputWriter> se, AdapterCounters &counter, threadsafe_queue<std::future<ReadBasePtr>> &futures) {
 
+        WriterHelper writer(pe, se);
         while(!futures.is_done()) {
             std::future<ReadBasePtr> fread;
             futures.wait_and_pop(fread);
@@ -290,19 +291,8 @@ public:
                 return;
             }
 
-            PairedEndReadPtr per = std::dynamic_pointer_cast<PairedEndRead>(rbase);
-            if (per) {
-                counter.output(*per);
-                writer_helper(per.get(), pe, se);
-            } else {
-                SingleEndReadPtr ser = std::dynamic_pointer_cast<SingleEndRead>(rbase);
-                if (ser) {
-                    counter.output(*ser);
-                    writer_helper(ser.get(), se);
-                } else {
-                    throw std::runtime_error("Unknown read type");
-                }
-            }
+            counter.output(*rbase);
+            writer(*rbase);
         }
     }
 
