@@ -269,10 +269,14 @@ public:
         bool forcePair = vm["force-pairs"].as<bool>();
         WriterHelper writer(pe, se);
 
-        while(reader.has_next()) {
-            auto i = reader.next();
-            PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
-            if (per) {
+
+        auto read_visit = make_read_visitor_func(
+            [&](SingleEndRead *ser) {
+                counters.input(*ser);
+                counters.output(*ser);
+                writer(*ser);
+            },
+            [&](PairedEndRead *per) {
                 counters.input(*per);
                 SingleEndReadPtr overlapped = check_read(*per, misDensity, mismatch, minOver, checkLengths, kmer, kmerOffset);
                 if (!overlapped) {
@@ -295,16 +299,11 @@ public:
                         writer(*overlapped);
                     }
                 }
-            } else {
-                SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
-                if (ser) {
-                    counters.input(*ser);
-                    counters.output(*ser);
-                    writer(*ser);
-                } else {
-                    throw std::runtime_error("Unknown read type");
-                }
-            }
+            });
+
+        while(reader.has_next()) {
+            auto i = reader.next();
+            i->accept(read_visit);
         }
     }
 };

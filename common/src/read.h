@@ -225,4 +225,33 @@ public:
     virtual void visit(PairedEndRead* per) = 0;
 };
 
+template <typename ST, typename PT>
+class ReadVisitorFunc : public ReadVisitor {
+public:
+    virtual ~ReadVisitorFunc() {}
+
+    ReadVisitorFunc(ST&& single_visit_, PT&& paired_visit_) :
+        single_visit(std::move(single_visit_)),
+        paired_visit(std::move(paired_visit_)) {}
+
+
+    virtual void visit(SingleEndRead* ser) {
+        single_visit(ser);
+    }
+
+    virtual void visit(PairedEndRead* per) {
+        paired_visit(per);
+    }
+
+private:
+    ST single_visit;
+    PT paired_visit;
+};
+
+// We use this make_read_visitor_func because class template arguments cannot be inferred.
+template <typename ST, typename PT>
+ReadVisitorFunc<ST, PT> make_read_visitor_func(ST&& single_visit, PT&& paired_visit) {
+    return ReadVisitorFunc<ST, PT>(std::forward<ST>(single_visit), std::forward<PT>(paired_visit));
+}
+
 #endif
