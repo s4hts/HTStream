@@ -229,21 +229,9 @@ public:
 
         while(reader.has_next()) {
             auto i = reader.next();
-            PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
-            if (per) {
-                counters.input(*per);
-                counters.output(*per);
-                writer(*per);
-            } else {
-                SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
-                if (ser) {
-                    counters.input(*ser);
-                    counters.output(*ser);
-                    writer(*ser);
-                } else {
-                    throw std::runtime_error("Unknown read type");
-                }
-            }
+            counters.input(*i);
+            counters.output(*i);
+            writer(*i);
         }
     }
 };
