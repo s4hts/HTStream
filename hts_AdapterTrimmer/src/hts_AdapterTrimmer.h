@@ -16,7 +16,6 @@
 #include <algorithm>
 #include <bitset>
 #include <utility>
-#include <type_traits>
 
 extern template class InputReader<SingleEndRead, SingleEndReadFastqImpl>;
 extern template class InputReader<PairedEndRead, PairedEndReadFastqImpl>;
