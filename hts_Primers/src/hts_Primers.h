@@ -198,8 +198,7 @@ public:
             bi::stream <bi::file_descriptor_source> fa_to_read{check_open_r(primers), bi::close_handle};
             InputReader<SingleEndRead, FastaReadImpl> fp(fa_to_read);
             while(fp.has_next()) {
-                auto i = fp.next();
-                SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
+                auto ser = fp.next();
                 Read r1 = ser->non_const_read_one();
                 primerMap[r1.get_id()] = r1.get_seq();
             }
@@ -208,8 +207,7 @@ public:
             std::istringstream fa_to_read(string2fasta(primers, prefix));
             InputReader<SingleEndRead, FastaReadImpl> fp(fa_to_read);
             while(fp.has_next()) {
-                auto i = fp.next();
-                SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
+                auto ser = fp.next();
                 Read r1 = ser->non_const_read_one();
                 primerMap[r1.get_id()] = r1.get_seq();
             }
@@ -550,27 +548,23 @@ public:
         const bool keep = vm["keep"].as<bool>();
         WriterHelper writer(pe, se);
 
-        while(reader.has_next()) {
-            auto i = reader.next();
-            PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
-            if (per) {
-                counter.input(*per);
+        auto read_visit = make_read_visitor_func(
+            [&](SingleEndRead *ser) {
+                if (check_read_se(*ser, counter, primer5p, primer3p, pMismatches, pEndMismatches, pfloat, flip, keep, min_mprimers)){
+                    counter.output(*ser);
+                    writer(*ser);
+                }
+            },
+            [&](PairedEndRead *per) {
                 if (check_read_pe(*per, counter, primer5p, primer3p, pMismatches, pEndMismatches, pfloat, flip, keep, min_mprimers)){
                     counter.output(*per);
                     writer(*per);
                 }
-            } else {
-                SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
-                if (ser) {
-                    counter.input(*ser);
-                    if (check_read_se(*ser, counter, primer5p, primer3p, pMismatches, pEndMismatches, pfloat, flip, keep, min_mprimers)){
-                        counter.output(*ser);
-                        writer(*ser);
-                    }
-                } else {
-                    throw std::runtime_error("Unknown read type");
-                }
-            }
+            });
+
+        while(reader.has_next()) {
+            auto i = reader.next();
+            i->accept(read_visit);
         }
     }
 };

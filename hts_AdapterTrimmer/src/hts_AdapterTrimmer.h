@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <bitset>
 #include <utility>
+#include <type_traits>
 
 extern template class InputReader<SingleEndRead, SingleEndReadFastqImpl>;
 extern template class InputReader<PairedEndRead, PairedEndReadFastqImpl>;
@@ -216,7 +217,7 @@ public:
         if (swapped) {
             std::swap(r1, r2);
         }
-        return std::dynamic_pointer_cast<ReadBase>(pe);
+        return std::static_pointer_cast<ReadBase>(pe);
     }
 
     unsigned int checkIfAdapter(Read &r1, Read &adapter, size_t loc1, size_t loc2, const double misDensity, const size_t &mismatch, const size_t &minOverlap ) {
@@ -273,7 +274,7 @@ public:
                 }
             }
         }
-        return std::dynamic_pointer_cast<ReadBase>(se);
+        return std::static_pointer_cast<ReadBase>(se);
     }
 
     void writer_thread(std::shared_ptr<OutputWriter> pe,  std::shared_ptr<OutputWriter> se, AdapterCounters &counter, threadsafe_queue<std::future<ReadBasePtr>> &futures) {
@@ -328,18 +329,19 @@ public:
         try {
             while(reader.has_next()) {
                 auto i = reader.next();
-                PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
-                if (per) {
-                    std::shared_ptr<PairedEndRead> sper = std::make_shared<PairedEndRead>(std::move(*per));
+                using EleType = typename decltype(i)::element_type;
+                // convert unique_ptr to shared_ptr
+                std::shared_ptr<EleType> p = std::shared_ptr<EleType>(std::move(i));
+                PairedEndReadPtr sper = std::dynamic_pointer_cast<PairedEndRead>(p);
+                if (sper) {
                     counter.input(*sper);
                     futures.push(threads.submit([=]() mutable {
                                 return check_read_pe(sper, misDensity, mismatch, minOver, checkLengths, kmer, kmerOffset, noFixBases); }));
 
                 } else {
-                    SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
+                    SingleEndReadPtr sser = std::dynamic_pointer_cast<SingleEndRead>(p);
 
-                    if (ser) {
-                        std::shared_ptr<SingleEndRead> sser = std::make_shared<SingleEndRead>(std::move(*ser));
+                    if (sser) {
                         counter.input(*sser);
                         futures.push(threads.submit([=]() mutable {
                                     return check_read_se(sser, misDensity, mismatch, minOver, checkLengths, kmer, kmerOffset, adapter); }));

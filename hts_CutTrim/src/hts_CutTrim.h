@@ -70,26 +70,23 @@ public:
         size_t r2_cut_right = vm["r2-cut-right"].as<size_t>();
 
         WriterHelper writer(pe, se);
-        while(reader.has_next()) {
-            auto i = reader.next();
-            PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
-            if (per) {
-                counters.input(*per);
+
+        auto read_visit = make_read_visitor_func(
+            [&](SingleEndRead *ser) {
+                cut_trim( ser->non_const_read_one(), r1_cut_left, r1_cut_right);
+            },
+            [&](PairedEndRead *per) {
                 cut_trim( per->non_const_read_one(), r1_cut_left, r1_cut_right);
                 cut_trim( per->non_const_read_two(), r2_cut_left, r2_cut_right);
-                writer(*per);
-                counters.output(*per);
-            } else {
-                SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
-                if (ser) {
-                    counters.input(*ser);
-                    cut_trim( ser->non_const_read_one(), r1_cut_left, r1_cut_right);
-                    writer(*ser);
-                    counters.output(*ser);
-                } else {
-                    throw std::runtime_error("Unknown read type");
-                }
             }
+            );
+
+        while(reader.has_next()) {
+            auto i = reader.next();
+            counters.input(*i);
+            i->accept(read_visit);
+            writer(*i);
+            counters.output(*i);
         }
     }
 };

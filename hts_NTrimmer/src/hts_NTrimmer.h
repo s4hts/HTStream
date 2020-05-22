@@ -95,11 +95,16 @@ public:
         bool exclude = vm["exclude"].as<bool>();
         WriterHelper writer(pe, se);
 
-        while(reader.has_next()) {
-            auto i = reader.next();
-            PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
-            if (per) {
-                counter.input(*per);
+        auto read_visit = make_read_visitor_func(
+            [&](SingleEndRead *ser) {
+                if (trim_n(ser->non_const_read_one(), exclude)){
+                    writer(*ser);
+                    counter.output(*ser);
+                } else {
+                    counter.increment_discard_se();
+                }
+            },
+            [&](PairedEndRead *per) {
                 if (trim_n(per->non_const_read_one(), exclude)){
                     if (trim_n(per->non_const_read_two(), exclude)){
                         writer(*per);
@@ -110,22 +115,13 @@ public:
                 } else {
                     counter.increment_discard_pe();
                 }
-            } else {
-                SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
-                if (ser) {
-                    counter.input(*ser);
-                    if (trim_n(ser->non_const_read_one(), exclude)){
-                        writer(*ser);
-                        counter.output(*ser);
-                    } else {
-                        counter.increment_discard_se();
-                    }
-                } else {
-                    throw std::runtime_error("Unknown read type");
-                }
-            }
-        }
+            });
 
+        while(reader.has_next()) {
+            auto i = reader.next();
+            counter.input(*i);
+            i->accept(read_visit);
+        }
     }
 };
 #endif

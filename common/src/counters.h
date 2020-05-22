@@ -92,28 +92,34 @@ public:
 
     virtual ~Counters() {}
 
-    virtual void input(ReadBase &read) {
-        PairedEndRead *per = dynamic_cast<PairedEndRead *>(&read);
-        if (per) {
-            ++PE_In;
-            Read &one = per->non_const_read_one();
-            Read &two = per->non_const_read_two();
-            R1_BpLen_In += one.getLength();
-            R2_BpLen_In += two.getLength();
-            TotalBasepairsInput += one.getLength();
-            TotalBasepairsInput += two.getLength();
-        } else {
-            SingleEndRead *ser = dynamic_cast<SingleEndRead *>(&read);
-            if (ser) {
-                ++SE_In;
-                Read &one = ser->non_const_read_one();
-                SE_BpLen_In += one.getLength();
-                TotalBasepairsInput += one.getLength();
-            } else {
-                throw std::runtime_error("In utils.h output: read type not valid");
-            }
-        }
+    virtual void input(PairedEndRead &per) {
+        ++PE_In;
+        Read &one = per.non_const_read_one();
+        Read &two = per.non_const_read_two();
+        R1_BpLen_In += one.getLength();
+        R2_BpLen_In += two.getLength();
+        TotalBasepairsInput += one.getLength();
+        TotalBasepairsInput += two.getLength();
         ++TotalFragmentsInput;
+    }
+
+    virtual void input(SingleEndRead &ser) {
+        ++SE_In;
+        Read &one = ser.non_const_read_one();
+        SE_BpLen_In += one.getLength();
+        TotalBasepairsInput += one.getLength();
+        ++TotalFragmentsInput;
+    }
+
+    virtual void input(ReadBase &read) {
+        auto read_visit = make_read_visitor_func(
+            [&](SingleEndRead *ser) {
+                input(*ser);
+            },
+            [&](PairedEndRead *per) {
+                input(*per);
+            });
+        read.accept(read_visit);
     }
 
     virtual void output(PairedEndRead &read) {
