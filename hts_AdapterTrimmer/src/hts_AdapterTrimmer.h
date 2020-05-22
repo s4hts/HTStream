@@ -324,31 +324,29 @@ public:
         thread_pool threads(50000, num_threads);
 
         std::thread output_thread([=, &counter, &futures]() mutable { writer_thread(pe, se, counter, futures); });
+
+        auto read_visit = make_read_visitor_func(
+            [&](SingleEndRead *ser) {
+                futures.push(threads.submit([=]() mutable {
+                                                return check_read_se(SingleEndReadPtr(ser), misDensity, mismatch, minOver, checkLengths, kmer, kmerOffset, adapter); }));
+            },
+            [&](PairedEndRead *per) {
+                futures.push(threads.submit([=]() mutable {
+                                                return check_read_pe(PairedEndReadPtr(per), misDensity, mismatch, minOver, checkLengths, kmer, kmerOffset, noFixBases); }));
+            });
+
+        // thread_guard must be declared last
         thread_guard tg(output_thread);
 
         try {
             while(reader.has_next()) {
                 auto i = reader.next();
-                using EleType = typename decltype(i)::element_type;
-                // convert unique_ptr to shared_ptr
-                std::shared_ptr<EleType> p = std::shared_ptr<EleType>(std::move(i));
-                PairedEndReadPtr sper = std::dynamic_pointer_cast<PairedEndRead>(p);
-                if (sper) {
-                    counter.input(*sper);
-                    futures.push(threads.submit([=]() mutable {
-                                return check_read_pe(sper, misDensity, mismatch, minOver, checkLengths, kmer, kmerOffset, noFixBases); }));
+                counter.input(*i);
 
-                } else {
-                    SingleEndReadPtr sser = std::dynamic_pointer_cast<SingleEndRead>(p);
-
-                    if (sser) {
-                        counter.input(*sser);
-                        futures.push(threads.submit([=]() mutable {
-                                    return check_read_se(sser, misDensity, mismatch, minOver, checkLengths, kmer, kmerOffset, adapter); }));
-                    } else {
-                        throw std::runtime_error("Unknown read type");
-                    }
-                }
+                // release the unique_ptr and convert to shared_ptr
+                // this way the reads will live beyond the while loop
+                auto p = i.release();
+                p->accept(read_visit);
             }
 
             // null ptr indicates end of processing
