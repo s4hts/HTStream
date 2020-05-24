@@ -31,7 +31,7 @@ public:
     }
 
     using Counters::input;
-    virtual void input(const ReadBase &read, size_t dup_freq) {
+    void input(ReadBase &read, size_t dup_freq) {
         if (dup_freq > 0 && TotalFragmentsInput % dup_freq == 0 && TotalFragmentsInput != 0){
             duplicateProportion.push_back(std::forward_as_tuple(TotalFragmentsInput, Duplicate));
         }
@@ -46,7 +46,7 @@ public:
         ++Ignored;
     }
 
-    virtual void write_out() {
+    void write_out() {
 
         // record final input/dup
         duplicateProportion.push_back(std::forward_as_tuple(TotalFragmentsInput, Duplicate));
@@ -71,6 +71,12 @@ public:
 
         start_sublabel("Paired_end");
         write_values(pe, 2);
+        start_sublabel("Read1",2);
+        write_values(r1, 3);
+        end_sublabel(2);
+        start_sublabel("Read2",2);
+        write_values(r2, 3);
+        end_sublabel(2);
         end_sublabel();
 
         finalize_json();
@@ -166,6 +172,7 @@ public:
                 writer_helper(i.second.get(), pe, se, false, false);
             }
         }
+        read_map.clear();
     }
 };
 #endif

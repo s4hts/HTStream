@@ -41,24 +41,17 @@ public:
     uint64_t T = 0;
     uint64_t N = 0;
 
-    uint64_t SE_BpLen = 0;
     uint64_t SE_bQ30 = 0;
 
-    uint64_t R1_BpLen = 0;
     uint64_t R1_bQ30 = 0;
-    uint64_t R2_BpLen = 0;
     uint64_t R2_bQ30 = 0;
 
     StatsCounters(const std::string &program_name, const po::variables_map &vm) : Counters::Counters(program_name, vm) {
         R1_Length.resize(1);
         R2_Length.resize(1);
         SE_Length.resize(1);
-        se.push_back(std::forward_as_tuple("total_basepairs", SE_BpLen));
         se.push_back(std::forward_as_tuple("total_Q30_basepairs", SE_bQ30));
-
-        r1.push_back(std::forward_as_tuple("total_basepairs", R1_BpLen));
         r1.push_back(std::forward_as_tuple("total_Q30_basepairs", R1_bQ30));
-        r2.push_back(std::forward_as_tuple("total_basepairs", R2_BpLen));
         r2.push_back(std::forward_as_tuple("total_Q30_basepairs", R2_bQ30));
 
         bases.push_back(std::forward_as_tuple("A", A));
@@ -67,11 +60,8 @@ public:
         bases.push_back(std::forward_as_tuple("T", T));
         bases.push_back(std::forward_as_tuple("N", N));
     }
-    virtual ~StatsCounters() {}
 
-    void read_stats(Read &r, uint64_t &BpLen, Vec &Length, Mat &read_bases, Mat &read_qualities, uint64_t &read_bQ30) {
-        // Total length of bases per read
-        BpLen += r.getLength();
+    void read_stats(Read &r, Vec &Length, Mat &read_bases, Mat &read_qualities, uint64_t &read_bQ30) {
         // Size histogram per read
         if ( r.getLength() + 1 > Length.size() ) {
             Length.resize(r.getLength() + 1);
@@ -124,18 +114,18 @@ public:
     }
 
     using Counters::output;
-    virtual void output(PairedEndRead &per, bool no_orphans = false) {
-        Counters::output(per, no_orphans);
-        read_stats(per.non_const_read_one(), R1_BpLen, R1_Length, R1_bases, R1_qualities, R1_bQ30);
-        read_stats(per.non_const_read_two(), R2_BpLen, R2_Length, R2_bases, R2_qualities, R2_bQ30);
+    void output(PairedEndRead &per) {
+        Counters::output(per);
+        read_stats(per.non_const_read_one(), R1_Length, R1_bases, R1_qualities, R1_bQ30);
+        read_stats(per.non_const_read_two(), R2_Length, R2_bases, R2_qualities, R2_bQ30);
     }
 
     void output(SingleEndRead &ser) {
         Counters::output(ser);
-        read_stats(ser.non_const_read_one(), SE_BpLen, SE_Length, SE_bases, SE_qualities, SE_bQ30);
+        read_stats(ser.non_const_read_one(), SE_Length, SE_bases, SE_qualities, SE_bQ30);
     }
 
-    virtual void write_out() {
+    void write_out() {
         std::vector<Vector> iSE_Length;
         for (size_t i = 1; i < SE_Length.size(); ++i) {
             if (SE_Length[i] > 0) {

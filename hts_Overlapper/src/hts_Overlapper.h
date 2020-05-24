@@ -35,14 +35,7 @@ public:
     }
 
     using Counters::output;
-
-    void output(SingleEndRead &ser, uint_fast64_t origLength, bool forcePair) {
-        ++TotalFragmentsOutput;
-        if (forcePair){
-            ++PE_Out;
-        } else {
-            ++SE_Out;
-        }
+    void overlap_stats(SingleEndRead &ser, uint_fast64_t origLength) {
         Read &one = ser.non_const_read_one();
         if (one.getLength() < origLength) {
             ++sins; //adapters must be had (short insert)
@@ -55,15 +48,11 @@ public:
         ++insertLength[one.getLength()];
     }
 
-    virtual void output(PairedEndRead &per, bool no_orphans = false)  {
-        (void)read;  //ignore unused variable warning
-        (void)no_orphans;  //ignore unused variable warning
+    void increment_lins()  {
         ++lins;
-        ++PE_Out;
-        ++TotalFragmentsOutput;
     }
 
-    virtual void write_out() {
+    void write_out() {
 
         std::vector<Vector> iLength;
         for (size_t i = 1; i < insertLength.size(); ++i) {
@@ -95,6 +84,13 @@ public:
 
         start_sublabel("Paired_end");
         write_values(pe, 2);
+        start_sublabel("Read1",2);
+        write_values(r1, 3);
+        end_sublabel(2);
+        start_sublabel("Read2",2);
+        write_values(r2, 3);
+        end_sublabel(2);
+
         end_sublabel();
 
         finalize_json();
@@ -282,11 +278,12 @@ public:
                 counters.input(*per);
                 SingleEndReadPtr overlapped = check_read(*per, misDensity, mismatch, minOver, checkLengths, kmer, kmerOffset);
                 if (!overlapped) {
-                    counters.output(*per, false);
+                    counters.increment_lins();
+                    counters.output(*per);
                     writer_helper(per, pe, se); //write out as is
                 } else if (overlapped) { //if there is an overlap
                     unsigned int origLength = std::max(unsigned(per->non_const_read_one().getLength()),unsigned(per->non_const_read_two().getLength()));
-                    counters.output(*overlapped, origLength, forcePair);
+                    counters.overlap_stats(*overlapped, origLength);
                     if (forcePair){
                         Read overlappedRead = overlapped->non_const_read_one();
                         Read &or1 = per->non_const_read_one();
@@ -297,8 +294,10 @@ public:
                         Read r2(overlappedRead.get_sub_seq().substr(mid),overlappedRead.get_sub_qual().substr(mid),overlappedRead.get_id_tab("1"));
                         r2.join_comment(or2.get_comment());
                         PairedEndRead newper(r1, r2);
+                        counters.output(newper);
                         writer_helper(&newper, pe, se); //write out as is
                     } else {
+                        counters.output(*overlapped);
                         writer_helper(overlapped.get(), pe, se);
                     }
                 }

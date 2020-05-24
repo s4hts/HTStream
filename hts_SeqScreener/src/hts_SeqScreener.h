@@ -68,7 +68,7 @@ public:
         ++PE_hits;
     }
 
-    virtual void write_out() {
+    void write_out() {
 
         initialize_json();
 
@@ -92,6 +92,12 @@ public:
 
         start_sublabel("Paired_end");
         write_values(pe, 2);
+        start_sublabel("Read1",2);
+        write_values(r1, 3);
+        end_sublabel(2);
+        start_sublabel("Read2",2);
+        write_values(r2, 3);
+        end_sublabel(2);
         end_sublabel();
 
         finalize_json();

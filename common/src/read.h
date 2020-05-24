@@ -63,10 +63,9 @@ private:
     size_t cut_R;
     size_t cut_L;
     bool discard;
-    size_t minLength;
 public:
     Read(const std::string& seq_, const std::string& qual_, const std::string& id_) :
-        seq(seq_), qual(qual_), id_orig(id_), length(seq_.length()), cut_R(seq_.length()), cut_L(0), discard(false), minLength(1) {
+        seq(seq_), qual(qual_), id_orig(id_), length(seq_.length()), cut_R(seq_.length()), cut_L(0), discard(false) {
            std::string fastq_delimiter =  " \t\f\n\r\v";
            // split the id into 2 delimited on the first space
            size_t pos = 0;
@@ -86,7 +85,7 @@ public:
            join_comment(comment_tmp);
          }
     Read() :
-        seq(""), qual(""), id_orig(""), id(""), id2(""), length(0), cut_R(seq.length()), cut_L(0), discard(false), minLength(1) {
+        seq(""), qual(""), id_orig(""), id(""), id2(""), length(0), cut_R(seq.length()), cut_L(0), discard(false) {
         }
     Read subread(size_t _start, size_t _length);
     std::string subseq(size_t _start, size_t _length);
@@ -147,8 +146,8 @@ public:
 
     void setRCut( size_t cut_R_ ) { cut_R = cut_R_;}
     void setLCut( size_t cut_L_ ) { cut_L = cut_L_; }
-    bool getDiscard() { discard = int(minLength) > int(cut_R) - int(cut_L); return discard; }
-    void setDiscard(size_t minLength_) { minLength = minLength_; }
+    bool getDiscard() { return discard; }
+    void setDiscard() { discard = true; }
     size_t getLength() const { return length; }
     size_t getLengthTrue() { return cut_R < cut_L ? 0 : cut_R - cut_L; }
     size_t getLTrim() { return cut_L; }
@@ -165,7 +164,6 @@ public:
     boost::optional<BitSet> get_key(size_t start, size_t length);
     Read& non_const_read_one() { return one; }
     Read& non_const_read_two() { return two; }
-    void checkDiscarded(size_t minLength) {one.setDiscard(minLength); two.setDiscard(minLength);}
     const Read& get_read_one() const { return one; }
     const Read& get_read_two() const { return two; }
     double avg_q_score();
@@ -184,7 +182,6 @@ public:
     boost::optional<BitSet> get_key(size_t start, size_t length);
     Read& non_const_read_one() { return one; }
     const Read& get_read() const { return one; }
-    void checkDiscarded(size_t minLength) {one.setDiscard(minLength);}
     double avg_q_score();
     std::shared_ptr<ReadBase> convert(bool stranded);
     void set_read_rc() { one.set_read_rc();}

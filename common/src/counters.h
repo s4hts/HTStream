@@ -38,12 +38,20 @@ public:
 
     uint64_t TotalFragmentsInput = 0;
     uint64_t TotalFragmentsOutput = 0;
+    uint64_t TotalBasepairsInput = 0;
+    uint64_t TotalBasepairsOutput = 0;
 
     uint64_t SE_In = 0;
     uint64_t SE_Out = 0;
+    uint64_t SE_BpLen_In = 0;
+    uint64_t SE_BpLen_Out = 0;
 
     uint64_t PE_In = 0;
     uint64_t PE_Out = 0;
+    uint64_t R1_BpLen_In = 0;
+    uint64_t R1_BpLen_Out = 0;
+    uint64_t R2_BpLen_In = 0;
+    uint64_t R2_BpLen_Out = 0;
 
     Counters(const std::string &program_name_, po::variables_map vm_):
             pName(program_name_),
@@ -65,9 +73,18 @@ public:
 
         fragment.push_back(std::forward_as_tuple("in", TotalFragmentsInput));
         fragment.push_back(std::forward_as_tuple("out", TotalFragmentsOutput));
+        fragment.push_back(std::forward_as_tuple("basepairs_in", TotalBasepairsInput));
+        fragment.push_back(std::forward_as_tuple("basepairs_out", TotalBasepairsOutput));
 
         se.push_back(std::forward_as_tuple("in", SE_In));
         se.push_back(std::forward_as_tuple("out", SE_Out));
+        se.push_back(std::forward_as_tuple("basepairs_in", SE_BpLen_In));
+        se.push_back(std::forward_as_tuple("basepairs_out", SE_BpLen_Out));
+
+        r1.push_back(std::forward_as_tuple("basepairs_in", R1_BpLen_In));
+        r1.push_back(std::forward_as_tuple("basepairs_out", R1_BpLen_Out));
+        r2.push_back(std::forward_as_tuple("basepairs_in", R2_BpLen_In));
+        r2.push_back(std::forward_as_tuple("basepairs_out", R2_BpLen_Out));
 
         pe.push_back(std::forward_as_tuple("in", PE_In));
         pe.push_back(std::forward_as_tuple("out", PE_Out));
@@ -75,14 +92,23 @@ public:
 
     virtual ~Counters() {}
 
-    virtual void input(const ReadBase &read) {
-        const PairedEndRead *per = dynamic_cast<const PairedEndRead *>(&read);
+    virtual void input(ReadBase &read) {
+        PairedEndRead *per = dynamic_cast<PairedEndRead *>(&read);
         if (per) {
             ++PE_In;
+            Read &one = per->non_const_read_one();
+            Read &two = per->non_const_read_two();
+            R1_BpLen_In += one.getLength();
+            R2_BpLen_In += two.getLength();
+            TotalBasepairsInput += one.getLength();
+            TotalBasepairsInput += two.getLength();
         } else {
-            const SingleEndRead *ser = dynamic_cast<const SingleEndRead *>(&read);
+            SingleEndRead *ser = dynamic_cast<SingleEndRead *>(&read);
             if (ser) {
                 ++SE_In;
+                Read &one = ser->non_const_read_one();
+                SE_BpLen_In += one.getLength();
+                TotalBasepairsInput += one.getLength();
             } else {
                 throw std::runtime_error("In utils.h output: read type not valid");
             }
@@ -90,15 +116,21 @@ public:
         ++TotalFragmentsInput;
     }
 
-    virtual void output(PairedEndRead &read, bool no_orphans = false) {
-        (void)read;  //ignore unused variable warning
-        (void)no_orphans;  //ignore unused variable warning
+    virtual void output(PairedEndRead &read) {
+        Read &one = read.non_const_read_one();
+        Read &two = read.non_const_read_two();
+        R1_BpLen_Out += one.getLengthTrue();
+        R2_BpLen_Out += two.getLengthTrue();
+        TotalBasepairsOutput += one.getLengthTrue();
+        TotalBasepairsOutput += two.getLengthTrue();
         ++PE_Out;
         ++TotalFragmentsOutput;
      }
 
     virtual void output(SingleEndRead &read) {
-        (void)read;  //ignore unused variable warning
+        Read &one = read.non_const_read_one();
+        SE_BpLen_Out += one.getLengthTrue();
+        TotalBasepairsOutput += one.getLengthTrue();
         ++SE_Out;
         ++TotalFragmentsOutput;
      }
@@ -138,18 +170,22 @@ public:
 
         start_sublabel("Paired_end");
         write_values(pe, 2);
-        start_sublabel("Read1",2);
-        write_values(r1, 3);
-        end_sublabel(2);
-        start_sublabel("Read2",2);
-        write_values(r2, 3);
-        end_sublabel(2);
+        if (!r1.empty()){
+            start_sublabel("Read1",2);
+            write_values(r1, 3);
+            end_sublabel(2);
+        }
+        if (!r2.empty()){
+            start_sublabel("Read2",2);
+            write_values(r2, 3);
+            end_sublabel(2);
+        }
         end_sublabel();
 
         finalize_json();
     }
 
-    virtual void initialize_json() {
+    void initialize_json() {
         std::ifstream testEnd(fStats);
         int end = testEnd.peek();
         testEnd.close();
@@ -164,23 +200,23 @@ public:
         }
     }
 
-    virtual void start_sublabel(const std::string &labelStr, const unsigned int indent = 1) {
+    void start_sublabel(const std::string &labelStr, const unsigned int indent = 1) {
         std::string pad(4 * indent, ' ');
         outStats << pad << "\"" << labelStr << "\": {\n";
     }
 
-    virtual void end_sublabel(const unsigned int indent = 1) {
+    void end_sublabel(const unsigned int indent = 1) {
         std::string pad(4 * indent, ' ');
         outStats.seekp(-2, std::ios::end );
         outStats << "\n" << pad << "},\n"; // finish off histogram
     }
 
-    virtual void write_options(const unsigned int indent = 1){
+    void write_options(const unsigned int indent = 1){
         std::string pad(4 * indent, ' ');
         for (const auto& it : vm) {
             auto& value = it.second.value();
             //unfortunate hack
-            if ((it.first == "stats-file") & vm.count("append-stats-file")) continue;
+            if ((it.first == "stats-file") and vm.count("append-stats-file")) continue;
             outStats << pad << "\"" << it.first.c_str() << "\": ";
             if (auto v = boost::any_cast<std::string>(&value))
                 outStats << "\"" << *v << "\"";
@@ -241,7 +277,7 @@ public:
         outStats << " ],\n"; // finish off
     }
 
-    virtual void write_matrix(const std::string &matrix_name, const Mat &data, const std::vector<std::string> &row_name, const std::vector<std::string> &col_name, const bool sparse = 0, const unsigned int indent = 1) {
+    void write_matrix(const std::string &matrix_name, const Mat &data, const std::vector<std::string> &row_name, const std::vector<std::string> &col_name, const bool sparse = 0, const unsigned int indent = 1) {
         std::string pad(4 * indent, ' ');
         std::string pad2(4 * (indent + 1), ' ');
         if (data.size() == 0) return;
@@ -294,7 +330,7 @@ public:
         outStats << pad << "},\n";
     }
 
-    virtual void finalize_json() {
+    void finalize_json() {
         outStats.seekp(-2, std::ios::end );
         outStats << "\n  }\n}\n";
         outStats.flush();
@@ -302,7 +338,7 @@ public:
     }
 
 private:
-    virtual void check_write() {
+    void check_write() {
         std::fstream out;
         out.open(fStats, std::ios::out | std::ios::app);
 
@@ -323,79 +359,50 @@ class TrimmingCounters : public Counters {
 public:
     uint64_t SE_Right_Trim = 0;
     uint64_t SE_Left_Trim = 0;
-    uint64_t SE_Discarded = 0;
 
     uint64_t R1_Left_Trim = 0;
     uint64_t R1_Right_Trim = 0;
     uint64_t R2_Left_Trim = 0;
     uint64_t R2_Right_Trim = 0;
-    uint64_t R1_Discarded = 0;
-    uint64_t R2_Discarded = 0;
-    uint64_t PE_Discarded = 0;
 
     TrimmingCounters(const std::string &program_name, po::variables_map vm ) : Counters::Counters(program_name, vm) {
         se.push_back(std::forward_as_tuple("rightTrim", SE_Right_Trim));
         se.push_back(std::forward_as_tuple("leftTrim", SE_Left_Trim));
-        se.push_back(std::forward_as_tuple("discarded", SE_Discarded));
 
         r1.push_back(std::forward_as_tuple("leftTrim", R1_Left_Trim));
         r1.push_back(std::forward_as_tuple("rightTrim", R1_Right_Trim));
-        r1.push_back(std::forward_as_tuple("discarded", R1_Discarded));
         r2.push_back(std::forward_as_tuple("leftTrim", R2_Left_Trim));
         r2.push_back(std::forward_as_tuple("rightTrim", R2_Right_Trim));
-        r2.push_back(std::forward_as_tuple("discarded", R2_Discarded));
-        pe.push_back(std::forward_as_tuple("discarded", PE_Discarded));
     }
-    virtual ~TrimmingCounters() {}
 
-    void R1_stats(Read &one) {
+    virtual void R1_stats(Read &one) {
         R1_Left_Trim += one.getLTrim();
         R1_Right_Trim += one.getRTrim();
     }
 
-    void R2_stats(Read &two) {
+    virtual void R2_stats(Read &two) {
         R2_Left_Trim += two.getLTrim();
         R2_Right_Trim += two.getRTrim();
     }
 
-    void SE_stats(Read &se) {
+    virtual void SE_stats(Read &se) {
         SE_Left_Trim += se.getLTrim();
         SE_Right_Trim += se.getRTrim();
     }
 
     using Counters::output;
-    virtual void output(PairedEndRead &per, bool no_orphans = false) {
+    virtual void output(PairedEndRead &per) {
+        Counters::output(per);
         Read &one = per.non_const_read_one();
         Read &two = per.non_const_read_two();
-        if (!one.getDiscard() && !two.getDiscard()) {
-            ++TotalFragmentsOutput;
-            ++PE_Out;
-            R1_stats(one);
-            R2_stats(two);
-        } else if (!one.getDiscard() && !no_orphans) {
-            ++TotalFragmentsOutput;
-            ++SE_Out;
-            ++R2_Discarded;
-            SE_stats(one);
-        } else if (!two.getDiscard() && !no_orphans) {
-            ++TotalFragmentsOutput;
-            ++SE_Out;
-            ++R1_Discarded;
-            SE_stats(two);
-        } else {
-            ++PE_Discarded;
-        }
+        R1_stats(one);
+        R2_stats(two);
     }
 
     virtual void output(SingleEndRead &ser) {
+        Counters::output(ser);
         Read &one = ser.non_const_read_one();
-        if (!one.getDiscard()) {
-            ++TotalFragmentsOutput;
-            ++SE_Out;
-            SE_stats(one);
-        } else {
-            ++SE_Discarded;
-        }
+        SE_stats(one);
     }
 
 };

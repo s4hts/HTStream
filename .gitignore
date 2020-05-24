@@ -9,3 +9,12 @@ build
 .Rproj.user
 .DS_Store
 /ext/googletest/*
+data
+clang-debug
+clang-release
+gperf
+static-build
+release
+debug
+gprof
+compile_commands.json

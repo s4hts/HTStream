@@ -22,7 +22,6 @@ po::options_description setStandardOptions();
 po::options_description setInputOptions();
 po::options_description setOutputOptions(const std::string& program_name);
 
-void setDefaultParamsCutting(po::options_description &desc);
 void setDefaultParamsTrim(po::options_description &desc);
 void setDefaultParamsOverlapping(po::options_description &desc);
 void setThreadPoolParams(po::options_description &desc);
