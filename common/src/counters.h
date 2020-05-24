@@ -366,8 +366,8 @@ public:
     uint64_t R2_Right_Trim = 0;
 
     TrimmingCounters(const std::string &program_name, po::variables_map vm ) : Counters::Counters(program_name, vm) {
-        se.push_back(std::forward_as_tuple("rightTrim", SE_Right_Trim));
         se.push_back(std::forward_as_tuple("leftTrim", SE_Left_Trim));
+        se.push_back(std::forward_as_tuple("rightTrim", SE_Right_Trim));
 
         r1.push_back(std::forward_as_tuple("leftTrim", R1_Left_Trim));
         r1.push_back(std::forward_as_tuple("rightTrim", R1_Right_Trim));
