@@ -4,7 +4,7 @@ export BUILDDIR=$1
 echo $0
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
-    findarg=-perm +111
+    findarg="-perm +111"
 else
     findarg=-executable
 fi
