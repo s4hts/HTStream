@@ -11,7 +11,6 @@
 #include "read.h"
 #include <boost/iostreams/concepts.hpp>
 #include <boost/algorithm/string.hpp>
-#include <boost/algorithm/string/join.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/device/file_descriptor.hpp>
@@ -31,8 +30,7 @@
 namespace bf = boost::filesystem;
 namespace bi = boost::iostreams;
 
-int check_open_r(const std::string& filename) ;
-std::string strjoin(const std::vector <std::string>& v, const std::string& delim);
+int check_open_r(const std::string& filename);
 std::string string2fasta(std::string seqstring, std::string prefix, const char delim=',');
 Read fasta_to_read(std::string fasta_file);
 

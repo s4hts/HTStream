@@ -113,17 +113,6 @@ int HtsOfstream::check_exists(const std::string& filename, bool force, bool gzip
     }
 }
 
-std::string strjoin(const std::vector <std::string>& v, const std::string& delim) {
-    std::ostringstream s;
-    for (const auto& i : v) {
-        if (&i != &v[0]) {
-            s << delim;
-        }
-        s << i;
-    }
-    return s.str();
-}
-
 Read InputFastq::load_read(std::istream *input) {
     while(std::getline(*input, id) && id.size() < 1) {
     }

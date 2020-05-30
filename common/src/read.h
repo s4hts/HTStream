@@ -10,6 +10,7 @@
 #include "typedefs.h"
 
 typedef boost::dynamic_bitset<> BitSet;
+std::string strjoin(const std::vector <std::string>& v, const std::string& delim);
 
 class ReadBase {
 public:
@@ -73,11 +74,12 @@ public:
            if (pos != std::string::npos){
              id = id_orig.substr(0, pos);
              // id2 remove the read designation, add back in on write out
-             id2 = id_orig.substr(pos+2, id_orig.size()-(pos+1));
+             id2 = id_orig.substr(pos+2);
            } else {
              id = id_orig;
              id2 = "";
            }
+           // Identifies any comments in the read id (id) and puts them into the comment vector
            std::vector <std::string> comment_tmp;
            boost::split(comment_tmp, id, boost::is_any_of("|"));
            id = comment_tmp[0];
@@ -93,8 +95,7 @@ public:
     const std::string& get_qual() const { return qual; }
     const std::string get_id_orig() const { return id_orig; }
     const std::string get_id_fastq(std::string read="") const {
-        std::string sam_comment = "";
-        for (auto const& s : comments) { sam_comment = sam_comment + '|' + s; }
+        std::string sam_comment = strjoin(comments, "|");;
         std::string tmp = id + sam_comment;
         if (!(id2 == "")) tmp = tmp + ' ' + read + id2;
         return tmp;
@@ -126,8 +127,8 @@ public:
                                             return q;  }
 
 
-    void add_comment( std::string tag ) { if (tag != "") comments.push_back(tag);}
-    void join_comment( std::vector <std::string> new_comments ) { comments.insert(comments.end(), new_comments.begin(), new_comments.end()); }
+    void add_comment( const std::string tag ) { if (tag != "") comments.push_back(tag);}
+    void join_comment( const std::vector <std::string> new_comments ) { comments.insert(comments.end(), new_comments.begin(), new_comments.end()); }
     void set_read_rc() {
         if (cut_R < cut_L) {
             return;
