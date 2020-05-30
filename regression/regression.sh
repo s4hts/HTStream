@@ -29,7 +29,7 @@ regenerate() {
 
         if [ ${prog##*/} == 'hts_SuperDeduper' ]
         then
-           mv $out.tab6.gz $out.tmp && zcat $out.tmp | sort > $out.tab6.gz
+           mv $out.tab6.gz $out.tmp && gzip -dc $out.tmp | sort | gzip > $out.tab6.gz
            mv $out.tab6 $out.tmp && cat $out.tmp | sort > $out.tab6
            rm $out.tmp
         fi
@@ -46,7 +46,7 @@ testrun() {
         if [ ${prog##*/} == 'hts_SuperDeduper' ]
         then
             echo sorting superDeduper because its output is non-deterministic
-            cp $out.tab6.gz $out.tmp && zcat $out.tmp | sort | gzip > $out.tab6.gz
+            cp $out.tab6.gz $out.tmp && gzip -dc  $out.tmp | sort | gzip > $out.tab6.gz
             echo "cp $out.tab6 $out.tmp && cat $out.tmp | sort > $out.tab6"
             cp $out.tab6 $out.tmp && cat $out.tmp | sort > $out.tab6
             rm $out.tmp
