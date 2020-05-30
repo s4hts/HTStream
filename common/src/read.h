@@ -6,6 +6,7 @@
 #include <boost/algorithm/string.hpp>
 #include <memory>
 #include <iostream>
+#include <sstream>
 #include <unordered_map>
 #include "typedefs.h"
 
