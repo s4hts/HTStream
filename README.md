@@ -9,5 +9,7 @@ https://s4hts.github.io/HTStream/
 If you encounter any bugs or have suggestions for improvement, please post them to:
 https://github.com/s4hts/HTStream/issues
 
+Check out [https://github.com/bnjenner/MultiQC](https://github.com/bnjenner/MultiQC) for nice HTML reports from HTStream log files!
+
 
 Thanks for trying HTStream!
