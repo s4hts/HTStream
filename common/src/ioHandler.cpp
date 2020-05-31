@@ -151,8 +151,8 @@ std::vector<ReadPtr> TabReadImpl::load_read(std::istream *input) {
     boost::split(parsedRead, tabLine, boost::is_any_of("\t"));
 
 
-    if (parsedRead.size() != 3 && parsedRead.size() != 5 && parsedRead.size() != 6) {
-        throw std::runtime_error("There are not either 3 (SE), 5 (PE, itab5), or 6 (PE, itab6) elements within a tab delimited file line");
+    if (parsedRead.size() != 3 && parsedRead.size() != 4 && parsedRead.size() != 5 && parsedRead.size() != 6 && parsedRead.size() != 8) {
+        throw std::runtime_error("There are not either 3 (SE, itab3), 4 (SE, itab with tags) 5 (PE, itab5), or 6 (PE, itab6), or 8 (PE, itab6 with tags) elements within a tab delimited file line");
     }
 
     if (parsedRead[1].size() != parsedRead[2].size()) {
@@ -161,6 +161,11 @@ std::vector<ReadPtr> TabReadImpl::load_read(std::istream *input) {
 
     reads[0] = std::make_shared<Read>(parsedRead[1], parsedRead[2], parsedRead[0]);
 
+    if (parsedRead.size() == 4) {
+        std::vector <std::string> comment;
+        boost::split(comment, parsedRead[3], boost::is_any_of("|"));
+        reads[0]->join_comment(comment);
+    }
     if (parsedRead.size() == 5) {
 
         if (parsedRead[3].size() != parsedRead[4].size()) {
@@ -179,6 +184,20 @@ std::vector<ReadPtr> TabReadImpl::load_read(std::istream *input) {
         reads.push_back(std::make_shared<Read>(parsedRead[4], parsedRead[5], parsedRead[3]));
     }
 
+    if (parsedRead.size() == 8) {
+
+        if (parsedRead[4].size() != parsedRead[5].size()) {
+            throw std::runtime_error("sequence and qualities are not the same length 2");
+        }
+
+        reads.push_back(std::make_shared<Read>(parsedRead[4], parsedRead[5], parsedRead[3]));
+        std::vector <std::string> comment1;
+        std::vector <std::string> comment2;
+        boost::split(comment1, parsedRead[6], boost::is_any_of("|"));
+        reads[0]->join_comment(comment1);
+        boost::split(comment2, parsedRead[7], boost::is_any_of("|"));
+        reads[1]->join_comment(comment2);
+    }
     // ignore extra lines at end of file
     while(input->good() and (input->peek() == '\n' || input->peek() == '\r')) {
         input->get();

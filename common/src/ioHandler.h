@@ -30,7 +30,7 @@
 namespace bf = boost::filesystem;
 namespace bi = boost::iostreams;
 
-int check_open_r(const std::string& filename) ;
+int check_open_r(const std::string& filename);
 std::string string2fasta(std::string seqstring, std::string prefix, const char delim=',');
 Read fasta_to_read(std::string fasta_file);
 
@@ -188,10 +188,10 @@ protected:
     std::shared_ptr<HtsOfstream> output = nullptr;
 
     void format_writer_rc(const Read &read) {
-       *output << "@" << read.get_id() << '\n' << read.get_seq_rc() << "\n+\n" << read.get_qual_rc() << '\n';
+       *output << "@" << read.get_id_fastq("1") << '\n' << read.get_seq_rc() << "\n+\n" << read.get_qual_rc() << '\n';
     }
     void format_writer(const Read &read) {
-       *output << "@" << read.get_id() << '\n' << read.get_sub_seq() << "\n+\n" << read.get_sub_qual() << '\n';
+       *output << "@" << read.get_id_fastq("1") << '\n' << read.get_sub_seq() << "\n+\n" << read.get_sub_qual() << '\n';
     }
 
 };
@@ -205,8 +205,8 @@ protected:
     std::shared_ptr<HtsOfstream> out1 = nullptr;
     std::shared_ptr<HtsOfstream> out2 = nullptr;
     void format_writer(const Read &read1, const Read &read2) {
-        *out1 << "@" << read1.get_id() << '\n' << read1.get_sub_seq() << "\n+\n" << read1.get_sub_qual() << '\n';
-        *out2 << "@" << read2.get_id() << '\n' << read2.get_sub_seq() << "\n+\n" << read2.get_sub_qual() << '\n';
+        *out1 << "@" << read1.get_id_fastq("1") << '\n' << read1.get_sub_seq() << "\n+\n" << read1.get_sub_qual() << '\n';
+        *out2 << "@" << read2.get_id_fastq("2") << '\n' << read2.get_sub_seq() << "\n+\n" << read2.get_sub_qual() << '\n';
     }
 };
 
@@ -218,8 +218,8 @@ public:
 protected:
     std::shared_ptr<HtsOfstream> out1 = nullptr;
     void format_writer(const Read &read1, const Read &read2) {
-        *out1 << "@" << read1.get_id() << '\n' << read1.get_sub_seq() << "\n+\n" << read1.get_sub_qual() << '\n';
-        *out1 << "@" << read2.get_id() << '\n' << read2.get_sub_seq() << "\n+\n" << read2.get_sub_qual() << '\n';
+        *out1 << "@" << read1.get_id_fastq("1") << '\n' << read1.get_sub_seq() << "\n+\n" << read1.get_sub_qual() << '\n';
+        *out1 << "@" << read2.get_id_fastq("2") << '\n' << read2.get_sub_seq() << "\n+\n" << read2.get_sub_qual() << '\n';
     }
 };
 
@@ -257,6 +257,9 @@ protected:
     const size_t pe2_bitwise = 141;
 
     void samout(const Read &read, size_t bitwiseflag) {
+        std::string sam_comment = "";
+        for (auto const& s : read.get_comment()) { sam_comment = sam_comment + '\t' + s; }
+
         *output << read.get_id_first() << '\t'
             << bitwiseflag << '\t'
             << "*\t" /*RNAME*/
@@ -267,10 +270,13 @@ protected:
             << "0\t" /*PNEXT*/
             << "0\t" /*TLEN*/
             << read.get_sub_seq() << "\t"
-            << read.get_sub_qual() << read.get_comment(true) << "\n";
+            << read.get_sub_qual() << sam_comment << "\n";
     }
 
     void samout_rc(const Read &read, size_t bitwiseflag) {
+        std::string sam_comment = "";
+        for (auto const& s : read.get_comment()) { sam_comment = sam_comment + '\t' + s; }
+
         *output << read.get_id_first() << '\t'
             << bitwiseflag << '\t'
             << "*\t" /*RNAME*/
@@ -281,7 +287,7 @@ protected:
             << "0\t" /*PNEXT*/
             << "0\t" /*TLEN*/
             << read.get_seq_rc() << "\t"
-            << read.get_qual_rc() << read.get_comment(true) << "\n";
+            << read.get_qual_rc() << sam_comment << "\n";
     }
 
     /*Unmapped specs for SE reads*/
@@ -312,15 +318,37 @@ protected:
     std::shared_ptr<HtsOfstream> output = nullptr;
 
     void format_writer(const Read &read) {
-        *output << read.get_id() << '\t' << read.get_sub_seq() << '\t' << read.get_sub_qual() << '\n';
+        *output << read.get_id_tab("1") << '\t' << read.get_sub_seq() << '\t' << read.get_sub_qual();
+        if (read.get_comment().size() > 0){
+            *output << '\t' << strjoin(read.get_comment(), "|");
+        }
+        *output << '\n';
     }
 
     void format_writer(const Read &read1, const Read &read2) {
-        *output << read1.get_id() << '\t' << read1.get_sub_seq() << '\t' << read1.get_sub_qual() << '\t' << read2.get_id() << '\t' << read2.get_sub_seq() << '\t' << read2.get_sub_qual() << '\n';
+        *output << read1.get_id_tab("1") << '\t' << read1.get_sub_seq() << '\t' << read1.get_sub_qual() << '\t' << read2.get_id_tab("2") << '\t' << read2.get_sub_seq() << '\t' << read2.get_sub_qual();
+        if (read1.get_comment().size() > 0 || read2.get_comment().size() > 0){
+            std::vector <std::string> comment1 = read1.get_comment();
+            std::vector <std::string> comment2 = read2.get_comment();
+            std::string strComment = "";
+            if (comment1.size() > 0){
+                strComment += strjoin(comment1, "|");
+            }
+            strComment += '\t';
+            if (comment2.size() > 0){
+                strComment += strjoin(comment2, "|");
+            }
+            *output << '\t' << strComment;
+        }
+        *output << '\n';
     }
 
     void format_writer_rc(const Read &read) {
-       *output <<  read.get_id() << '\t' << read.get_seq_rc() << "\t" << read.get_qual_rc() << '\n';
+        *output <<  read.get_id_tab("1") << '\t' << read.get_seq_rc() << "\t" << read.get_qual_rc();
+        if (read.get_comment().size() > 0){
+            *output << '\t' << strjoin(read.get_comment(), "|");
+        }
+        *output << '\n';
     }
 };
 

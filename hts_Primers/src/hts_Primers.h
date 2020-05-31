@@ -200,7 +200,7 @@ public:
             while(fp.has_next()) {
                 auto ser = fp.next();
                 Read r1 = ser->non_const_read_one();
-                primerMap[r1.get_id()] = r1.get_seq();
+                primerMap[r1.get_id_orig()] = r1.get_seq();
             }
         } else {
             // comma seperated
@@ -209,7 +209,7 @@ public:
             while(fp.has_next()) {
                 auto ser = fp.next();
                 Read r1 = ser->non_const_read_one();
-                primerMap[r1.get_id()] = r1.get_seq();
+                primerMap[r1.get_id_orig()] = r1.get_seq();
             }
         }
         return (primerMap);
@@ -421,7 +421,6 @@ public:
             if (flipped){
               counter.increment_flipped();
               r1.add_comment("Pf:Z:FLIP");
-              r2.add_comment("Pf:Z:FLIP");
             }
             r1.add_comment("P5:Z:" + p5primer);
             r2.add_comment("P3:Z:" + p3primer);

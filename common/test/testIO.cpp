@@ -148,5 +148,5 @@ TEST_F(ReadsTest, testString2Fasta) {
     Read readSeq = b->get_read();
 
     ASSERT_EQ("TTTTACACACAACAC", readSeq.get_seq());
-    ASSERT_EQ("seq2", readSeq.get_id());
+    ASSERT_EQ("seq2", readSeq.get_id_fastq());
 }
