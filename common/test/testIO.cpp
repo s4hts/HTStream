@@ -110,10 +110,11 @@ TEST_F(ReadsTest, testTabWrite) {
 
     {
         std::shared_ptr<HtsOfstream> hts_of(new HtsOfstream(out1));
-        std::unique_ptr<OutputWriter> ofs(new ReadBaseOutTab(hts_of));
+        std::shared_ptr<OutputWriter> ofs(new ReadBaseOutTab(hts_of));
+        WriterHelper writer = WriterHelper(ofs, ofs);
         while(ifs.has_next()) {
             auto r = ifs.next();
-            ofs->write(*r);
+            writer(*r);
         }
     }
 

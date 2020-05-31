@@ -21,12 +21,14 @@ TEST_F(LengthFilterTest, MaxLength) {
     std::shared_ptr<std::ostringstream> out1(new std::ostringstream);
     std::shared_ptr<HtsOfstream> hts_of(new HtsOfstream(out1));
     std::shared_ptr<OutputWriter> tab(new ReadBaseOutTab(hts_of));
+
+    WriterHelper writer(tab, tab, false, false);
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
         lf.length_filter(per->non_const_read_one(), 0, 8);
         lf.length_filter(per->non_const_read_two(), 0, 11);
-        writer_helper(per, tab, tab, false, false);
+        writer(*per);
     }
     ASSERT_EQ("Read2\tGTCCTATGGT\t##########\n", out1->str());
 };
@@ -40,12 +42,14 @@ TEST_F(LengthFilterTest, MinLength) {
     std::shared_ptr<std::ostringstream> out1(new std::ostringstream);
     std::shared_ptr<HtsOfstream> hts_of(new HtsOfstream(out1));
     std::shared_ptr<OutputWriter> tab(new ReadBaseOutTab(hts_of));
+
+    WriterHelper writer(tab, tab, false, false);
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
         lf.length_filter(per->non_const_read_one(), 11, 100);
         lf.length_filter(per->non_const_read_two(), 11, 100);
-        writer_helper(per, tab, tab, false, false);
+        writer(*per);
     }
     ASSERT_EQ("Read1\tTGACTTGACATTAAGCAAGTACCAGTACCGATACCATAGGACCCAAGGTA\t##################################################\n", out1->str());
 };
@@ -60,12 +64,13 @@ TEST_F(LengthFilterTest, MaxLengthStranded) {
     std::shared_ptr<std::ostringstream> out1(new std::ostringstream);
     std::shared_ptr<HtsOfstream> hts_of(new HtsOfstream(out1));
     std::shared_ptr<OutputWriter> tab(new ReadBaseOutTab(hts_of));
+    WriterHelper writer(tab, tab, true, false);
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
         lf.length_filter(per->non_const_read_one(), 0, 11);
         lf.length_filter(per->non_const_read_two(), 0, 11);
-        writer_helper(per, tab, tab, true, false);
+        writer(*per);
     }
     ASSERT_EQ("Read2\tACCATAGGAC\t##########\n", out1->str());
 };
@@ -79,12 +84,13 @@ TEST_F(LengthFilterTest, MaxLengthOrphan) {
     std::shared_ptr<std::ostringstream> out1(new std::ostringstream);
     std::shared_ptr<HtsOfstream> hts_of(new HtsOfstream(out1));
     std::shared_ptr<OutputWriter> tab(new ReadBaseOutTab(hts_of));
+    WriterHelper writer(tab, tab, false, true);
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
         lf.length_filter(per->non_const_read_one(), 0, 11);
         lf.length_filter(per->non_const_read_two(), 0, 11);
-        writer_helper(per, tab, tab, false, true);
+        writer(*per);
     }
     ASSERT_EQ("", out1->str());
 };

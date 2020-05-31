@@ -270,12 +270,28 @@ public:
     /*Particullary time consuming in each read*/
     boost::dynamic_bitset <> forwardLookup(bitKmer);
     boost::dynamic_bitset <> reverseLookup(bitKmer);
+    WriterHelper writer(pe, se, false);
 
-    while(reader.has_next()) {
-        auto i = reader.next();
-        PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
-        if (per) {
-            counter.input(*per);
+    auto read_visit = make_read_visitor_func(
+        [&](SingleEndRead *ser) {
+            double val = check_read(lookup, ser->get_read(), bitKmer, lookup_loc, lookup_loc_rc, forwardLookup, reverseLookup );
+            val = val / ( ser->get_read().getLength() - kmerSize);
+
+            if (val > hits) {
+                counter.inc_SE_hits();
+            }
+            if (val <= hits && !inverse && !record) {
+                counter.output(*ser);
+                writer(*ser);
+            } else if (val > hits && inverse && !record) {
+                counter.output(*ser);
+                writer(*ser);
+            } else if (record) {
+                counter.output(*ser);
+                writer(*ser);
+            }
+        },
+        [&](PairedEndRead *per) {
             double val = check_read(lookup, per->get_read_one(), bitKmer, lookup_loc, lookup_loc_rc, forwardLookup, reverseLookup );
             val = val / ( per->get_read_one().getLength() - kmerSize);
 
@@ -291,40 +307,20 @@ public:
             }
             if (val <= hits && !inverse && !record) {
                 counter.output(*per);
-                writer_helper(per, pe, se, false);
+                writer(*per);
             } else if (val > hits && inverse && !record) {
                 counter.output(*per);
-                writer_helper(per, pe, se, false);
+                writer(*per);
             } else if (record) {
                 counter.output(*per);
-                writer_helper(per, pe, se, false);
+                writer(*per);
             }
+        });
 
-        } else {
-            SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
-
-            if (ser) {
-                counter.input(*ser);
-                double val = check_read(lookup, ser->get_read(), bitKmer, lookup_loc, lookup_loc_rc, forwardLookup, reverseLookup );
-                val = val / ( ser->get_read().getLength() - kmerSize);
-
-                if (val > hits) {
-                    counter.inc_SE_hits();
-                }
-                if (val <= hits && !inverse && !record) {
-                    counter.output(*ser);
-                    writer_helper(ser, pe, se, false);
-                } else if (val > hits && inverse && !record) {
-                    counter.output(*ser);
-                    writer_helper(ser, pe, se, false);
-                } else if (record) {
-                    counter.output(*ser);
-                    writer_helper(ser, pe, se, false);
-                }
-            } else {
-                throw std::runtime_error("Unknown read type");
-            }
-        }
+    while(reader.has_next()) {
+        auto i = reader.next();
+        counter.input(*i);
+        i->accept(read_visit);
     }
 }
 

@@ -26,56 +26,53 @@ public:
     uint64_t PE_Discarded = 0;
     uint64_t R1_Discarded = 0;
     uint64_t R2_Discarded = 0;
+    bool no_orphans = false;
 
-
+    virtual ~LengthFilterCounters() {}
     LengthFilterCounters(const std::string &program_name, const po::variables_map &vm) : Counters::Counters(program_name, vm) {
         se.push_back(std::forward_as_tuple("discarded", SE_Discarded));
         pe.push_back(std::forward_as_tuple("discarded", PE_Discarded));
         r1.push_back(std::forward_as_tuple("discarded", R1_Discarded));
         r2.push_back(std::forward_as_tuple("discarded", R2_Discarded));
     }
+    using Counters::output;
 
-    void output(SingleEndRead &ser)  {
-        Read &one = ser.non_const_read_one();
-        if (!one.getDiscard()) {
+    virtual void output(SingleEndRead &ser) {
+        if (!ser.get_read().getDiscard()) {
             ++TotalFragmentsOutput;
             ++SE_Out;
-            SE_BpLen_Out += one.getLength();
-            TotalBasepairsOutput += one.getLength();
+            SE_BpLen_Out += ser.get_read().getLength();
+            TotalBasepairsOutput += ser.get_read().getLength();
         } else {
             ++SE_Discarded;
         }
     }
 
-    void output(PairedEndRead &per, bool no_orphans) {
-        Read &one = per.non_const_read_one();
-        Read &two = per.non_const_read_two();
-        if (!one.getDiscard() && !two.getDiscard()) {
+    virtual void output(PairedEndRead &per) {
+        if (!per.get_read_one().getDiscard() && !per.get_read_two().getDiscard()) {
             ++TotalFragmentsOutput;
             ++PE_Out;
-            R1_BpLen_Out += one.getLengthTrue();
-            R2_BpLen_Out += two.getLengthTrue();
-            TotalBasepairsOutput += one.getLengthTrue();
-            TotalBasepairsOutput += two.getLengthTrue();
-        } else if (!one.getDiscard() && !no_orphans) {
+            R1_BpLen_Out += per.get_read_one().getLengthTrue();
+            R2_BpLen_Out += per.get_read_two().getLengthTrue();
+            TotalBasepairsOutput += per.get_read_one().getLengthTrue();
+            TotalBasepairsOutput += per.get_read_two().getLengthTrue();
+        } else if (!per.get_read_one().getDiscard() && !no_orphans) {
             ++TotalFragmentsOutput;
             ++SE_Out;
-            SE_BpLen_Out += one.getLengthTrue();
-            TotalBasepairsOutput += one.getLengthTrue();
+            SE_BpLen_Out += per.get_read_one().getLengthTrue();
+            TotalBasepairsOutput += per.get_read_one().getLengthTrue();
+
             ++R2_Discarded;
-        } else if (!two.getDiscard() && !no_orphans) {
+        } else if (!per.get_read_two().getDiscard() && !no_orphans) {
             ++TotalFragmentsOutput;
             ++SE_Out;
-            SE_BpLen_Out += two.getLengthTrue();
-            TotalBasepairsOutput += two.getLengthTrue();
+            SE_BpLen_Out += per.get_read_two().getLengthTrue();
+            TotalBasepairsOutput += per.get_read_two().getLengthTrue();
             ++R1_Discarded;
         } else {
             ++PE_Discarded;
         }
     }
-
-private:
-    using Counters::output;  // overload the base class and ignore warnings
 };
 
 class LengthFilter: public MainTemplate<LengthFilterCounters, LengthFilter> {
@@ -102,7 +99,7 @@ public:
 
 
 /* TODO update the comments here
-*/
+ */
     void length_filter(Read &r, size_t min_length, size_t max_length) {
         if (max_length && max_length < r.getLengthTrue()) {
             r.setDiscard();
@@ -120,27 +117,14 @@ public:
         bool stranded =  vm["stranded"].as<bool>();
         bool no_orphans = vm["no-orphans"].as<bool>();
         size_t max_length = vm["max-length"].as<size_t>();
-
+        counters.no_orphans = no_orphans;
+        WriterHelper writer(pe, se, stranded, no_orphans);
         while(reader.has_next()) {
             auto i = reader.next();
-            PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
-            if (per) {
-                counters.input(*per);
-                length_filter( per->non_const_read_one(), min_length, max_length);
-                length_filter( per->non_const_read_two(), min_length, max_length);
-                writer_helper(per, pe, se, stranded, no_orphans);
-                counters.output(*per, no_orphans);
-            } else {
-                SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
-                if (ser) {
-                    counters.input(*ser);
-                    length_filter( ser->non_const_read_one(), min_length, max_length);
-                    writer_helper(ser, pe, se, false, false);
-                    counters.output(*ser);
-                } else {
-                    throw std::runtime_error("Unknown read type");
-                }
-            }
+            std::for_each(i->get_reads_non_const().begin(), i->get_reads_non_const().end(), ([=](const ReadPtr &read) { return length_filter(*read, min_length, max_length); }));
+
+            writer(*i);
+            counters.output(*i);
         }
     }
 };

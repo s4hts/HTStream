@@ -216,7 +216,7 @@ public:
         if (swapped) {
             std::swap(r1, r2);
         }
-        return std::dynamic_pointer_cast<ReadBase>(pe);
+        return std::static_pointer_cast<ReadBase>(pe);
     }
 
     unsigned int checkIfAdapter(Read &r1, Read &adapter, size_t loc1, size_t loc2, const double misDensity, const size_t &mismatch, const size_t &minOverlap ) {
@@ -273,11 +273,12 @@ public:
                 }
             }
         }
-        return std::dynamic_pointer_cast<ReadBase>(se);
+        return std::static_pointer_cast<ReadBase>(se);
     }
 
     void writer_thread(std::shared_ptr<OutputWriter> pe,  std::shared_ptr<OutputWriter> se, AdapterCounters &counter, threadsafe_queue<std::future<ReadBasePtr>> &futures) {
 
+        WriterHelper writer(pe, se);
         while(!futures.is_done()) {
             std::future<ReadBasePtr> fread;
             futures.wait_and_pop(fread);
@@ -290,19 +291,8 @@ public:
                 return;
             }
 
-            PairedEndReadPtr per = std::dynamic_pointer_cast<PairedEndRead>(rbase);
-            if (per) {
-                counter.output(*per);
-                writer_helper(per.get(), pe, se);
-            } else {
-                SingleEndReadPtr ser = std::dynamic_pointer_cast<SingleEndRead>(rbase);
-                if (ser) {
-                    counter.output(*ser);
-                    writer_helper(ser.get(), pe, se);
-                } else {
-                    throw std::runtime_error("Unknown read type");
-                }
-            }
+            counter.output(*rbase);
+            writer(*rbase);
         }
     }
 
@@ -333,30 +323,29 @@ public:
         thread_pool threads(50000, num_threads);
 
         std::thread output_thread([=, &counter, &futures]() mutable { writer_thread(pe, se, counter, futures); });
+
+        auto read_visit = make_read_visitor_func(
+            [&](SingleEndRead *ser) {
+                futures.push(threads.submit([=]() mutable {
+                                                return check_read_se(SingleEndReadPtr(ser), misDensity, mismatch, minOver, checkLengths, kmer, kmerOffset, adapter); }));
+            },
+            [&](PairedEndRead *per) {
+                futures.push(threads.submit([=]() mutable {
+                                                return check_read_pe(PairedEndReadPtr(per), misDensity, mismatch, minOver, checkLengths, kmer, kmerOffset, noFixBases); }));
+            });
+
+        // thread_guard must be declared last
         thread_guard tg(output_thread);
 
         try {
             while(reader.has_next()) {
                 auto i = reader.next();
-                PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
-                if (per) {
-                    std::shared_ptr<PairedEndRead> sper = std::make_shared<PairedEndRead>(std::move(*per));
-                    counter.input(*sper);
-                    futures.push(threads.submit([=]() mutable {
-                                return check_read_pe(sper, misDensity, mismatch, minOver, checkLengths, kmer, kmerOffset, noFixBases); }));
+                counter.input(*i);
 
-                } else {
-                    SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
-
-                    if (ser) {
-                        std::shared_ptr<SingleEndRead> sser = std::make_shared<SingleEndRead>(std::move(*ser));
-                        counter.input(*sser);
-                        futures.push(threads.submit([=]() mutable {
-                                    return check_read_se(sser, misDensity, mismatch, minOver, checkLengths, kmer, kmerOffset, adapter); }));
-                    } else {
-                        throw std::runtime_error("Unknown read type");
-                    }
-                }
+                // release the unique_ptr and convert to shared_ptr
+                // this way the reads will live beyond the while loop
+                auto p = i.release();
+                p->accept(read_visit);
             }
 
             // null ptr indicates end of processing

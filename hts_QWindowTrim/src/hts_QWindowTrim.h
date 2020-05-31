@@ -118,12 +118,18 @@ public:
         size_t window_size = vm["window-size"].as<size_t>();
         bool no_left = vm["no-left"].as<bool>();
         bool no_right = vm["no-right"].as<bool>();
+        WriterHelper writer(pe, se);
 
-        while(reader.has_next()) {
-            auto i = reader.next();
-            PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
-            if (per) {
-                counters.input(*per);
+        auto read_visit = make_read_visitor_func(
+            [&](SingleEndRead *ser) {
+                if (!no_left) {
+                    trim_left(ser->non_const_read_one(), qual_threshold, window_size);
+                }
+                if (!no_right) {
+                    trim_right(ser->non_const_read_one(), qual_threshold, window_size);
+                }
+            },
+            [&](PairedEndRead *per) {
                 if (!no_left) {
                     trim_left(per->non_const_read_one(), qual_threshold, window_size);
                     trim_left(per->non_const_read_two(), qual_threshold, window_size);
@@ -132,27 +138,17 @@ public:
                     trim_right(per->non_const_read_one(), qual_threshold, window_size);
                     trim_right(per->non_const_read_two(), qual_threshold, window_size);
                 }
-                writer_helper(per, pe, se);
-                counters.output(*per);
-            } else {
-                SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
+            });
 
-                if (ser) {
-                    counters.input(*ser);
-                    if (!no_left) {
-                        trim_left(ser->non_const_read_one(), qual_threshold, window_size);
-                    }
-                    if (!no_right) {
-                        trim_right(ser->non_const_read_one(), qual_threshold, window_size);
-                    }
-                    writer_helper(ser, pe, se);
-                    counters.output(*ser);
-                } else {
-                    throw std::runtime_error("Unknow read type");
-                }
-            }
+        while(reader.has_next()) {
+            auto i = reader.next();
+            counters.input(*i);
+
+            i->accept(read_visit);
+
+            writer(*i);
+            counters.output(*i);
         }
-
     }
 };
 

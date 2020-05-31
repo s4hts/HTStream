@@ -89,14 +89,14 @@ public:
 
 class InputFastq {
 protected:
-    Read load_read(std::istream *input);
+    ReadPtr load_read(std::istream *input);
 
     std::string id, seq, id2, qual;
 };
 
 class InputFasta {
 protected:
-    Read load_read(std::istream *input);
+    ReadPtr load_read(std::istream *input);
     std::string id, seq;
     std::string tmpSeq;
 };
@@ -143,7 +143,7 @@ class TabReadImpl : public InputFastq {
 public:
     TabReadImpl(std::istream& in1_) : in1(&in1_) {}
     TabReadImpl(std::vector<std::string> in_) : fin(in_) {}
-    std::vector<Read> load_read(std::istream *input);
+    std::vector<ReadPtr> load_read(std::istream *input);
 protected:
     std::istream* in1;
     std::vector<std::string> fin;
@@ -176,7 +176,6 @@ public:
     virtual void write(const PairedEndRead& ) { throw std::runtime_error("No PE implementation of write (Probably a SE read)"); }
     virtual void write(const SingleEndRead& ) { throw std::runtime_error("No SE implementaiton of write (Probably a PE read)"); }
     virtual void write_read(const Read &, bool ) { throw std::runtime_error("No write_read class, only accessable with SE"); } //only SE
-    virtual void write(const ReadBase &) { throw std::runtime_error("No ReadBase class, only accessable with tab"); } //maybe typecase eventually
 };
 
 class SingleEndReadOutFastq : public OutputWriter {
@@ -185,14 +184,6 @@ public:
     virtual ~SingleEndReadOutFastq() {};
     virtual void write(const SingleEndRead &read) { format_writer(read.get_read()); }
     virtual void write_read(const Read &read, bool rc) { if (rc) { format_writer_rc(read); } else { format_writer(read); } }
-    virtual void write(const ReadBase &read) {
-        const SingleEndRead *ser = dynamic_cast<const SingleEndRead*>(&read);
-        if (ser) {
-            write(*ser);
-        } else {
-            throw std::runtime_error("PairedEndRead passed in SingleEndReadOutFastq::write");
-        }
-    }
 protected:
     std::shared_ptr<HtsOfstream> output = nullptr;
 
@@ -210,14 +201,6 @@ public:
     PairedEndReadOutFastq(std::shared_ptr<HtsOfstream> &out1_, std::shared_ptr<HtsOfstream> &out2_) : out1(out1_), out2(out2_) { }
     virtual ~PairedEndReadOutFastq() {};
     virtual void write(const PairedEndRead &read) { format_writer(read.get_read_one(), read.get_read_two()); }
-    virtual void write(const ReadBase &read) {
-        const PairedEndRead *per = dynamic_cast<const PairedEndRead*>(&read);
-        if (per) {
-            write(*per);
-        } else {
-            throw std::runtime_error("SingleEndRead passed in PairedEndReadOutFastq::write");
-        }
-    }
 protected:
     std::shared_ptr<HtsOfstream> out1 = nullptr;
     std::shared_ptr<HtsOfstream> out2 = nullptr;
@@ -232,14 +215,6 @@ public:
     PairedEndReadOutInter(std::shared_ptr<HtsOfstream> &out_) : out1(out_) { }
     virtual ~PairedEndReadOutInter() {};
     virtual void write(const PairedEndRead &read) { format_writer(read.get_read_one(), read.get_read_two()); }
-    virtual void write(const ReadBase &read) {
-        const PairedEndRead *per = dynamic_cast<const PairedEndRead*>(&read);
-        if (per) {
-            write(*per);
-        } else {
-            throw std::runtime_error("SingleEndRead called in PairedEndReadOutInter::write");
-        }
-    }
 protected:
     std::shared_ptr<HtsOfstream> out1 = nullptr;
     void format_writer(const Read &read1, const Read &read2) {
@@ -257,18 +232,6 @@ public:
     virtual void write(const SingleEndRead &read) { format_writer(read.get_read()); }
     virtual void write_read(const Read &read, bool rc) { if (rc) { format_writer_rc(read); } else { format_writer(read); } }
 
-    virtual void write(const ReadBase &read) {
-        const PairedEndRead *per = dynamic_cast<const PairedEndRead*>(&read);
-        if (per) {
-            format_writer(per->get_read_one(), per->get_read_two());
-        } else {
-            const SingleEndRead *ser = dynamic_cast<const SingleEndRead*>(&read);
-            if (ser == NULL) {
-                throw std::runtime_error("ReadBaseOutTab::write could not cast read as SE or PE read");
-            }
-            format_writer(ser->get_read());
-        }
-    }
 protected:
     std::shared_ptr<HtsOfstream> output = nullptr;
 
@@ -351,18 +314,6 @@ public:
     virtual void write(const SingleEndRead &read) { format_writer(read.get_read()); }
     virtual void write_read(const Read &read, bool rc) { if (rc) { format_writer_rc(read); } else { format_writer(read); } }
 
-    virtual void write(const ReadBase &read) {
-        const PairedEndRead *per = dynamic_cast<const PairedEndRead*>(&read);
-        if (per) {
-            format_writer(per->get_read_one(), per->get_read_two());
-        } else {
-            const SingleEndRead *ser = dynamic_cast<const SingleEndRead*>(&read);
-            if (ser == NULL) {
-                throw std::runtime_error("ReadBaseOutTab::write could not cast read as SE or PE read");
-            }
-            format_writer(ser->get_read());
-        }
-    }
 protected:
     std::shared_ptr<HtsOfstream> output = nullptr;
 
@@ -401,6 +352,50 @@ protected:
     }
 };
 
-void writer_helper(ReadBase *r, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, bool stranded = false, bool no_orphans = false);
+class WriterHelper : public ReadVisitor {
+public:
+    virtual ~WriterHelper() {}
+    WriterHelper(std::shared_ptr<OutputWriter> pe_, std::shared_ptr<OutputWriter> se_,
+                 bool stranded_ = false, bool no_orphans_ = false) :
+        stranded(stranded_), no_orphans(no_orphans_), pe(pe_), se(se_) {}
+
+    void operator() (ReadBase &read) {
+        read.accept(*this);
+    }
+
+    void operator() (SingleEndRead &read) {
+        visit(&read);
+    }
+
+    void operator() (PairedEndRead &read) {
+        visit(&read);
+    }
+
+    virtual void visit(PairedEndRead *per) {
+        Read &one = per->non_const_read_one();
+        Read &two = per->non_const_read_two();
+
+        if (!one.getDiscard() && !two.getDiscard()) {
+            pe->write(*per);
+        } else if (!one.getDiscard() && !no_orphans) { // Will never be RC
+            se->write_read(one, false);
+        } else if (!two.getDiscard() && !no_orphans) { // if stranded RC
+            se->write_read((per->get_read_two()), stranded);
+        }
+
+    }
+
+    virtual void visit(SingleEndRead *ser) {
+        if (! (ser->non_const_read_one()).getDiscard() ) {
+            se->write(*ser);
+        }
+    }
+
+private:
+    bool stranded;
+    bool no_orphans;
+    std::shared_ptr<OutputWriter> pe;
+    std::shared_ptr<OutputWriter> se;
+};
 
 #endif

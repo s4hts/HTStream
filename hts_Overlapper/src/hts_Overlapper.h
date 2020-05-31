@@ -270,17 +270,22 @@ public:
         const size_t kmer = vm["kmer"].as<size_t>();
         const size_t kmerOffset = vm["kmer-offset"].as<size_t>();
         bool forcePair = vm["force-pairs"].as<bool>();
+        WriterHelper writer(pe, se);
 
-        while(reader.has_next()) {
-            auto i = reader.next();
-            PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
-            if (per) {
+
+        auto read_visit = make_read_visitor_func(
+            [&](SingleEndRead *ser) {
+                counters.input(*ser);
+                counters.output(*ser);
+                writer(*ser);
+            },
+            [&](PairedEndRead *per) {
                 counters.input(*per);
                 SingleEndReadPtr overlapped = check_read(*per, misDensity, mismatch, minOver, checkLengths, kmer, kmerOffset);
                 if (!overlapped) {
                     counters.increment_lins();
                     counters.output(*per);
-                    writer_helper(per, pe, se); //write out as is
+                    writer(*per); //write out as is
                 } else if (overlapped) { //if there is an overlap
                     unsigned int origLength = std::max(unsigned(per->non_const_read_one().getLength()),unsigned(per->non_const_read_two().getLength()));
                     counters.overlap_stats(*overlapped, origLength);
@@ -295,22 +300,17 @@ public:
                         r2.join_comment(or2.get_comment());
                         PairedEndRead newper(r1, r2);
                         counters.output(newper);
-                        writer_helper(&newper, pe, se); //write out as is
+                        writer(newper); //write out as is
                     } else {
                         counters.output(*overlapped);
-                        writer_helper(overlapped.get(), pe, se);
+                        writer(*overlapped);
                     }
                 }
-            } else {
-                SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
-                if (ser) {
-                    counters.input(*ser);
-                    counters.output(*ser);
-                    writer_helper(ser, pe, se);
-                } else {
-                    throw std::runtime_error("Unknown read type");
-                }
-            }
+            });
+
+        while(reader.has_next()) {
+            auto i = reader.next();
+            i->accept(read_visit);
         }
     }
 };

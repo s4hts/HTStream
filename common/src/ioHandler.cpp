@@ -3,36 +3,6 @@
 #include <cerrno>
 #include <sstream>
 
-void writer_helper(ReadBase *r, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, bool stranded, bool no_orphans ) { //class writer
-    PairedEndRead *per = dynamic_cast<PairedEndRead*>(r);
-    if (per) {
-        Read &one = per->non_const_read_one();
-        Read &two = per->non_const_read_two();
-
-        if (!one.getDiscard() && !two.getDiscard()) {
-            pe->write(*per);
-        } else if (!one.getDiscard() && !no_orphans) { // Will never be RC
-            one.join_comment(two.get_comment());
-            se->write_read(one, false);
-        } else if (!two.getDiscard() && !no_orphans) { // if stranded RC
-            two.join_comment(one.get_comment());
-            se->write_read(two, stranded);
-        } else {
-
-        }
-    } else {
-        SingleEndRead *ser = dynamic_cast<SingleEndRead*>(r);
-        if (!ser) {
-            throw std::runtime_error("Unknown read found");
-        }
-        if (! (ser->non_const_read_one()).getDiscard() ) {
-            se->write(*ser);
-        } else {
-
-        }
-    }
-}
-
 void skip_lr(std::istream *input) {
     while(input and input->good() and (input->peek() == '\n' || input->peek() == '\r')) {
         input->get();
@@ -86,7 +56,6 @@ int check_open_r(const std::string& filename) {
     return fileno(f);
 }
 
-
 int HtsOfstream::check_exists(const std::string& filename, bool force, bool gzip, bool std_out) {
     FILE* f = NULL;
 
@@ -113,7 +82,7 @@ int HtsOfstream::check_exists(const std::string& filename, bool force, bool gzip
     }
 }
 
-Read InputFastq::load_read(std::istream *input) {
+ReadPtr InputFastq::load_read(std::istream *input) {
     while(std::getline(*input, id) && id.size() < 1) {
     }
     if (id.size() < 1) {
@@ -142,10 +111,10 @@ Read InputFastq::load_read(std::istream *input) {
     while(input->good() and (input->peek() == '\n' || input->peek() == '\r')) {
         input->get();
     }
-    return Read(seq, qual, id.substr(1));
+    return std::make_shared<Read>(seq, qual, id.substr(1));
 }
 
-Read InputFasta::load_read(std::istream *input) {
+ReadPtr InputFasta::load_read(std::istream *input) {
     while(std::getline(*input, id) && id.size() < 1) {
     }
     if (id.size() < 1) {
@@ -167,14 +136,14 @@ Read InputFasta::load_read(std::istream *input) {
     while(input->good() and (input->peek() == '\n' || input->peek() == '\r')) {
         input->get();
     }
-    return Read(seq, "", id.substr(1));
+    return std::make_shared<Read>(seq, "", id.substr(1));
 
 }
 
 //Overrides load_read for tab delimited reads
-std::vector<Read> TabReadImpl::load_read(std::istream *input) {
+std::vector<ReadPtr> TabReadImpl::load_read(std::istream *input) {
 
-    std::vector <Read> reads(1);
+    std::vector <ReadPtr> reads(1);
     while(std::getline(*input, tabLine) && tabLine.size() < 1) {
     }
 
@@ -190,12 +159,12 @@ std::vector<Read> TabReadImpl::load_read(std::istream *input) {
         throw std::runtime_error("sequence and qualities are not the same length 1");
     }
 
-    reads[0] = Read(parsedRead[1], parsedRead[2], parsedRead[0]);
+    reads[0] = std::make_shared<Read>(parsedRead[1], parsedRead[2], parsedRead[0]);
 
     if (parsedRead.size() == 4) {
         std::vector <std::string> comment;
         boost::split(comment, parsedRead[3], boost::is_any_of("|"));
-        reads[0].join_comment(comment);
+        reads[0]->join_comment(comment);
     }
     if (parsedRead.size() == 5) {
 
@@ -203,7 +172,7 @@ std::vector<Read> TabReadImpl::load_read(std::istream *input) {
             throw std::runtime_error("sequence and qualities are not the same length 2");
         }
 
-        reads.push_back(Read(parsedRead[3], parsedRead[4], parsedRead[0]));
+        reads.push_back(std::make_shared<Read>(parsedRead[3], parsedRead[4], parsedRead[0]));
     }
 
     if (parsedRead.size() == 6) {
@@ -212,7 +181,7 @@ std::vector<Read> TabReadImpl::load_read(std::istream *input) {
             throw std::runtime_error("sequence and qualities are not the same length 2");
         }
 
-        reads.push_back(Read(parsedRead[4], parsedRead[5], parsedRead[3]));
+        reads.push_back(std::make_shared<Read>(parsedRead[4], parsedRead[5], parsedRead[3]));
     }
 
     if (parsedRead.size() == 8) {
@@ -221,13 +190,13 @@ std::vector<Read> TabReadImpl::load_read(std::istream *input) {
             throw std::runtime_error("sequence and qualities are not the same length 2");
         }
 
-        reads.push_back(Read(parsedRead[4], parsedRead[5], parsedRead[3]));
+        reads.push_back(std::make_shared<Read>(parsedRead[4], parsedRead[5], parsedRead[3]));
         std::vector <std::string> comment1;
         std::vector <std::string> comment2;
         boost::split(comment1, parsedRead[6], boost::is_any_of("|"));
-        reads[0].join_comment(comment1);
+        reads[0]->join_comment(comment1);
         boost::split(comment2, parsedRead[7], boost::is_any_of("|"));
-        reads[1].join_comment(comment2);
+        reads[1]->join_comment(comment2);
     }
     // ignore extra lines at end of file
     while(input->good() and (input->peek() == '\n' || input->peek() == '\r')) {
@@ -268,8 +237,8 @@ bool InputReader<SingleEndRead, FastaReadImpl>::has_next() {
 
 template <>
 InputReader<PairedEndRead, PairedEndReadFastqImpl>::value_type InputReader<PairedEndRead, PairedEndReadFastqImpl>::next() {
-    Read r1 = load_read(in1);
-    Read r2 = load_read(in2);
+    ReadPtr r1 = load_read(in1);
+    ReadPtr r2 = load_read(in2);
     return InputReader<PairedEndRead, PairedEndReadFastqImpl>::value_type(new PairedEndRead(r1, r2));
 }
 
@@ -291,8 +260,8 @@ bool InputReader<PairedEndRead, PairedEndReadFastqImpl>::has_next() {
 
 template<>
 InputReader<PairedEndRead, InterReadImpl>::value_type InputReader<PairedEndRead, InterReadImpl>::next() {
-    Read r1 = load_read(in1);
-    Read r2;
+    ReadPtr r1 = load_read(in1);
+    ReadPtr r2;
     try {
         r2 = load_read(in1);
     } catch (const std::exception&) {
@@ -314,11 +283,11 @@ bool InputReader<PairedEndRead, InterReadImpl>::has_next() {
 
 template <>
 InputReader<ReadBase, TabReadImpl>::value_type InputReader<ReadBase, TabReadImpl>::next() {
-    std::vector<Read> rs = load_read(in1);
+    std::vector<ReadPtr> rs = load_read(in1);
     if (rs.size() == 1) {
-        return InputReader<SingleEndRead, TabReadImpl>::value_type(new SingleEndRead(rs[0]));
+        return InputReader<SingleEndRead, TabReadImpl>::value_type(new SingleEndRead(rs));
     }
-    return InputReader<PairedEndRead, TabReadImpl>::value_type(new PairedEndRead(rs[0], rs[1]));
+    return InputReader<PairedEndRead, TabReadImpl>::value_type(new PairedEndRead(rs));
 }
 
 template <>

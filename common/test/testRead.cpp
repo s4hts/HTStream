@@ -34,7 +34,7 @@ TEST(ConvertToTwobit, ConvertToTwobitWorks){
 }
 
 TEST(qual, avgQualScore) {
-    SingleEndRead r1(Read("aaa",
+    SingleEndRead r1(std::make_shared<Read>("aaa",
                        "###",
                        "foo"));
     ASSERT_EQ(r1.avg_q_score(), 2);

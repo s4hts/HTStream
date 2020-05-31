@@ -135,11 +135,20 @@ public:
         bool no_right = vm["no-right"].as<bool>();
 
         bool r1fA = false, r1fT = false, r2fA = false, r1rA = false;
-        while(reader.has_next()) {
-            auto i = reader.next();
-            PairedEndRead* per = dynamic_cast<PairedEndRead*>(i.get());
-            if (per) {
-                counters.input(*per);
+        WriterHelper writer(pe, se);
+
+        auto read_visit = make_read_visitor_func(
+            [&](SingleEndRead *ser) {
+                if (!no_left) {
+                    if (!no_pA) r1fA = trim_left(ser->non_const_read_one(), 'A', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
+                    if (!no_pT && !r1fA) r1fT = trim_left(ser->non_const_read_one(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
+                }
+                if (!no_right && !r1fA && !r1fT) {
+                    if (!no_pA) r1rA = trim_right(ser->non_const_read_one(), 'A', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
+                    if (!no_pT && ! r1rA) trim_right(ser->non_const_read_one(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
+                }
+            },
+            [&](PairedEndRead *per) {
                 if (!no_left){ // 5' fragment end detection
                     if (!no_pA) r1fA = trim_left(per->non_const_read_one(), 'A', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
                     if (!no_pT && !r1fA) r1fT = trim_left(per->non_const_read_one(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
@@ -149,26 +158,14 @@ public:
                     if (!no_pT && !r2fA) trim_left(per->non_const_read_two(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
                 }
                 // polyAT must be on one of the two fragment ends (when PE), don't bother checking read ends, reads should be overlapped otherwise.
-                writer_helper(per, pe, se);
-                counters.output(*per);
-            } else {
-                SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
-                if (ser) {
-                    counters.input(*ser);
-                    if (!no_left) {
-                        if (!no_pA) r1fA = trim_left(ser->non_const_read_one(), 'A', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
-                        if (!no_pT && !r1fA) r1fT = trim_left(ser->non_const_read_one(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
-                    }
-                    if (!no_right && !r1fA && !r1fT) {
-                        if (!no_pA) r1rA = trim_right(ser->non_const_read_one(), 'A', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
-                        if (!no_pT && ! r1rA) trim_right(ser->non_const_read_one(), 'T', min_trim, max_trim, window_size, max_mismatch_errorDensity, perfect_windows);
-                    }
-                    writer_helper(ser, pe, se);
-                    counters.output(*ser);
-                } else {
-                    throw std::runtime_error("Unknown read type");
-                }
-            }
+            });
+
+        while(reader.has_next()) {
+            auto i = reader.next();
+            counters.input(*i);
+            i->accept(read_visit);
+            writer(*i);
+            counters.output(*i);
         }
 
     }
