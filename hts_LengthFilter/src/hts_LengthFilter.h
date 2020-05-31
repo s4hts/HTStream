@@ -81,8 +81,7 @@ public:
     LengthFilter() {
         program_name = "hts_LengthFilter";
         app_description =
-            "The hts_LengthFilter application trims a set number of bases from the 5'\n";
-        app_description += "  and/or 3' end of each read\n";
+            "The hts_LengthFilter application filters reads that are too long or too short.'\n";
     }
 
     void add_extra_options(po::options_description &desc) {
