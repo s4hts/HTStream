@@ -160,8 +160,8 @@ void setThreadPoolParams(po::options_description &desc) {
 
 void version_or_help(std::string program_name, std::string app_description, po::options_description &desc, po::variables_map vm, bool error) {
 
-    std::string prolog="HTStream <https://github.com/ibest/HTStream> application: " + program_name;
-    std::string epilog="Please report any issues, request for enhancement, or comments to <https://github.com/ibest/HTStream/issues>";
+    std::string prolog="HTStream <https://github.com/s4hts/HTStream> application: " + program_name;
+    std::string epilog="Please report any issues, request for enhancement, or comments to <https://github.com/s4hts/HTStream/issues>";
     int SUCCESS = 0;
     int FAILURE = 1;
     if (vm.count("version")) {
