@@ -84,8 +84,7 @@ public:
            std::vector <std::string> comment_tmp;
            boost::split(comment_tmp, id, boost::is_any_of("|"));
            id = comment_tmp[0];
-           comment_tmp.erase(comment_tmp.begin());
-           join_comment(comment_tmp);
+           join_comment(comment_tmp, 1);
          }
     Read() :
         seq(""), qual(""), id_orig(""), id(""), id2(""), length(0), cut_R(seq.length()), cut_L(0), discard(false) {
@@ -129,7 +128,7 @@ public:
 
 
     void add_comment( const std::string& tag ) { if (tag != "") comments.push_back(tag);}
-    void join_comment( const std::vector<std::string>& new_comments ) { comments.insert(comments.end(), new_comments.begin(), new_comments.end()); }
+    void join_comment( const std::vector<std::string>& new_comments, size_t offset = 0) { comments.insert(comments.end(), new_comments.begin() + offset, new_comments.end()); }
     void set_read_rc() {
         if (cut_R < cut_L) {
             return;
