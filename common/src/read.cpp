@@ -2,6 +2,18 @@
 #include <boost/dynamic_bitset.hpp>
 #include <numeric>
 
+
+std::string strjoin(const std::vector <std::string>& v, const std::string& delim) {
+    std::ostringstream s;
+    for (const auto& i : v) {
+        if (&i != &v[0]) {
+            s << delim;
+        }
+        s << i;
+    }
+    return s.str();
+}
+
 std::string ReadBase::bit_to_str(const BitSet &bits) {
     size_t str_len = bits.size()/2;
     std::string out;
