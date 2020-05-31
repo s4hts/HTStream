@@ -19,8 +19,8 @@ We'd love to accept your additions!
 
 ### Contributing code
 
-If you want to contribute, start working through the HTStream codebase, navigate to the [Github "issues" tab](https://github.com/ibest/HTStream/issues) and start looking through interesting issues.
-[issues with the "enhancement" label](https://github.com/ibest/HTStream/labels/enhancement) are well suited for outside contributions, and we haven't had time yet to get to them.
+If you want to contribute, start working through the HTStream codebase, navigate to the [Github "issues" tab](https://github.com/s4hts/HTStream/issues) and start looking through interesting issues.
+[issues with the "enhancement" label](https://github.com/s4hts/HTStream/labels/enhancement) are well suited for outside contributions, and we haven't had time yet to get to them.
 **If you have an idea for a new feature or application**, please first create a new issue (add the 'enhancement' or 'feature' label) and get feedback from other developers and users. We would love to give guidance, save duplicate work if the feature is already under development, or save you some time if the functionality lives elsewhere.
 
 If you decide to start on an issue, leave a comment so that other people know that you're working on it. If you want to help out, but not alone, use the issue comment thread to coordinate.
@@ -36,7 +36,7 @@ After the change has been submitted internally, your pull request will be merged
 ### Contribution guidelines and standards
 
 Before sending your pull request for
-[review](https://github.com/ibest/HTStream/pulls),
+[review](https://github.com/s4hts/HTStream/pulls),
 make sure your changes are consistent with the guidelines.
 
 #### General guidelines and philosophy for contribution
