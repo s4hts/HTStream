@@ -120,6 +120,7 @@ public:
         WriterHelper writer(pe, se, stranded, no_orphans);
         while(reader.has_next()) {
             auto i = reader.next();
+            counters.input(*i);
             std::for_each(i->get_reads_non_const().begin(), i->get_reads_non_const().end(), ([=](const ReadPtr &read) { return length_filter(*read, min_length, max_length); }));
 
             writer(*i);
