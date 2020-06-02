@@ -5,6 +5,7 @@ A toolset for high throughput sequence analysis using a streaming approach facil
 Please see the web page for install and usage instructions: 
 https://s4hts.github.io/HTStream/
 
+And this page for a Docker image: https://hub.docker.com/r/dzs74/htstream.
 
 If you encounter any bugs or have suggestions for improvement, please post them to:
 https://github.com/s4hts/HTStream/issues
