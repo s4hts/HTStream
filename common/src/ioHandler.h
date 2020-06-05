@@ -26,6 +26,7 @@
 #include <cstdio>
 
 #include "counters.h"
+#include "hts_exception.h"
 
 namespace bf = boost::filesystem;
 namespace bi = boost::iostreams;
@@ -173,9 +174,9 @@ public:
 class OutputWriter {
 public:
     virtual ~OutputWriter() {  }
-    virtual void write(const PairedEndRead& ) { throw std::runtime_error("No PE implementation of write (Probably a SE read)"); }
-    virtual void write(const SingleEndRead& ) { throw std::runtime_error("No SE implementaiton of write (Probably a PE read)"); }
-    virtual void write_read(const Read &, bool ) { throw std::runtime_error("No write_read class, only accessable with SE"); } //only SE
+    virtual void write(const PairedEndRead& ) { throw HtsRuntimeException("No PE implementation of write (Probably a SE read)"); }
+    virtual void write(const SingleEndRead& ) { throw HtsRuntimeException("No SE implementaiton of write (Probably a PE read)"); }
+    virtual void write_read(const Read &, bool ) { throw HtsRuntimeException("No write_read class, only accessable with SE"); } //only SE
 };
 
 class SingleEndReadOutFastq : public OutputWriter {

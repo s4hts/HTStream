@@ -103,7 +103,7 @@ public:
                   ++read_bases[index][4];
                   break;
               default:
-                  throw std::runtime_error("Unknown bp in stats counter");
+                  throw HtsRuntimeException("Unknown bp in stats counter");
             }
             // qualities
             size_t qscore = qual[index];

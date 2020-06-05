@@ -154,7 +154,7 @@ public:
         case 'G':
             return std::pair<bool, bool> (1, 0);
         default:
-            throw std::runtime_error(std::string("Unknown base pair in sequence ") + c);
+            throw HtsRuntimeException(std::string("Unknown base pair in sequence ") + c);
         }
     }
 
@@ -255,7 +255,7 @@ public:
         setLookup_read(lookup, readSeq, vm["kmer"].as<size_t>());
     }
     if (lookup.size() == 0){
-        throw std::runtime_error("Exception lookup table contains no kmers");
+        throw HtsRuntimeException("Exception lookup table contains no kmers");
     }
 
     counter.set_screeninfo(lookup_file, screen_len, lookup.size());
