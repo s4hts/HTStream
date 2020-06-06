@@ -9,6 +9,7 @@ message( status "cmake module path: " ${CMAKE_MODULE_PATH})
 
 set(CMAKE_CXX_STANDARD 11)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(Boost_USE_STATIC_LIBS OFF)
 set(BUILD_SHARED_LIBS ON)
 
@@ -52,3 +53,8 @@ add_subdirectory(hts_QWindowTrim)
 add_subdirectory(hts_SeqScreener)
 add_subdirectory(hts_Stats)
 add_subdirectory(hts_SuperDeduper)
+
+add_custom_target( copy-compile-commands ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_BINARY_DIR}/compile_commands.json ${CMAKE_CURRENT_LIST_DIR}
+    COMMENT "copy compile_commands"
+    )
