@@ -1,0 +1,51 @@
+{ "hts_QWindowTrim": {
+    "Program_details": {
+        "program": "hts_QWindowTrim",
+        "version": "v1.3.1-3-g6a07c7f",
+        "options": {
+            "avg-qual-score": 20,
+            "force": true,
+            "no-left": false,
+            "no-right": false,
+            "notes": "",
+            "qual-offset": 33,
+            "read1-input": [ "./test_r1.fastq.gz"],
+            "read2-input": [ "./test_r2.fastq.gz"],
+            "stats-file": "hts_QWindowTrim.json",
+            "tab-output": "hts_QWindowTrim",
+            "uncompressed": false,
+            "window-size": 10
+        }
+    },
+    "Fragment": {
+        "in": 25,
+        "out": 25,
+        "basepairs_in": 15050,
+        "basepairs_out": 12554
+    },
+    "Single_end": {
+        "in": 0,
+        "out": 0,
+        "basepairs_in": 0,
+        "basepairs_out": 0,
+        "rightTrim": 0,
+        "leftTrim": 0
+    },
+    "Paired_end": {
+        "in": 25,
+        "out": 25,
+        "Read1": {
+            "basepairs_in": 7525,
+            "basepairs_out": 7377,
+            "leftTrim": 1,
+            "rightTrim": 147
+        },
+        "Read2": {
+            "basepairs_in": 7525,
+            "basepairs_out": 5177,
+            "leftTrim": 3,
+            "rightTrim": 2345
+        }
+    }
+  }
+}

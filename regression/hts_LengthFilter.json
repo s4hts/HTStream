@@ -1,0 +1,48 @@
+{ "hts_LengthFilter": {
+    "Program_details": {
+        "program": "hts_LengthFilter",
+        "version": "v1.3.1-3-g6a07c7f",
+        "options": {
+            "force": true,
+            "max-length": 0,
+            "min-length": 0,
+            "no-orphans": false,
+            "notes": "",
+            "read1-input": [ "./test_r1.fastq.gz"],
+            "read2-input": [ "./test_r2.fastq.gz"],
+            "stats-file": "hts_LengthFilter.json",
+            "stranded": false,
+            "tab-output": "hts_LengthFilter",
+            "uncompressed": false
+        }
+    },
+    "Fragment": {
+        "in": 25,
+        "out": 25,
+        "basepairs_in": 15050,
+        "basepairs_out": 15050
+    },
+    "Single_end": {
+        "in": 0,
+        "out": 0,
+        "basepairs_in": 0,
+        "basepairs_out": 0,
+        "discarded": 0
+    },
+    "Paired_end": {
+        "in": 25,
+        "out": 25,
+        "discarded": 0,
+        "Read1": {
+            "basepairs_in": 7525,
+            "basepairs_out": 7525,
+            "discarded": 0
+        },
+        "Read2": {
+            "basepairs_in": 7525,
+            "basepairs_out": 7525,
+            "discarded": 0
+        }
+    }
+  }
+}

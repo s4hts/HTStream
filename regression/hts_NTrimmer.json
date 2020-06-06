@@ -1,0 +1,49 @@
+{ "hts_NTrimmer": {
+    "Program_details": {
+        "program": "hts_NTrimmer",
+        "version": "v1.3.1-3-g6a07c7f",
+        "options": {
+            "exclude": false,
+            "force": true,
+            "notes": "",
+            "read1-input": [ "./test_r1.fastq.gz"],
+            "read2-input": [ "./test_r2.fastq.gz"],
+            "stats-file": "hts_NTrimmer.json",
+            "tab-output": "hts_NTrimmer",
+            "uncompressed": false
+        }
+    },
+    "Fragment": {
+        "in": 25,
+        "out": 25,
+        "basepairs_in": 15050,
+        "basepairs_out": 12525
+    },
+    "Single_end": {
+        "in": 0,
+        "out": 0,
+        "basepairs_in": 0,
+        "basepairs_out": 0,
+        "rightTrim": 0,
+        "leftTrim": 0,
+        "discarded": 0
+    },
+    "Paired_end": {
+        "in": 25,
+        "out": 25,
+        "discarded": 0,
+        "Read1": {
+            "basepairs_in": 7525,
+            "basepairs_out": 7525,
+            "leftTrim": 0,
+            "rightTrim": 0
+        },
+        "Read2": {
+            "basepairs_in": 7525,
+            "basepairs_out": 5000,
+            "leftTrim": 0,
+            "rightTrim": 2525
+        }
+    }
+  }
+}

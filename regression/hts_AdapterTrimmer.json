@@ -1,0 +1,55 @@
+{ "hts_AdapterTrimmer": {
+    "Program_details": {
+        "program": "hts_AdapterTrimmer",
+        "version": "v1.3.1-3-7c7f",
+        "options": {
+            "adapter-sequence": "AGATCGGAAGAGCACACGTCTGAACTCCAGTCA",
+            "check-lengths": 20,
+            "force": true,
+            "kmer": 8,
+            "kmer-offset": 1,
+            "max-mismatch": 100,
+            "max-mismatch-errorDensity": 0.25,
+            "min-overlap": 8,
+            "no-fixbases": false,
+            "notes": "",
+            "number-of-threads": 1,
+            "read1-input": [ "./test_r1.fastq.gz"],
+            "read2-input": [ "./test_r2.fastq.gz"],
+            "stats-file": "hts_AdapterTrimmer.json",
+            "tab-output": "hts_AdapterTrimmer",
+            "uncompressed": false
+        }
+    },
+    "Fragment": {
+        "in": 25,
+        "out": 25,
+        "basepairs_in": 15050,
+        "basepairs_out": 14368
+    },
+    "Single_end": {
+        "in": 0,
+        "out": 0,
+        "basepairs_in": 0,
+        "basepairs_out": 0,
+        "adapterTrim": 0,
+        "adapterBpTrim": 0
+    },
+    "Paired_end": {
+        "in": 25,
+        "out": 25,
+        "Read1": {
+            "basepairs_in": 7525,
+            "basepairs_out": 7184,
+            "adapterTrim": 5,
+            "adapterBpTrim": 341
+        },
+        "Read2": {
+            "basepairs_in": 7525,
+            "basepairs_out": 7184,
+            "adapterTrim": 5,
+            "adapterBpTrim": 341
+        }
+    }
+  }
+}
