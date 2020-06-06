@@ -14,7 +14,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: install boost libs
-      run: sudo apt-get install libboost-dev libboost-system-dev libboost-program-options-dev libboost-iostreams-dev libboost-filesystem-dev 
+      run: sudo apt-get install libboost-dev libboost-system-dev libboost-program-options-dev libboost-iostreams-dev libboost-filesystem-dev jq
     - name: make build dir
       run: mkdir build&&cd build
     - name: cmake
@@ -41,7 +41,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: install boost libs
-      run: sudo apt-get install libboost-dev libboost-system-dev libboost-program-options-dev libboost-iostreams-dev libboost-filesystem-dev clang
+      run: sudo apt-get install libboost-dev libboost-system-dev libboost-program-options-dev libboost-iostreams-dev libboost-filesystem-dev clang jq
     - name: make build dir
       run: mkdir build&&cd build
     - name: cmake
