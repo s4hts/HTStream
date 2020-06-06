@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-export BUILDDIR=$1
+BUILDDIR=$1
 echo $0
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -24,7 +24,7 @@ regenerate() {
     for prog in `find $BUILDDIR -maxdepth 2 -name "hts*" -type f $findarg -not -name "*_test"`; do
         out=${prog##*/}
         echo running $prog output to $out
-        $prog -1 $fastqr1 -2 $fastqr2 -t $out -F
+        $prog -1 $fastqr1 -2 $fastqr2 -t $out -F -L $out.json
         $prog -1 $fastq_rawr1 -2 $fastq_rawr2 -t $out -F -u
 
         if [ ${prog##*/} == 'hts_SuperDeduper' ]
@@ -34,15 +34,23 @@ regenerate() {
            rm $out.tmp
         fi
     done
+
+    ## run piped commands to make sure log output is good
+    superd=`find $BUILDDIR -maxdepth 2 -name "hts_SuperDeduper" -type f $findarg -not -name "*_test"`
+    stats=`find $BUILDDIR -maxdepth 2 -name "hts_Stats" -type f $findarg -not -name "*_test"`
+
+    $superd -1 $fastqr1 -2 $fastqr2 -L chain.json | $stats -A chain.json > /dev/null
 }
 
 testrun() {
     for prog in `find $BUILDDIR  -maxdepth 2 -name "hts*" -type f $findarg -not -name "*_test"`; do
-        out=${prog##*/}.test
+        mkdir -p test
+        out=test/${prog##*/}
         echo running $prog output to $out
-        $prog -1 $fastqr1 -2 $fastqr2 -t $out -F
+        $prog -1 $fastqr1 -2 $fastqr2 -t $out -F -L $out.json
         $prog -1 $fastq_rawr1 -2 $fastq_rawr2 -t $out -F -u
 
+        orig=${prog##*/}
         if [ ${prog##*/} == 'hts_SuperDeduper' ]
         then
             echo sorting superDeduper because its output is non-deterministic
@@ -51,20 +59,33 @@ testrun() {
             cp $out.tab6 $out.tmp && cat $out.tmp | sort > $out.tab6
             rm $out.tmp
 
-            orig=${out%%.*}
-
             echo diff $out.tab6 $orig.tab6
             diff $out.tab6 $orig.tab6
             echo zdiff $out.tab6.gz $orig.tab6.gz
             diff <(gzip -dc $out.tab6.gz) <(gzip -dc $orig.tab6.gz)
             rm $out.tab6 $out.tab6.gz
         else
-            echo zdiff $out.tab6.gz ${out%%.*}.tab6.gz
-            diff <(gzip -dc $out.tab6.gz) <(gzip -dc ${out%%.*}.tab6.gz)
-            echo diff $out.tab6 ${out%%.*}.tab6
-            diff $out.tab6 ${out%%.*}.tab6
+            echo zdiff $out.tab6.gz $orig.tab6.gz
+            diff <(gzip -dc $out.tab6.gz) <(gzip -dc $orig.tab6.gz)
+            echo diff $out.tab6 $orig.tab6
+            diff $out.tab6 $orig.tab6
             rm $out.tab6.gz $out.tab6
         fi
+        echo diff $out.json $orig.json
+        diff <(cat $out.json | jq "del(.$orig.Program_details.version) | del(.$orig.Program_details.options[\"stats-file\"]) | del(.$orig.Program_details.options[\"tab-output\"])") \
+            <(cat $orig.json | jq "del(.$orig.Program_details.version) | del(.$orig.Program_details.options[\"stats-file\"]) | del(.$orig.Program_details.options[\"tab-output\"])")
+
+        ## run piped commands to make sure log output is good
+        superd=`find $BUILDDIR -maxdepth 2 -name "hts_SuperDeduper" -type f $findarg -not -name "*_test"`
+        stats=`find $BUILDDIR -maxdepth 2 -name "hts_Stats" -type f $findarg -not -name "*_test"`
+
+        $superd -1 $fastqr1 -2 $fastqr2 -L test/chain.json | $stats -A test/chain.json > /dev/null
+
+        echo diff test/chain.json chain.json
+        diff <(cat test/chain.json | jq "del(.hts_SuperDeduper.Program_details.version) | del(.hts_SuperDeduper.Program_details.options[\"stats-file\"]) | del(.hts_SuperDeduper.Program_details.options[\"append-stats-file\"]) | del(.hts_Stats.Program_details.version) | del(.hts_Stats.Program_details.options[\"stats-file\"]) | del(.hts_Stats.Program_details.options[\"append-stats-file\"])") \
+            <(cat chain.json | jq "del(.hts_SuperDeduper.Program_details.version) | del(.hts_SuperDeduper.Program_details.options[\"stats-file\"]) | del(.hts_SuperDeduper.Program_details.options[\"append-stats-file\"]) | del(.hts_Stats.Program_details.version) | del(.hts_Stats.Program_details.options[\"stats-file\"]) | del(.hts_Stats.Program_details.options[\"append-stats-file\"])")
+
+        rm -rf test
     done
 }
 

@@ -1,0 +1,48 @@
+{ "hts_SuperDeduper": {
+    "Program_details": {
+        "program": "hts_SuperDeduper",
+        "version": "v1.3.1-3-g6a07c7f",
+        "options": {
+            "avg-qual-score": 30,
+            "force": true,
+            "inform-avg-qual-score": 5,
+            "length": 10,
+            "log_freq": 1000000,
+            "notes": "",
+            "read1-input": [ "./test_r1.fastq.gz"],
+            "read2-input": [ "./test_r2.fastq.gz"],
+            "start": 10,
+            "stats-file": "hts_SuperDeduper.test.json",
+            "tab-output": "hts_SuperDeduper.test",
+            "uncompressed": false
+        }
+    },
+    "Fragment": {
+        "in": 25,
+        "out": 25,
+        "basepairs_in": 15050,
+        "basepairs_out": 15050,
+        "ignored": 0,
+        "duplicate": 0,
+        "duplicate_saturation": [ [25,0] ]
+    },
+    "Single_end": {
+        "in": 0,
+        "out": 0,
+        "basepairs_in": 0,
+        "basepairs_out": 0
+    },
+    "Paired_end": {
+        "in": 25,
+        "out": 25,
+        "Read1": {
+            "basepairs_in": 7525,
+            "basepairs_out": 7525
+        },
+        "Read2": {
+            "basepairs_in": 7525,
+            "basepairs_out": 7525
+        }
+    }
+  }
+}

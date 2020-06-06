@@ -1,0 +1,55 @@
+{ "hts_PolyATTrim": {
+    "Program_details": {
+        "program": "hts_PolyATTrim",
+        "version": "v1.3.1-3-g6a07c7f",
+        "options": {
+            "force": true,
+            "max-mismatch-errorDensity": 0.3,
+            "max-trim": 30,
+            "min-trim": 5,
+            "no-left": false,
+            "no-right": false,
+            "notes": "",
+            "perfect-windows": 1,
+            "read1-input": [ "./test_r1.fastq.gz"],
+            "read2-input": [ "./test_r2.fastq.gz"],
+            "skip_polyA": false,
+            "skip_polyT": false,
+            "stats-file": "hts_PolyATTrim.json",
+            "tab-output": "hts_PolyATTrim",
+            "uncompressed": false,
+            "window-size": 6
+        }
+    },
+    "Fragment": {
+        "in": 25,
+        "out": 25,
+        "basepairs_in": 15050,
+        "basepairs_out": 15044
+    },
+    "Single_end": {
+        "in": 0,
+        "out": 0,
+        "basepairs_in": 0,
+        "basepairs_out": 0,
+        "rightTrim": 0,
+        "leftTrim": 0
+    },
+    "Paired_end": {
+        "in": 25,
+        "out": 25,
+        "Read1": {
+            "basepairs_in": 7525,
+            "basepairs_out": 7519,
+            "leftTrim": 6,
+            "rightTrim": 0
+        },
+        "Read2": {
+            "basepairs_in": 7525,
+            "basepairs_out": 7525,
+            "leftTrim": 0,
+            "rightTrim": 0
+        }
+    }
+  }
+}
