@@ -10,7 +10,7 @@ void skip_lr(std::istream *input) {
 }
 
 void  __attribute__ ((noreturn)) throw_error(const std::string& filename) {
-    throw std::runtime_error(filename + ": " +  std::strerror( errno ));
+    throw HtsIOException(filename + ": " +  std::strerror( errno ));
 }
 
 /*
@@ -41,7 +41,7 @@ int check_open_r(const std::string& filename) {
 
     bf::path p(filename);
     if (!bf::exists(p)) {
-        throw std::runtime_error("File " + filename + " was not found.");
+        throw HtsIOException("File " + filename + " was not found.");
     }
 
     if (p.extension() == ".gz") {
@@ -78,7 +78,7 @@ int HtsOfstream::check_exists(const std::string& filename, bool force, bool gzip
         }
         return fileno(f);
     } else {
-        throw std::runtime_error("File " + fname + " all ready exists. Please use -F or delete it\n");
+        throw HtsIOException("File " + fname + " all ready exists. Please use -F or delete it\n");
     }
 }
 
@@ -86,25 +86,25 @@ ReadPtr InputFastq::load_read(std::istream *input) {
     while(std::getline(*input, id) && id.size() < 1) {
     }
     if (id.size() < 1) {
-        throw std::runtime_error("invalid id line empty");
+        throw HtsIOException("invalid id line empty");
     }
     if (id[0] != '@') {
-        throw std::runtime_error("id line did not begin with @");
+        throw HtsIOException("id line did not begin with @");
     }
     std::getline(*input, seq);
     if (seq.size() < 1) {
-        throw std::runtime_error("invalid seq line empty");
+        throw HtsIOException("invalid seq line empty");
     }
     std::getline(*input, id2);
     if (id2.size() < 1) {
-        throw std::runtime_error("invalid id2 line empty");
+        throw HtsIOException("invalid id2 line empty");
     }
     if (id2[0] != '+') {
-        throw std::runtime_error("invalid id2 line did not begin with +");
+        throw HtsIOException("invalid id2 line did not begin with +");
     }
     std::getline(*input, qual);
     if (qual.size() != seq.size()) {
-        throw std::runtime_error("qual string not the same length as sequence");
+        throw HtsIOException("qual string not the same length as sequence");
     }
 
     // ignore extra lines at end of file
@@ -118,10 +118,10 @@ ReadPtr InputFasta::load_read(std::istream *input) {
     while(std::getline(*input, id) && id.size() < 1) {
     }
     if (id.size() < 1) {
-        throw std::runtime_error("invalid id - line empty");
+        throw HtsIOException("invalid id - line empty");
     }
     if (id[0] != '>') {
-        throw std::runtime_error("id line did not begin with >");
+        throw HtsIOException("id line did not begin with >");
     }
     seq = "";
     while (std::getline(*input, tmpSeq)) {
@@ -131,7 +131,7 @@ ReadPtr InputFasta::load_read(std::istream *input) {
         }
     }
     if (seq.size() < 1) {
-        throw std::runtime_error("no sequence");
+        throw HtsIOException("no sequence");
     }
     while(input->good() and (input->peek() == '\n' || input->peek() == '\r')) {
         input->get();
@@ -152,11 +152,11 @@ std::vector<ReadPtr> TabReadImpl::load_read(std::istream *input) {
 
 
     if (parsedRead.size() != 3 && parsedRead.size() != 4 && parsedRead.size() != 5 && parsedRead.size() != 6 && parsedRead.size() != 8) {
-        throw std::runtime_error("There are not either 3 (SE, itab3), 4 (SE, itab with tags) 5 (PE, itab5), or 6 (PE, itab6), or 8 (PE, itab6 with tags) elements within a tab delimited file line");
+        throw HtsIOException("There are not either 3 (SE, itab3), 4 (SE, itab with tags) 5 (PE, itab5), or 6 (PE, itab6), or 8 (PE, itab6 with tags) elements within a tab delimited file line");
     }
 
     if (parsedRead[1].size() != parsedRead[2].size()) {
-        throw std::runtime_error("sequence and qualities are not the same length 1");
+        throw HtsIOException("sequence and qualities are not the same length 1");
     }
 
     reads[0] = std::make_shared<Read>(parsedRead[1], parsedRead[2], parsedRead[0]);
@@ -169,7 +169,7 @@ std::vector<ReadPtr> TabReadImpl::load_read(std::istream *input) {
     if (parsedRead.size() == 5) {
 
         if (parsedRead[3].size() != parsedRead[4].size()) {
-            throw std::runtime_error("sequence and qualities are not the same length 2");
+            throw HtsIOException("sequence and qualities are not the same length 2");
         }
 
         reads.push_back(std::make_shared<Read>(parsedRead[3], parsedRead[4], parsedRead[0]));
@@ -178,7 +178,7 @@ std::vector<ReadPtr> TabReadImpl::load_read(std::istream *input) {
     if (parsedRead.size() == 6) {
 
         if (parsedRead[4].size() != parsedRead[5].size()) {
-            throw std::runtime_error("sequence and qualities are not the same length 2");
+            throw HtsIOException("sequence and qualities are not the same length 2");
         }
 
         reads.push_back(std::make_shared<Read>(parsedRead[4], parsedRead[5], parsedRead[3]));
@@ -187,7 +187,7 @@ std::vector<ReadPtr> TabReadImpl::load_read(std::istream *input) {
     if (parsedRead.size() == 8) {
 
         if (parsedRead[4].size() != parsedRead[5].size()) {
-            throw std::runtime_error("sequence and qualities are not the same length 2");
+            throw HtsIOException("sequence and qualities are not the same length 2");
         }
 
         reads.push_back(std::make_shared<Read>(parsedRead[4], parsedRead[5], parsedRead[3]));
@@ -265,7 +265,7 @@ InputReader<PairedEndRead, InterReadImpl>::value_type InputReader<PairedEndRead,
     try {
         r2 = load_read(in1);
     } catch (const std::exception&) {
-        throw std::runtime_error("odd number of sequences in interleaved file");
+        throw HtsIOException("odd number of sequences in interleaved file");
     }
     return InputReader<PairedEndRead, InterReadImpl>::value_type(new PairedEndRead(r1, r2));
 }

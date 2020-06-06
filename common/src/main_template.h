@@ -35,6 +35,7 @@ public:
     const size_t SUCCESS = 0;
     const size_t ERROR_IN_COMMAND_LINE = 1;
     const size_t ERROR_UNHANDLED_EXCEPTION = 2;
+    const size_t ERROR_HTS_EXCEPTION = 3;
 
     std::string program_name;
     std::string app_description;
@@ -78,12 +79,12 @@ public:
 
                 if(vm.count("read1-input")) {
                     if (!vm.count("read2-input")) {
-                        throw std::runtime_error("must specify both read1 and read2 input files.");
+                        throw HtsRuntimeException("must specify both read1 and read2 input files.");
                     }
                     auto read1_files = vm["read1-input"].as<std::vector<std::string> >();
                     auto read2_files = vm["read2-input"].as<std::vector<std::string> >();
                     if (read1_files.size() != read2_files.size()) {
-                        throw std::runtime_error("must have same number of input files for read1 and read2");
+                        throw HtsRuntimeException("must have same number of input files for read1 and read2");
                     }
                     for(size_t i = 0; i < read1_files.size(); ++i) {
                         bi::stream<bi::file_descriptor_source> is1{check_open_r(read1_files[i]), bi::close_handle};
@@ -130,9 +131,15 @@ public:
             }
 
         }
+        catch(HtsException& e)
+        {
+            std::cerr << "ERROR: " << e.what() << std::endl;
+            return ERROR_HTS_EXCEPTION;
+
+        }
         catch(std::exception& e)
         {
-            std::cerr << "\n\tUnhandled Exception: "
+            std::cerr << "ERROR: Unhandled Exception: "
                       << e.what() << std::endl;
             return ERROR_UNHANDLED_EXCEPTION;
 

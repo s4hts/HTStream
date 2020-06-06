@@ -2,19 +2,21 @@
 #define COUNTERS_H
 
 
-#include <unistd.h>
-#include <map>
-#include <unordered_map>
-#include <string>
-#include <iostream>
-#include <fstream>
-#include <vector>
-#include <tuple>
-#include "version.h"
-#include "read.h"
-#include "typedefs.h"
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
+#include <fstream>
+#include <iostream>
+#include <map>
+#include <string>
+#include <tuple>
+#include <unistd.h>
+#include <unordered_map>
+#include <vector>
+
+#include "hts_exception.h"
+#include "read.h"
+#include "typedefs.h"
+#include "version.h"
 
 namespace bf = boost::filesystem;
 namespace po = boost::program_options;
@@ -238,7 +240,7 @@ public:
                 outStats.seekp(-2, std::ios::end );
                 outStats << "]";
             } else
-                throw std::runtime_error("In counters.h write_options: options type not seen in the switch, need to add new options type.");
+                throw HtsRuntimeException("In counters.h write_options: options type not seen in the switch, need to add new options type.");
 
             outStats << ",\n";
         }
@@ -286,8 +288,8 @@ public:
         std::string pad2(4 * (indent + 1), ' ');
         if (data.size() == 0) return;
 
-        if (data.size() < col_name.size()) throw std::runtime_error("In counters.h output: data matrix column size less than col_names size");
-        if (data[0].size() < row_name.size()) throw std::runtime_error("In counters.h output: data matrix row size less than row_names size");
+        if (data.size() < col_name.size()) throw HtsRuntimeException("In counters.h output: data matrix column size less than col_names size");
+        if (data[0].size() < row_name.size()) throw HtsRuntimeException("In counters.h output: data matrix row size less than row_names size");
 
         outStats << pad << "\"" << matrix_name << "\": {\n";
 
@@ -352,7 +354,7 @@ private:
         }
         else
         {
-            throw std::runtime_error("Error: Cannot write to " + fStats + ": " +  std::strerror( errno ) + '\n');
+            throw HtsIOException("Error: Cannot write to " + fStats + ": " +  std::strerror( errno ) + '\n');
         }
     }
 

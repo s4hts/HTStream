@@ -206,6 +206,6 @@ char rc (const char &bp) {
         case 'N':
             return 'N';
         default:
-            throw std::runtime_error("Unknown base provided to rc");
+            throw HtsRuntimeException("Unknown base provided to rc");
     }
 }
