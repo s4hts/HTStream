@@ -14,6 +14,9 @@
 #include <utility>
 #include "utils.h"
 #include "main_template.h"
+#include "threadutils.h"
+
+typedef std::pair<ReadBasePtr, SingleEndReadPtr> OverlapPair;
 
 class OverlappingCounters : public Counters {
 public:
@@ -101,6 +104,9 @@ class Overlapper: public MainTemplate<OverlappingCounters, Overlapper> {
 public:
 
     void add_extra_options(po::options_description &desc) {
+        setThreadPoolParams(desc);
+        // number-of-threads|p
+
         setDefaultParamsOverlapping(desc);
         // kmer|k ; kmer-offset|r ; max-mismatch-errorDensity|x
         // check-lengths|c ; min-overlap|o
@@ -223,10 +229,10 @@ public:
         return nullptr;
     }
 
-    SingleEndReadPtr check_read(PairedEndRead &pe, const double misDensity, const size_t &mismatch, const size_t &minOver, const size_t &checkLengths, const size_t kmer, const size_t kmerOffset) {
+    OverlapPair check_read(PairedEndReadPtr pe, const double misDensity, const size_t &mismatch, const size_t &minOver, const size_t &checkLengths, const size_t kmer, const size_t kmerOffset) {
 
-        Read &r1 = pe.non_const_read_one();
-        Read &r2 = pe.non_const_read_two();
+        Read &r1 = pe->non_const_read_one();
+        Read &r2 = pe->non_const_read_two();
 
         bool swapped = false;
         /* Read1 needs to always be longer than Read 2 */
@@ -249,7 +255,63 @@ public:
             overlapped->set_read_rc();
         }
 
-        return overlapped;
+        return std::make_pair(std::static_pointer_cast<ReadBase>(pe), overlapped);
+    }
+
+    void writer_thread(std::shared_ptr<OutputWriter> pe,  std::shared_ptr<OutputWriter> se, OverlappingCounters &counter, threadsafe_queue<std::future<OverlapPair>> &futures, bool forcePair) {
+
+        WriterHelper writer(pe, se);
+
+        SingleEndReadPtr overlapped;
+
+        auto read_visit = make_read_visitor_func(
+            [&](SingleEndRead *ser) {
+                counter.output(*ser);
+                writer(*ser);
+            },
+            [&](PairedEndRead *per) {
+
+                if (!overlapped) {
+                    counter.increment_lins();
+                    counter.output(*per);
+                    writer(*per); //write out as is
+                } else if (overlapped) { //if there is an overlap
+                    unsigned int origLength = std::max(unsigned(per->non_const_read_one().getLength()),unsigned(per->non_const_read_two().getLength()));
+                    counter.overlap_stats(*overlapped, origLength);
+                    if (forcePair){
+                        Read overlappedRead = overlapped->non_const_read_one();
+                        Read &or1 = per->non_const_read_one();
+                        Read &or2 = per->non_const_read_two();
+                        double mid = ceil(overlappedRead.getLengthTrue() / 2.0);
+                        Read r1(overlappedRead.get_sub_seq().substr(0,mid),overlappedRead.get_sub_qual().substr(0,mid),overlappedRead.get_id_tab("1"));
+                        r1.join_comment(or1.get_comment());
+                        Read r2(overlappedRead.get_sub_seq().substr(mid),overlappedRead.get_sub_qual().substr(mid),overlappedRead.get_id_tab("1"));
+                        r2.join_comment(or2.get_comment());
+                        PairedEndRead newper(r1, r2);
+                        counter.output(newper);
+                        writer(newper); //write out as is
+                    } else {
+                        counter.output(*overlapped);
+                        writer(*overlapped);
+                    }
+                }
+            });
+
+
+        while(!futures.is_done()) {
+            std::future<OverlapPair> fread;
+            futures.wait_and_pop(fread);
+
+            OverlapPair opair = fread.get();
+
+            // null read indicates all done
+            if (!opair.first) {
+                futures.set_done();
+                return;
+            }
+            overlapped = opair.second;
+            opair.first->accept(read_visit);
+        }
     }
 
 /*This is the helper class for overlap
@@ -262,7 +324,7 @@ public:
  * With a min it is useful to have a higher confidence in the bases in the overlap and longer read
  * With a sin it is useful to have the higher confidence as well as removing the adapters*/
     template <class T, class Impl>
-    void do_app(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, OverlappingCounters &counters, const po::variables_map &vm) {
+    void do_app(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, OverlappingCounters &counter, const po::variables_map &vm) {
         const double misDensity = vm["max-mismatch-errorDensity"].as<double>();
         const size_t mismatch = vm["max-mismatch"].as<size_t>();
         const size_t minOver = vm["min-overlap"].as<size_t>();
@@ -270,48 +332,36 @@ public:
         const size_t kmer = vm["kmer"].as<size_t>();
         const size_t kmerOffset = vm["kmer-offset"].as<size_t>();
         bool forcePair = vm["force-pairs"].as<bool>();
-        WriterHelper writer(pe, se);
 
+        size_t num_threads = vm["number-of-threads"].as<size_t>();
+
+        threadsafe_queue<std::future<OverlapPair>> futures(50000);
+        thread_pool threads(50000, num_threads);
+
+        std::thread output_thread([=, &counter, &futures]() mutable { writer_thread(pe, se, counter, futures, forcePair); });
 
         auto read_visit = make_read_visitor_func(
             [&](SingleEndRead *ser) {
-                counters.input(*ser);
-                counters.output(*ser);
-                writer(*ser);
+                SingleEndReadPtr sser(ser);
+                futures.push(threads.submit([=]() { return std::make_pair(std::static_pointer_cast<ReadBase>(sser), SingleEndReadPtr()); }));
             },
             [&](PairedEndRead *per) {
-                counters.input(*per);
-                SingleEndReadPtr overlapped = check_read(*per, misDensity, mismatch, minOver, checkLengths, kmer, kmerOffset);
-                if (!overlapped) {
-                    counters.increment_lins();
-                    counters.output(*per);
-                    writer(*per); //write out as is
-                } else if (overlapped) { //if there is an overlap
-                    unsigned int origLength = std::max(unsigned(per->non_const_read_one().getLength()),unsigned(per->non_const_read_two().getLength()));
-                    counters.overlap_stats(*overlapped, origLength);
-                    if (forcePair){
-                        Read overlappedRead = overlapped->non_const_read_one();
-                        Read &or1 = per->non_const_read_one();
-                        Read &or2 = per->non_const_read_two();
-                        double mid = ceil(overlappedRead.getLengthTrue() / 2.0);
-                        Read r1(overlappedRead.get_sub_seq().substr(0,mid),overlappedRead.get_sub_qual().substr(0,mid),overlappedRead.get_id_tab("1"));
-                        r1.join_comment(or1.get_comment());
-                        Read r2(overlappedRead.get_sub_seq().substr(mid),overlappedRead.get_sub_qual().substr(mid),overlappedRead.get_id_tab("1"));
-                        r2.join_comment(or2.get_comment());
-                        PairedEndRead newper(r1, r2);
-                        counters.output(newper);
-                        writer(newper); //write out as is
-                    } else {
-                        counters.output(*overlapped);
-                        writer(*overlapped);
-                    }
-                }
+                futures.push(threads.submit([=]() mutable {
+                                                return check_read(PairedEndReadPtr(per), misDensity, mismatch, minOver, checkLengths, kmer, kmerOffset); }));
             });
+        // thread_guard must be declared last
+        thread_guard tg(output_thread);
 
         while(reader.has_next()) {
             auto i = reader.next();
-            i->accept(read_visit);
+            counter.input(*i);
+
+            // release so we convert to shared_ptr later
+            auto p = i.release();
+            p->accept(read_visit);
         }
+        // null ptr indicates end of processing
+        futures.push(threads.submit([]() { return std::make_pair(ReadBasePtr(), SingleEndReadPtr()); }));
     }
 };
 #endif

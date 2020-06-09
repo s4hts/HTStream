@@ -41,8 +41,8 @@ TEST_F(OverlapperTest, test_check_length) {
         
     while(ifp.has_next()) {
         auto i = ifp.next();
-        PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        rb = ol.check_read(*per, misDensity, 100, 8, 20, kmer, kmerOffset);
+        PairedEndReadPtr per = std::move(i);
+        rb = ol.check_read(per, misDensity, 100, 8, 20, kmer, kmerOffset).second;
         ASSERT_EQ(rb, nullptr);
         const std::string s1 =  "CGCCCAGCTAGTTCTTCAAATCTTTAACAAATACTTCAGCAACTCACCTTCTGGGTCTCTTTCCCCCCTATCTGTTGCAATAAACACAGGGGTGTCCAAG";
         const std::string s2 =  "AAAAAAAAAAAA";
@@ -61,8 +61,8 @@ TEST_F(OverlapperTest, engulfR1) {
         
     while(ifp.has_next()) {
         auto i = ifp.next();
-        PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        rb = ol.check_read(*per, misDensity, 100, 10, 10, kmer, kmerOffset);
+        PairedEndReadPtr per = std::move(i);
+        rb = ol.check_read(per, misDensity, 100, 10, 10, kmer, kmerOffset).second;
     }
     const Read &r = rb->get_read();
     ASSERT_EQ(r.get_seq(), "AACCATTAACCAAATTGGACATATCTCATCTATCCTTATACTTA");
@@ -77,8 +77,8 @@ TEST_F(OverlapperTest, engulfR2) {
     
     while(ifp.has_next()) {
         auto i = ifp.next();
-        PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        rb = ol.check_read(*per, misDensity, 100, 10, 10, kmer, kmerOffset);
+        PairedEndReadPtr per = std::move(i);
+        rb = ol.check_read(per, misDensity, 100, 10, 10, kmer, kmerOffset).second;
     }
     const Read &r = rb->get_read();
     ASSERT_EQ(r.get_seq(), "GGTAAACCATTAACCAAATTGGACATATCTCATCT");
@@ -94,8 +94,8 @@ TEST_F(OverlapperTest, trim) {
     
     while(ifp.has_next()) {
         auto i = ifp.next();
-        PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        rb = ol.check_read(*per, misDensity, 100, 10, 10, kmer, kmerOffset);
+        PairedEndReadPtr per = std::move(i);
+        rb = ol.check_read(per, misDensity, 100, 10, 10, kmer, kmerOffset).second;
     }
     const Read &r = rb->get_read();
     ASSERT_EQ(r.get_seq(), "ACCATAACATAAACC");
@@ -110,8 +110,8 @@ TEST_F(OverlapperTest, trim_short_R1) {
     
     while(ifp.has_next()) {
         auto i = ifp.next();
-        PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        rb = ol.check_read(*per, misDensity, 100, 10, 10, kmer, kmerOffset);
+        PairedEndReadPtr per = std::move(i);
+        rb = ol.check_read(per, misDensity, 100, 10, 10, kmer, kmerOffset).second;
     }
     const Read &r = rb->get_read();
     ASSERT_EQ(r.get_seq(), "ACCATAACATAAACC");
@@ -126,8 +126,8 @@ TEST_F(OverlapperTest, normal) {
     
     while(ifp.has_next()) {
         auto i = ifp.next();
-        PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        rb = ol.check_read(*per, misDensity, 100, 10, 10, kmer, kmerOffset);
+        PairedEndReadPtr per = std::move(i);
+        rb = ol.check_read(per, misDensity, 100, 10, 10, kmer, kmerOffset).second;
     }
     const Read &r = rb->get_read();
     ASSERT_EQ(r.get_seq(), "GGTAAACCATTAACCAAATTGGACATATCTCATCTATCCTTATACTTAGCGCGAACGAGAAACGAGAGGAGACCGAGAG");
@@ -142,8 +142,8 @@ TEST_F(OverlapperTest, normal_short_R1) {
     
     while(ifp.has_next()) {
         auto i = ifp.next();
-        PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        rb = ol.check_read(*per, misDensity, 100, 10, 10, kmer, kmerOffset);
+        PairedEndReadPtr per = std::move(i);
+        rb = ol.check_read(per, misDensity, 100, 10, 10, kmer, kmerOffset).second;
     }
     const Read &r = rb->get_read();
     ASSERT_EQ(r.get_seq(), "GGTAAACCATTAACCAAATTGGACATATCTCATCTATCCTTATACTTAGCGCGAACGAGAAACGAGAGGAGACCGAGAG");
@@ -158,8 +158,8 @@ TEST_F(OverlapperTest, perfectOverlap) {
     
     while(ifp.has_next()) {
         auto i = ifp.next();
-        PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        rb = ol.check_read(*per, misDensity, 100, 10, 10, kmer, kmerOffset);
+        PairedEndReadPtr per = std::move(i);
+        rb = ol.check_read(per, misDensity, 100, 10, 10, kmer, kmerOffset).second;
     }
     const Read &r = rb->get_read();
     ASSERT_EQ(r.get_seq(), "ACTTGACATTAAGCAAGTACCAGTACCGATACCATAGGACCCAAGGTA");
@@ -174,8 +174,8 @@ TEST_F(OverlapperTest, perfectOverlap_short_R1) {
     
     while(ifp.has_next()) {
         auto i = ifp.next();
-        PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        rb = ol.check_read(*per, misDensity, 100, 10, 10, kmer, kmerOffset);
+        PairedEndReadPtr per = std::move(i);
+        rb = ol.check_read(per, misDensity, 100, 10, 10, kmer, kmerOffset).second;
     }
     const Read &r = rb->get_read();
     ASSERT_EQ(r.get_seq(), "ACTTGACATTAAGCAAGTACCAGTACCGATACCATAGGACCCAAGGTA");
@@ -190,8 +190,8 @@ TEST_F(OverlapperTest, noOverlap) {
     
     while(ifp.has_next()) {
         auto i = ifp.next();
-        PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        rb = ol.check_read(*per, misDensity, 100, 10, 10, kmer, kmerOffset);
+        PairedEndReadPtr per = std::move(i);
+        rb = ol.check_read(per, misDensity, 100, 10, 10, kmer, kmerOffset).second;
         ASSERT_EQ(rb, nullptr);
         const std::string s1 =  "GGTAAACCATTAACCAAATTGGACATATCTCATCTATCCTTATACTTA";
         const std::string s2 =  "TACCTTGGGTCCTATGGTATCGGTACTGGTACTTGCTTAATGTCAAGT";
@@ -209,8 +209,8 @@ TEST_F(OverlapperTest, noOverlap_short_R1) {
     
     while(ifp.has_next()) {
         auto i = ifp.next();
-        PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        rb = ol.check_read(*per, misDensity, 100, 10, 10, kmer, kmerOffset);
+        PairedEndReadPtr per = std::move(i);
+        rb = ol.check_read(per, misDensity, 100, 10, 10, kmer, kmerOffset).second;
         ASSERT_EQ(rb, nullptr);
         const std::string s1 =  "GGTAAACCATTAACCAAATTGGACATATCTCATCTATCCTTATA";
         const std::string s2 =  "TACCTTGGGTCCTATGGTATCGGTACTGGTACTTGCTTAATGTCAAGT";

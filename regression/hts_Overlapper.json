@@ -1,7 +1,7 @@
 { "hts_Overlapper": {
     "Program_details": {
         "program": "hts_Overlapper",
-        "version": "v1.3.1-3-g6a07c7f",
+        "version": "v1.3.1-9-g7a2caeb",
         "options": {
             "check-lengths": 20,
             "force": true,
@@ -12,10 +12,11 @@
             "max-mismatch-errorDensity": 0.25,
             "min-overlap": 8,
             "notes": "",
+            "number-of-threads": 1,
             "read1-input": [ "./test_r1.fastq.gz"],
             "read2-input": [ "./test_r2.fastq.gz"],
-            "stats-file": "hts_Overlapper.json",
-            "tab-output": "hts_Overlapper",
+            "stats-file": "test/hts_Overlapper.json",
+            "tab-output": "test/hts_Overlapper",
             "uncompressed": false
         }
     },
