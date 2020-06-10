@@ -1,7 +1,7 @@
-{ "hts_SuperDeduper": {
+[ {
     "Program_details": {
         "program": "hts_SuperDeduper",
-        "version": "v1.3.1-3-g6a07c7f",
+        "version": "v1.3.1-12-g252bfc2",
         "options": {
             "avg-qual-score": 30,
             "force": true,
@@ -45,4 +45,4 @@
         }
     }
   }
-}
+]
