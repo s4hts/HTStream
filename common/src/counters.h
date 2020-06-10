@@ -199,10 +199,10 @@ public:
         if (aStats && end != -1) {
             outStats.open(fStats, std::ios::in | std::ios::out); //append
             outStats.seekp(-6, std::ios::end );
-            outStats << "  }, \"" << pName << "\": {\n";
+            outStats << "  }, {\n";
         } else {
             outStats.open(fStats, std::ios::out | std::ios::trunc); //overwrite
-            outStats << "{ \"" << pName << "\": {\n";
+            outStats << "[ {\n";
         }
     }
 
@@ -338,7 +338,7 @@ public:
 
     void finalize_json() {
         outStats.seekp(-2, std::ios::end );
-        outStats << "\n  }\n}\n";
+        outStats << "\n  }\n]\n";
         outStats.flush();
         outStats.close();
     }

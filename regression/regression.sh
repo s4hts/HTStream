@@ -72,8 +72,8 @@ testrun() {
             rm $out.tab6.gz $out.tab6
         fi
         echo diff $out.json $orig.json
-        diff <(cat $out.json | jq "del(.$orig.Program_details.version) | del(.$orig.Program_details.options[\"stats-file\"]) | del(.$orig.Program_details.options[\"tab-output\"])") \
-            <(cat $orig.json | jq "del(.$orig.Program_details.version) | del(.$orig.Program_details.options[\"stats-file\"]) | del(.$orig.Program_details.options[\"tab-output\"])")
+        diff <(cat $out.json | jq "del(.[0].Program_details.version) | del(.[0].Program_details.options[\"stats-file\"]) | del(.[0].Program_details.options[\"tab-output\"])") \
+            <(cat $orig.json | jq "del(.[0].Program_details.version) | del(.[0].Program_details.options[\"stats-file\"]) | del(.[0].Program_details.options[\"tab-output\"])")
 
         ## run piped commands to make sure log output is good
         superd=`find $BUILDDIR -maxdepth 2 -name "hts_SuperDeduper" -type f $findarg -not -name "*_test"`
@@ -82,8 +82,8 @@ testrun() {
         $superd -1 $fastqr1 -2 $fastqr2 -L test/chain.json | $stats -A test/chain.json > /dev/null
 
         echo diff test/chain.json chain.json
-        diff <(cat test/chain.json | jq "del(.hts_SuperDeduper.Program_details.version) | del(.hts_SuperDeduper.Program_details.options[\"stats-file\"]) | del(.hts_SuperDeduper.Program_details.options[\"append-stats-file\"]) | del(.hts_Stats.Program_details.version) | del(.hts_Stats.Program_details.options[\"stats-file\"]) | del(.hts_Stats.Program_details.options[\"append-stats-file\"])") \
-            <(cat chain.json | jq "del(.hts_SuperDeduper.Program_details.version) | del(.hts_SuperDeduper.Program_details.options[\"stats-file\"]) | del(.hts_SuperDeduper.Program_details.options[\"append-stats-file\"]) | del(.hts_Stats.Program_details.version) | del(.hts_Stats.Program_details.options[\"stats-file\"]) | del(.hts_Stats.Program_details.options[\"append-stats-file\"])")
+        diff <(cat test/chain.json | jq "del(.[0].Program_details.version) | del(.[0].Program_details.options[\"stats-file\"]) | del(.[0].Program_details.options[\"append-stats-file\"]) | del(.[1].Program_details.version) | del(.[1].Program_details.options[\"stats-file\"]) | del(.[1].Program_details.options[\"append-stats-file\"])") \
+            <(cat chain.json | jq "del(.[0].Program_details.version) | del(.[0].Program_details.options[\"stats-file\"]) | del(.[0].Program_details.options[\"append-stats-file\"]) | del(.[1].Program_details.version) | del(.[1].Program_details.options[\"stats-file\"]) | del(.[1].Program_details.options[\"append-stats-file\"])")
 
         rm -rf test
     done
