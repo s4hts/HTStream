@@ -16,7 +16,7 @@
 #include "main_template.h"
 #include "threadutils.h"
 
-typedef std::pair<ReadBasePtr, SingleEndReadPtr> OverlapPair;
+typedef std::pair<ReadBasePtr, SingleEndReadPtr> OverlapRV;
 
 class OverlappingCounters : public Counters {
 public:
@@ -229,7 +229,7 @@ public:
         return nullptr;
     }
 
-    OverlapPair check_read(PairedEndReadPtr pe, const double misDensity, const size_t &mismatch, const size_t &minOver, const size_t &checkLengths, const size_t kmer, const size_t kmerOffset) {
+    OverlapRV check_read(PairedEndReadPtr pe, const double misDensity, const size_t &mismatch, const size_t &minOver, const size_t &checkLengths, const size_t kmer, const size_t kmerOffset) {
 
         Read &r1 = pe->non_const_read_one();
         Read &r2 = pe->non_const_read_two();
@@ -258,7 +258,7 @@ public:
         return std::make_pair(std::static_pointer_cast<ReadBase>(pe), overlapped);
     }
 
-    void writer_thread(std::shared_ptr<OutputWriter> pe,  std::shared_ptr<OutputWriter> se, OverlappingCounters &counter, threadsafe_queue<std::future<OverlapPair>> &futures, bool forcePair) {
+    void writer_thread(std::shared_ptr<OutputWriter> pe,  std::shared_ptr<OutputWriter> se, OverlappingCounters &counter, threadsafe_queue<std::future<OverlapRV>> &futures, bool forcePair) {
 
         WriterHelper writer(pe, se);
 
@@ -299,10 +299,10 @@ public:
 
 
         while(!futures.is_done()) {
-            std::future<OverlapPair> fread;
+            std::future<OverlapRV> fread;
             futures.wait_and_pop(fread);
 
-            OverlapPair opair = fread.get();
+            OverlapRV opair = fread.get();
 
             // null read indicates all done
             if (!opair.first) {
@@ -335,7 +335,7 @@ public:
 
         size_t num_threads = vm["number-of-threads"].as<size_t>();
 
-        threadsafe_queue<std::future<OverlapPair>> futures(50000);
+        threadsafe_queue<std::future<OverlapRV>> futures(50000);
         thread_pool threads(50000, num_threads);
 
         std::thread output_thread([=, &counter, &futures]() mutable { writer_thread(pe, se, counter, futures, forcePair); });
