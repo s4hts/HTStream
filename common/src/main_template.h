@@ -122,6 +122,7 @@ public:
                     InputReader<ReadBase, TabReadImpl> ift(tabin);
                     static_cast<DerivedType*>(this)->do_app(ift, pe, se, counters, vm);
                 }
+
                 counters.write_out();
             }
             catch(po::error& e)
