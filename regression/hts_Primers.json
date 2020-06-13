@@ -1,7 +1,7 @@
 [ {
     "Program_details": {
         "program": "hts_Primers",
-        "version": "v1.3.1-12-g252bfc2",
+        "version": "v1.3.1-14-gb2ff171",
         "options": {
             "flip": false,
             "float": 0,
@@ -19,9 +19,9 @@
         }
     },
     "Fragment": {
-        "in": 0,
+        "in": 25,
         "out": 25,
-        "basepairs_in": 0,
+        "basepairs_in": 15050,
         "basepairs_out": 15050,
         "flipped": 0,
         "primers_counts": [ ["None","None",25] ]
@@ -36,17 +36,17 @@
         "discarded": 0
     },
     "Paired_end": {
-        "in": 0,
+        "in": 25,
         "out": 25,
         "discarded": 0,
         "Read1": {
-            "basepairs_in": 0,
+            "basepairs_in": 7525,
             "basepairs_out": 7525,
             "primerTrim": 0,
             "primerBpTrim": 0
         },
         "Read2": {
-            "basepairs_in": 0,
+            "basepairs_in": 7525,
             "basepairs_out": 7525,
             "primerTrim": 0,
             "primerBpTrim": 0

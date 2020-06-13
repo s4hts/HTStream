@@ -563,6 +563,7 @@ public:
 
         while(reader.has_next()) {
             auto i = reader.next();
+            counter.input(*i);
             i->accept(read_visit);
         }
     }
