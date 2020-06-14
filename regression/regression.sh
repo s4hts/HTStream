@@ -98,4 +98,4 @@ then
 fi
 
 rm $fastq_rawr1 $fastq_rawr2
-rm stats.log
+rm stats.json
