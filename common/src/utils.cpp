@@ -128,9 +128,9 @@ po::options_description setStandardOptions(){
             // version, help, notes
             ("version,v", "Version print")
             ("help,h",  "Prints help documentation")
-            ("notes,N", po::value<std::string>()->default_value(""),  "Notes for the stats JSON")
+            ("notes,N", po::value<std::string>()->default_value(""),  "Notes to be included int the JSON output log")
             //stats file
-            ("stats-file,L", po::value<std::string>()->default_value("stats.log") , "Write to stats file name")
+            ("stats-file,L", po::value<std::string>()->default_value("stats.json") , "Write to stats file name")
             ("append-stats-file,A", po::value<std::string>() , "Append to stats file name");
     return standard;
 }
