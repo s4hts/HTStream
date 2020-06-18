@@ -209,3 +209,9 @@ char rc (const char &bp) {
             throw HtsRuntimeException("Unknown base provided to rc");
     }
 }
+
+void hts_assert(bool expr, const std::string &str) {
+    if(!expr) {
+        throw HtsRuntimeException(str);
+    }
+}

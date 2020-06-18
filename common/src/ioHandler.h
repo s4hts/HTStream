@@ -98,8 +98,10 @@ protected:
 class InputFasta {
 protected:
     ReadPtr load_read(std::istream *input);
+    Reference load_reference(std::istream *input);
     std::string id, seq;
     std::string tmpSeq;
+    std::stringstream stream;
 };
 
 class FastaReadImpl : public InputFasta {

@@ -44,4 +44,8 @@ typedef std::unordered_multimap<std::string, std::size_t> seqLookup;
 
 seqLookup readOneMap(std::string seq1, const size_t kmer, const size_t kmerOffset);
 
+void hts_assert(bool expr, const std::string &str);
+
+
+
 #endif

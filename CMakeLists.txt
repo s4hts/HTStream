@@ -53,6 +53,7 @@ add_subdirectory(hts_QWindowTrim)
 add_subdirectory(hts_SeqScreener)
 add_subdirectory(hts_Stats)
 add_subdirectory(hts_SuperDeduper)
+#add_subdirectory(hts_MinScreener)
 
 add_custom_target( copy-compile-commands ALL
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_BINARY_DIR}/compile_commands.json ${CMAKE_CURRENT_LIST_DIR}

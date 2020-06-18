@@ -118,6 +118,29 @@ public:
 typedef std::shared_ptr<Read> ReadPtr;
 typedef std::vector<ReadPtr> Reads;
 
+/* Reference represents one named sequence from a reference (fasta file usually)
+ */
+class Reference {
+public:
+    Reference(std::string &&sequence_, const std::string &&id_) :
+        id(std::move(id_)), seq(std::move(sequence_)) {};
+
+
+    std::string get_seq(size_t offset = 0, size_t length = -1) const {
+        return seq.substr(offset, length);
+    }
+
+    std::string get_id() const {
+        return id;
+    }
+
+private:
+    std::string id;
+    std::string seq;
+};
+
+typedef std::shared_ptr<Reference> ReferencePtr;
+
 class ReadVisitor;
 
 class ReadBase {
@@ -195,6 +218,8 @@ public:
     Read& non_const_read_two() { return *two; }
     const Read& get_read_one() const { return *one; }
     const Read& get_read_two() const { return *two; }
+    ReadPtr get_read_one_ptr() { return one; }
+    ReadPtr get_read_two_ptr() { return two; }
     virtual double avg_q_score();
     std::shared_ptr<ReadBase> convert(bool stranded);
     virtual void accept(ReadVisitor &rv);
@@ -225,6 +250,7 @@ public:
     virtual boost::optional<BitSet> get_key(size_t start, size_t length);
     Read& non_const_read_one() { return *one; }
     const Read& get_read() const { return *one; }
+    ReadPtr get_read_ptr() const { return one; }
     virtual double avg_q_score();
     std::shared_ptr<ReadBase> convert(bool stranded);
     void set_read_rc() { one->set_read_rc();}

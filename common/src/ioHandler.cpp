@@ -140,6 +140,35 @@ ReadPtr InputFasta::load_read(std::istream *input) {
 
 }
 
+Reference InputFasta::load_reference(std::istream *input) {
+    while(std::getline(*input, id) && id.size() < 1) {
+    }
+    if (id.size() < 1) {
+        throw HtsIOException("invalid id - line empty");
+    }
+    if (id[0] != '>') {
+        throw HtsIOException("id line did not begin with >");
+    }
+    stream.str("");
+    stream.clear();
+
+    while (std::getline(*input, tmpSeq)) {
+        stream << tmpSeq;
+        if (input->peek() == '>') {
+            break;
+        }
+    }
+    if (stream.peek() == EOF) {
+        throw HtsIOException("no sequence");
+    }
+    while(input->good() and (input->peek() == '\n' || input->peek() == '\r')) {
+        input->get();
+    }
+    return Reference(stream.str(), id.substr(1));
+
+}
+
+
 //Overrides load_read for tab delimited reads
 std::vector<ReadPtr> TabReadImpl::load_read(std::istream *input) {
 
@@ -230,6 +259,18 @@ InputReader<SingleEndRead, FastaReadImpl>::value_type InputReader<SingleEndRead,
 
 template <>
 bool InputReader<SingleEndRead, FastaReadImpl>::has_next() {
+    // ignore extra lines at end of file
+    skip_lr(input);
+    return (input and input->good());
+};
+
+template<>
+InputReader<Reference, FastaReadImpl>::value_type InputReader<Reference, FastaReadImpl>::next() {
+    return InputReader<Reference, FastaReadImpl>::value_type(new Reference(load_reference(input)));
+}
+
+template <>
+bool InputReader<Reference, FastaReadImpl>::has_next() {
     // ignore extra lines at end of file
     skip_lr(input);
     return (input and input->good());

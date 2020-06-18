@@ -15,6 +15,7 @@ public:
     const std::string readTabData = "TESTOne\tACTG\t####\tTESTOne\tACTG\t####\nTestTwo\tACTG\t####\n";
     const std::string readDataInter = "@Whatever1\nAAAAAAA\n+\n#######\n@Whatever2\nGGGCCCT\n+\nBBBBBBB\n";
     const std::string fastaFile = ">1\nTACCCACACA\nTTTTACACACAACAC\n>2\nACGATGACA\n";
+    const std::string fastaFileN = ">1\nTACCCACACA\nTTTTACACACAACACNNN\n>2\nNACGNNATGACA\n";
     const std::string fastaString = "TACCCACACA,TTTTACACACAACAC,ACGATGACA";
 };
 
@@ -35,6 +36,45 @@ TEST_F(ReadsTest, fasta_to_read) {
     ASSERT_EQ(read_count, 2u);
 };
 
+TEST_F(ReadsTest, fasta_to_reference) {
+    std::istringstream in1(fastaFile);
+    InputReader<Reference, FastaReadImpl> ifs(in1);
+    size_t read_count = 0;
+    while(ifs.has_next()) {
+        auto r = ifs.next();
+
+        std::string s = r->get_seq();
+        if (read_count == 0) {
+            ASSERT_EQ("1", r->get_id());
+            ASSERT_EQ("TACCCACACATTTTACACACAACAC", s);
+        } else {
+            ASSERT_EQ("2", r->get_id());
+            ASSERT_EQ("ACGATGACA", s);
+        }
+        ++read_count;
+    }
+    ASSERT_EQ(read_count, 2u);
+}
+
+TEST_F(ReadsTest, fasta_to_reference_n) {
+    std::istringstream in1(fastaFileN);
+    InputReader<Reference, FastaReadImpl> ifs(in1);
+    size_t read_count = 0;
+    while(ifs.has_next()) {
+        auto r = ifs.next();
+
+        std::string s = r->get_seq();
+        if (read_count == 0) {
+            ASSERT_EQ("1", r->get_id());
+            ASSERT_EQ("TACCCACACATTTTACACACAACACNNN", s);
+        } else {
+            ASSERT_EQ("2", r->get_id());
+            ASSERT_EQ("NACGNNATGACA", s);
+        }
+        ++read_count;
+    }
+    ASSERT_EQ(read_count, 2u);
+}
 
 TEST_F(ReadsTest, parseTabRead) {
     std::istringstream in1(readTabData);
