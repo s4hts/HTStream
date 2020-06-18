@@ -215,3 +215,18 @@ void hts_assert(bool expr, const std::string &str) {
         throw HtsRuntimeException(str);
     }
 }
+
+// https://gist.github.com/badboy/6267743
+// This is a multiplication method for hashing. Minimap2 uses this function, but
+// this function does not mask, no constraining the bitrange.
+uint64_t hash64shift(uint64_t key)
+{
+    key = (~key) + (key << 21);  // key = (key << 21) - key - 1;
+    key = key ^ (key >> 24);
+    key = (key + (key << 3)) + (key << 8);  // key * 265
+    key = key ^ (key >> 14);
+    key = (key + (key << 2)) + (key << 4);  // key * 21
+    key = key ^ (key >> 28);
+    key = key + (key << 31);
+    return key;
+}

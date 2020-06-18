@@ -46,6 +46,6 @@ seqLookup readOneMap(std::string seq1, const size_t kmer, const size_t kmerOffse
 
 void hts_assert(bool expr, const std::string &str);
 
-
+uint64_t hash64shift(uint64_t key);
 
 #endif

@@ -6,15 +6,24 @@
 
 #include <deque>
 
+template <typename T>
 class MinLoc {
 public:
-    ReferencePtr ref;
+    T ref;
     size_t offset = 0;  // offset is in basepairs
     size_t length = 0;  // length in basepairs
-    MinLoc(ReferencePtr ref_, size_t offset_, size_t length_) :
+    MinLoc(T ref_, size_t offset_, size_t length_) :
         ref(ref_), offset(offset_), length(length_) {}
 };
 
+class Hash64 {
+public:
+    size_t operator() (uint64_t key) const {
+        return hash64shift(key);
+    }
+};
+
+template <typename T>
 class Minimizer {
 public:
     Minimizer(size_t w_ = 10, size_t k_ = 10) : k(k_), w(w_) {
@@ -27,7 +36,7 @@ public:
         rshift1 = (k-1)*2;
     }
 
-    typedef std::unordered_multimap<uint64_t, MinLoc> KmerMap;
+    typedef std::unordered_multimap<uint64_t, MinLoc<T>, Hash64> KmerMap;
 
     
     // converts a string to a : A:0, T:3, C:1, G:2
@@ -69,6 +78,8 @@ public:
 
     bool append_two_bit(uint64_t& kmer, uint64_t& rkmer, u_char c) {
         uint64_t bp = 0;
+
+        // thanks zev!
         if(ascii_to_mer(bp, c)) {
             kmer = (kmer << 2 | bp) & mask;
             rkmer = (rkmer >> 2) | ((3u ^ bp) << rshift1);
@@ -81,7 +92,7 @@ public:
     }
 
 
-    // thanks to https://www.biostars.org/p/113640/ <- and a slight mod!
+    // thanks to https://www.biostars.org/p/113640/
     uint64_t reverse_complement(const uint64_t mer)
     {
         uint64_t res = ~mer;
@@ -93,7 +104,7 @@ public:
         return (res >> (2 * (32 - k)));
     }
 
-    void add_reference(ReferencePtr ref) {
+    void find_mins(T ref) {
         const std::string &seq = ref->get_seq();
         hts_assert(seq.size()/2 >= k+w-1, "sequence length must be >= k+w-1");
 
@@ -104,7 +115,7 @@ public:
         std::multiset<uint64_t> min_kmer;
         std::deque<decltype(min_kmer)::iterator> kmer_queue;
 
-        decltype(kmers)::iterator lastmin = kmers.end();
+        typename decltype(kmers)::iterator lastmin = kmers.end();
 
         for (size_t i = 0; i < seq.size(); ++i) {
 
@@ -134,13 +145,14 @@ public:
                     if (lastmin != kmers.end() && lastmin->first == *min_kmer.begin()) {
                         ++(lastmin->second.length);
                     } else {
-                        lastmin = kmers.emplace(*min_kmer.begin(), MinLoc(ref, i-(k+w-2), k+w-1));
+                        lastmin = kmers.emplace(*min_kmer.begin(), MinLoc<T>(ref, i-(k+w-2), k+w-1));
                     }
                 }
             }
         }
 
     }
+
 
     KmerMap& get_kmers() { return kmers; }
 
