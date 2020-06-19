@@ -46,6 +46,10 @@ public:
             auto ref = faReader.next();
             ref_minimizer->find_mins(ReferencePtr(std::move(ref)));
         }
+
+        size_t count = ref_minimizer->get_kmers().bucket_count();
+        float load = ref_minimizer->get_kmers().load_factor();
+        std::cerr << "reference buckets: " << count << ", elements per bucket: " << load << std::endl;
     }
 
 
@@ -58,13 +62,11 @@ public:
         size_t hits = 0;
 
         for (auto& mini : read_minimizer->get_kmers()) {
-            for (auto hit = ref_minimizer->get_kmers().find(mini.first); hit != ref_minimizer->get_kmers().end(); ++hit) {
-                ++hits;
-            }
+            hits += ref_minimizer->get_kmers().count(mini.first);
         }
-        if (hits > 0) {
-            std::cerr << "found " << hits << " from read " << read->get_seq() << std::endl;
-        }
+        // if (hits > 0) {
+        //     std::cerr << "found " << hits << " from read " << read->get_seq() << std::endl;
+        // }
         return hits;
     }
 
@@ -122,6 +124,7 @@ public:
         }
     }
 
+private:
     std::unique_ptr<Minimizer<ReferencePtr>> ref_minimizer;
     std::unique_ptr<Minimizer<ReadPtr>> read_minimizer;
 };
