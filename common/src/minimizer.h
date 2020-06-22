@@ -63,8 +63,8 @@ public:
 
     // convert string to kmer, used for testing mainly
     boost::optional<uint64_t> two_bit(const std::string& seq, size_t index = 0, size_t length = -1) {
-        uint64_t kmer;
-        uint64_t bp;
+        uint64_t kmer = 0;
+        uint64_t bp = 0;
         size_t stop = length == static_cast<size_t>(-1) ? seq.size() : index+length;
         for (size_t i = index; i < stop; ++i) {
             if(ascii_to_mer(bp, seq[i])) {

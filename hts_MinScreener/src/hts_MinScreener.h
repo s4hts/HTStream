@@ -53,21 +53,30 @@ public:
     }
 
 
-    size_t check_read(const ReadPtr read) {
+    // returns jaccard similarity
+    double check_read(const ReadPtr read) {
         // clear for each read
         read_minimizer->get_kmers().clear();
 
         read_minimizer->find_mins(read);
 
         size_t hits = 0;
+        size_t count = 0;
+        size_t misses = 0;
 
         for (auto& mini : read_minimizer->get_kmers()) {
-            hits += ref_minimizer->get_kmers().count(mini.first);
+            count = ref_minimizer->get_kmers().count(mini.first);
+            hits += count;
+            if (count == 0) {
+                misses += 1;
+            }
         }
-        // if (hits > 0) {
-        //     std::cerr << "found " << hits << " from read " << read->get_seq() << std::endl;
+
+        double similarity = (double(hits))/(hits + misses);
+        // if (similarity > 0.5) {
+        //     std::cerr << "found " << hits << " similarity: " << similarity << " from read " << read->get_seq() << std::endl;
         // }
-        return hits;
+        return similarity;
     }
 
     template <class T, class Impl>
@@ -97,8 +106,8 @@ public:
 
         auto read_visit = make_read_visitor_func(
             [&](SingleEndRead *ser) {
-                size_t hits = check_read(ser->get_read_ptr());
-                if (hits > 0) {
+                double similarity = check_read(ser->get_read_ptr());
+                if (similarity > .5) {
                     counter.inc_SE_hits();
                 }
 
@@ -106,10 +115,10 @@ public:
                 writer(*ser);
             },
             [&](PairedEndRead *per) {
-                size_t hits = check_read(per->get_read_one_ptr());
-                hits += check_read(per->get_read_two_ptr());
+                double similarity = check_read(per->get_read_one_ptr());
+                similarity += check_read(per->get_read_two_ptr());
 
-                if (hits > 0) {
+                if (similarity > 0.5) {
                     counter.inc_PE_hits();
                 }
 
