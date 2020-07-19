@@ -290,13 +290,13 @@ public:
 
         /* (primer) should always be greater than end_matches */
         if (primerlen < end_matches){
-            val.dist = -2;
+            val.dist = primerlen + 1;
             return (val);
         }
         /* (primer) should always be < (read) */
 
         if (primerlen > seqlen) { // primer should never be greater than the seq
-            val.dist = -2;
+            val.dist = primerlen + 1;
             return (val);
         }
 
@@ -316,7 +316,7 @@ public:
                 if (column[primerlen - end_matches] <= val.dist ){
                     endmatchcount=0;
                     for (size_t l = 1; l <= end_matches; l++){
-                        if (primer[primerlen - l] != seq[x + i + end_matches - l]){
+                        if (charMatch(primer[primerlen - l],seq[x + i + end_matches - l])){
                             break;
                         }
                         endmatchcount++;
