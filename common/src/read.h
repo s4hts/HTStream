@@ -110,9 +110,9 @@ public:
     bool getDiscard() const { return discard; }
     void setDiscard() { discard = true; }
     size_t getLength() const { return length; }
-    size_t getLengthTrue() const { return cut_R < cut_L ? 0 : cut_R - cut_L; }
+    size_t getLengthTrue() const { return cut_R < cut_L ? 0.0 : cut_R - cut_L; }
     size_t getLTrim() const { return cut_L; }
-    size_t getRTrim() const { return length - cut_R; }
+    size_t getRTrim() const { return cut_R < cut_L ? length - cut_L : length - cut_R; }
 };
 
 typedef std::shared_ptr<Read> ReadPtr;
@@ -128,7 +128,7 @@ public:
 
     Reads& get_reads_non_const() { return reads; }
     const Reads& get_reads() const { return reads; }
-    
+
     virtual boost::optional<boost::dynamic_bitset<>> get_key(size_t start, size_t length) = 0;
     static boost::optional<BitSet> str_to_bit(const std::string& StrKey) {
           // converts a string to a 2bit representation: A:00, T:11, C:01, G:10
@@ -216,12 +216,12 @@ public:
     SingleEndRead(const ReadPtr& one_) : SingleEndRead() {
         one = one_;
         reads[0] = one;
-    }              
+    }
     SingleEndRead(const std::vector<ReadPtr> reads_) {
         reads = reads_;
         one = reads[0];
     }
-    
+
     virtual boost::optional<BitSet> get_key(size_t start, size_t length);
     Read& non_const_read_one() { return *one; }
     const Read& get_read() const { return *one; }
