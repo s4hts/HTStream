@@ -200,6 +200,7 @@ TEST_F(TrimN, emptyTab) {
     while(ifp.has_next()) {
         auto i = ifp.next();
         SingleEndRead *per = dynamic_cast<SingleEndRead*>(i.get());
+        nt.trim_n(per->non_const_read_one(), false);
 
         ASSERT_EQ(per->get_read().getLength(), per->get_read().getLengthTrue());
         ASSERT_EQ(0u, per->get_read().getRTrim());
