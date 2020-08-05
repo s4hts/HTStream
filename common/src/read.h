@@ -105,14 +105,16 @@ public:
     void changeSeq( size_t loc, char bp ) { seq[loc] = bp; }
     void changeQual( size_t loc, char score ) {qual[loc] = score; }
 
-    void setRCut( size_t cut_R_ ) { cut_R = cut_R_;}
-    void setLCut( size_t cut_L_ ) { cut_L = cut_L_; }
+    void setRCut( size_t cut_R_ ) { assert(cut_R_ <= length); cut_R = cut_R_; }
+    void setLCut( size_t cut_L_ ) { assert(cut_L_ <= length); cut_L = cut_L_; }
     bool getDiscard() const { return discard; }
     void setDiscard() { discard = true; }
     size_t getLength() const { return length; }
     size_t getLengthTrue() const { return cut_R < cut_L ? 0 : cut_R - cut_L; }
+    // number of bp that are trimmed off left side
     size_t getLTrim() const { return cut_L; }
-    size_t getRTrim() const { return length - cut_R; }
+    // number of bp that are trimmed off right side
+    size_t getRTrim() const { return (length - cut_R); }
 };
 
 typedef std::shared_ptr<Read> ReadPtr;

@@ -69,7 +69,7 @@ public:
         size_t i = 0;
 
         for (std::string::iterator it = seq.begin(); it != seq.end(); ++it) {
-            i = static_cast<size_t>(it - seq.begin() );
+            i = it - seq.begin();
 
             if (*it == 'N') {
                 if (exclude) {
@@ -82,6 +82,11 @@ public:
                 bestLeft = currentLeft;
             }
         }
+        // don't change rcut if sequence is empty
+        if (seq.length() == 0) {
+            return true;
+        }
+
         rb.setLCut(bestLeft);
         rb.setRCut(bestRight+1);
         return true;
