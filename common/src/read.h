@@ -114,7 +114,7 @@ public:
     // number of bp that are trimmed off left side
     size_t getLTrim() const { return cut_L; }
     // number of bp that are trimmed off right side
-    size_t getRTrim() const { return (length - cut_R); }
+    size_t getRTrim() const { return cut_R <= cut_L ? (length - cut_L)+1 : length - cut_R; }
 };
 
 typedef std::shared_ptr<Read> ReadPtr;
