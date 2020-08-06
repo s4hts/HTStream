@@ -70,18 +70,18 @@ public:
     std::vector<std::string> get_comment() const { return comments;}
     static char complement(char bp);
 
-    const std::string get_sub_seq() const { return cut_R < cut_L ? "N" : seq.substr(cut_L, cut_R - cut_L); }
-    const std::string get_sub_qual() const { return cut_R < cut_L ? "#" : qual.substr(cut_L, cut_R - cut_L); }
+    const std::string get_sub_seq() const { return cut_R <= cut_L ? "N" : seq.substr(cut_L, cut_R - cut_L); }
+    const std::string get_sub_qual() const { return cut_R <= cut_L ? "#" : qual.substr(cut_L, cut_R - cut_L); }
 
 
-    const std::string get_seq_rc() const { if (cut_R < cut_L) { return "N"; }
+    const std::string get_seq_rc() const { if (cut_R <= cut_L) { return "N"; }
                                            std::string s = seq.substr(cut_L, cut_R - cut_L) ;
                                            std::transform(begin(s), end(s), begin(s), complement);
                                            std::reverse(begin(s), end(s));
                                            return s; }
 
 
-    const std::string get_qual_rc() const { if (cut_R < cut_L) { return "#"; }
+    const std::string get_qual_rc() const { if (cut_R <= cut_L) { return "#"; }
                                             std::string q = qual.substr(cut_L, cut_R - cut_L);
                                             std::reverse(begin(q), end(q));
                                             return q;  }
@@ -90,7 +90,7 @@ public:
     void add_comment( const std::string& tag ) { if (tag != "") comments.push_back(tag);}
     void join_comment( const std::vector<std::string>& new_comments, size_t offset = 0) { comments.insert(comments.end(), new_comments.begin() + offset, new_comments.end()); }
     void set_read_rc() {
-        if (cut_R < cut_L) {
+        if (cut_R <= cut_L) {
             return;
         }
         std::string s = seq.substr(cut_L, cut_R - cut_L) ;
@@ -110,7 +110,7 @@ public:
     bool getDiscard() const { return discard; }
     void setDiscard() { discard = true; }
     size_t getLength() const { return length; }
-    size_t getLengthTrue() const { return cut_R < cut_L ? 0 : cut_R - cut_L; }
+    size_t getLengthTrue() const { return cut_R <= cut_L ? 1 : cut_R - cut_L; }
     // number of bp that are trimmed off left side
     size_t getLTrim() const { return cut_L; }
     // number of bp that are trimmed off right side
@@ -130,7 +130,7 @@ public:
 
     Reads& get_reads_non_const() { return reads; }
     const Reads& get_reads() const { return reads; }
-    
+
     virtual boost::optional<boost::dynamic_bitset<>> get_key(size_t start, size_t length) = 0;
     static boost::optional<BitSet> str_to_bit(const std::string& StrKey) {
           // converts a string to a 2bit representation: A:00, T:11, C:01, G:10
@@ -218,12 +218,12 @@ public:
     SingleEndRead(const ReadPtr& one_) : SingleEndRead() {
         one = one_;
         reads[0] = one;
-    }              
+    }
     SingleEndRead(const std::vector<ReadPtr> reads_) {
         reads = reads_;
         one = reads[0];
     }
-    
+
     virtual boost::optional<BitSet> get_key(size_t start, size_t length);
     Read& non_const_read_one() { return *one; }
     const Read& get_read() const { return *one; }
