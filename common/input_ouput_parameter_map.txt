@@ -41,7 +41,7 @@ K
   kmer                        k   Overlapping     AdapterTrimmer,Overlapper
   kmer                        k                   SeqScreener
   skip_polyT                  k                   PolyATTrim
-  keep                        k                   Primers
+  keep                        k                   Primers, SuperDeduper
 L
   no-left                     l   Trim            PolyATTrim, QWindowTrim
   length                      l                   SuperDeduper
