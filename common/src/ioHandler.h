@@ -379,10 +379,10 @@ public:
         if (!one.getDiscard() && !two.getDiscard()) {
             pe->write(*per);
         } else if (!one.getDiscard() && !no_orphans) { // Will never be RC
-            one.join_comment(r2.get_comment());
+            one.join_comment(two.get_comment());
             se->write_read(one, false);
         } else if (!two.getDiscard() && !no_orphans) { // if stranded RC
-            two.join_comment(r1.get_comment());
+            two.join_comment(one.get_comment());
             se->write_read(two, stranded);
         }
 
