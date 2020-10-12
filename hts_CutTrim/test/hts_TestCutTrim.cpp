@@ -45,3 +45,19 @@ TEST_F(CutTrimTest, PETrim) {
     }
     ASSERT_EQ("Read2\tCTTGGGTCCTATGGTATCGGTACTGGTACT\t##############################\tRead1\tTGACATTAAGCAAGTACCAGTACCGATACC\t##############################\n", out1->str());
 };
+
+
+TEST_F(CutTrimTest, RightTrim) {
+    std::istringstream in1(readData_1);
+    std::istringstream in2(readData_2);
+
+    InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(in1, in2);
+
+    while(ifp.has_next()) {
+        auto i = ifp.next();
+        PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
+        ct.cut_trim(per->non_const_read_one(), 0, 2);
+        ASSERT_EQ("TGACTTGACATTAAGCAAGTACCAGTACCGATACCATAGGACCCAAGG", (per->non_const_read_one()).get_sub_seq());
+        ASSERT_EQ(per->get_read_one().getRTrim(), 2u);
+    }
+};

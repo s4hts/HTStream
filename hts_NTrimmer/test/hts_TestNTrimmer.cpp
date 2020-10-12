@@ -16,6 +16,9 @@ public:
     const std::string readData_8 = "@Read1\nNNNNNNNNNNNNNNNNNNNNNNN\n+\n#######################\n";
     const std::string readData_9a = "@Read1\nCTGACTGACTGANNNACTGACTGACTGNCTGACTG\n+\n###################################\n";
     const std::string readData_9b = "@Read1\nCTGACTGACTGANNNACTGACTGACTGANTGACTG\n+\n###################################\n";
+    const std::string readData_10a = "@Read1\nN\n+\n#\n";
+    const std::string readData_10b = "@Read1\nACTNNNTGCT\n+\n##########\n";
+    const std::string readData_empty_tab = "D00689:146:C9B2EANXX:8:2303:19367:3733#GATCAC		";
     NTrimmer nt;
 };
 
@@ -162,5 +165,44 @@ TEST_F(TrimN, longN) {
         nt.trim_n(per->non_const_read_two(), false);
         ASSERT_EQ("CTGACTGACTGA", (per->non_const_read_one()).get_sub_seq());
         ASSERT_EQ("ACTGACTGACTGA", (per->non_const_read_two()).get_sub_seq());
+    }
+};
+
+TEST_F(TrimN, shortN) {
+    std::istringstream in1(readData_10a);
+    std::istringstream in2(readData_10b);
+
+    InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(in1, in2);
+
+    while(ifp.has_next()) {
+        auto i = ifp.next();
+        PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
+        nt.trim_n(per->non_const_read_one(), false);
+        nt.trim_n(per->non_const_read_two(), false);
+        ASSERT_EQ("N", (per->non_const_read_one()).get_sub_seq());
+        ASSERT_EQ(0u, (per->get_read_one().getRTrim()));
+        ASSERT_EQ(1u, (per->get_read_one().getLengthTrue()));
+        ASSERT_EQ(per->get_read_one().getLength(),per->get_read_one().getLengthTrue());
+
+        ASSERT_EQ("TGCT", (per->non_const_read_two()).get_sub_seq());
+        ASSERT_EQ(0u, (per->get_read_two().getRTrim()));
+        ASSERT_EQ(6u, (per->get_read_two().getLTrim()));
+        ASSERT_EQ(10u, per->get_read_two().getLength());
+        ASSERT_EQ(4u, per->get_read_two().getLengthTrue());
+    }
+};
+
+TEST_F(TrimN, emptyTab) {
+    std::istringstream in1(readData_empty_tab);
+
+    InputReader<ReadBase, TabReadImpl> ifp(in1);
+
+    while(ifp.has_next()) {
+        auto i = ifp.next();
+        SingleEndRead *per = dynamic_cast<SingleEndRead*>(i.get());
+        nt.trim_n(per->non_const_read_one(), false);
+        ASSERT_EQ(0u, per->get_read().getLength());
+        ASSERT_EQ(1u, per->get_read().getLengthTrue());
+        ASSERT_EQ(0u, per->get_read().getRTrim());
     }
 };
