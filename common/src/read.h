@@ -32,7 +32,7 @@ public:
            // split the id into 2 delimited on the first space
            size_t pos = 0;
            pos = id_orig.find_first_of(fastq_delimiter);
-           if (pos != std::string::npos){
+           if (pos != std::string::npos && pos+2 < id_orig.size()){
              id = id_orig.substr(0, pos);
              // id2 remove the read designation, add back in on write out
              id2 = id_orig.substr(pos+2);
