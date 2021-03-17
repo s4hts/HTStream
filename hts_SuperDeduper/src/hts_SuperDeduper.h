@@ -111,6 +111,15 @@ public:
         desc.add_options()
             ("start,s", po::value<size_t>()->default_value(10)->notifier(boost::bind(&check_range<size_t>, "start", _1, 1, 10000)),  "Start location for unique ID (min 1, max 10000)")
             ("length,l", po::value<size_t>()->default_value(10)->notifier(boost::bind(&check_range<size_t>, "length", _1, 1, 10000)), "Length of unique ID (min 1, max 10000)")
+            ("umi-read", po::value<size_t>()->notifier(boost::bind(&check_range<size_t>, "readumi", _1, 1, 2)),  "Read which contains the umi (1 or 2 allowed)")
+            ("umi-start", po::value<size_t>()->notifier(boost::bind(&check_range<size_t>, "startumi", _1, 1, 10000)),  "Start location for the umi (min 1, max 10000)")
+            ("umi-length", po::value<size_t>()->notifier(boost::bind(&check_range<size_t>, "lengthumi", _1, 1, 10000)), "Length of umi (min 1, max 10000)")
+            ("a-read", po::value<size_t>()->notifier(boost::bind(&check_range<size_t>, "reada", _1, 1, 2)),  "Read for key a for unique ID. first part of the key (1 or 2 allowed)")
+            ("a-start", po::value<size_t>()->notifier(boost::bind(&check_range<size_t>, "starta", _1, 1, 10000)),  "Start location for key a (min 1, max 10000)")
+            ("a-length", po::value<size_t>()->notifier(boost::bind(&check_range<size_t>, "lengtha", _1, 1, 10000)), "Length of key a (min 1, max 10000)")
+            ("b-read", po::value<size_t>()->notifier(boost::bind(&check_range<size_t>, "readb", _1, 1, 2)),  "Read for key b (can be the same as a) (1 or 2 allowed) ")
+            ("b-start", po::value<size_t>()->notifier(boost::bind(&check_range<size_t>, "startb", _1, 1, 10000)),  "Start location for key b (min 1, max 10000)")
+            ("b-length", po::value<size_t>()->notifier(boost::bind(&check_range<size_t>, "lengthb", _1, 1, 10000)), "Length of key b (min 1, max 10000)")
             ("avg-qual-score,q", po::value<double>()->default_value(30)->notifier(boost::bind(&check_range<double>, "avg-qual-score", _1, 1, 10000)), "Avg quality score to have the read written automatically (min 1, max 10000)")
             ("inform-avg-qual-score,a", po::value<double>()->default_value(5)->notifier(boost::bind(&check_range<double>, "inform-avg-qual-score", _1, 1, 10000)), "Avg quality score to consider a read informative (min 1, max 10000)") //I know this says user input is a int, but is actually a double
             ("log_freq,e", po::value<size_t>()->default_value(1000000)->notifier(boost::bind(&check_range<size_t>, "log_freq", _1, 0, 1000000000)), "Frequency in which to log duplicates in reads, can be used to create a saturation plot (0 turns off).");
@@ -168,6 +177,19 @@ public:
         const double discard_qual = vm["inform-avg-qual-score"].as<double>();
         const size_t start = vm["start"].as<size_t>() - 1;
         const size_t length = vm["length"].as<size_t>();
+
+        const size_t umiread = vm["readumi"].as<size_t>();
+        const size_t umistart = vm["startumi"].as<size_t>() - 1;
+        const size_t umilength = vm["lengthumi"].as<size_t>();
+
+        const size_t aread = vm["reada"].as<size_t>();
+        const size_t astart = vm["starta"].as<size_t>() - 1;
+        const size_t alength = vm["lengtha"].as<size_t>();
+
+        const size_t bread = vm["readb"].as<size_t>();
+        const size_t bstart = vm["startb"].as<size_t>() - 1;
+        const size_t blength = vm["lengthb"].as<size_t>();
+
         const size_t log_freq = vm["log_freq"].as<size_t>();
         const bool keep = vm["keep"].as<bool>();
 
