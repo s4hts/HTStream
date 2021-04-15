@@ -56,7 +56,7 @@ public:
     const std::string get_id_orig() const { return id_orig; }
     const std::string get_id_fastq(const std::string& read="") const {
         std::string sam_comment = strjoin(comments, "|");;
-        std::string tmp = id + sam_comment;
+        std::string tmp = id + "|" + sam_comment;
         if (!(id2 == "")) tmp = tmp + ' ' + read + id2;
         return tmp;
     }
@@ -128,7 +128,7 @@ public:
 
     Reads& get_reads_non_const() { return reads; }
     const Reads& get_reads() const { return reads; }
-    
+
     virtual boost::optional<boost::dynamic_bitset<>> get_key(size_t start, size_t length) = 0;
     static boost::optional<BitSet> str_to_bit(const std::string& StrKey) {
           // converts a string to a 2bit representation: A:00, T:11, C:01, G:10
@@ -216,12 +216,12 @@ public:
     SingleEndRead(const ReadPtr& one_) : SingleEndRead() {
         one = one_;
         reads[0] = one;
-    }              
+    }
     SingleEndRead(const std::vector<ReadPtr> reads_) {
         reads = reads_;
         one = reads[0];
     }
-    
+
     virtual boost::optional<BitSet> get_key(size_t start, size_t length);
     Read& non_const_read_one() { return *one; }
     const Read& get_read() const { return *one; }
