@@ -25,6 +25,10 @@ private:
     size_t cut_R;
     size_t cut_L;
     bool discard;
+    const std::string fastq_comment() const { if (!comments.size()) { return ""; }
+                                           std::string s = "|" + strjoin(comments, "|");
+                                           return s; }
+
 public:
     Read(const std::string& seq_, const std::string& qual_, const std::string& id_) :
         seq(seq_), qual(qual_), id_orig(id_), length(seq_.length()), cut_R(seq_.length()), cut_L(0), discard(false) {
@@ -55,8 +59,7 @@ public:
     const std::string& get_qual() const { return qual; }
     const std::string get_id_orig() const { return id_orig; }
     const std::string get_id_fastq(const std::string& read="") const {
-        std::string sam_comment = "|" + strjoin(comments, "|");;
-        std::string tmp = id + sam_comment;
+        std::string tmp = id + fastq_comment();
         if (!(id2 == "")) tmp = tmp + ' ' + read + id2;
         return tmp;
     }
