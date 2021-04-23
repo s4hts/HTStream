@@ -187,14 +187,16 @@ public:
     virtual void write_read(const Read &read, bool rc) { if (rc) { format_writer_rc(read); } else { format_writer(read); } }
 protected:
     std::shared_ptr<HtsOfstream> output = nullptr;
-    std::string sam_comment = "";
-    for (auto const& s : read.get_comment()) { sam_comment = sam_comment + '|' + s; }
 
     void format_writer_rc(const Read &read) {
-       *output << "@" << read.get_id_fastq("1", sam_comment) << '\n' << read.get_seq_rc() << "\n+\n" << read.get_qual_rc() << '\n';
+        std::string sam_comment = "";
+        for (auto const& s : read.get_comment()) { sam_comment = sam_comment + '|' + s; }
+        *output << "@" << read.get_id_fastq("1", sam_comment) << '\n' << read.get_seq_rc() << "\n+\n" << read.get_qual_rc() << '\n';
     }
     void format_writer(const Read &read) {
-       *output << "@" << read.get_id_fastq("1", sam_comment) << '\n' << read.get_sub_seq() << "\n+\n" << read.get_sub_qual() << '\n';
+        std::string sam_comment = "";
+        for (auto const& s : read.get_comment()) { sam_comment = sam_comment + '|' + s; }
+        *output << "@" << read.get_id_fastq("1", sam_comment) << '\n' << read.get_sub_seq() << "\n+\n" << read.get_sub_qual() << '\n';
     }
 
 };
