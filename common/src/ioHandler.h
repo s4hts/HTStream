@@ -213,8 +213,8 @@ protected:
         for (auto const& s : read1.get_comment()) { sam_comment = sam_comment + '|' + s; }
         for (auto const& s : read2.get_comment()) { sam_comment = sam_comment + '|' + s; }
 
-        *out1 << "@" << read1.get_id_fastq("1", sam_comment) << 'test' << '\n' << read1.get_sub_seq() << "\n+\n" << read1.get_sub_qual() << '\n';
-        *out2 << "@" << read2.get_id_fastq("2", sam_comment) << 'test' << '\n' << read2.get_sub_seq() << "\n+\n" << read2.get_sub_qual() << '\n';
+        *out1 << "@" << read1.get_id_fastq("1", sam_comment) << '\n' << read1.get_sub_seq() << "\n+\n" << read1.get_sub_qual() << '\n';
+        *out2 << "@" << read2.get_id_fastq("2", sam_comment) << '\n' << read2.get_sub_seq() << "\n+\n" << read2.get_sub_qual() << '\n';
     }
 };
 
