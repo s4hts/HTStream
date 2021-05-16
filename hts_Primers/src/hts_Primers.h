@@ -337,6 +337,7 @@ public:
 
         ALIGNPOS test_val, best_val;
         std::string p5primer = "None", p3primer = "None";
+        long p5dist, p3dist = 0.0;
         size_t pmatches = 0;
         bool flipped = false;
 
@@ -378,6 +379,7 @@ public:
                 pmatches++;
             }
         }
+        p5dist = best_val.dist;
         best_val.dist = pMismatches + 1;
         const std::string &seq2 = r2.get_seq();
         for ( auto it = primer3p.begin(); it != primer3p.end(); ++it ){
@@ -413,6 +415,8 @@ public:
                 pmatches++;
             }
         }
+        p3dist = best_val.dist;
+
         counter.primer_match_counter(p5primer,p3primer);
         if (pmatches < mpmatches) {
             counter.increment_discard_pe();
@@ -423,7 +427,10 @@ public:
               r1.add_comment("Pf:Z:FLIP");
             }
             r1.add_comment("P5:Z:" + p5primer);
+            r1.add_comment("P5d:i:" + p5dist);
+
             r2.add_comment("P3:Z:" + p3primer);
+            r2.add_comment("P3d:i:" + p3dist);
         }
         return true;
     }
@@ -432,6 +439,8 @@ public:
 
         ALIGNPOS test_val, best_val;
         std::string p5primer = "None", p3primer = "None";
+        long p5dist, p3dist = 0.0;
+
         size_t pmatches = 0;
         bool flipped = false;
 
@@ -472,6 +481,7 @@ public:
                 pmatches++;
             }
         }
+        p5dist = best_val.dist;
         best_val.dist = pMismatches + 1;
         const std::string &seq2 = r1.get_seq_rc();
         for ( auto it = primer3p.begin(); it != primer3p.end(); ++it ){
@@ -507,6 +517,7 @@ public:
                 pmatches++;
             }
         }
+        p3dist = best_val.name;
         counter.primer_match_counter(p5primer,p3primer);
         if (pmatches < mpmatches) {
             counter.increment_discard_se();
@@ -517,7 +528,9 @@ public:
               r1.add_comment("Pf:Z:FLIP");
             }
             r1.add_comment("P5:Z:" + p5primer);
+            r1.add_comment("P5d:i:" + p5dist);
             r1.add_comment("P3:Z:" + p3primer);
+            r1.add_comment("P3d:i:" + p3dist);
         }
         return true;
     }
