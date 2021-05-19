@@ -173,10 +173,12 @@ public:
 
             if (seq1[read1_bp] == seq2[read2_bp]) {
                 bp = seq1[read1_bp];
-                qual = static_cast<char>(std::min(qual1[read1_bp] + qual2[read2_bp] - 33, 40 + 33)); //addition of qual (minus just one of the ascii values
+                qual = static_cast<char>(std::max(qual1[read1_bp], qual2[read2_bp])); //addition of qual (minus just one of the ascii values
+                //qual = static_cast<char>(std::min(qual1[read1_bp] + qual2[read2_bp] - 33, 40 + 33)); //addition of qual (minus just one of the ascii values
             } else {
                 bp = qual1[read1_bp] >= qual2[read2_bp] ? seq1[read1_bp] : seq2[read2_bp];
-                qual = static_cast<char>(std::max(qual1[read1_bp] - qual2[read2_bp] + 33, 1 + 33));
+                qual = qual1[read1_bp] >= qual2[read2_bp] ? qual1[read1_bp] : qual2[read2_bp];
+                //qual = static_cast<char>(std::max(qual1[read1_bp] - qual2[read2_bp] + 33, 1 + 33));
             }
             finalSeq += bp;
             finalQual += qual;
