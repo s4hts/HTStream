@@ -337,7 +337,7 @@ public:
 
         ALIGNPOS test_val, best_val;
         std::string p5primer = "None", p3primer = "None";
-        long p5dist, p3dist = 0.0;
+        long p5dist, p3dist = 0;
         size_t pmatches = 0;
         bool flipped = false;
 
@@ -427,10 +427,10 @@ public:
               r1.add_comment("Pf:Z:FLIP");
             }
             r1.add_comment("P5:Z:" + p5primer);
-            r1.add_comment("P5d:i:" + p5dist);
+            r1.add_comment("P5d:i:" + std::to_string(p5dist));
 
             r2.add_comment("P3:Z:" + p3primer);
-            r2.add_comment("P3d:i:" + p3dist);
+            r2.add_comment("P3d:i:" + std::to_string(p3dist));
         }
         return true;
     }
@@ -439,7 +439,7 @@ public:
 
         ALIGNPOS test_val, best_val;
         std::string p5primer = "None", p3primer = "None";
-        long p5dist, p3dist = 0.0;
+        long p5dist, p3dist = 0;
 
         size_t pmatches = 0;
         bool flipped = false;
@@ -528,9 +528,9 @@ public:
               r1.add_comment("Pf:Z:FLIP");
             }
             r1.add_comment("P5:Z:" + p5primer);
-            r1.add_comment("P5d:i:" + p5dist);
+            r1.add_comment("P5d:i:" + std::to_string(p5dist));
             r1.add_comment("P3:Z:" + p3primer);
-            r1.add_comment("P3d:i:" + p3dist);
+            r1.add_comment("P3d:i:" + std::to_string(p3dist));
         }
         return true;
     }
