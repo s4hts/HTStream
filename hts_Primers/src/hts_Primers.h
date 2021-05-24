@@ -517,7 +517,7 @@ public:
                 pmatches++;
             }
         }
-        p3dist = best_val.name;
+        p3dist = best_val.dist;
         counter.primer_match_counter(p5primer,p3primer);
         if (pmatches < mpmatches) {
             counter.increment_discard_se();
