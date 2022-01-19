@@ -422,8 +422,12 @@ public:
               counter.increment_flipped();
               r1.add_comment("Pf:Z:FLIP");
             }
-            r1.add_comment("P5:Z:" + p5primer);
-            r2.add_comment("P3:Z:" + p3primer);
+            // Only P5 or P3 tag is written out when that primer is looked for.
+            // This enables to look for P5 and P3 in separate instances.
+            if (!primer5p.empty())
+              r1.add_comment("P5:Z:" + p5primer);
+            if (!primer3p.empty())
+              r2.add_comment("P3:Z:" + p3primer);
         }
         return true;
     }
@@ -516,8 +520,12 @@ public:
               counter.increment_flipped();
               r1.add_comment("Pf:Z:FLIP");
             }
-            r1.add_comment("P5:Z:" + p5primer);
-            r1.add_comment("P3:Z:" + p3primer);
+            // Only P5 or P3 tag is written out when that primer is looked for.
+            // This enables to look for P5 and P3 in separate instances.
+            if (!primer5p.empty())
+              r1.add_comment("P5:Z:" + p5primer);
+            if (!primer3p.empty())
+              r1.add_comment("P3:Z:" + p3primer);
         }
         return true;
     }
