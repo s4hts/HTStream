@@ -1,5 +1,6 @@
 #ifndef READ_H
 #define READ_H
+#define NDEBUG
 
 #include <boost/dynamic_bitset.hpp>
 #include <boost/optional.hpp>
