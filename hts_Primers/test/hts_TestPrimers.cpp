@@ -34,6 +34,154 @@ TEST_F(Primer, test_bounded_edit_distance) {
     ASSERT_EQ(34u, r.epos);
 };
 
+TEST_F(Primer, test_bed_indels1) {
+  // Perfect Match 3' end
+  const std::string read_seq_indel = "@TEST\nTCCACGGGACGTCCAAAATGGTGCAGGATGGAAAAGCATGTGGCACGT\n+\nIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII";
+  const std::string primer_match = "ACGTGCCACATGCTTTTCCA";
+  std::istringstream in1(read_seq_indel);
+  InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(in1);
+  SeqMap primer5p;
+  SeqMap primer3p = p.fasta2dict(primer_match, "seq");
+
+  PrimerCounters counter("hts_Primers", vm);
+  while(ifs.has_next()) {
+      auto i = ifs.next();
+      SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
+      counter.input(*ser);
+      // check_read_pe(PairedEndRead &pe, PrimerCounters &counter, SeqMap &primer5p, SeqMap &primer3p, const size_t pMismatches, const size_t pEndMismatches, const size_t pfloat, const size_t flip, const size_t keep, const size_t mpmatches
+      p.check_read_se(*ser, counter, primer5p, primer3p, 4, 4, 5, true, false, 2);
+      counter.output(*ser);
+      ASSERT_EQ("TCCACGGGACGTCCAAAATGGTGCAGGA", (ser->non_const_read_one()).get_sub_seq());
+      ASSERT_EQ(0u, (ser->non_const_read_one()).getLTrim());
+      ASSERT_EQ(20u, (ser->non_const_read_one()).getRTrim());
+      ASSERT_EQ(0u, counter.flipped);
+  }
+};
+
+
+TEST_F(Primer, test_bed_indels2) {
+  // delection in primer, insersion in read Match 3' end
+  const std::string read_seq_indel = "@TEST\nTCCACGGGACGTCCAAAATGGTGCAGGATGGAAAAGCATGTGGCACGT\n+\nIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII";
+  const std::string primer_match = "ACGTGACATGCTTTTCCA";
+  std::istringstream in1(read_seq_indel);
+  InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(in1);
+  SeqMap primer5p;
+  SeqMap primer3p = p.fasta2dict(primer_match, "seq");
+
+  PrimerCounters counter("hts_Primers", vm);
+  while(ifs.has_next()) {
+      auto i = ifs.next();
+      SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
+      counter.input(*ser);
+      // check_read_pe(PairedEndRead &pe, PrimerCounters &counter, SeqMap &primer5p, SeqMap &primer3p, const size_t pMismatches, const size_t pEndMismatches, const size_t pfloat, const size_t flip, const size_t keep, const size_t mpmatches
+      p.check_read_se(*ser, counter, primer5p, primer3p, 4, 4, 5, true, false, 2);
+      counter.output(*ser);
+      ASSERT_EQ("TCCACGGGACGTCCAAAATGGTGCAGGA", (ser->non_const_read_one()).get_sub_seq());
+      ASSERT_EQ(0u, (ser->non_const_read_one()).getLTrim());
+      ASSERT_EQ(20u, (ser->non_const_read_one()).getRTrim());
+      ASSERT_EQ(0u, counter.flipped);
+  }
+};
+
+TEST_F(Primer, test_bed_indels3) {
+  // insertion in primer, deletion in read Math 3' end
+  const std::string read_seq_indel = "@TEST\nTCCACGGGACGTCCAAAATGGTGCAGGATGGAAAAGCATGTGGCACGT\n+\nIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII";
+  const std::string primer_match = "ACGTGCCCCACATGCTTTTCCA";
+  std::istringstream in1(read_seq_indel);
+  InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(in1);
+  SeqMap primer5p;
+  SeqMap primer3p = p.fasta2dict(primer_match, "seq");
+
+  PrimerCounters counter("hts_Primers", vm);
+  while(ifs.has_next()) {
+      auto i = ifs.next();
+      SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
+      counter.input(*ser);
+      // check_read_pe(PairedEndRead &pe, PrimerCounters &counter, SeqMap &primer5p, SeqMap &primer3p, const size_t pMismatches, const size_t pEndMismatches, const size_t pfloat, const size_t flip, const size_t keep, const size_t mpmatches
+      p.check_read_se(*ser, counter, primer5p, primer3p, 4, 4, 5, true, false, 2);
+      counter.output(*ser);
+      ASSERT_EQ("TCCACGGGACGTCCAAAATGGTGCAGGA", (ser->non_const_read_one()).get_sub_seq());
+      ASSERT_EQ(0u, (ser->non_const_read_one()).getLTrim());
+      ASSERT_EQ(20u, (ser->non_const_read_one()).getRTrim());
+      ASSERT_EQ(0u, counter.flipped);
+  }
+};
+
+
+TEST_F(Primer, test_bed_indels4) {
+  // Insersion in Read, deletion in primer Match 3' end
+  const std::string read_seq_indel = "@TEST\nACGTGCCCCACATGCTTTTCCATCCTGCACCATTTTGGACGTCCCGTGGA\n+\nIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII";
+  const std::string primer_match = "ACGTGCCACATGCTTTTCCA";
+  std::istringstream in1(read_seq_indel);
+  InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(in1);
+  SeqMap primer5p;
+  SeqMap primer3p = p.fasta2dict(primer_match, "seq");
+
+  PrimerCounters counter("hts_Primers", vm);
+  while(ifs.has_next()) {
+      auto i = ifs.next();
+      SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
+      counter.input(*ser);
+      // check_read_pe(PairedEndRead &pe, PrimerCounters &counter, SeqMap &primer5p, SeqMap &primer3p, const size_t pMismatches, const size_t pEndMismatches, const size_t pfloat, const size_t flip, const size_t keep, const size_t mpmatches
+      p.check_read_se(*ser, counter, primer5p, primer3p, 4, 4, 5, true, false, 2);
+      counter.output(*ser);
+      ASSERT_EQ("TCCACGGGACGTCCAAAATGGTGCAGGA", (ser->non_const_read_one()).get_sub_seq());
+      ASSERT_EQ(0u, (ser->non_const_read_one()).getLTrim());
+      ASSERT_EQ(22u, (ser->non_const_read_one()).getRTrim());
+      ASSERT_EQ(0u, counter.flipped);
+  }
+};
+
+
+TEST_F(Primer, test_bed_indels5) {
+  // Deletion in read, insersion in primer Match 3' end
+  const std::string read_seq_indel = "@TEST\nTCCACGGGACGTCCAAAATGGTGCAGGATGGAAAAGCATGTCACGT\n+\nIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII";
+  const std::string primer_match = "ACGTGCCACATGCTTTTCCA";
+  std::istringstream in1(read_seq_indel);
+  InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(in1);
+  SeqMap primer5p;
+  SeqMap primer3p = p.fasta2dict(primer_match, "seq");
+
+  PrimerCounters counter("hts_Primers", vm);
+  while(ifs.has_next()) {
+      auto i = ifs.next();
+      SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
+      counter.input(*ser);
+      // check_read_pe(PairedEndRead &pe, PrimerCounters &counter, SeqMap &primer5p, SeqMap &primer3p, const size_t pMismatches, const size_t pEndMismatches, const size_t pfloat, const size_t flip, const size_t keep, const size_t mpmatches
+      p.check_read_se(*ser, counter, primer5p, primer3p, 4, 4, 5, true, false, 2);
+      counter.output(*ser);
+      ASSERT_EQ("TCCACGGGACGTCCAAAATGGTGCAGGA", (ser->non_const_read_one()).get_sub_seq());
+      ASSERT_EQ(0u, (ser->non_const_read_one()).getLTrim());
+      ASSERT_EQ(18u, (ser->non_const_read_one()).getRTrim());
+      ASSERT_EQ(0u, counter.flipped);
+  }
+};
+
+
+TEST_F(Primer, read_is_primer) {
+  // Deletion in read, insersion in primer Match 3' end
+  const std::string read_seq_indel = "@TEST\nTGGAAAAGCATGTGGCACGT\n+\nIIIIIIIIIIIIIIIIIIII";
+  const std::string primer_match = "ACGTGCCACATGCTTTTCCA";
+  std::istringstream in1(read_seq_indel);
+  InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(in1);
+  SeqMap primer5p;
+  SeqMap primer3p = p.fasta2dict(primer_match, "seq");
+
+  PrimerCounters counter("hts_Primers", vm);
+  while(ifs.has_next()) {
+      auto i = ifs.next();
+      SingleEndRead* ser = dynamic_cast<SingleEndRead*>(i.get());
+      counter.input(*ser);
+      // check_read_pe(PairedEndRead &pe, PrimerCounters &counter, SeqMap &primer5p, SeqMap &primer3p, const size_t pMismatches, const size_t pEndMismatches, const size_t pfloat, const size_t flip, const size_t keep, const size_t mpmatches
+      p.check_read_se(*ser, counter, primer5p, primer3p, 4, 4, 5, true, false, 2);
+      counter.output(*ser);
+      ASSERT_EQ("N", (ser->non_const_read_one()).get_sub_seq());
+      ASSERT_EQ(0u, (ser->non_const_read_one()).getLTrim());
+      ASSERT_EQ(20u, (ser->non_const_read_one()).getRTrim());
+      ASSERT_EQ(0u, counter.flipped);
+  }
+};
+
 TEST_F(Primer, test_pairs_both_match) {
     po::variables_map vm;
 
