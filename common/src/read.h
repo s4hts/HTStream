@@ -110,10 +110,10 @@ public:
         std::cout << seq << std::endl;
         std::cout << qual << std::endl;
         std::cout << id_orig << std::endl;
-        std::cout << to_string(length) << std::endl;
-        std::cout << to_string(cut_R) << std::endl;
-        std::cout << to_string(cut_L) << std::endl;
-        std::cout << to_string(cut_R_) << std::endl;
+        std::cout << std::to_string(length) << std::endl;
+        std::cout << std::to_string(cut_R) << std::endl;
+        std::cout << std::to_string(cut_L) << std::endl;
+        std::cout << std::to_string(cut_R_) << std::endl;
       }
       cut_R = cut_R_;
     }
