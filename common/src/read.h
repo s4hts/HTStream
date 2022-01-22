@@ -105,19 +105,8 @@ public:
     void changeSeq( size_t loc, char bp ) { seq[loc] = bp; }
     void changeQual( size_t loc, char score ) {qual[loc] = score; }
 
-    void setRCut( size_t cut_R_ ) {
-      if(cut_R_ <= length){
-        std::cout << seq << std::endl;
-        std::cout << qual << std::endl;
-        std::cout << id_orig << std::endl;
-        std::cout << std::to_string(length) << std::endl;
-        std::cout << std::to_string(cut_R) << std::endl;
-        std::cout << std::to_string(cut_L) << std::endl;
-        std::cout << std::to_string(cut_R_) << std::endl;
-      }
-      cut_R = cut_R_;
-    }
-    void setLCut( size_t cut_L_ ) { if(cut_L_ <= length); cut_L = cut_L_; }
+    void setRCut( size_t cut_R_ ) { assert(cut_R_ <= length); cut_R = cut_R_; }
+    void setLCut( size_t cut_L_ ) { assert(cut_L_ <= length); cut_L = cut_L_; }
     bool getDiscard() const { return discard; }
     void setDiscard() { discard = true; }
     size_t getLength() const { return length; }
