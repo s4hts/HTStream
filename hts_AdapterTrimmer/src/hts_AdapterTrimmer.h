@@ -251,7 +251,7 @@ public:
         Read &r1 = se->non_const_read_one();
         /* if adapter is longer than sequence, set length to same as seq */
         if (adapter_seq.length() > r1.getLength()){
-            adapter_seq = adapter_seq.substr(0, r1.getLength());
+            adapter_seq = adapter_seq.substr(0, r1.getLength()-1);
         }
 
         Read adapter = Read(adapter_seq, "", "");
