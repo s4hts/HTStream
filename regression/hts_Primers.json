@@ -1,7 +1,7 @@
 [ {
     "Program_details": {
         "program": "hts_Primers",
-        "version": "v1.3.1-14-gb2ff171",
+        "version": "v1.3.3-18-g0c8bf48",
         "options": {
             "flip": false,
             "float": 0,
@@ -24,7 +24,7 @@
         "basepairs_in": 15050,
         "basepairs_out": 15050,
         "flipped": 0,
-        "primers_counts": [ ["None","None",25] ]
+        "primers_counts": [ ["","",25] ]
     },
     "Single_end": {
         "in": 0,

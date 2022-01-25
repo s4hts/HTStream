@@ -25,6 +25,7 @@ private:
     size_t cut_R;
     size_t cut_L;
     bool discard;
+
 public:
     Read(const std::string& seq_, const std::string& qual_, const std::string& id_) :
         seq(seq_), qual(qual_), id_orig(id_), length(seq_.length()), cut_R(seq_.length()), cut_L(0), discard(false) {
@@ -54,13 +55,14 @@ public:
     const std::string& get_seq() const  { return seq; }
     const std::string& get_qual() const { return qual; }
     const std::string get_id_orig() const { return id_orig; }
-    const std::string get_id_fastq(const std::string& read="") const {
-        std::string sam_comment = strjoin(comments, "|");;
+    const std::string get_id_fastq(const char& read='\0') const {
+        std::string sam_comment = "";
+        for (auto const& s : comments) { sam_comment += '|' + s; }
         std::string tmp = id + sam_comment;
         if (!(id2 == "")) tmp = tmp + ' ' + read + id2;
         return tmp;
     }
-    const std::string get_id_tab(const std::string& read="") const {
+    const std::string get_id_tab(const char& read='\0') const {
         std::string tmp = id;
         if (!(id2 == "")) tmp = tmp + ' ' + read + id2;
         return tmp;
@@ -105,8 +107,8 @@ public:
     void changeSeq( size_t loc, char bp ) { seq[loc] = bp; }
     void changeQual( size_t loc, char score ) {qual[loc] = score; }
 
-    void setRCut( size_t cut_R_ ) { assert(cut_R_ <= length); cut_R = cut_R_; }
-    void setLCut( size_t cut_L_ ) { assert(cut_L_ <= length); cut_L = cut_L_; }
+    void setRCut( size_t cut_R_ ) { cut_R = cut_R_; }
+    void setLCut( size_t cut_L_ ) { cut_L = cut_L_; }
     bool getDiscard() const { return discard; }
     void setDiscard() { discard = true; }
     size_t getLength() const { return length; }

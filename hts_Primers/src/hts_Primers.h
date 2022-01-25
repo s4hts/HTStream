@@ -336,7 +336,7 @@ public:
     bool check_read_pe(PairedEndRead &pe, PrimerCounters &counter, SeqMap &primer5p, SeqMap &primer3p, const size_t pMismatches, const size_t pEndMismatches, const size_t pfloat, const size_t flip, const size_t keep, const size_t mpmatches) {
 
         ALIGNPOS test_val, best_val;
-        std::string p5primer = "None", p3primer = "None";
+        std::string p5primer = "", p3primer = "";
         size_t pmatches = 0;
         bool flipped = false;
 
@@ -393,7 +393,7 @@ public:
             p3primer = best_val.name;
             if (!keep) r2.setLCut(best_val.epos);
             pmatches++;
-        } else if (flip && p5primer=="None") {
+        } else if (flip && p5primer=="") {
             best_val.dist = pMismatches + 1;
             const std::string &seq2 = r1.get_seq();
             for ( auto it = primer3p.begin(); it != primer3p.end(); ++it ){
@@ -422,8 +422,12 @@ public:
               counter.increment_flipped();
               r1.add_comment("Pf:Z:FLIP");
             }
-            r1.add_comment("P5:Z:" + p5primer);
-            r2.add_comment("P3:Z:" + p3primer);
+            // Only P5 or P3 tag is written out when that primer is looked for.
+            // This enables to look for P5 and P3 in separate instances.
+            if (!primer5p.empty() && p5primer != "")
+              r1.add_comment("P5:Z:" + p5primer);
+            if (!primer3p.empty() && p3primer != "")
+              r2.add_comment("P3:Z:" + p3primer);
         }
         return true;
     }
@@ -431,7 +435,7 @@ public:
     bool check_read_se(SingleEndRead &se, PrimerCounters &counter, SeqMap &primer5p, SeqMap &primer3p, const size_t pMismatches, const size_t pEndMismatches, const size_t pfloat, const size_t flip, const size_t keep, const size_t mpmatches) {
 
         ALIGNPOS test_val, best_val;
-        std::string p5primer = "None", p3primer = "None";
+        std::string p5primer = "", p3primer = "";
         size_t pmatches = 0;
         bool flipped = false;
 
@@ -487,7 +491,7 @@ public:
             p3primer = best_val.name;
             if (!keep) r1.setRCut(r1.getLength() -  best_val.epos);
             pmatches++;
-        } else if (flip && p5primer=="None") {
+        } else if (flip && p5primer=="") {
             best_val.dist = pMismatches + 1;
             const std::string &temp = r1.get_seq();
             for ( auto it = primer3p.begin(); it != primer3p.end(); ++it ){
@@ -516,8 +520,12 @@ public:
               counter.increment_flipped();
               r1.add_comment("Pf:Z:FLIP");
             }
-            r1.add_comment("P5:Z:" + p5primer);
-            r1.add_comment("P3:Z:" + p3primer);
+            // Only P5 or P3 tag is written out when that primer is looked for.
+            // This enables to look for P5 and P3 in separate instances.
+            if (!primer5p.empty() && p5primer != "")
+              r1.add_comment("P5:Z:" + p5primer);
+            if (!primer3p.empty() && p3primer != "")
+              r1.add_comment("P3:Z:" + p3primer);
         }
         return true;
     }
