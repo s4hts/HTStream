@@ -55,12 +55,14 @@ public:
     const std::string& get_seq() const  { return seq; }
     const std::string& get_qual() const { return qual; }
     const std::string get_id_orig() const { return id_orig; }
-    const std::string get_id_fastq(const std::string& read="", const std::string& sam_comment="") const {
+    const std::string get_id_fastq(const char& read='\0') const {
+        std::string sam_comment = "";
+        for (auto const& s : comments) { sam_comment += '|' + s; }
         std::string tmp = id + sam_comment;
         if (!(id2 == "")) tmp = tmp + ' ' + read + id2;
         return tmp;
     }
-    const std::string get_id_tab(const std::string& read="") const {
+    const std::string get_id_tab(const char& read='\0') const {
         std::string tmp = id;
         if (!(id2 == "")) tmp = tmp + ' ' + read + id2;
         return tmp;

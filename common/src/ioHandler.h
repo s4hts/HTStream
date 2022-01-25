@@ -189,14 +189,10 @@ protected:
     std::shared_ptr<HtsOfstream> output = nullptr;
 
     void format_writer_rc(const Read &read) {
-        std::string sam_comment = "";
-        for (auto const& s : read.get_comment()) { sam_comment = sam_comment + '|' + s; }
-        *output << "@" << read.get_id_fastq("1", sam_comment) << '\n' << read.get_seq_rc() << "\n+\n" << read.get_qual_rc() << '\n';
+        *output << "@" << read.get_id_fastq('1') << '\n' << read.get_seq_rc() << "\n+\n" << read.get_qual_rc() << '\n';
     }
     void format_writer(const Read &read) {
-        std::string sam_comment = "";
-        for (auto const& s : read.get_comment()) { sam_comment = sam_comment + '|' + s; }
-        *output << "@" << read.get_id_fastq("1", sam_comment) << '\n' << read.get_sub_seq() << "\n+\n" << read.get_sub_qual() << '\n';
+        *output << "@" << read.get_id_fastq('1') << '\n' << read.get_sub_seq() << "\n+\n" << read.get_sub_qual() << '\n';
     }
 
 };
@@ -211,12 +207,8 @@ protected:
     std::shared_ptr<HtsOfstream> out2 = nullptr;
 
     void format_writer(const Read &read1, const Read &read2) {
-        std::string sam_comment = "";
-        for (auto const& s : read1.get_comment()) { sam_comment = sam_comment + '|' + s; }
-        for (auto const& s : read2.get_comment()) { sam_comment = sam_comment + '|' + s; }
-
-        *out1 << "@" << read1.get_id_fastq("1", sam_comment) << '\n' << read1.get_sub_seq() << "\n+\n" << read1.get_sub_qual() << '\n';
-        *out2 << "@" << read2.get_id_fastq("2", sam_comment) << '\n' << read2.get_sub_seq() << "\n+\n" << read2.get_sub_qual() << '\n';
+        *out1 << "@" << read1.get_id_fastq('1') << '\n' << read1.get_sub_seq() << "\n+\n" << read1.get_sub_qual() << '\n';
+        *out2 << "@" << read2.get_id_fastq('2') << '\n' << read2.get_sub_seq() << "\n+\n" << read2.get_sub_qual() << '\n';
     }
 };
 
@@ -229,11 +221,8 @@ protected:
     std::shared_ptr<HtsOfstream> out1 = nullptr;
 
     void format_writer(const Read &read1, const Read &read2) {
-        std::string sam_comment = "";
-        for (auto const& s : read1.get_comment()) { sam_comment = sam_comment + '|' + s; }
-        for (auto const& s : read2.get_comment()) { sam_comment = sam_comment + '|' + s; }
-        *out1 << "@" << read1.get_id_fastq("1", sam_comment) << '\n' << read1.get_sub_seq() << "\n+\n" << read1.get_sub_qual() << '\n';
-        *out1 << "@" << read2.get_id_fastq("2", sam_comment) << '\n' << read2.get_sub_seq() << "\n+\n" << read2.get_sub_qual() << '\n';
+        *out1 << "@" << read1.get_id_fastq('1') << '\n' << read1.get_sub_seq() << "\n+\n" << read1.get_sub_qual() << '\n';
+        *out1 << "@" << read2.get_id_fastq('2') << '\n' << read2.get_sub_seq() << "\n+\n" << read2.get_sub_qual() << '\n';
     }
 };
 
@@ -290,7 +279,7 @@ protected:
 
     void samout_rc(const Read &read, size_t bitwiseflag) {
         std::string sam_comment = "";
-        for (auto const& s : read.get_comment()) { sam_comment = sam_comment + '\t' + s; }
+        for (auto const& s : read.get_comment()) { sam_comment += '\t' + s; }
 
         *output << read.get_id_first() << '\t'
             << bitwiseflag << '\t'
@@ -334,7 +323,7 @@ protected:
     std::shared_ptr<HtsOfstream> output = nullptr;
 
     void format_writer(const Read &read) {
-        *output << read.get_id_tab("1") << '\t' << read.get_sub_seq() << '\t' << read.get_sub_qual();
+        *output << read.get_id_tab('1') << '\t' << read.get_sub_seq() << '\t' << read.get_sub_qual();
         if (read.get_comment().size() > 0){
             *output << '\t' << strjoin(read.get_comment(), "|");
         }
@@ -342,7 +331,8 @@ protected:
     }
 
     void format_writer(const Read &read1, const Read &read2) {
-        *output << read1.get_id_tab("1") << '\t' << read1.get_sub_seq() << '\t' << read1.get_sub_qual() << '\t' << read2.get_id_tab("2") << '\t' << read2.get_sub_seq() << '\t' << read2.get_sub_qual();
+        *output << read1.get_id_tab('1') << '\t' << read1.get_sub_seq() << '\t' << read1.get_sub_qual() << '\t' << read2.get_id_tab('2') << '\t' << read2.get_sub_seq() << '\t' << read2.get_sub_qual();
+
         if (read1.get_comment().size() > 0 || read2.get_comment().size() > 0){
             std::vector <std::string> comment1 = read1.get_comment();
             std::vector <std::string> comment2 = read2.get_comment();
@@ -360,7 +350,7 @@ protected:
     }
 
     void format_writer_rc(const Read &read) {
-        *output <<  read.get_id_tab("1") << '\t' << read.get_seq_rc() << "\t" << read.get_qual_rc();
+        *output <<  read.get_id_tab('1') << '\t' << read.get_seq_rc() << "\t" << read.get_qual_rc();
         if (read.get_comment().size() > 0){
             *output << '\t' << strjoin(read.get_comment(), "|");
         }
