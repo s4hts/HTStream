@@ -1,5 +1,6 @@
 #ifndef N_TRIM_H
 #define N_TRIM_H
+#define NDEBUG
 //  this is so we can implment hash function for dynamic_bitset
 #define BOOST_DYNAMIC_BITSET_DONT_USE_FRIENDS
 
