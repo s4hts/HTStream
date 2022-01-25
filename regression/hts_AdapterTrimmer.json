@@ -1,7 +1,7 @@
 [ {
     "Program_details": {
         "program": "hts_AdapterTrimmer",
-        "version": "v1.3.1-12-g252bfc2",
+        "version": "v1.3.3-18-g0c8bf48",
         "options": {
             "adapter-sequence": "AGATCGGAAGAGCACACGTCTGAACTCCAGTCA",
             "check-lengths": 20,
