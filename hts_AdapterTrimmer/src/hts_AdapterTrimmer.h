@@ -43,6 +43,7 @@ public:
         r2.push_back(std::forward_as_tuple("adapterTrim", R2_Adapter_Trim));
         r2.push_back(std::forward_as_tuple("adapterBpTrim", R2_Adapter_BpTrim));
     }
+    virtual ~AdapterCounters() {}
 
     using Counters::output;
     void output(SingleEndRead &ser)  {

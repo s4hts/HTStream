@@ -36,6 +36,7 @@ public:
         overlapped.push_back(std::forward_as_tuple("medium", mins));
         overlapped.push_back(std::forward_as_tuple("long", lins));
     }
+    virtual ~OverlappingCounters() {}
 
     using Counters::output;
     void overlap_stats(SingleEndRead &ser, uint_fast64_t origLength) {

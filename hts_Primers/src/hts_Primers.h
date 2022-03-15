@@ -58,6 +58,7 @@ public:
         r2.push_back(std::forward_as_tuple("primerBpTrim", R2_Primer_BpTrim));
         pe.push_back(std::forward_as_tuple("discarded", PE_Discarded));
     }
+    virtual ~PrimerCounters() {}
 
     void set_seqmap(SeqMap primerMap_5p, SeqMap primerMap_3p) {
         SeqMap primers_5p = primerMap_5p;

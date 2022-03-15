@@ -53,6 +53,7 @@ public:
         screened_info.push_back(std::forward_as_tuple("lookupKmers", lookup_kmers));
 
     }
+    virtual ~SeqScreenerCounters() {}
 
     void set_screeninfo(const std::string &screenFile, uint64_t sbp, uint64_t lkmers) {
         screen_file = screenFile;

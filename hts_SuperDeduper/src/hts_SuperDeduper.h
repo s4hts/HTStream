@@ -29,6 +29,7 @@ public:
         fragment.push_back(std::forward_as_tuple("ignored", Ignored));
         fragment.push_back(std::forward_as_tuple("duplicate", Duplicate));
     }
+    virtual ~SuperDeduperCounters() {}
 
     using Counters::input;
     void input(ReadBase &read, size_t dup_freq) {
