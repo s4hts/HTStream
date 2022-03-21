@@ -1,5 +1,6 @@
 #include "read.h"
 #include <boost/dynamic_bitset.hpp>
+#include <boost/bind.hpp>
 #include <numeric>
 
 
@@ -74,21 +75,21 @@ boost::optional<BitSet> SingleEndRead::get_key(size_t _start, size_t _length){
     }
 }
 
-inline double qual_sum(double s, const char c) {
-    return (double(c) - 33) + s; //need ascii offset
+inline double qual_sum(double s, const char c, size_t offset) {
+    return (double(c) - offset) + s; //need ascii offset
 }
 
-double SingleEndRead::avg_q_score()
+double SingleEndRead::avg_q_score(const size_t qual_offset)
 {
-    double sum = std::accumulate(one->get_qual().begin(), one->get_qual().end(), double(0), qual_sum);
+    double sum = std::accumulate(one->get_qual().begin(), one->get_qual().end(), double(0), boost::bind(&qual_sum, _1, _2, qual_offset));
     return sum/double(one->get_qual().length());
 
 }
 
-double PairedEndRead::avg_q_score()
+double PairedEndRead::avg_q_score(const size_t qual_offset)
 {
-    double sum = std::accumulate(one->get_qual().begin(), one->get_qual().end(), double(0), qual_sum);
-    sum += std::accumulate(two->get_qual().begin(), two->get_qual().end(), double(0), qual_sum);
+    double sum = std::accumulate(one->get_qual().begin(), one->get_qual().end(), double(0), boost::bind(&qual_sum, _1, _2, qual_offset));
+    sum += std::accumulate(two->get_qual().begin(), two->get_qual().end(), double(0), boost::bind(&qual_sum, _1, _2, qual_offset));
     return sum/double(one->get_qual().length() + two->get_qual().length());
 }
 

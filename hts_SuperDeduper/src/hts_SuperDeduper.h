@@ -118,14 +118,14 @@ public:
     }
 
     template <class T, class Impl>
-    void load_map(InputReader<T, Impl> &reader, SuperDeduperCounters& counters, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, double avg_automatic_write, double discard_qual, size_t start, size_t length, size_t log_freq ){
+    void load_map(InputReader<T, Impl> &reader, SuperDeduperCounters& counters, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, double avg_automatic_write, double discard_qual, size_t start, size_t length, size_t log_freq, const size_t qual_offset = DEFAULT_QUAL_OFFSET){
         double tmpAvg;
         WriterHelper writer(pe, se, false);
 
         while(reader.has_next()) {
             auto i = reader.next();
             counters.input(*i, log_freq);
-            tmpAvg = i->avg_q_score();
+            tmpAvg = i->avg_q_score(qual_offset);
             //check for existance, store or compare quality and replace:
             if ( tmpAvg < discard_qual ){ // averge qual must be less than discard_qual, ignored
                 counters.increment_ignored();
@@ -141,7 +141,7 @@ public:
                     }
                 } else if (read_map[*key] == nullptr) { //key already seen and written out, PCR dup
                     counters.increment_replace();
-                } else if( tmpAvg > read_map[*key]->avg_q_score()){ // new read is 'better' than old, key not yet read out
+                } else if( tmpAvg > read_map[*key]->avg_q_score(qual_offset)){ // new read is 'better' than old, key not yet read out
                     if (tmpAvg >= avg_automatic_write) { // read qualifies, write out
                         writer(*i);
                         counters.output(*i);
@@ -166,8 +166,9 @@ public:
         const size_t start = vm["start"].as<size_t>() - 1;
         const size_t length = vm["length"].as<size_t>();
         const size_t log_freq = vm["log_freq"].as<size_t>();
+        const size_t qual_offset = vm["qual-offset"].as<size_t>();
         WriterHelper writer(pe, se, false, false);
-        load_map(reader, counter, pe, se, avg_automatic_write, discard_qual, start, length, log_freq);
+        load_map(reader, counter, pe, se, avg_automatic_write, discard_qual, start, length, log_freq, qual_offset);
         for(auto const &i : read_map) {
             if (i.second.get() != nullptr) {
                 counter.output(*i.second.get());

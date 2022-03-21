@@ -102,7 +102,7 @@ public:
  *
  * Within the overlap if they are the same bp, then add q scores
  * If they are different bp, subtract q scores and take the larger quality base*/
-    unsigned int checkIfOverlap(Read &r1, Read &r2, size_t loc1, size_t loc2, const double misDensity, const size_t &mismatch, const size_t &minOverlap, bool noFixBases = false ) {
+    unsigned int checkIfOverlap(Read &r1, Read &r2, size_t loc1, size_t loc2, const double misDensity, const size_t &mismatch, const size_t &minOverlap, const size_t qual_offset, bool noFixBases = false) {
         size_t minLoc = std::min(loc1, loc2);
         int loc1_t = loc1 - minLoc;
         int loc2_t = loc2 - minLoc;
@@ -138,12 +138,12 @@ public:
                 read1_bp = loc1_t + i;
                 read2_bp = loc2_t + i;
                 if (seq1[read1_bp] == seq2[read2_bp] )  {
-                    qual = static_cast<char>(std::min(qual1[read1_bp] + qual2[read2_bp] - 33, 40 + 33));  // MATT: I still don't agree with this, so 38 [confident] and 2 [not so confident] return a 40 [very confident]??
+                    qual = static_cast<char>(std::min(qual1[read1_bp] + qual2[read2_bp] - qual_offset, 40 + qual_offset));  // MATT: I still don't agree with this, so 38 [confident] and 2 [not so confident] return a 40 [very confident]??
                     r1.changeQual(read1_bp, qual);
                     r2.changeQual( (r2_len - 1) -  read2_bp, qual);
                 } else {
                     bp = qual1[read1_bp] >= qual2[read2_bp] ? seq1[read1_bp] : seq2[read2_bp];
-                    qual = static_cast<char>(std::max(qual1[read1_bp] - qual2[read2_bp] + 33, 1 + 33));
+                    qual = static_cast<char>(std::max(qual1[read1_bp] - qual2[read2_bp] + qual_offset, 1 + qual_offset));
 
                     r1.changeSeq(read1_bp, bp);
                     r1.changeQual(read1_bp, qual);
@@ -165,7 +165,7 @@ public:
     }
 
 /*Because of the way overlapping works, you only need to check the ends of the shorter read*/
-    void getOverlappedReads(Read &r1, Read &r2, const seqLookup &seq1Map,  const double misDensity, const size_t &mismatch, const size_t &minOver, const size_t &checkLengths, const size_t kmer, bool noFixBases = false ) {
+    void getOverlappedReads(Read &r1, Read &r2, const seqLookup &seq1Map,  const double misDensity, const size_t &mismatch, const size_t &minOver, const size_t &checkLengths, const size_t kmer, const size_t qual_offset, bool noFixBases = false ) {
 
         // checkLengths should at most be 1/2 read length to check all kmers in read
         std::string seq2 = r2.get_seq_rc();
@@ -176,7 +176,7 @@ public:
             // check first checkLength kmers at the beginning of read2 (mins)
             auto test = seq1Map.equal_range(seq2.substr(bp, kmer));
             for (auto it = test.first; it != test.second; ++it) {
-                unsigned int overlapped = checkIfOverlap(r1, r2, it->second, bp, misDensity, mismatch, minOver, noFixBases);
+                unsigned int overlapped = checkIfOverlap(r1, r2, it->second, bp, misDensity, mismatch, minOver, qual_offset, noFixBases);
                 if (overlapped) {
                     return;
                 }
@@ -186,7 +186,7 @@ public:
             // check last checkLengths kmers at the end of the read2 (sins)
             auto test = seq1Map.equal_range(seq2.substr(bp, kmer));
             for (auto it = test.first; it != test.second; ++it) {
-                unsigned int overlapped = checkIfOverlap(r1, r2, it->second, bp, misDensity, mismatch, minOver, noFixBases);
+                unsigned int overlapped = checkIfOverlap(r1, r2, it->second, bp, misDensity, mismatch, minOver, qual_offset, noFixBases);
                 if (overlapped) {
                     return;
                 }
@@ -194,7 +194,7 @@ public:
         }
     }
 
-    ReadBasePtr check_read_pe(PairedEndReadPtr pe, const double misDensity, const size_t mismatch, const size_t minOver, const size_t checkLengths, const size_t kmer, const size_t kmerOffset, bool noFixBases = false ) {
+    ReadBasePtr check_read_pe(PairedEndReadPtr pe, const double misDensity, const size_t mismatch, const size_t minOver, const size_t checkLengths, const size_t kmer, const size_t kmerOffset, bool noFixBases = false, const size_t qual_offset = DEFAULT_QUAL_OFFSET) {
 
         Read &r1 = pe->non_const_read_one();
         Read &r2 = pe->non_const_read_two();
@@ -213,7 +213,7 @@ public:
         seqLookup mOne = readOneMap(r1.get_seq(), kkmer, kmerOffset);
         /* returns null if no much
          * r1 and r2 and passed by ref in case only adapter trimming is on */
-        getOverlappedReads(r1, r2, mOne, misDensity, mismatch, minOver, checkL, kkmer, noFixBases) ;
+        getOverlappedReads(r1, r2, mOne, misDensity, mismatch, minOver, checkL, kkmer, qual_offset, noFixBases) ;
         if (swapped) {
             std::swap(r1, r2);
         }
@@ -319,6 +319,7 @@ public:
         bool noFixBases = vm["no-fixbases"].as<bool>();
         std::string adapter = vm["adapter-sequence"].as<std::string>();
         size_t num_threads = vm["number-of-threads"].as<size_t>();
+        const size_t qual_offset = vm["qual-offset"].as<size_t>();
 
         threadsafe_queue<std::future<ReadBasePtr>> futures(50000);
         thread_pool threads(50000, num_threads);
@@ -332,7 +333,7 @@ public:
             },
             [&](PairedEndRead *per) {
                 futures.push(threads.submit([=]() mutable {
-                                                return check_read_pe(PairedEndReadPtr(per), misDensity, mismatch, minOver, checkLengths, kmer, kmerOffset, noFixBases); }));
+                                                return check_read_pe(PairedEndReadPtr(per), misDensity, mismatch, minOver, checkLengths, kmer, kmerOffset, noFixBases, qual_offset); }));
             });
 
         // thread_guard must be declared last

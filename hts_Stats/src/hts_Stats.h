@@ -18,8 +18,6 @@ extern template class InputReader<PairedEndRead, PairedEndReadFastqImpl>;
 extern template class InputReader<PairedEndRead, InterReadImpl>;
 extern template class InputReader<ReadBase, TabReadImpl>;
 
-const uint64_t QUAL_MAX = 94;
-
 class StatsCounters : public Counters {
 
 public:
@@ -110,7 +108,7 @@ public:
             }
             // qualities
             size_t qscore = qual[index];
-            uint_fast64_t qscore_int = qscore - 33;
+            uint_fast64_t qscore_int = qscore - (vm.count("qual-offset") ? vm["qual-offset"].as<size_t>() : DEFAULT_QUAL_OFFSET);
             if (qscore_int < QUAL_MAX) {
                 q30bases += (qscore_int) >= 30;
                 ++read_qualities[index][qscore_int];
