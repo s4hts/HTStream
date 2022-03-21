@@ -1,7 +1,7 @@
 [ {
     "Program_details": {
         "program": "hts_SuperDeduper",
-        "version": "v1.3.3-23-g11c6ed0-dirty",
+        "version": "v1.3.3-24-g735cdf1-dirty",
         "options": {
             "avg-qual-score": 30,
             "force": false,
@@ -9,6 +9,7 @@
             "length": 10,
             "log_freq": 1000000,
             "notes": "",
+            "qual-offset": 33,
             "read1-input": [ "./test_r1.fastq.gz"],
             "read2-input": [ "./test_r2.fastq.gz"],
             "start": 10,
@@ -46,11 +47,12 @@
   }, {
     "Program_details": {
         "program": "hts_Stats",
-        "version": "v1.3.3-23-g11c6ed0-dirty",
+        "version": "v1.3.3-24-g735cdf1-dirty",
         "options": {
             "append-stats-file": "chain.json",
             "force": false,
             "notes": "",
+            "qual-offset": 33,
             "uncompressed": false
         }
     },

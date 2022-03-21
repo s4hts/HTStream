@@ -1,7 +1,7 @@
 [ {
     "Program_details": {
         "program": "hts_PolyATTrim",
-        "version": "v1.3.3-23-g11c6ed0-dirty",
+        "version": "v1.3.3-24-g735cdf1-dirty",
         "options": {
             "force": true,
             "max-mismatch-errorDensity": 0.3,
@@ -11,6 +11,7 @@
             "no-right": false,
             "notes": "",
             "perfect-windows": 1,
+            "qual-offset": 33,
             "read1-input": [ "./test_r1.fastq.gz"],
             "read2-input": [ "./test_r2.fastq.gz"],
             "skip_polyA": false,

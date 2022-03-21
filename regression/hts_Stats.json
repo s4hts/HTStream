@@ -1,10 +1,11 @@
 [ {
     "Program_details": {
         "program": "hts_Stats",
-        "version": "v1.3.3-23-g11c6ed0-dirty",
+        "version": "v1.3.3-24-g735cdf1-dirty",
         "options": {
             "force": true,
             "notes": "",
+            "qual-offset": 33,
             "read1-input": [ "./test_r1.fastq.gz"],
             "read2-input": [ "./test_r2.fastq.gz"],
             "stats-file": "hts_Stats.json",

@@ -1,7 +1,7 @@
 [ {
     "Program_details": {
         "program": "hts_Primers",
-        "version": "v1.3.3-23-g11c6ed0-dirty",
+        "version": "v1.3.3-24-g735cdf1-dirty",
         "options": {
             "flip": false,
             "float": 0,
@@ -11,6 +11,7 @@
             "notes": "",
             "primer_end_mismatches": 4,
             "primer_mismatches": 4,
+            "qual-offset": 33,
             "read1-input": [ "./test_r1.fastq.gz"],
             "read2-input": [ "./test_r2.fastq.gz"],
             "stats-file": "hts_Primers.json",
