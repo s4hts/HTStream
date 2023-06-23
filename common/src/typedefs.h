@@ -14,4 +14,7 @@ typedef std::tuple<uint_fast64_t, uint_fast64_t> Vector;
 typedef std::vector<uint_fast64_t> Vec;
 typedef std::vector<Vec> Mat;
 
+const uint64_t QUAL_MAX = 94;
+const uint64_t DEFAULT_QUAL_OFFSET = 33;
+
 #endif

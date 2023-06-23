@@ -60,6 +60,7 @@ public:
         bases.push_back(std::forward_as_tuple("T", T));
         bases.push_back(std::forward_as_tuple("N", N));
     }
+    virtual ~StatsCounters() {}
 
     void read_stats(Read &r, Vec &Length, Mat &read_bases, Mat &read_qualities, uint64_t &read_bQ30) {
         // Size histogram per read
@@ -71,7 +72,7 @@ public:
         // update size of base and Q score matrix if needed
         for( size_t gap = 0 ; read_bases.size() < r.getLength(); gap++ ) {
             Vec bases(5,0); // A,C,T,G,N
-            Vec qualities(43,0); // quality score 0 to 42
+            Vec qualities(QUAL_MAX,0); // quality score 0 to MAX
             read_bases.push_back(bases);
             read_qualities.push_back(qualities);
         }
@@ -103,12 +104,15 @@ public:
                   ++read_bases[index][4];
                   break;
               default:
-                  throw HtsRuntimeException("Unknown bp in stats counter");
+                  throw HtsRuntimeException(std::string("Unknown bp in stats counter: ") + bp);
             }
             // qualities
             size_t qscore = qual[index];
-            q30bases += (qscore - 33) >= 30;
-            ++read_qualities[index][(qscore - 33)];
+            uint_fast64_t qscore_int = qscore - (vm.count("qual-offset") ? vm["qual-offset"].as<size_t>() : DEFAULT_QUAL_OFFSET);
+            if (qscore_int < QUAL_MAX) {
+                q30bases += (qscore_int) >= 30;
+                ++read_qualities[index][qscore_int];
+            }
         }
         read_bQ30 += q30bases;
     }
@@ -161,7 +165,7 @@ public:
         }
         std::vector<std::string> b{ "A", "C", "G", "T", "N"};
         std::vector<std::string> q;
-        for (size_t j = 0; j < 43; j++){
+        for (size_t j = 0; j < QUAL_MAX; j++){
           q.push_back(std::to_string((int)j));
         }
 

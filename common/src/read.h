@@ -163,7 +163,7 @@ public:
     }
     static std::string bit_to_str(const BitSet &bits);
     static boost::optional<BitSet> reverse_complement(const std::string& str, int start, int length);
-    virtual double avg_q_score() = 0;
+    virtual double avg_q_score(const size_t qual_offset = DEFAULT_QUAL_OFFSET) = 0;
 
     virtual void accept(ReadVisitor &rv) = 0;
 
@@ -199,7 +199,7 @@ public:
     Read& non_const_read_two() { return *two; }
     const Read& get_read_one() const { return *one; }
     const Read& get_read_two() const { return *two; }
-    virtual double avg_q_score();
+    virtual double avg_q_score(const size_t qual_offset = DEFAULT_QUAL_OFFSET);
     std::shared_ptr<ReadBase> convert(bool stranded);
     virtual void accept(ReadVisitor &rv);
 
@@ -229,7 +229,7 @@ public:
     virtual boost::optional<BitSet> get_key(size_t start, size_t length);
     Read& non_const_read_one() { return *one; }
     const Read& get_read() const { return *one; }
-    virtual double avg_q_score();
+    virtual double avg_q_score(const size_t qual_offset = DEFAULT_QUAL_OFFSET);
     std::shared_ptr<ReadBase> convert(bool stranded);
     void set_read_rc() { one->set_read_rc();}
     virtual void accept(ReadVisitor &rv);

@@ -95,17 +95,19 @@ po::options_description setInputOptions(){
 
     po::options_description input("Input Options [default: tab6 format on stdin]");
     input.add_options()
-            //input options
-            ("read1-input,1", po::value< std::vector<std::string> >()->multitoken(),
-                                           "Read 1 paired end fastq input <space separated for multiple files>")
-            ("read2-input,2", po::value< std::vector<std::string> >()->multitoken(),
-                                           "Read 2 paired end fastq input <space separated for multiple files>")
-            ("singleend-input,U", po::value< std::vector<std::string> >()->multitoken(),
-                                           "Single end read fastq input <space separated for multiple files>")
-            ("interleaved-input,I", po::value< std::vector<std::string> >()->multitoken(),
-                                           "Interleaved fastq input <space separated for multiple files>")
-            ("tab-input,T", po::value< std::vector<std::string> >()->multitoken(),
-                                           "Tab-delimited (tab6) input <space separated for multiple files>");
+        //input options
+        ("read1-input,1", po::value< std::vector<std::string> >()->multitoken(),
+         "Read 1 paired end fastq input <space separated for multiple files>")
+        ("read2-input,2", po::value< std::vector<std::string> >()->multitoken(),
+         "Read 2 paired end fastq input <space separated for multiple files>")
+        ("singleend-input,U", po::value< std::vector<std::string> >()->multitoken(),
+         "Single end read fastq input <space separated for multiple files>")
+        ("interleaved-input,I", po::value< std::vector<std::string> >()->multitoken(),
+         "Interleaved fastq input <space separated for multiple files>")
+        ("qual-offset,o", po::value<size_t>()->default_value(DEFAULT_QUAL_OFFSET)->notifier(boost::bind(&check_range<size_t>, "qual-offset", _1, 1, 10000)),
+         "Quality offset for ascii q-score (default is 33) (min 1, max 10000)")
+        ("tab-input,T", po::value< std::vector<std::string> >()->multitoken(),
+             "Tab-delimited (tab6) input <space separated for multiple files>");
     return input;
 }
 

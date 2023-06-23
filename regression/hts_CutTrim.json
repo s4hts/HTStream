@@ -1,10 +1,11 @@
 [ {
     "Program_details": {
         "program": "hts_CutTrim",
-        "version": "v1.3.3-18-g0c8bf48",
+        "version": "v1.3.3-24-g735cdf1-dirty",
         "options": {
             "force": true,
             "notes": "",
+            "qual-offset": 33,
             "r1-cut-left": 0,
             "r1-cut-right": 0,
             "r2-cut-left": 0,

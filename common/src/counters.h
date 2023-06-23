@@ -55,7 +55,7 @@ public:
     uint64_t R2_BpLen_In = 0;
     uint64_t R2_BpLen_Out = 0;
 
-    Counters(const std::string &program_name_, po::variables_map vm_):
+    Counters(const std::string &program_name_, const po::variables_map& vm_):
             pName(program_name_),
             vm(vm_) {
 
@@ -380,6 +380,8 @@ public:
         r2.push_back(std::forward_as_tuple("leftTrim", R2_Left_Trim));
         r2.push_back(std::forward_as_tuple("rightTrim", R2_Right_Trim));
     }
+
+    virtual ~TrimmingCounters() {}
 
     virtual void R1_stats(Read &one) {
         R1_Left_Trim += one.getLTrim();
