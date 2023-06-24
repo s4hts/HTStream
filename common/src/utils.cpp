@@ -184,7 +184,7 @@ void version_or_help(std::string program_name, std::string app_description, po::
         std::cerr << desc << std::endl;
         std::cerr << std::endl << epilog << std::endl;
         exit(FAILURE); //failure
-    } else if ( !vm.count("read1-input") & !vm.count("singleend-input") & !vm.count("tab-input") & !vm.count("interleaved-input") & isatty(fileno(stdin)) ){
+    } else if ( !vm.count("read1-input") && !vm.count("singleend-input") && !vm.count("tab-input") && !vm.count("interleaved-input") && isatty(fileno(stdin)) ){
         std::cerr << "ERROR: Input data absent" << std::endl << std::endl;
         std::cerr << prolog << std::endl;
         std::cerr << "Version: " << VERSION << std::endl;
