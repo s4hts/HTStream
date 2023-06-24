@@ -13,6 +13,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(Boost_USE_STATIC_LIBS OFF)
 set(BUILD_SHARED_LIBS ON)
 
+# ignore boost deprication
+add_definitions("-DBOOST_BIND_GLOBAL_PLACEHOLDERS")
+
 if (APPLE)
 elseif (UNIX)
   if (BUILD_STATIC_BIN)

@@ -5,15 +5,15 @@ include(ExternalProject)
 
 
 execute_process(
-  COMMAND "tar" "-xzf" "${CMAKE_SOURCE_DIR}/ext/googletest/release-1.10.0.tar.gz"
+  COMMAND "tar" "-xzf" "${CMAKE_SOURCE_DIR}/ext/googletest/googletest-release-1.12.1.tar.gz"
   WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/ext/googletest"
   RESULT_VARIABLE tar_result
   )
 
-message(STATUS "tar result: ${tar_result} ${CMAKE_SOURCE_DIR}/ext/googletest/release-1.10.0.tar.gz")
+message(STATUS "tar result: ${tar_result} ${CMAKE_SOURCE_DIR}/ext/googletest/googletest-release-1.12.1.tar.gz")
 
 ExternalProject_Add(googletest
-  SOURCE_DIR "${CMAKE_SOURCE_DIR}/ext/googletest/googletest-release-1.10.0"
+  SOURCE_DIR "${CMAKE_SOURCE_DIR}/ext/googletest/googletest-release-1.12.1"
   CMAKE_ARGS -Dgtest_force_shared_crt=ON
   PREFIX "${CMAKE_CURRENT_BINARY_DIR}"
   
