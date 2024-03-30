@@ -34,7 +34,7 @@ public:
 
     void add_extra_options(po::options_description &desc) {
         desc.add_options()
-            ("read,r", po::value<size_t>()->default_value(1)->notifier(boost::bind(&check_range<size_t>, "read", _1, 1, 2)), "Read from which to extract the UMI.");
+            ("read,r", po::value<size_t>()->default_value(1)->notifier(boost::bind(&check_range<size_t>, "read", _1, 1, 2)), "Read from which to extract the UMI (ignored if SE).");
         desc.add_options()
             ("umi_length,l", po::value<size_t>()->default_value(6)->notifier(boost::bind(&check_range<size_t>, "umi_length", _1, 1, 36)), "Total length of UMI to extract (1, 36)");
     }
