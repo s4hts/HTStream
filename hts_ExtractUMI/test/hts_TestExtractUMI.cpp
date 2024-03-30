@@ -7,8 +7,6 @@ class ExtractUMITest : public ::testing::Test {
 public:
     const std::string readData_1 = "@Read1\nTGACTTGACATTAAGCAAGTACCAGTACCGATACCATAGGACCCAAGGTA\n+\n##################################################\n";
 
-    std::string UMI = "";
-    size_t umi_length = 6;
     ExtractUMI eu;
 };
 
@@ -19,6 +17,6 @@ TEST_F(ExtractUMITest, BasicExtract) {
 
     auto i = ifp.next();
     PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-    eu.extract_umi(per->non_const_read_one(), UMI, 6);
+    eu.extract_umi(per->non_const_read_one(), 6);
     ASSERT_EQ("@Read1_TGACTT", (per->non_const_read_one()).get_id_first());
 };

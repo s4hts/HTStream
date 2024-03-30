@@ -23,6 +23,8 @@ extern template class InputReader<ReadBase, TabReadImpl>;
 class ExtractUMI: public MainTemplate<TrimmingCounters, ExtractUMI> {
 public:
 
+    std::string UMI = "";
+
     ExtractUMI() {
         program_name = "hts_ExtractUMI";
         app_description =
@@ -39,13 +41,12 @@ public:
 
 
 
-    std::string extract_umi(Read &r, std::string umi = "", size_t umi_length = 6) {
-        if (umi == "") {
-            umi = r.get_seq().substr(0, umi_length);
+    void extract_umi(Read &r, size_t umi_length = 6) {
+        if (UMI == "") {
+            UMI = r.get_seq().substr(0, umi_length);
             r.setLCut(umi_length);
         }
-        r.set_id_first(r.get_id_first() + "_" + umi);       
-        return umi;
+        r.set_id_first(r.get_id_first() + "_" + UMI);       
     }
 
 
@@ -54,22 +55,20 @@ public:
         
         size_t read = vm["read"].as<size_t>();
         size_t umi_length = vm["umi_length"].as<size_t>(); 
-        std::string UMI = "";
-
 
         WriterHelper writer(pe, se);
 
         auto read_visit = make_read_visitor_func(
             [&](SingleEndRead *ser) {
-                UMI = extract_umi( ser->non_const_read_one(), UMI, umi_length );
+                extract_umi( ser->non_const_read_one(), umi_length );
             },
             [&](PairedEndRead *per) {
                 if (read == 1) {
-                    UMI = extract_umi( per->non_const_read_one(), UMI, umi_length );
-                    UMI = extract_umi( per->non_const_read_two(), UMI, umi_length );
+                    extract_umi( per->non_const_read_one(), umi_length );
+                    extract_umi( per->non_const_read_two(), umi_length );
                 } else {
-                    UMI = extract_umi( per->non_const_read_two(), UMI, umi_length );
-                    UMI = extract_umi( per->non_const_read_one(), UMI, umi_length );
+                    extract_umi( per->non_const_read_two(), umi_length );
+                    extract_umi( per->non_const_read_one(), umi_length );
                 }
             }
             );
