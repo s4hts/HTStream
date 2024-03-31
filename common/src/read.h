@@ -104,7 +104,7 @@ public:
         qual = q;
     }
 
-    // added with UMIExtract
+    // added with ExtractUMI
     void set_id_first( std::string new_id) { id = new_id; }
 
     void changeSeq( size_t loc, char bp ) { seq[loc] = bp; }
