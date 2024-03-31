@@ -35,7 +35,7 @@ public:
 
     void add_extra_options(po::options_description &desc) {
         desc.add_options()
-            ("read,r", po::value<size_t>()->default_value(1)->notifier(boost::bind(&check_range<size_t>, "read", _1, 1, 2)), "Read from which to extract the UMI. ignored if SE")
+            ("read,r", po::value<size_t>()->default_value(1)->notifier(boost::bind(&check_range<size_t>, "read", _1, 1, 2)), "Read from which to extract the UMI, ignored if SE")
             ("umi_length,l", po::value<size_t>()->default_value(6)->notifier(boost::bind(&check_range<size_t>, "umi_length", _1, 1, 36)), "Total length of UMI to extract (1, 36)")
             ("avg-qual-score,q", po::value<size_t>()->default_value(0)->notifier(boost::bind(&check_range<size_t>, "avg-qual-score", _1, 0, 10000)), "Threshold for quality score average of UMI (min 1, max 10000), read pairs are discarded, default is unset");
     }
@@ -54,7 +54,7 @@ public:
             This condition is used to transfer UMI or discard status
                 between PE reads.
         */
-        if (UMI == "") {
+        if (UMI.empty()) {
 
             if (qual_threshold != qual_offset) { // Threshold of 0 = no quality filtering
 

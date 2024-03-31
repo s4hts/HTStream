@@ -66,7 +66,7 @@ TEST_F(ExtractUMITest, ReadTwoExtract) { // R2 extract test
 };
 
 
-TEST_F(ExtractUMITest, FilteredExtract) { // Filtered extract teset
+TEST_F(ExtractUMITest, FilteredExtract) { // Filtered extract test
     std::istringstream in1(readData_1);
 
     InputReader<SingleEndRead, SingleEndReadFastqImpl> ifp(in1);
