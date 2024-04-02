@@ -22,14 +22,21 @@ extern template class InputReader<ReadBase, TabReadImpl>;
 class ExtractUMI: public MainTemplate<TrimmingCounters, ExtractUMI> {
 public:
 
-    std::vector<char> read_options{'F', 'R', 'B'};
+    std::vector<char> read_options{'F', 'R', 'B'}; // possible paramters for read options
 
+    // bases some parameters and allows passing UMIs between PE reads
     struct UMI {
-      std::string seq = "";
-      std::string qual = "";
-      int length = 0;
-      bool discard = false;
-    } umi;
+      std::string seq;
+      std::string qual;
+      size_t length;
+      bool discard;
+      size_t qual_threshold;
+      size_t avg_qual_threshold;
+      size_t qual_offset;
+      bool homopolymer;
+      bool discard_n;
+    };
+
 
     ExtractUMI() {
         program_name = "hts_ExtractUMI";
@@ -51,24 +58,27 @@ public:
             ("discard-n,n", po::bool_switch()->default_value(false), "Remove reads with UMIs containing an N");
     }
 
-    void quality_check(size_t qual_threshold, size_t avg_qual_threshold, size_t qual_offset) {
 
-        if (qual_threshold != 0) {
+    void quality_check(UMI &umi) {
 
-            qual_threshold += qual_offset;
+        size_t tmp_qual_threshold; // just to be sure original parameters are not overwritten
+
+        if (umi.qual_threshold != 0) {
+
+            tmp_qual_threshold = umi.qual_threshold + umi.qual_offset;
 
             for (std::string::iterator it = umi.qual.begin() ; it != umi.qual.end() ; ++it) {
-                if (static_cast<size_t>(*it) < qual_threshold) {
+                if (static_cast<size_t>(*it) < tmp_qual_threshold) {
                     umi.discard = true;
                     break;
                 }
             }
 
-        } else if (avg_qual_threshold != 0) {
+        } else if (umi.avg_qual_threshold != 0) {
 
-            avg_qual_threshold += qual_offset;
+            tmp_qual_threshold = umi.avg_qual_threshold + umi.qual_offset;
             size_t current_sum = 0;
-            size_t final_qual_threshold = avg_qual_threshold * umi.length;
+            size_t final_qual_threshold = tmp_qual_threshold * umi.length;
 
             for (std::string::iterator it = umi.qual.begin() ; it != umi.qual.end() ; ++it) {
                 current_sum += static_cast<size_t>(*it);
@@ -83,42 +93,41 @@ public:
     }
 
 
-    void homopolymer_check() { 
+    void homopolymer_check(UMI &umi) { 
         if (umi.seq.find_first_not_of(umi.seq[0]) == std::string::npos) {
             umi.discard = true;
         }
     }
+
     
-    void n_check() { 
+    void n_check(UMI &umi) { 
         if (umi.seq.find('N') != std::string::npos) {
             umi.discard = true;
         }
     }
 
 
-    void extract_umi(Read &r, size_t umi_length, size_t qual_threshold, size_t avg_qual_threshold, 
-                        size_t qual_offset, bool homopolymer, bool discard_n) {
+    void extract_umi(Read &r, UMI &umi) {
 
         if (umi.seq.empty()) {
 
-            umi.seq = r.get_seq().substr(0, umi_length);
-            umi.length = umi_length;
+            umi.seq = r.get_seq().substr(0, umi.length);
 
-            if (qual_threshold + avg_qual_threshold != 0) {
-                umi.qual = r.get_qual().substr(0, umi_length);
-                quality_check(qual_threshold, avg_qual_threshold, qual_offset);
+            if (umi.qual_threshold + umi.avg_qual_threshold != 0) {
+                umi.qual = r.get_qual().substr(0, umi.length);
+                quality_check(umi);
             }
 
-            if (homopolymer) {
-                homopolymer_check();
+            if (umi.homopolymer) {
+                homopolymer_check(umi);
             }
 
-            if (discard_n) {
-                n_check();
+            if (umi.discard_n) {
+                n_check(umi);
             }
 
             if (!umi.discard) {
-                r.setLCut(umi_length);
+                r.setLCut(umi.length);
             }
 
         }
@@ -143,24 +152,38 @@ public:
         bool homopolymer =  vm["homopolymer"].as<bool>();
         bool discard_n =  vm["discard-n"].as<bool>();
 
+
+        // init UMI struct
+        UMI umi = {
+                   "",                  // umi sequence
+                   "",                  // qual sequence
+                   umi_length,          // umi length
+                   false,               // discard status (init)
+                   qual_threshold,         // quality threshold
+                   avg_qual_threshold,  // avg quality threshold
+                   qual_offset,         // quality offset  
+                   homopolymer,         // homopolymer filter
+                   discard_n           // discard N containing UMIs
+                  };
+
+
         WriterHelper writer(pe, se);
 
         auto read_visit = make_read_visitor_func(
             [&](SingleEndRead *ser) {
-                extract_umi( ser->non_const_read_one(), umi_length, qual_threshold, avg_qual_threshold, 
-                                                        qual_offset, homopolymer, discard_n );
+                extract_umi( ser->non_const_read_one(), umi);
             },
             [&](PairedEndRead *per) {
                 if (read == 'F') {
-                    extract_umi( per->non_const_read_one(), umi_length, qual_threshold, avg_qual_threshold, 
-                                                            qual_offset, homopolymer, discard_n );
-                    extract_umi( per->non_const_read_two(), umi_length, qual_threshold, avg_qual_threshold, 
-                                                            qual_offset, homopolymer, discard_n );
+                    extract_umi( per->non_const_read_one(), umi);
+                    extract_umi( per->non_const_read_two(), umi);
+                } else if (read == 'R') {
+                    extract_umi( per->non_const_read_two(), umi);
+                    extract_umi( per->non_const_read_one(), umi);
                 } else {
-                    extract_umi( per->non_const_read_two(), umi_length, qual_threshold, avg_qual_threshold, 
-                                                            qual_offset, homopolymer, discard_n );
-                    extract_umi( per->non_const_read_one(), umi_length, qual_threshold, avg_qual_threshold, 
-                                                            qual_offset, homopolymer, discard_n );
+                    extract_umi( per->non_const_read_one(), umi);
+                    std::tie(umi.seq, umi.qual) = std::make_tuple("", ""); // reset umi struct
+                    extract_umi( per->non_const_read_two(), umi);
                 }
             }
             );
@@ -169,7 +192,7 @@ public:
             auto i = reader.next();
             counters.input(*i);
             i->accept(read_visit);
-            umi = UMI();
+            std::tie(umi.seq, umi.qual, umi.discard) = std::make_tuple("", "", false); // reset umi struct
             writer(*i);
             counters.output(*i);
         }
