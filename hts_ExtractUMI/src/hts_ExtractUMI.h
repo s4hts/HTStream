@@ -43,7 +43,7 @@ public:
 
     void add_extra_options(po::options_description &desc) {
         desc.add_options()
-            ("read,r", po::value<char>()->default_value('F')->notifier(boost::bind(&check_char<char>, "read", _1, read_options)), "Read from which to extract the UMI (F = Forward, R = Reverse, B = Both), forward if SE")
+            ("read,r", po::value<char>()->default_value('F')->notifier(boost::bind(&check_char_range<char>, "read", _1, read_options)), "Read from which to extract the UMI (F = Forward, R = Reverse, B = Both), forward if SE")
             ("umi-length,l", po::value<size_t>()->default_value(6)->notifier(boost::bind(&check_range<size_t>, "umi_length", _1, 1, 36)), "Total length of UMI to extract (1, 36)")
             ("qual-score,q", po::value<size_t>()->default_value(0)->notifier(boost::bind(&check_range<size_t>, "qual-score", _1, 0, 10000)), "Threshold for quality score for any base within a UMI (min 1, max 10000), read pairs are discarded, default is unset")
             ("avg-qual-score,Q", po::value<size_t>()->default_value(0)->notifier(boost::bind(&check_range<size_t>, "avg-qual-score", _1, 0, 10000)), "Threshold for quality score average of UMI (min 1, max 10000), read pairs are discarded, default is unset")
@@ -135,7 +135,7 @@ public:
     template <class T, class Impl>
     void do_app(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, TrimmingCounters& counters, const po::variables_map &vm) {
         
-        char read = vm["read"].as<size_t>();
+        char read = vm["read"].as<char>();
         size_t umi_length = vm["umi-length"].as<size_t>(); 
         size_t qual_offset = vm["qual-offset"].as<size_t>();
         size_t qual_threshold = vm["qual-score"].as<size_t>();
