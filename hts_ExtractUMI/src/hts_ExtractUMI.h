@@ -23,6 +23,7 @@ class ExtractUMI: public MainTemplate<TrimmingCounters, ExtractUMI> {
 public:
 
     std::vector<char> read_options{'F', 'R', 'B'}; // possible paramters for read options
+    std::vector<char> del_options{'-', '_', ':', '+'}; // possible paramters for read options
 
     // bases some parameters and allows passing UMIs between PE reads
     struct UMI {
@@ -41,14 +42,15 @@ public:
     ExtractUMI() {
         program_name = "hts_ExtractUMI";
         app_description =
-            "The hts_ExtractUMI application trims a set number of bases from the 5'\n";
-        app_description += "  (left) end of a read and appends it to the read ID.\n";
+            "The hts_ExtractUMI application trims a set number of bases from the 5' (left)\n";
+        app_description += "  end of a read and appends it to the end of the read ID.\n";
     }
 
     void add_extra_options(po::options_description &desc) {
         desc.add_options()
             ("read,r", po::value<char>()->default_value('F')->notifier(boost::bind(&check_values<char>, "read", _1, read_options)), "Read from which to extract the UMI (F = Forward, R = Reverse, B = Both), ignored if SE")
             ("umi-length,l", po::value<size_t>()->default_value(6)->notifier(boost::bind(&check_range<size_t>, "umi_length", _1, 1, 36)), "Total length of UMI to extract (1, 36)")
+            ("delimiter,d", po::value<char>()->default_value(':')->notifier(boost::bind(&check_values<char>, "delimter", _1, del_options)), "Character to separate the UMI sequence from other fields in the Read ID (Possible options: '-', '_', ':', '+')")
             ("qual-score,q", po::value<size_t>()->default_value(0)->notifier(boost::bind(&check_range<size_t>, "qual-score", _1, 0, 10000)), "Threshold for quality score for any base within a UMI (min 1, max 10000), read pairs are discarded, default is unset")
             ("avg-qual-score,Q", po::value<size_t>()->default_value(0)->notifier(boost::bind(&check_range<size_t>, "avg-qual-score", _1, 0, 10000)), "Threshold for quality score average of UMI (min 1, max 10000), read pairs are discarded, default is unset")
             ("homopolymer,p", po::bool_switch()->default_value(false), "Remove reads with homopolymer UMIs")
@@ -104,7 +106,7 @@ public:
     }
 
 
-    void extract_umi(Read &r, UMI &umi) {
+    void extract_umi(Read &r, UMI &umi, const char &del) {
 
         if (umi.seq.empty()) {
 
@@ -130,7 +132,7 @@ public:
         }
 
         if (!umi.discard) {
-            r.set_id_first(r.get_id_first() + "_" + umi.seq);
+            r.set_id_first(r.get_id_first() + del + umi.seq);
         } else {
             r.setDiscard();
         }  
@@ -143,6 +145,7 @@ public:
         
         char read = vm["read"].as<char>();
         size_t umi_length = vm["umi-length"].as<size_t>(); 
+        char del = vm["delimiter"].as<char>();
         size_t qual_offset = vm["qual-offset"].as<size_t>();
         size_t qual_threshold = vm["qual-score"].as<size_t>();
         size_t avg_qual_threshold = vm["avg-qual-score"].as<size_t>();
@@ -168,19 +171,19 @@ public:
 
         auto read_visit = make_read_visitor_func(
             [&](SingleEndRead *ser) {
-                extract_umi( ser->non_const_read_one(), umi);
+                extract_umi( ser->non_const_read_one(), umi, del );
             },
             [&](PairedEndRead *per) {
                 if (read == 'F') {
-                    extract_umi( per->non_const_read_one(), umi );
-                    extract_umi( per->non_const_read_two(), umi );
+                    extract_umi( per->non_const_read_one(), umi, del );
+                    extract_umi( per->non_const_read_two(), umi, del );
                 } else if (read == 'R') {
-                    extract_umi( per->non_const_read_two(), umi );
-                    extract_umi( per->non_const_read_one(), umi );
+                    extract_umi( per->non_const_read_two(), umi, del );
+                    extract_umi( per->non_const_read_one(), umi, del );
                 } else {
-                    extract_umi( per->non_const_read_one(), umi );
+                    extract_umi( per->non_const_read_one(), umi, del );
                     std::tie(umi.seq, umi.qual) = std::make_tuple("", ""); // reset umi struct
-                    extract_umi( per->non_const_read_two(), umi );
+                    extract_umi( per->non_const_read_two(), umi, del );
                 }
             }
             );

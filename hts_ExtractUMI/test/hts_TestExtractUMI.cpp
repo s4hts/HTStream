@@ -32,8 +32,8 @@ TEST_F(ExtractUMITest, BasicExtract) { // SE extract test
 
     auto i = ifp.next();
     SingleEndRead *ser = dynamic_cast<SingleEndRead*>(i.get());
-    eu.extract_umi(ser->non_const_read_one(), umi);
-    ASSERT_EQ("Read1_NAAAAA", (ser->non_const_read_one()).get_id_first());
+    eu.extract_umi(ser->non_const_read_one(), umi, ':');
+    ASSERT_EQ("Read1:NAAAAA", (ser->non_const_read_one()).get_id_first());
 };
 
 
@@ -53,11 +53,11 @@ TEST_F(ExtractUMITest, ReadOneExtract) { // R1 extract test
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        eu.extract_umi(per->non_const_read_one(), umi);
-        eu.extract_umi(per->non_const_read_two(), umi);
+        eu.extract_umi(per->non_const_read_one(), umi, ':');
+        eu.extract_umi(per->non_const_read_two(), umi, ':');
         writer(*per);
     }
-    ASSERT_EQ("Read1_NAAAAA\tGACATTAAGCAA\t############\tRead2_NAAAAA\tTTTTTTGACATTAAGCAA\t!!!!!!############\n", out1->str());
+    ASSERT_EQ("Read1:NAAAAA\tGACATTAAGCAA\t############\tRead2:NAAAAA\tTTTTTTGACATTAAGCAA\t!!!!!!############\n", out1->str());
 };
 
 
@@ -77,11 +77,11 @@ TEST_F(ExtractUMITest, ReadTwoExtract) { // R2 extract test
     while(ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        eu.extract_umi(per->non_const_read_two(), umi);
-        eu.extract_umi(per->non_const_read_one(), umi);
+        eu.extract_umi(per->non_const_read_two(), umi, ':');
+        eu.extract_umi(per->non_const_read_one(), umi, ':');
         writer(*per);
     }
-    ASSERT_EQ("Read1_TTTTTT\tNAAAAAGACATTAAGCAA\t!!!!!!############\tRead2_TTTTTT\tGACATTAAGCAA\t############\n", out1->str());
+    ASSERT_EQ("Read1:TTTTTT\tNAAAAAGACATTAAGCAA\t!!!!!!############\tRead2:TTTTTT\tGACATTAAGCAA\t############\n", out1->str());
 };
 
 
@@ -95,7 +95,7 @@ TEST_F(ExtractUMITest, QualFilt) { // Hard Filter extract test
 
     auto i = ifp.next();
     SingleEndRead *ser = dynamic_cast<SingleEndRead*>(i.get());
-    eu.extract_umi(ser->non_const_read_one(), umi);
+    eu.extract_umi(ser->non_const_read_one(), umi, ':');
     ASSERT_EQ(true, (ser->non_const_read_one()).getDiscard());
 };
 
@@ -110,7 +110,7 @@ TEST_F(ExtractUMITest, AvgQualFilt) { // Average Filter extract test
 
     auto i = ifp.next();
     SingleEndRead *ser = dynamic_cast<SingleEndRead*>(i.get());
-    eu.extract_umi(ser->non_const_read_one(), umi);
+    eu.extract_umi(ser->non_const_read_one(), umi, ':');
     ASSERT_EQ(true, (ser->non_const_read_one()).getDiscard());
 };
 
@@ -125,7 +125,7 @@ TEST_F(ExtractUMITest, HomopolymerFilt) { // Homopolymer filter test
 
     auto i = ifp.next();
     SingleEndRead *ser = dynamic_cast<SingleEndRead*>(i.get());
-    eu.extract_umi(ser->non_const_read_one(), umi);
+    eu.extract_umi(ser->non_const_read_one(), umi, ':');
     ASSERT_EQ(true, (ser->non_const_read_one()).getDiscard());
 };
 
@@ -140,6 +140,6 @@ TEST_F(ExtractUMITest, NFilt) { // N filter test
 
     auto i = ifp.next();
     SingleEndRead *ser = dynamic_cast<SingleEndRead*>(i.get());
-    eu.extract_umi(ser->non_const_read_one(), umi);
+    eu.extract_umi(ser->non_const_read_one(), umi, ':');
     ASSERT_EQ(true, (ser->non_const_read_one()).getDiscard());
 };
