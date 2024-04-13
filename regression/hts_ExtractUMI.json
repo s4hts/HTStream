@@ -1,0 +1,53 @@
+[ {
+    "Program_details": {
+        "program": "hts_ExtractUMI",
+        "version": "v1.3.3-24-g735cdf1-dirty",
+        "options": {
+            "avg-qual-score": 0,
+            "discard-n": false,
+	    "force": true,
+            "homopolymer": false,
+            "notes": "",
+            "qual-offset": 33,
+            "qual-score": 0,
+            "read": "F",
+            "read1-input": [ "./test_r1.fastq.gz"],
+            "read2-input": [ "./test_r2.fastq.gz"],
+            "stats-file": "hts_ExtractUMI.json",
+            "tab-output": "hts_ExtractUMI",
+            "umi-length": 6,
+            "uncompressed": false
+        }
+    },
+    "Fragment": {
+        "in": 25,
+        "out": 25,
+        "basepairs_in": 15050,
+        "basepairs_out": 14900
+    },
+    "Single_end": {
+        "in": 0,
+        "out": 0,
+        "basepairs_in": 0,
+        "basepairs_out": 0,
+        "rightTrim": 0,
+        "leftTrim": 0
+    },
+    "Paired_end": {
+        "in": 25,
+        "out": 25,
+        "Read1": {
+            "basepairs_in": 7525,
+            "basepairs_out": 7375,
+            "leftTrim": 150,
+            "rightTrim": 0
+        },
+        "Read2": {
+            "basepairs_in": 7525,
+            "basepairs_out": 7525,
+            "leftTrim": 0,
+            "rightTrim": 0
+        }
+    }
+  }
+]

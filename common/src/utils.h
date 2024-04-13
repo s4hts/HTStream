@@ -35,6 +35,14 @@ void check_range(const std::string& name, const T& value, const T& min, const T&
    }
 }
 
+// Used in hts_ExtractUMI
+template<typename T>
+void check_values(const std::string& name, const T& opt, const std::vector<T>& options)
+{
+   if (std::count(options.begin(), options.end(), opt) == 0) {
+      throw po::validation_error(po::validation_error::invalid_option_value, name);
+   }
+}
 
 char rc(const char &bp);
 
