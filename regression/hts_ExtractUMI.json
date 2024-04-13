@@ -38,8 +38,8 @@
         "Read1": {
             "basepairs_in": 7525,
             "basepairs_out": 7375,
-            "leftTrim": 0,
-            "rightTrim": 150
+            "leftTrim": 150,
+            "rightTrim": 0
         },
         "Read2": {
             "basepairs_in": 7525,
