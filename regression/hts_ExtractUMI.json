@@ -15,6 +15,7 @@
             "read2-input": [ "./test_r2.fastq.gz"],
             "stats-file": "hts_ExtractUMI.json",
             "tab-output": "hts_ExtractUMI",
+            "umi-length": 6,
             "uncompressed": false
         }
     },
