@@ -116,7 +116,7 @@ public:
             ("avg-qual-score,q", po::value<double>()->default_value(30)->notifier(boost::bind(&check_range<double>, "avg-qual-score", _1, 1, 10000)), "Avg quality score to have the read written automatically (min 1, max 10000)")
             ("inform-avg-qual-score,a", po::value<double>()->default_value(5)->notifier(boost::bind(&check_range<double>, "inform-avg-qual-score", _1, 1, 10000)), "Avg quality score to consider a read informative (min 1, max 10000)") //I know this says user input is a int, but is actually a double
             ("log_freq,e", po::value<size_t>()->default_value(1000000)->notifier(boost::bind(&check_range<size_t>, "log_freq", _1, 0, 1000000000)), "Frequency in which to log duplicates in reads, can be used to create a saturation plot (0 turns off).")
-            ("umi-mode,m", po::bool_switch()->default_value(false), "Includes UMI in unique ID (assumes hts_ExtractUMI has been ran prior to hts_SuperDeduper)");
+            ("umi,u", po::bool_switch()->default_value(false), "Includes UMI in unique ID (assumes hts_ExtractUMI has been ran prior to hts_SuperDeduper)");
 
     }
 
@@ -179,7 +179,7 @@ public:
         const size_t length = vm["length"].as<size_t>();
         const size_t log_freq = vm["log_freq"].as<size_t>();
         const size_t qual_offset = vm["qual-offset"].as<size_t>();
-        const bool umi = vm["umi-mode"].as<bool>();
+        const bool umi = vm["umi"].as<bool>();
 
         WriterHelper writer(pe, se, false, false);
         load_map(reader, counter, pe, se, avg_automatic_write, discard_qual, start, length, log_freq, qual_offset, umi);
