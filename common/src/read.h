@@ -105,7 +105,7 @@ public:
     }
 
     // added with ExtractUMI
-    void set_id_first( std::string new_id) { id = new_id; }
+    void set_id_first(const std::string& new_id) { id = new_id; }
 
     void changeSeq( size_t loc, char bp ) { seq[loc] = bp; }
     void changeQual( size_t loc, char score ) {qual[loc] = score; }

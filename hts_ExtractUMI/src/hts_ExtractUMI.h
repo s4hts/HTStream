@@ -42,10 +42,7 @@ public:
         program_name = "hts_ExtractUMI";
         app_description =
             "The hts_ExtractUMI application trims a set number of bases from the 5'\n";
-        app_description += "  end of a read and appends it to the read ID. Program is \n";
-        app_description += "  meant to be an HTStream drop-in for umi_tools extract \n";
-        app_description += "  with some different features that is compatible with \n";
-        app_description += "  HTStream streaming pipelines.\n";
+        app_description += "  (left) end of a read and appends it to the read ID.\n";
     }
 
     void add_extra_options(po::options_description &desc) {
