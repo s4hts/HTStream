@@ -116,7 +116,7 @@ public:
             ("avg-qual-score,q", po::value<double>()->default_value(30)->notifier(boost::bind(&check_range<double>, "avg-qual-score", _1, 1, 10000)), "Avg quality score to have the read written automatically (min 1, max 10000)")
             ("inform-avg-qual-score,a", po::value<double>()->default_value(5)->notifier(boost::bind(&check_range<double>, "inform-avg-qual-score", _1, 1, 10000)), "Avg quality score to consider a read informative (min 1, max 10000)") //I know this says user input is a int, but is actually a double
             ("log_freq,e", po::value<size_t>()->default_value(1000000)->notifier(boost::bind(&check_range<size_t>, "log_freq", _1, 0, 1000000000)), "Frequency in which to log duplicates in reads, can be used to create a saturation plot (0 turns off).")
-            ("umi,u", po::bool_switch()->default_value(false), "Includes UMI in unique ID (assumes hts_ExtractUMI has been ran prior)");
+            ("umi,u", po::bool_switch()->default_value(false), "Includes UMI in unique ID (assumes hts_ExtractUMI has been ran prior to hts_SuperDeduper)");
 
     }
 
@@ -124,7 +124,7 @@ public:
     void load_map(InputReader<T, Impl> &reader, SuperDeduperCounters& counters, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, double avg_automatic_write, double discard_qual, size_t start, size_t length, size_t log_freq, const size_t qual_offset = DEFAULT_QUAL_OFFSET, const bool umi = false){
         double tmpAvg;
         std::string umi_seq;
-        boost::optional<boost::dynamic_bitset<>> umi_bit(0);
+        boost::optional<boost::dynamic_bitset<>> umi_bit;
         WriterHelper writer(pe, se, false);
 
         while(reader.has_next()) {
@@ -141,7 +141,7 @@ public:
             //check for existance, store or compare quality and replace:
             if ( tmpAvg < discard_qual ){ // averge qual must be less than discard_qual, ignored
                 counters.increment_ignored();
-            } else if (auto key=i->bitjoin(umi_bit, (i -> get_key(start, length)))) { // check for duplicate
+            } else if (auto key=i->bitjoin(umi_bit, (i -> get_key(start, length)), umi)) { // check for duplicate
                 // find faster than count on some compilers, new key
                 if(read_map.find(*key) == read_map.end()) { // first time the key is seen
                     if ( tmpAvg >= avg_automatic_write ) { // if its greater than avg_automatic_write then write out
