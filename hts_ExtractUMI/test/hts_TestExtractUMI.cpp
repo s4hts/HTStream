@@ -185,8 +185,8 @@ TEST_F(ExtractUMITest, DRAGEN) { // TRAGEN test
     while (ifp.has_next()) {
         auto i = ifp.next();
         PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
-        eu.extract_umi(per->non_const_read_one(), umi, ':', true);
-        eu.extract_umi(per->non_const_read_two(), umi, ':', true);
+        eu.extract_umi(per->non_const_read_one(), umi, ':', true, false);
+        eu.extract_umi(per->non_const_read_two(), umi, ':', true, false);
         eu.set_dragen(per->non_const_read_one(), umi);
         eu.set_dragen(per->non_const_read_two(), umi);
         writer(*per);
