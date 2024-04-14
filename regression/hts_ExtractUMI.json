@@ -3,7 +3,9 @@
         "program": "hts_ExtractUMI",
         "version": "v1.3.3-24-g735cdf1-dirty",
         "options": {
+	    "DRAGEN": false,
             "avg-qual-score": 0,
+	    "delimiter": "_",
             "discard-n": false,
 	    "force": true,
             "homopolymer": false,
