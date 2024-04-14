@@ -27,15 +27,16 @@ public:
 
     // bases some parameters and allows passing UMIs between PE reads
     struct UMI {
-      std::string seq;
-      std::string qual;
-      size_t length;
-      bool discard;
-      size_t qual_threshold;
-      size_t avg_qual_threshold;
-      size_t qual_offset;
-      bool homopolymer;
-      bool discard_n;
+        std::string seq1;
+        std::string seq2;
+        std::string qual;
+        size_t length;
+        bool discard;
+        size_t qual_threshold;
+        size_t avg_qual_threshold;
+        size_t qual_offset;
+        bool homopolymer;
+        bool discard_n;
     };
 
 
@@ -48,13 +49,14 @@ public:
 
     void add_extra_options(po::options_description &desc) {
         desc.add_options()
-            ("read,r", po::value<char>()->default_value('F')->notifier(boost::bind(&check_values<char>, "read", _1, read_options)), "Read from which to extract the UMI (F = Forward, R = Reverse, B = Both), ignored if SE")
-            ("umi-length,l", po::value<size_t>()->default_value(6)->notifier(boost::bind(&check_range<size_t>, "umi_length", _1, 1, 36)), "Total length of UMI to extract (1, 36)")
-            ("delimiter,d", po::value<char>()->default_value(':')->notifier(boost::bind(&check_values<char>, "delimter", _1, del_options)), "Character to separate the UMI sequence from other fields in the Read ID (Possible options: '-', '_', ':', '+')")
-            ("qual-score,q", po::value<size_t>()->default_value(0)->notifier(boost::bind(&check_range<size_t>, "qual-score", _1, 0, 10000)), "Threshold for quality score for any base within a UMI (min 1, max 10000), read pairs are discarded, default is unset")
-            ("avg-qual-score,Q", po::value<size_t>()->default_value(0)->notifier(boost::bind(&check_range<size_t>, "avg-qual-score", _1, 0, 10000)), "Threshold for quality score average of UMI (min 1, max 10000), read pairs are discarded, default is unset")
-            ("homopolymer,p", po::bool_switch()->default_value(false), "Remove reads with homopolymer UMIs")
-            ("discard-n,n", po::bool_switch()->default_value(false), "Remove reads with UMIs containing an N");
+        ("read,r", po::value<char>()->default_value('F')->notifier(boost::bind(&check_values<char>, "read", _1, read_options)), "Read from which to extract the UMI (F = Forward, R = Reverse, B = Both), ignored if SE")
+        ("umi-length,l", po::value<size_t>()->default_value(6)->notifier(boost::bind(&check_range<size_t>, "umi_length", _1, 1, 36)), "Total length of UMI to extract (1, 36)")
+        ("delimiter,d", po::value<char>()->default_value('_')->notifier(boost::bind(&check_values<char>, "delimiter", _1, del_options)), "Character to separate the UMI sequence from other fields in the Read ID (Possible options: '-', '_', ':', '+')")
+        ("qual-score,q", po::value<size_t>()->default_value(0)->notifier(boost::bind(&check_range<size_t>, "qual-score", _1, 0, 10000)), "Threshold for quality score for any base within a UMI (min 1, max 10000), read pairs are discarded, default is unset")
+        ("avg-qual-score,Q", po::value<size_t>()->default_value(0)->notifier(boost::bind(&check_range<size_t>, "avg-qual-score", _1, 0, 10000)), "Threshold for quality score average of UMI (min 1, max 10000), read pairs are discarded, default is unset")
+        ("homopolymer,p", po::bool_switch()->default_value(false), "Remove reads with homopolymer UMIs")
+        ("discard-n,n", po::bool_switch()->default_value(false), "Remove reads with UMIs containing an N")
+        ("DRAGEN,D", po::bool_switch()->default_value(false), "Formats UMI addition to Read ID so that it is useable with Illumina's DRAGEN suite (Paried End reads in \"Both\" mode only, otherwise ignored. Automatically sets delimiter to ':')");
     }
 
 
@@ -92,25 +94,28 @@ public:
     }
 
 
-    void homopolymer_check(UMI &umi) { 
-        if (umi.seq.find_first_not_of(umi.seq[0]) == std::string::npos) {
-            umi.discard = true;
-        }
-    }
-
-    
-    void n_check(UMI &umi) { 
-        if (umi.seq.find('N') != std::string::npos) {
-            umi.discard = true;
-        }
+    bool homopolymer_check(const std::string &tmp_seq) {
+        if (tmp_seq.find_first_not_of(tmp_seq[0]) == std::string::npos) { return true; }
+        return false;
     }
 
 
-    void extract_umi(Read &r, UMI &umi, const char &del) {
+    bool n_check(const std::string &tmp_seq) {
+        if (tmp_seq.find('N') != std::string::npos) { return true; }
+        return false;
+    }
 
-        if (umi.seq.empty()) {
+    void set_dragen(Read &r, const UMI &umi) {
+        r.set_id_first(r.get_id_first() + ":" + umi.seq1 + "+" + umi.seq2);
+    }
 
-            umi.seq = r.get_seq().substr(0, umi.length);
+    void extract_umi(Read &r, UMI &umi, const char &del, const bool &dragen = false, const bool &both_reads = false) {
+
+        std::string tmp_seq;
+
+        if ( ((umi.seq1.empty()) || dragen) || both_reads ) {
+
+            tmp_seq = r.get_seq().substr(0, umi.length);
 
             if (umi.qual_threshold + umi.avg_qual_threshold != 0) {
                 umi.qual = r.get_qual().substr(0, umi.length);
@@ -118,81 +123,101 @@ public:
             }
 
             if (umi.homopolymer) {
-                homopolymer_check(umi);
+                umi.discard = homopolymer_check(tmp_seq);
             }
 
             if (umi.discard_n) {
-                n_check(umi);
+                umi.discard = n_check(tmp_seq);
             }
 
             if (!umi.discard) {
                 r.setLCut(umi.length);
             }
 
+            if (!umi.seq1.empty() && dragen) {
+                umi.seq2 = tmp_seq; // necessary copy?
+            } else {
+                umi.seq1 = tmp_seq; // necessary copy?
+            }
+
         }
 
-        if (!umi.discard) {
-            r.set_id_first(r.get_id_first() + del + umi.seq);
+        if ((!umi.discard)) {
+            if (!dragen) { r.set_id_first(r.get_id_first() + del + umi.seq1); }
         } else {
             r.setDiscard();
-        }  
+        }
 
     }
 
-
     template <class T, class Impl>
     void do_app(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, TrimmingCounters& counters, const po::variables_map &vm) {
-        
+
         char read = vm["read"].as<char>();
-        size_t umi_length = vm["umi-length"].as<size_t>(); 
+        size_t umi_length = vm["umi-length"].as<size_t>();
         char del = vm["delimiter"].as<char>();
         size_t qual_offset = vm["qual-offset"].as<size_t>();
         size_t qual_threshold = vm["qual-score"].as<size_t>();
         size_t avg_qual_threshold = vm["avg-qual-score"].as<size_t>();
-        bool homopolymer =  vm["homopolymer"].as<bool>();
-        bool discard_n =  vm["discard-n"].as<bool>();
+        bool homopolymer = vm["homopolymer"].as<bool>();
+        bool discard_n = vm["discard-n"].as<bool>();
+        bool dragen = vm["DRAGEN"].as<bool>();
+
+
+        if (dragen) {
+            if (umi_length > 8) {
+                throw HtsIOException("UMI length (--umi-length) greater than 8 is not compatible with --DRAGEN parameter");    
+            } else if (del != ':') {
+                throw HtsIOException("Delimiter (--delimiter) must be ':' to be compatible with --DRAGEN parameter");    
+            }
+        }
 
 
         // init UMI struct
         UMI umi = {
-                   "",                     // umi sequence
-                   "",                     // qual sequence
-                   umi_length,             // umi length
-                   false,                  // discard status (init)
-                   qual_threshold,         // quality threshold
-                   avg_qual_threshold,     // avg quality threshold
-                   qual_offset,            // quality offset  
-                   homopolymer,            // homopolymer filter
-                   discard_n               // discard N containing UMIs
-                  };
+            "",                     // umi R1 sequence
+            "",                     // umi R2 sequence
+            "",                     // qual sequence
+            umi_length,             // umi length
+            false,                  // discard status (init)
+            qual_threshold,         // quality threshold
+            avg_qual_threshold,     // avg quality threshold
+            qual_offset,            // quality offset
+            homopolymer,            // homopolymer filter
+            discard_n               // discard N containing UMIs
+        };
 
 
         WriterHelper writer(pe, se);
 
         auto read_visit = make_read_visitor_func(
-            [&](SingleEndRead *ser) {
-                extract_umi( ser->non_const_read_one(), umi, del );
-            },
-            [&](PairedEndRead *per) {
-                if (read == 'F') {
-                    extract_umi( per->non_const_read_one(), umi, del );
-                    extract_umi( per->non_const_read_two(), umi, del );
-                } else if (read == 'R') {
-                    extract_umi( per->non_const_read_two(), umi, del );
-                    extract_umi( per->non_const_read_one(), umi, del );
-                } else {
-                    extract_umi( per->non_const_read_one(), umi, del );
-                    std::tie(umi.seq, umi.qual) = std::make_tuple("", ""); // reset umi struct
-                    extract_umi( per->non_const_read_two(), umi, del );
+        [&](SingleEndRead * ser) {
+            extract_umi( ser->non_const_read_one(), umi, del );
+        },
+        [&](PairedEndRead * per) {
+            if (read == 'F') {
+                extract_umi( per->non_const_read_one(), umi, del );
+                extract_umi( per->non_const_read_two(), umi, del );
+            } else if (read == 'R') {
+                extract_umi( per->non_const_read_two(), umi, del );
+                extract_umi( per->non_const_read_one(), umi, del );
+            } else {
+                extract_umi( per->non_const_read_one(), umi, del, dragen, true );
+                std::tie(umi.qual) = std::make_tuple(""); // reset umi struct
+                extract_umi( per->non_const_read_two(), umi, del, dragen, true );
+                if (dragen) {
+                    set_dragen( per->non_const_read_one(), umi );
+                    set_dragen( per->non_const_read_two(), umi );
                 }
             }
-            );
+        }
+                          );
 
-        while(reader.has_next()) {
+        while (reader.has_next()) {
             auto i = reader.next();
             counters.input(*i);
             i->accept(read_visit);
-            std::tie(umi.seq, umi.qual, umi.discard) = std::make_tuple("", "", false); // reset umi struct
+            std::tie(umi.seq1, umi.seq2, umi.qual, umi.discard) = std::make_tuple("", "", "", false); // reset umi struct
             writer(*i);
             counters.output(*i);
         }
