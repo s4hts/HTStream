@@ -56,7 +56,7 @@ public:
         ("avg-qual-score,Q", po::value<size_t>()->default_value(0)->notifier(boost::bind(&check_range<size_t>, "avg-qual-score", _1, 0, 10000)), "Threshold for quality score average of UMI (min 1, max 10000), read pairs are discarded, default is unset")
         ("homopolymer,p", po::bool_switch()->default_value(false), "Remove reads with homopolymer UMIs")
         ("discard-n,n", po::bool_switch()->default_value(false), "Remove reads with UMIs containing an N")
-        ("DRAGEN,D", po::bool_switch()->default_value(false), "Formats UMI addition to Read ID so that it is useable with Illumina's DRAGEN suite (PAIRED END READS ONLY! For Single End, use \"--delimiter ':'\" and set \"--umi-length\" to 15 or below). Automatically sets delimiter to ':'");
+        ("DRAGEN,D", po::bool_switch()->default_value(false), "Formats UMI addition to Read ID so that it is compatible with Illumina's DRAGEN suite.");
     }
 
 
@@ -164,12 +164,8 @@ public:
         bool dragen = vm["DRAGEN"].as<bool>();
 
 
-        if (dragen) {
-            if (umi_length > 8) {
-                throw HtsIOException("UMI length (--umi-length) greater than 8 is not compatible with --DRAGEN parameter");    
-            } else if (del != ':') {
-                throw HtsIOException("Delimiter (--delimiter) must be ':' to be compatible with --DRAGEN parameter");    
-            }
+        if (dragen & (del != ':')) {
+            throw HtsIOException("Delimiter (--delimiter) must be ':' to be compatible with --DRAGEN parameter");    
         }
 
 
@@ -192,9 +188,15 @@ public:
 
         auto read_visit = make_read_visitor_func(
         [&](SingleEndRead * ser) {
+            if (dragen && (umi_length > 15)) {
+                throw HtsIOException("UMI length (--umi-length) greater than 15 is not compatible with --DRAGEN parameter for Single End Reads");    
+            }
             extract_umi( ser->non_const_read_one(), umi, del );
         },
         [&](PairedEndRead * per) {
+            if (dragen && (umi_length > 8)) {
+                throw HtsIOException("UMI length (--umi-length) greater than 8 is not compatible with --DRAGEN parameter for PairedEndRead End Reads");    
+            }
             if (read == 'F') {
                 extract_umi( per->non_const_read_one(), umi, del );
                 extract_umi( per->non_const_read_two(), umi, del );
