@@ -43,8 +43,8 @@ public:
     ExtractUMI() {
         program_name = "hts_ExtractUMI";
         app_description =
-            "The hts_ExtractUMI application trims a set number of bases from the 5' (left)\n";
-        app_description += "  end of a read and appends it to the end of the read ID.\n";
+            "The hts_ExtractUMI application trims a set number of bases from the 5'\n";
+        app_description += "   (left) end of a read and appends it to the end of the read ID.\n";
     }
 
     void add_extra_options(po::options_description &desc) {
@@ -60,7 +60,7 @@ public:
     }
 
 
-    void quality_check(UMI &umi) {
+    bool quality_check(UMI &umi) {
 
         size_t tmp_qual_threshold; // just to be sure original parameters are not overwritten
 
@@ -70,8 +70,7 @@ public:
 
             for (std::string::iterator it = umi.qual.begin() ; it != umi.qual.end() ; ++it) {
                 if (static_cast<size_t>(*it) < tmp_qual_threshold) {
-                    umi.discard = true;
-                    break;
+                    return true;
                 }
             }
 
@@ -86,11 +85,11 @@ public:
             }
 
             if (current_sum < final_qual_threshold) {
-                umi.discard = true;
+                return true;
             }
-
         }
 
+        return false;
     }
 
 
@@ -105,9 +104,11 @@ public:
         return false;
     }
 
+
     void set_dragen(Read &r, const UMI &umi) {
         r.set_id_first(r.get_id_first() + ":" + umi.seq1 + "+" + umi.seq2);
     }
+
 
     void extract_umi(Read &r, UMI &umi, const char &del, const bool &dragen = false, const bool &both_reads = false) {
 
@@ -119,7 +120,7 @@ public:
 
             if (umi.qual_threshold + umi.avg_qual_threshold != 0) {
                 umi.qual = r.get_qual().substr(0, umi.length);
-                quality_check(umi);
+                umi.discard = quality_check(umi);
             }
 
             if (umi.homopolymer) {
