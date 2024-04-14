@@ -56,7 +56,7 @@ public:
         ("avg-qual-score,Q", po::value<size_t>()->default_value(0)->notifier(boost::bind(&check_range<size_t>, "avg-qual-score", _1, 0, 10000)), "Threshold for quality score average of UMI (min 1, max 10000), read pairs are discarded, default is unset")
         ("homopolymer,p", po::bool_switch()->default_value(false), "Remove reads with homopolymer UMIs")
         ("discard-n,n", po::bool_switch()->default_value(false), "Remove reads with UMIs containing an N")
-        ("DRAGEN,D", po::bool_switch()->default_value(false), "Formats UMI addition to Read ID so that it is useable with Illumina's DRAGEN suite (Paried End reads in \"Both\" mode only, otherwise ignored. Automatically sets delimiter to ':')");
+        ("DRAGEN,D", po::bool_switch()->default_value(false), "Formats UMI addition to Read ID so that it is useable with Illumina's DRAGEN suite (PAIRED END READS ONLY! For Single End, use \"--delimiter ':'\" and set \"--umi-length\" to 15 or below). Automatically sets delimiter to ':'");
     }
 
 
