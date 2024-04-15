@@ -116,12 +116,11 @@ public:
             ("avg-qual-score,q", po::value<double>()->default_value(30)->notifier(boost::bind(&check_range<double>, "avg-qual-score", _1, 1, 10000)), "Avg quality score to have the read written automatically (min 1, max 10000)")
             ("inform-avg-qual-score,a", po::value<double>()->default_value(5)->notifier(boost::bind(&check_range<double>, "inform-avg-qual-score", _1, 1, 10000)), "Avg quality score to consider a read informative (min 1, max 10000)") //I know this says user input is a int, but is actually a double
             ("log_freq,e", po::value<size_t>()->default_value(1000000)->notifier(boost::bind(&check_range<size_t>, "log_freq", _1, 0, 1000000000)), "Frequency in which to log duplicates in reads, can be used to create a saturation plot (0 turns off).")
-            ("umi,u", po::bool_switch()->default_value(false), "Includes UMI in unique ID (assumes hts_ExtractUMI has been ran prior to hts_SuperDeduper)");
-
+            ("umi-delimiter,d", po::value<char>()->default_value('\0')->notifier(boost::bind(&check_values<char>, "delimiter", _1, DEL_OPTIONS)), "Enables UMI mode and speicifes character to separate the UMI sequence from other fields in the Read ID (Possible options: '-', '_', ':')");
     }
 
     template <class T, class Impl>
-    void load_map(InputReader<T, Impl> &reader, SuperDeduperCounters& counters, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, double avg_automatic_write, double discard_qual, size_t start, size_t length, size_t log_freq, const size_t qual_offset = DEFAULT_QUAL_OFFSET, const bool umi = false){
+    void load_map(InputReader<T, Impl> &reader, SuperDeduperCounters& counters, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, double avg_automatic_write, double discard_qual, size_t start, size_t length, size_t log_freq, const size_t qual_offset = DEFAULT_QUAL_OFFSET, const char del = '\0'){
         double tmpAvg;
         std::string umi_seq;
         boost::optional<boost::dynamic_bitset<>> umi_bit;
@@ -132,16 +131,18 @@ public:
             counters.input(*i, log_freq);
             tmpAvg = i->avg_q_score(qual_offset);
 
-            if (umi) { 
+            if (del != '\0') { 
                 umi_seq = "";
-                for (const auto &r : i -> get_reads_non_const()) { umi_seq += r -> get_umi(); }
+                for (const auto &r : i -> get_reads_non_const()) { 
+                    umi_seq += r -> get_umi(del); 
+                }
                 umi_bit = i -> str_to_bit(umi_seq);
             };
 
             //check for existance, store or compare quality and replace:
             if ( tmpAvg < discard_qual ){ // averge qual must be less than discard_qual, ignored
                 counters.increment_ignored();
-            } else if (auto key=i->bitjoin(umi_bit, (i -> get_key(start, length)), umi)) { // check for duplicate
+            } else if (auto key=i->bitjoin(umi_bit, (i -> get_key(start, length)), del)) { // check for duplicate
                 // find faster than count on some compilers, new key
                 if(read_map.find(*key) == read_map.end()) { // first time the key is seen
                     if ( tmpAvg >= avg_automatic_write ) { // if its greater than avg_automatic_write then write out
@@ -179,10 +180,10 @@ public:
         const size_t length = vm["length"].as<size_t>();
         const size_t log_freq = vm["log_freq"].as<size_t>();
         const size_t qual_offset = vm["qual-offset"].as<size_t>();
-        const bool umi = vm["umi"].as<bool>();
+        const char del = vm["umi-delimiter"].as<char>();
 
         WriterHelper writer(pe, se, false, false);
-        load_map(reader, counter, pe, se, avg_automatic_write, discard_qual, start, length, log_freq, qual_offset, umi);
+        load_map(reader, counter, pe, se, avg_automatic_write, discard_qual, start, length, log_freq, qual_offset, del);
         for(auto const &i : read_map) {
             if (i.second.get() != nullptr) {
                 counter.output(*i.second.get());

@@ -71,11 +71,21 @@ public:
     const std::string get_id_first() const { return id; }
     const std::string get_id_second() const { return id2; }
     
-    const std::string get_umi() { 
-        if (id.find('_') != std::string::npos) {
-            return id.substr(id.rfind("_") + 2);
+    const std::string get_umi(const char& del) {
+        size_t idx = id.rfind(del);
+        if (idx == std::string::npos) {
+            throw HtsRuntimeException("Did not detected extracted UMI. Be sure hts_ExtractUMI is run prior to hts_Superdeduper");
         }
-        throw HtsRuntimeException("Did not detected extracted UMI. Be sure hts_ExtractUMI is run prior to hts_Superdeduper");
+        std::string umi = id.substr(idx + 1);
+
+        // clean up DRAGEN format if present
+        idx = umi.rfind('+');
+        if (idx == std::string::npos) { 
+            return umi; 
+        } else {
+            umi.erase(idx);
+            return umi;
+        }
     }
 
     std::vector<std::string> get_comment() const { return comments;}
@@ -174,7 +184,7 @@ public:
         return bit;
     }
     static std::string bit_to_str(const BitSet &bits);
-    static boost::optional<BitSet> bitjoin(const boost::optional<BitSet> &bit1, const boost::optional<BitSet> &bit2, const bool &include);
+    static boost::optional<BitSet> bitjoin(const boost::optional<BitSet> &bit1, const boost::optional<BitSet> &bit2, const char& del);
     static boost::optional<BitSet> reverse_complement(const std::string& str, int start, int length);
     virtual double avg_q_score(const size_t qual_offset = DEFAULT_QUAL_OFFSET) = 0;
 

@@ -16,7 +16,7 @@ std::string strjoin(const std::vector <std::string>& v, const std::string& delim
 }
 
 std::string ReadBase::bit_to_str(const BitSet &bits) {
-    size_t str_len = bits.size();
+    size_t str_len = bits.size()/2;
     std::string out;
     out.resize(str_len);
     size_t i = bits.size() -1;
@@ -35,8 +35,12 @@ std::string ReadBase::bit_to_str(const BitSet &bits) {
     return out;
 }
 
-boost::optional<BitSet> ReadBase::bitjoin(const boost::optional<BitSet> &bit1, const boost::optional<BitSet> &bit2, const bool& include) {
-    if (!include) { return bit2; }
+boost::optional<BitSet> ReadBase::bitjoin(const boost::optional<BitSet> &bit1, const boost::optional<BitSet> &bit2, const char& del) {
+    if (del == '\0') { 
+        return bit2; 
+    } else if (bit1 == boost::none) {
+        return boost::none;
+    }
     size_t bits = bit1 -> size() + bit2 -> size();
     BitSet bittag(bits);
     for(size_t i = 0; i < bit1 -> size(); i++) { bittag[i] = (int)(*bit1)[i]; }

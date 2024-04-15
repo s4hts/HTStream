@@ -22,9 +22,6 @@ extern template class InputReader<ReadBase, TabReadImpl>;
 class ExtractUMI: public MainTemplate<TrimmingCounters, ExtractUMI> {
 public:
 
-    std::vector<char> read_options{'F', 'R', 'B'}; // possible paramters for read options
-    std::vector<char> del_options{'-', '_', ':', '+'}; // possible paramters for read options
-
     // bases some parameters and allows passing UMIs between PE reads
     struct UMI {
         std::string seq1;
@@ -49,9 +46,9 @@ public:
 
     void add_extra_options(po::options_description &desc) {
         desc.add_options()
-        ("read,r", po::value<char>()->default_value('F')->notifier(boost::bind(&check_values<char>, "read", _1, read_options)), "Read from which to extract the UMI (F = Forward, R = Reverse, B = Both), ignored if SE")
+        ("read,r", po::value<char>()->default_value('F')->notifier(boost::bind(&check_values<char>, "read", _1, READ_OPTIONS)), "Read from which to extract the UMI (F = Forward, R = Reverse, B = Both), ignored if SE")
         ("umi-length,l", po::value<size_t>()->default_value(6)->notifier(boost::bind(&check_range<size_t>, "umi_length", _1, 1, 36)), "Total length of UMI to extract (1, 36)")
-        ("delimiter,d", po::value<char>()->default_value('_')->notifier(boost::bind(&check_values<char>, "delimiter", _1, del_options)), "Character to separate the UMI sequence from other fields in the Read ID (Possible options: '-', '_', ':', '+')")
+        ("delimiter,d", po::value<char>()->default_value('_')->notifier(boost::bind(&check_values<char>, "delimiter", _1, DEL_OPTIONS)), "Character to separate the UMI sequence from other fields in the Read ID (Possible options: '-', '_', ':')")
         ("qual-score,q", po::value<size_t>()->default_value(0)->notifier(boost::bind(&check_range<size_t>, "qual-score", _1, 0, 10000)), "Threshold for quality score for any base within a UMI (min 1, max 10000), read pairs are discarded, default is unset")
         ("avg-qual-score,Q", po::value<size_t>()->default_value(0)->notifier(boost::bind(&check_range<size_t>, "avg-qual-score", _1, 0, 10000)), "Threshold for quality score average of UMI (min 1, max 10000), read pairs are discarded, default is unset")
         ("homopolymer,p", po::bool_switch()->default_value(false), "Remove reads with homopolymer UMIs")
@@ -144,7 +141,9 @@ public:
         }
 
         if ((!umi.discard)) {
-            if (!dragen) { r.set_id_first(r.get_id_first() + del + umi.seq1); }
+            if (!dragen) { 
+                r.set_id_first(r.get_id_first() + del + umi.seq1); 
+            }
         } else {
             r.setDiscard();
         }
