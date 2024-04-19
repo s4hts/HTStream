@@ -8,6 +8,8 @@ public:
 
     const std::string readData_1 = "@Read1\nNAAAAAGACATTAAGCAA\n+\n!!!!!!############\n";
     const std::string readData_2 = "@Read2\nTTTTTTGACATTAAGCAA\n+\n!!!!!!############\n";
+    const std::string dragenData_1 = "@A00887_1:1:2:3:4:5:6\nNAAAAAGACATTAAGCAA\n+\n!!!!!!############\n";
+    const std::string dragenData_2 = "@A00887_2:1:2:3:4:5:6\nTTTTTTGACATTAAGCAA\n+\n!!!!!!############\n";
 
     ExtractUMI eu;
 
@@ -169,9 +171,9 @@ TEST_F(ExtractUMITest, NFilt) { // N filter test
 };
 
 
-TEST_F(ExtractUMITest, DRAGEN) { // TRAGEN test
-    std::istringstream in1(readData_1);
-    std::istringstream in2(readData_2);
+TEST_F(ExtractUMITest, DRAGEN) { // DRAGEN test
+    std::istringstream in1(dragenData_1);
+    std::istringstream in2(dragenData_2);
 
     InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(in1, in2);
     std::shared_ptr<std::ostringstream> out1(new std::ostringstream);
@@ -191,5 +193,5 @@ TEST_F(ExtractUMITest, DRAGEN) { // TRAGEN test
         eu.set_dragen(per->non_const_read_two(), umi);
         writer(*per);
     }
-    ASSERT_EQ("Read1:NAAAAA+TTTTTT\tGACATTAAGCAA\t############\tRead2:NAAAAA+TTTTTT\tGACATTAAGCAA\t############\n", out1->str());
+    ASSERT_EQ("A00887_1:1:2:3:4:5:6:NAAAAA+TTTTTT\tGACATTAAGCAA\t############\tA00887_2:1:2:3:4:5:6:NAAAAA+TTTTTT\tGACATTAAGCAA\t############\n", out1->str());
 };
