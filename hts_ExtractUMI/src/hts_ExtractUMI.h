@@ -11,6 +11,8 @@
 #include <unordered_map>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/functional/hash.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/join.hpp>
 #include <algorithm>
 
 extern template class InputReader<SingleEndRead, SingleEndReadFastqImpl>;
@@ -103,7 +105,16 @@ public:
 
 
     void set_dragen(Read &r, const UMI &umi) {
-        r.set_id_first(r.get_id_first() + ":" + umi.seq1 + "+" + umi.seq2);
+        std::vector<std::string> result;
+        boost::split(result, r.get_id_first(), boost::is_any_of(":"));
+        if (result.size() < 7) {
+            throw HtsIOException("DRAGEN read ID format not found. Must have at least 7 fields deliminated by a ':'");               
+        } if (result.size() == 7) {
+            result.push_back(umi.seq1 + "+" + umi.seq2);
+        } else {
+            result[7] = umi.seq1 + "+" + umi.seq2;
+        }
+       r.set_id_first(boost::algorithm::join(result, ":"));
     }
 
 
