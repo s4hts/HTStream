@@ -108,11 +108,7 @@ public:
 
     void set_dragen(Read &r, const UMI &umi, const bool &se = false) {
 
-<<<<<<< HEAD
-         std::string new_id;
-=======
         std::string new_id;
->>>>>>> hts_SuperDeduper
         if (se) {
             new_id = umi.seq1;
         } else {
@@ -123,20 +119,13 @@ public:
         boost::split(result, r.get_id_first(), boost::is_any_of(":"));
         if (result.size() < 7) {
             throw HtsIOException("DRAGEN read ID format not found. Must have at least 7 fields deliminated by a ':'");               
-<<<<<<< HEAD
         } else if (result.size() == 7) {
-=======
-        } if (result.size() == 7) {
->>>>>>> hts_SuperDeduper
             result.push_back(new_id);
         } else {
             result[7] = new_id;
         }
-<<<<<<< HEAD
+
         r.set_id_first(boost::algorithm::join(result, ":"));
-=======
-       r.set_id_first(boost::algorithm::join(result, ":"));
->>>>>>> hts_SuperDeduper
     }
 
 
@@ -224,13 +213,8 @@ public:
             if (dragen && (umi_length > 15)) {
                 throw HtsIOException("UMI length (--umi-length) greater than 15 is not compatible with --DRAGEN parameter for Single End Reads");    
             }
-<<<<<<< HEAD
-            extract_umi( ser->non_const_read_one(), umi, del, dragen );
-            if (dragen) { set_dragen( ser->non_const_read_one(), umi, true); }
-=======
             extract_umi( ser->non_const_read_one(), umi, del );
             if (dragen) { set_dragen( ser->non_const_read_one(), umi, true ); }
->>>>>>> hts_SuperDeduper
         },
         [&](PairedEndRead * per) {
             if (dragen && (umi_length > 8)) {
