@@ -213,7 +213,7 @@ public:
             if (dragen && (umi_length > 15)) {
                 throw HtsIOException("UMI length (--umi-length) greater than 15 is not compatible with --DRAGEN parameter for Single End Reads");    
             }
-            extract_umi( ser->non_const_read_one(), umi, del );
+            extract_umi( ser->non_const_read_one(), umi, del, dragen );
             if (dragen) { set_dragen( ser->non_const_read_one(), umi, true ); }
         },
         [&](PairedEndRead * per) {

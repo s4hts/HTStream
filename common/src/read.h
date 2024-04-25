@@ -4,6 +4,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <boost/optional.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/join.hpp>
 #include <memory>
 #include <iostream>
 #include <sstream>
@@ -83,6 +84,13 @@ public:
         if (idx == std::string::npos) { 
             return umi; 
         } else {
+            std::vector<std::string> result;
+            boost::split(result, id, boost::is_any_of(":"));
+            if (result.size() < 7) {
+                throw HtsRuntimeException("Read ID misformated. Does not have appropriate number of \":\" delimited columns for DRAGEN UMI format");
+            }
+            umi = result[7];
+            idx = umi.rfind('+');
             umi.erase(idx);
             return umi;
         }
