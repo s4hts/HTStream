@@ -9,6 +9,7 @@
 #include <sstream>
 #include <unordered_map>
 #include "typedefs.h"
+#include "hts_exception.h"
 
 typedef boost::dynamic_bitset<> BitSet;
 std::string strjoin(const std::vector <std::string>& v, const std::string& delim);
@@ -69,6 +70,24 @@ public:
     }
     const std::string get_id_first() const { return id; }
     const std::string get_id_second() const { return id2; }
+    
+    const std::string get_umi(const char& del) {
+        size_t idx = id.rfind(del);
+        if (idx == std::string::npos) {
+            throw HtsRuntimeException("Did not detected extracted UMI. Be sure hts_ExtractUMI is run prior to hts_Superdeduper");
+        }
+        std::string umi = id.substr(idx + 1);
+
+        // clean up DRAGEN format if present
+        idx = umi.rfind('+');
+        if (idx == std::string::npos) { 
+            return umi; 
+        } else {
+            umi.erase(idx);
+            return umi;
+        }
+    }
+
     std::vector<std::string> get_comment() const { return comments;}
     static char complement(char bp);
 
@@ -115,7 +134,7 @@ public:
     bool getDiscard() const { return discard; }
     void setDiscard() { discard = true; }
     size_t getLength() const { return length; }
-    size_t getLengthTrue() const { return cut_R <= cut_L ? 1 : cut_R - cut_L; }
+    size_t getLengthTrue() const { return cut_R <= cut_L ? 1 : cut_R - cut_L;  }
     // number of bp that are trimmed off left side
     size_t getLTrim() const { return cut_L; }
     // number of bp that are trimmed off right side
@@ -165,6 +184,7 @@ public:
         return bit;
     }
     static std::string bit_to_str(const BitSet &bits);
+    static boost::optional<BitSet> bitjoin(const boost::optional<BitSet> &bit1, const boost::optional<BitSet> &bit2, const char& del);
     static boost::optional<BitSet> reverse_complement(const std::string& str, int start, int length);
     virtual double avg_q_score(const size_t qual_offset = DEFAULT_QUAL_OFFSET) = 0;
 
