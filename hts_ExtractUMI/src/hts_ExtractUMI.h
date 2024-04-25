@@ -13,9 +13,8 @@
 #include <boost/functional/hash.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/join.hpp>
-<<<<<<< HEAD
-=======
->>>>>>> hts_SuperDeduper
+
+
 #include <algorithm>
 
 extern template class InputReader<SingleEndRead, SingleEndReadFastqImpl>;
