@@ -133,7 +133,7 @@ public:
 
             if (del != '\0') { 
                 umi_seq = "";
-                for (const auto &r : i -> get_reads_non_const()) { 
+                for (const auto &r : i -> get_reads()) { 
                     umi_seq += r -> get_umi(del); 
                 }
                 umi_bit = i -> str_to_bit(umi_seq);

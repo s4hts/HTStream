@@ -75,7 +75,7 @@ public:
     const std::string get_umi(const char& del) {
         size_t idx = id.rfind(del);
         if (idx == std::string::npos) {
-            throw HtsRuntimeException("Did not detected extracted UMI. Be sure hts_ExtractUMI is run prior to hts_Superdeduper");
+            throw HtsRuntimeException("Did not detected extracted UMI. Be sure hts_ExtractUMI is run prior to the current operation");
         }
         std::string umi = id.substr(idx + 1);
 
