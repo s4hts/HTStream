@@ -86,7 +86,7 @@ public:
         } else {
             std::vector<std::string> result;
             boost::split(result, id, boost::is_any_of(":"));
-            if (result.size() < 7) {
+            if (result.size() < 8) {
                 throw HtsRuntimeException("Read ID misformated. Does not have appropriate number of \":\" delimited columns for DRAGEN UMI format");
             }
             umi = result[7];
