@@ -35,10 +35,8 @@ std::string ReadBase::bit_to_str(const BitSet &bits) {
     return out;
 }
 
-boost::optional<BitSet> ReadBase::bitjoin(const boost::optional<BitSet> &bit1, const boost::optional<BitSet> &bit2, const char& del) {
-    if (del == '\0') { 
-        return bit2; 
-    } else if ((bit1 == boost::none) || (bit2 == boost::none)) {
+boost::optional<BitSet> ReadBase::bitjoin(const boost::optional<BitSet> &bit1, const boost::optional<BitSet> &bit2) {
+    if ((bit1 == boost::none) || (bit2 == boost::none)) {
         return boost::none;
     }
     size_t bits = bit1 -> size() + bit2 -> size();

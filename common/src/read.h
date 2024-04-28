@@ -192,7 +192,7 @@ public:
         return bit;
     }
     static std::string bit_to_str(const BitSet &bits);
-    static boost::optional<BitSet> bitjoin(const boost::optional<BitSet> &bit1, const boost::optional<BitSet> &bit2, const char& del);
+    static boost::optional<BitSet> bitjoin(const boost::optional<BitSet> &bit1, const boost::optional<BitSet> &bit2);
     static boost::optional<BitSet> reverse_complement(const std::string& str, int start, int length);
     virtual double avg_q_score(const size_t qual_offset = DEFAULT_QUAL_OFFSET) = 0;
 

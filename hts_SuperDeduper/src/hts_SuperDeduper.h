@@ -123,7 +123,7 @@ public:
     void load_map(InputReader<T, Impl> &reader, SuperDeduperCounters& counters, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, double avg_automatic_write, double discard_qual, size_t start, size_t length, size_t log_freq, const size_t qual_offset = DEFAULT_QUAL_OFFSET, const char del = '\0'){
         double tmpAvg;
         std::string umi_seq;
-        boost::optional<boost::dynamic_bitset<>> umi_bit;
+        boost::optional<boost::dynamic_bitset<>> bit;
         WriterHelper writer(pe, se, false);
 
         while(reader.has_next()) {
@@ -136,13 +136,17 @@ public:
                 for (const auto &r : i -> get_reads()) { 
                     umi_seq += r -> get_umi(del); 
                 }
-                umi_bit = i -> str_to_bit(umi_seq);
-            };
+                bit = i -> bitjoin(i -> str_to_bit(umi_seq), i -> get_key(start, length));
+
+            } else {
+                bit = i -> get_key(start, length);
+            }
+
 
             //check for existance, store or compare quality and replace:
             if ( tmpAvg < discard_qual ){ // averge qual must be less than discard_qual, ignored
                 counters.increment_ignored();
-            } else if (auto key=i->bitjoin(umi_bit, (i -> get_key(start, length)), del)) { // check for duplicate
+            } else if (auto key=bit) { // check for duplicate
                 // find faster than count on some compilers, new key
                 if(read_map.find(*key) == read_map.end()) { // first time the key is seen
                     if ( tmpAvg >= avg_automatic_write ) { // if its greater than avg_automatic_write then write out
