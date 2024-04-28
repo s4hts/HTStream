@@ -35,6 +35,17 @@ std::string ReadBase::bit_to_str(const BitSet &bits) {
     return out;
 }
 
+boost::optional<BitSet> ReadBase::bitjoin(const boost::optional<BitSet> &bit1, const boost::optional<BitSet> &bit2) {
+    if ((bit1 == boost::none) || (bit2 == boost::none)) {
+        return boost::none;
+    }
+    size_t bits = bit1 -> size() + bit2 -> size();
+    BitSet bittag(bits);
+    for(size_t i = 0; i < bit1 -> size(); i++) { bittag[i] = (int)(*bit1)[i]; }
+    for(size_t i = 0; i < bit2 -> size(); i++) { bittag[i + (bit1 -> size())] = (int)(*bit2)[i]; }
+    return bittag;
+}
+
 // Read
 Read Read::subread(size_t _start, size_t _length){
     return Read(seq.substr(_start, _length), qual.substr(_start,_length), id);
