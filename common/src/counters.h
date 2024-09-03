@@ -228,7 +228,7 @@ public:
                 outStats << "\"" << *v << "\"";
             else if (auto v = boost::any_cast<char>(&value)) // options case for chars (hts_ExtractUMI)
                 outStats << "\"" << *v << "\"";
-            else if (auto v = boost::any_cast<bool>(&value))
+            else if (auto v = boost::any_cast<bool>(&value))    
                 outStats << ((*v) ? "true" : "false");
             else if (auto v = boost::any_cast<size_t>(&value))
                 outStats << *v;

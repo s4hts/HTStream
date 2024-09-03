@@ -177,7 +177,7 @@ public:
                 qual = static_cast<char>(std::min(qual1[read1_bp] + qual2[read2_bp] - qual_offset, 40 + qual_offset)); //addition of qual (minus just one of the ascii values
             } else {
                 bp = qual1[read1_bp] >= qual2[read2_bp] ? seq1[read1_bp] : seq2[read2_bp];
-                qual = static_cast<char>(std::max(qual1[read1_bp] - qual2[read2_bp] + qual_offset, 1 + qual_offset));
+                qual = static_cast<char>(std::min(std::max(qual1[read1_bp] - qual2[read2_bp] + qual_offset, 1 + qual_offset), 40 + qual_offset));
             }
             finalSeq += bp;
             finalQual += qual;
