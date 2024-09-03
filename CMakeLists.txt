@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 3.2)
 project (HTStream)
 
-option(BUILD_STATIC_BIN "builds static binary (linux only)" ON)
+option(BUILD_STATIC_BIN "builds static binary (linux only)" OFF)
 option(BUILD_GPERFTOOLS "links to google perftools" OFF)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
@@ -10,7 +10,7 @@ message( status "cmake module path: " ${CMAKE_MODULE_PATH})
 set(CMAKE_CXX_STANDARD 11)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(Boost_USE_STATIC_LIBS ON)
+set(Boost_USE_STATIC_LIBS OFF)
 set(BUILD_SHARED_LIBS ON)
 
 # ignore boost deprication
