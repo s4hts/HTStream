@@ -236,7 +236,7 @@ public:
                 }
             }
         }
-                          );
+);
 
         while (reader.has_next()) {
             auto i = reader.next();
