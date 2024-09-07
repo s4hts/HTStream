@@ -1,7 +1,7 @@
 [ {
     "Program_details": {
         "program": "hts_Overlapper",
-        "version": "v1.3.3-24-g735cdf1-dirty",
+        "version": "v1.3.3-85-g0f46b5f-dirty",
         "options": {
             "check-lengths": 20,
             "force": true,
@@ -16,8 +16,8 @@
             "qual-offset": 33,
             "read1-input": [ "./test_r1.fastq.gz"],
             "read2-input": [ "./test_r2.fastq.gz"],
-            "stats-file": "hts_Overlapper.json",
-            "tab-output": "hts_Overlapper",
+            "stats-file": "test/hts_Overlapper.json",
+            "tab-output": "test/hts_Overlapper",
             "uncompressed": false
         }
     },
