@@ -143,7 +143,9 @@ public:
                     r2.changeQual( (r2_len - 1) -  read2_bp, qual);
                 } else {
                     bp = qual1[read1_bp] >= qual2[read2_bp] ? seq1[read1_bp] : seq2[read2_bp];
-                    qual = static_cast<char>(std::min(std::max(qual1[read1_bp] - qual2[read2_bp] + qual_offset, 1 + qual_offset), 40 + qual_offset));
+		    qual = qual1[read1_bp] >= qual2[read2_bp] ?
+          		static_cast<char>(std::min(qual1[read1_bp] - qual2[read2_bp] + qual_offset, 1 + qual_offset)) :
+          		static_cast<char>(std::min(qual2[read2_bp] - qual1[read1_bp] + qual_offset, 1 + qual_offset));
 
                     r1.changeSeq(read1_bp, bp);
                     r1.changeQual(read1_bp, qual);
