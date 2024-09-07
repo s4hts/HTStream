@@ -1,7 +1,7 @@
 [ {
     "Program_details": {
         "program": "hts_AdapterTrimmer",
-        "version": "v1.3.3-24-g735cdf1-dirty",
+        "version": "v1.3.3-85-g0f46b5f-dirty",
         "options": {
             "adapter-sequence": "AGATCGGAAGAGCACACGTCTGAACTCCAGTCA",
             "check-lengths": 20,
@@ -15,8 +15,8 @@
             "notes": "",
             "number-of-threads": 1,
             "qual-offset": 33,
-            "read1-input": [ "./test_r1.fastq.gz"],
-            "read2-input": [ "./test_r2.fastq.gz"],
+            "read1-input": [ "test_r1.fastq.gz"],
+            "read2-input": [ "test_r1.fastq.gz"],
             "stats-file": "hts_AdapterTrimmer.json",
             "tab-output": "hts_AdapterTrimmer",
             "uncompressed": false
@@ -26,7 +26,7 @@
         "in": 25,
         "out": 25,
         "basepairs_in": 15050,
-        "basepairs_out": 14368
+        "basepairs_out": 15050
     },
     "Single_end": {
         "in": 0,
@@ -41,15 +41,15 @@
         "out": 25,
         "Read1": {
             "basepairs_in": 7525,
-            "basepairs_out": 7184,
-            "adapterTrim": 5,
-            "adapterBpTrim": 341
+            "basepairs_out": 7525,
+            "adapterTrim": 0,
+            "adapterBpTrim": 0
         },
         "Read2": {
             "basepairs_in": 7525,
-            "basepairs_out": 7184,
-            "adapterTrim": 5,
-            "adapterBpTrim": 341
+            "basepairs_out": 7525,
+            "adapterTrim": 0,
+            "adapterBpTrim": 0
         }
     }
   }
