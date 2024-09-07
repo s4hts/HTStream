@@ -60,9 +60,12 @@ public:
     const std::string get_id_fastq(const char& read='\0') const {
         std::string sam_comment = "";
         for (auto const& s : comments) { sam_comment += '|' + s; }
-        std::string tmp = id + ' ' + read;
-        if (!(id2 == "")) tmp = tmp + id2;
-        tmp = tmp + sam_comment;
+        std::string tmp = id;
+        if (!(id2 == "")){
+		 tmp = tmp + ' ' + read + id2 + sam_comment;
+	} else if (!(sam_comment == "")){
+		tmp = tmp + ' ' + read + sam_comment;
+	}
         return tmp;
     }
     const std::string get_id_tab(const char& read='\0') const {
