@@ -116,11 +116,11 @@ public:
             ("avg-qual-score,q", po::value<double>()->default_value(30)->notifier(boost::bind(&check_range<double>, "avg-qual-score", _1, 1, 10000)), "Avg quality score to have the read written automatically (min 1, max 10000)")
             ("inform-avg-qual-score,a", po::value<double>()->default_value(5)->notifier(boost::bind(&check_range<double>, "inform-avg-qual-score", _1, 1, 10000)), "Avg quality score to consider a read informative (min 1, max 10000)") //I know this says user input is a int, but is actually a double
             ("log_freq,e", po::value<size_t>()->default_value(1000000)->notifier(boost::bind(&check_range<size_t>, "log_freq", _1, 0, 1000000000)), "Frequency in which to log duplicates in reads, can be used to create a saturation plot (0 turns off).")
-            ("umi-delimiter,d", po::value<char>()->default_value('\0')->notifier(boost::bind(&check_values<char>, "delimiter", _1, DEL_OPTIONS)), " Enables UMI mode and specifies character to separate the UMI sequence from other fields in the Read ID (Possible options: '-', '_', ':')");
+            ("umi-delimiter,d", po::value<char>()->default_value(' ')->notifier(boost::bind(&check_values<char>, "delimiter", _1, DEL_OPTIONS)), "Enables UMI mode and specifies character to separate the UMI sequence from other fields in the Read ID. Possible options: '-', '_', ':'. Default is unset.");
     }
 
     template <class T, class Impl>
-    void load_map(InputReader<T, Impl> &reader, SuperDeduperCounters& counters, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, double avg_automatic_write, double discard_qual, size_t start, size_t length, size_t log_freq, const size_t qual_offset = DEFAULT_QUAL_OFFSET, const char del = '\0'){
+    void load_map(InputReader<T, Impl> &reader, SuperDeduperCounters& counters, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, double avg_automatic_write, double discard_qual, size_t start, size_t length, size_t log_freq, const size_t qual_offset = DEFAULT_QUAL_OFFSET, const char del = ' '){
         double tmpAvg;
         std::string umi_seq;
         boost::optional<boost::dynamic_bitset<>> bit;
@@ -131,7 +131,7 @@ public:
             counters.input(*i, log_freq);
             tmpAvg = i->avg_q_score(qual_offset);
 
-            if (del != '\0') { 
+            if (del != ' ') { 
                 umi_seq = "";
                 for (const auto &r : i -> get_reads()) { 
                     umi_seq += r -> get_umi(del); 

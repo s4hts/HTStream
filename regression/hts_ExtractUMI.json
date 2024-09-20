@@ -4,6 +4,7 @@
         "version": "v1.3.3-24-g735cdf1-dirty",
         "options": {
 	    "DRAGEN": false,
+            "add-as-tag": false,
             "avg-qual-score": 0,
 	    "delimiter": "_",
             "discard-n": false,

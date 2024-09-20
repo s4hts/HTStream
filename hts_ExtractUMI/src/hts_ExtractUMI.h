@@ -38,6 +38,7 @@ public:
         size_t qual_offset;
         bool homopolymer;
         bool discard_n;
+        bool add_as_tag;
     };
 
 
@@ -57,6 +58,7 @@ public:
         ("avg-qual-score,Q", po::value<size_t>()->default_value(0)->notifier(boost::bind(&check_range<size_t>, "avg-qual-score", _1, 0, 10000)), "Threshold for quality score average of UMI (min 1, max 10000), read pairs are discarded, default is unset")
         ("homopolymer,p", po::bool_switch()->default_value(false), "Remove reads with homopolymer UMIs")
         ("discard-n,n", po::bool_switch()->default_value(false), "Remove reads with UMIs containing an N")
+        ("add-as-tag,C", po::bool_switch()->default_value(false), "Appends UMI to tag section of read IDs.")
         ("DRAGEN,D", po::bool_switch()->default_value(false), "Formats UMI addition to Read ID so that it is compatible with Illumina's DRAGEN suite.");
     }
 
@@ -128,12 +130,22 @@ public:
         r.set_id_first(boost::algorithm::join(result, ":"));
     }
 
+    void set_tag(Read &r, const UMI &umi, const bool &se = false) {
+        std::string new_id;
+        if (se) {
+            new_id = umi.seq1;
+        } else {
+            new_id = umi.seq1 + "-" + umi.seq2;
+        }
+        r.add_comment("RX:Z:" + new_id);
+    }
+
 
     void extract_umi(Read &r, UMI &umi, const char &del, const bool &dragen = false, const bool &both_reads = false) {
 
         std::string tmp_seq;
 
-        if ( ((umi.seq1.empty()) || dragen) || both_reads ) {
+        if ((umi.seq1.empty() || dragen) || both_reads ) {
 
             tmp_seq = r.get_seq().substr(0, umi.length);
 
@@ -154,7 +166,7 @@ public:
                 r.setLCut(umi.length);
             }
 
-            if (!umi.seq1.empty() && dragen) {
+            if ((!umi.seq1.empty() && dragen) || (!umi.seq1.empty() && both_reads && umi.add_as_tag)) {
                 umi.seq2 = tmp_seq; // necessary copy?
             } else {
                 umi.seq1 = tmp_seq; // necessary copy?
@@ -162,9 +174,9 @@ public:
 
         }
 
-        if ((!umi.discard)) {
-            if (!dragen) { 
-                r.set_id_first(r.get_id_first() + del + umi.seq1); 
+        if (!umi.discard) {
+            if (!dragen && !umi.add_as_tag) {
+                r.set_id_first(r.get_id_first() + del + umi.seq1); // append UMI to read ID
             }
         } else {
             r.setDiscard();
@@ -177,6 +189,7 @@ public:
 
         char read = vm["read"].as<char>();
         size_t umi_length = vm["umi-length"].as<size_t>();
+        bool add_as_tag = vm["add-as-tag"].as<bool>();
         char del = vm["delimiter"].as<char>();
         size_t qual_offset = vm["qual-offset"].as<size_t>();
         size_t qual_threshold = vm["qual-score"].as<size_t>();
@@ -202,7 +215,8 @@ public:
             avg_qual_threshold,     // avg quality threshold
             qual_offset,            // quality offset
             homopolymer,            // homopolymer filter
-            discard_n               // discard N containing UMIs
+            discard_n,              // discard N containing UMIs
+            add_as_tag              // add as tag
         };
 
 
@@ -215,10 +229,14 @@ public:
             }
             extract_umi( ser->non_const_read_one(), umi, del, dragen );
             if (dragen) { set_dragen( ser->non_const_read_one(), umi, true ); }
+            if (add_as_tag) { set_tag( ser->non_const_read_one(), umi, true); }
         },
         [&](PairedEndRead * per) {
             if (dragen && (umi_length > 8)) {
                 throw HtsIOException("UMI length (--umi-length) greater than 8 is not compatible with --DRAGEN parameter for PairedEndRead End Reads");    
+            }
+            if (dragen && add_as_tag) {
+                throw HtsIOException("DRAGEN parameter (--DRAGEN) is not compatible with --add-as-tag parameter");    
             }
             if (read == 'F') {
                 extract_umi( per->non_const_read_one(), umi, del );
@@ -226,13 +244,16 @@ public:
             } else if (read == 'R') {
                 extract_umi( per->non_const_read_two(), umi, del );
                 extract_umi( per->non_const_read_one(), umi, del );
-            } else {
+            } else if (read == 'B') {
                 extract_umi( per->non_const_read_one(), umi, del, dragen, true );
                 std::tie(umi.qual) = std::make_tuple(""); // reset umi struct
                 extract_umi( per->non_const_read_two(), umi, del, dragen, true );
                 if (dragen) {
                     set_dragen( per->non_const_read_one(), umi );
                     set_dragen( per->non_const_read_two(), umi );
+                } else if (add_as_tag) {
+                    set_tag( per->non_const_read_one(), umi );
+                    set_tag( per->non_const_read_two(), umi );
                 }
             }
         }

@@ -24,7 +24,8 @@ public:
         0,          // avg quality threshold
         33,         // quality offset
         false,      // homopolymer discard
-        false       // discard N containing UMIs
+        false,       // discard N containing UMIs
+        false      // add as tag
     };
 };
 
@@ -194,4 +195,30 @@ TEST_F(ExtractUMITest, DRAGEN) { // DRAGEN test
         writer(*per);
     }
     ASSERT_EQ("A00887_1:1:2:3:4:5:6:NAAAAA+TTTTTT\tGACATTAAGCAA\t############\tA00887_2:1:2:3:4:5:6:NAAAAA+TTTTTT\tGACATTAAGCAA\t############\n", out1->str());
+};
+
+TEST_F(ExtractUMITest, TagExtract) { // Both extract test
+    std::istringstream in1(readData_1);
+    std::istringstream in2(readData_2);
+
+    InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(in1, in2);
+    std::shared_ptr<std::ostringstream> out1(new std::ostringstream);
+    std::shared_ptr<HtsOfstream> hts_of(new HtsOfstream(out1));
+    std::shared_ptr<OutputWriter> tab(new ReadBaseOutTab(hts_of));
+
+    // reset umi struct
+    std::tie(umi.seq1, umi.qual, umi.add_as_tag) = std::make_tuple("", "", true);
+
+    WriterHelper writer(tab, tab);
+    while (ifp.has_next()) {
+        auto i = ifp.next();
+        PairedEndRead *per = dynamic_cast<PairedEndRead*>(i.get());
+        eu.extract_umi( per->non_const_read_one(), umi, ':', false, true );
+        std::tie(umi.qual) = std::make_tuple(""); // reset umi struct
+        eu.extract_umi( per->non_const_read_two(), umi, ':', false, true );
+        eu.set_tag( per->non_const_read_one(), umi );
+        eu.set_tag( per->non_const_read_two(), umi );
+        writer(*per);
+    }
+    ASSERT_EQ("Read1\tGACATTAAGCAA\t############\tRead2\tGACATTAAGCAA\t############\tRX:Z:NAAAAA-TTTTTT\tRX:Z:NAAAAA-TTTTTT\n", out1->str());
 };
