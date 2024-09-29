@@ -4,6 +4,7 @@
         "version": "v1.3.3-24-g735cdf1-dirty",
         "options": {
 	    "DRAGEN": false,
+            "add-as-tag": false,
             "avg-qual-score": 0,
 	    "delimiter": "_",
             "discard-n": false,
@@ -15,6 +16,7 @@
             "read": "F",
             "read1-input": [ "./test_r1.fastq.gz"],
             "read2-input": [ "./test_r2.fastq.gz"],
+            "separator": "+",
             "stats-file": "hts_ExtractUMI.json",
             "tab-output": "hts_ExtractUMI",
             "umi-length": 6,

@@ -206,6 +206,7 @@ std::vector<ReadPtr> TabReadImpl::load_read(std::istream *input) {
     return reads;
 }
 
+
 template <>
 InputReader<SingleEndRead, SingleEndReadFastqImpl>::value_type InputReader<SingleEndRead, SingleEndReadFastqImpl>::next() {
     return InputReader<SingleEndRead, SingleEndReadFastqImpl>::value_type(new SingleEndRead(load_read(input)));

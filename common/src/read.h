@@ -75,30 +75,6 @@ public:
     }
     const std::string get_id_first() const { return id; }
     const std::string get_id_second() const { return id2; }
-    
-    const std::string get_umi(const char& del) {
-        size_t idx = id.rfind(del);
-        if (idx == std::string::npos) {
-            throw HtsRuntimeException("Did not detected extracted UMI. Be sure hts_ExtractUMI is run prior to the current operation");
-        }
-        std::string umi = id.substr(idx + 1);
-
-        // clean up DRAGEN format if present
-        idx = umi.rfind('+');
-        if (idx == std::string::npos) { 
-            return umi; 
-        } else {
-            std::vector<std::string> result;
-            boost::split(result, id, boost::is_any_of(":"));
-            if (result.size() < 8) {
-                throw HtsRuntimeException("Read ID misformated. Does not have appropriate number of \":\" delimited columns for DRAGEN UMI format");
-            }
-            umi = result[7];
-            idx = umi.rfind('+');
-            umi.erase(idx);
-            return umi;
-        }
-    }
 
     std::vector<std::string> get_comment() const { return comments;}
     static char complement(char bp);
@@ -118,6 +94,62 @@ public:
                                             std::string q = qual.substr(cut_L, cut_R - cut_L);
                                             std::reverse(begin(q), end(q));
                                             return q;  }
+
+    const std::string get_umi(const char &del, const size_t &col, bool &both_reads) {
+        
+        size_t idx = id.rfind(del);
+        if (idx == std::string::npos) {
+            throw HtsRuntimeException("Did not detected extracted UMI. Be sure hts_ExtractUMI is run prior to the current operation");
+        }
+
+        std::vector<std::string> result;
+        boost::split(result, id, boost::is_any_of(":"));
+
+        std::string umi;
+        if (col == 0) {
+            umi = result[result.size() - 1];
+        } else if (result.size() > col) {
+            throw HtsRuntimeException("Read ID misformated. Does not have appropriate number of \":\" delimited columns to extract UMI");
+        } else {
+            umi = result[col - 1];
+        }
+
+        for (const auto &s : DEL_OPTIONS) {
+            
+            idx = umi.find(s);
+
+            if (idx != std::string::npos) {
+                both_reads = true;
+                umi.erase(idx, 1);
+                return umi;
+            }
+        }
+        return umi;
+    }
+
+    const std::string get_umi_tag(bool &both_reads) {
+
+        size_t idx;
+        for (const auto &c : get_comment()) {
+            idx = c.find("RX:Z:");
+            if (idx != std::string::npos) {
+                std::string umi = c.substr(idx + 5);
+
+                for (const auto &s : DEL_OPTIONS) {
+                    
+                    idx = umi.find(s);
+
+                    if (idx != std::string::npos) {
+                        both_reads = true;
+                        umi.erase(idx, 1);
+                        return umi;
+                    }
+                }
+                return umi;
+            }
+        }
+        throw HtsRuntimeException("No UMI Tag found in read header. Be sure hts_ExtractUMI is run prior to the current operation");
+    }
 
 
     void add_comment( const std::string& tag ) { if (tag != "") comments.push_back(tag);}
