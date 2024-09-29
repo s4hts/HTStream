@@ -16,8 +16,8 @@ typedef std::vector<Vec> Mat;
 
 const uint64_t QUAL_MAX = 94;
 const uint64_t DEFAULT_QUAL_OFFSET = 33;
-const std::vector<char> READ_OPTIONS{'F', 'R', 'B'}; // possible read options
-const std::vector<char> DEL_OPTIONS{'-', '_', ':', ' '}; // possible char options (last one is to allow unset)
+const std::vector<char> READ_OPTIONS{'F', 'R', 'B', 'P'}; // possible read options
+const std::vector<char> DEL_OPTIONS{'-', '_', ':', '+', ' '}; // possible char options (last one is to allow unset)
 
 
 #endif

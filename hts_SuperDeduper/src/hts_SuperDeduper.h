@@ -116,12 +116,15 @@ public:
             ("avg-qual-score,q", po::value<double>()->default_value(30)->notifier(boost::bind(&check_range<double>, "avg-qual-score", _1, 1, 10000)), "Avg quality score to have the read written automatically (min 1, max 10000)")
             ("inform-avg-qual-score,a", po::value<double>()->default_value(5)->notifier(boost::bind(&check_range<double>, "inform-avg-qual-score", _1, 1, 10000)), "Avg quality score to consider a read informative (min 1, max 10000)") //I know this says user input is a int, but is actually a double
             ("log_freq,e", po::value<size_t>()->default_value(1000000)->notifier(boost::bind(&check_range<size_t>, "log_freq", _1, 0, 1000000000)), "Frequency in which to log duplicates in reads, can be used to create a saturation plot (0 turns off).")
-            ("umi-delimiter,d", po::value<char>()->default_value(' ')->notifier(boost::bind(&check_values<char>, "delimiter", _1, DEL_OPTIONS)), "Enables UMI mode and specifies character to separate the UMI sequence from other fields in the Read ID. Possible options: '-', '_', ':'. Default is unset.");
+            ("umi-delimiter,d", po::value<char>()->default_value(' ')->notifier(boost::bind(&check_values<char>, "umi-delimiter", _1, DEL_OPTIONS)), "Enables UMI mode and specifies character to separate the UMI sequence from other fields in the Read ID. Possible options: '-', '_', ':'. Default is unset.")
+            ("umi-column,c", po::value<size_t>()->default_value(0)->notifier(boost::bind(&check_range<size_t>, "umi-column", _1, 0, 100)), "Sepcifies column (1-based index) to look for UMI sequence if apart of read ID. Default is 0, refering to the last column")
+            ("umi-tag,C", po::bool_switch()->default_value(false), "Enables UMI mode but extracts UMI from read header tags.");
     }
 
     template <class T, class Impl>
-    void load_map(InputReader<T, Impl> &reader, SuperDeduperCounters& counters, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, double avg_automatic_write, double discard_qual, size_t start, size_t length, size_t log_freq, const size_t qual_offset = DEFAULT_QUAL_OFFSET, const char del = ' '){
+    void load_map(InputReader<T, Impl> &reader, SuperDeduperCounters& counters, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, double avg_automatic_write, double discard_qual, size_t start, size_t length, size_t log_freq, const size_t qual_offset = DEFAULT_QUAL_OFFSET, const char del = ' ', const size_t col = 0, const bool tag = false){
         double tmpAvg;
+        bool both_reads = false;
         std::string umi_seq;
         boost::optional<boost::dynamic_bitset<>> bit;
         WriterHelper writer(pe, se, false);
@@ -134,14 +137,22 @@ public:
             if (del != ' ') { 
                 umi_seq = "";
                 for (const auto &r : i -> get_reads()) { 
-                    umi_seq += r -> get_umi(del); 
+                    umi_seq += r -> get_umi(del, col, both_reads); 
+                    if (both_reads) { break; }
+                }
+                bit = i -> bitjoin(i -> str_to_bit(umi_seq), i -> get_key(start, length));
+
+            } else if (tag) {
+                umi_seq = "";
+                for (const auto &r : i -> get_reads()) {
+                    umi_seq += r -> get_umi_tag(both_reads); 
+                    if (both_reads) { break; }
                 }
                 bit = i -> bitjoin(i -> str_to_bit(umi_seq), i -> get_key(start, length));
 
             } else {
                 bit = i -> get_key(start, length);
             }
-
 
             //check for existance, store or compare quality and replace:
             if ( tmpAvg < discard_qual ){ // averge qual must be less than discard_qual, ignored
@@ -185,9 +196,12 @@ public:
         const size_t log_freq = vm["log_freq"].as<size_t>();
         const size_t qual_offset = vm["qual-offset"].as<size_t>();
         const char del = vm["umi-delimiter"].as<char>();
+        const size_t col = vm["umi-column"].as<size_t>();
+        const bool tag = vm["umi-tag"].as<bool>();
+
 
         WriterHelper writer(pe, se, false, false);
-        load_map(reader, counter, pe, se, avg_automatic_write, discard_qual, start, length, log_freq, qual_offset, del);
+        load_map(reader, counter, pe, se, avg_automatic_write, discard_qual, start, length, log_freq, qual_offset, del, col, tag);
         for(auto const &i : read_map) {
             if (i.second.get() != nullptr) {
                 counter.output(*i.second.get());

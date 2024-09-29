@@ -15,7 +15,9 @@
             "start": 10,
             "stats-file": "hts_SuperDeduper.json",
             "tab-output": "hts_SuperDeduper",
+            "umi-column": 0,
 	    "umi-delimiter": " ",
+            "umi-tag": false,
             "uncompressed": false
         }
     },
