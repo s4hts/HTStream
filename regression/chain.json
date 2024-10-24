@@ -14,7 +14,9 @@
             "read2-input": [ "./test_r2.fastq.gz"],
             "start": 10,
             "stats-file": "chain.json",
-	    "umi-delimiter": "\u0000",
+            "umi-column": 0,
+	    "umi-delimiter": " ",
+            "umi-tag": false,
             "uncompressed": false
         }
     },
