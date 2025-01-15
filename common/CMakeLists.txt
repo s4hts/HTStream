@@ -1,4 +1,3 @@
-cmake_minimum_required (VERSION 3.2)
 project (hts_common)
 
 add_custom_command(
@@ -23,7 +22,7 @@ file(GLOB sources "src/*.cpp")
 list(APPEND sources  ${CMAKE_BINARY_DIR}/common/version.h)
 message( "common sources: " ${sources})
 
-FIND_PACKAGE( Boost 1.56 COMPONENTS system program_options filesystem iostreams REQUIRED )
+FIND_PACKAGE( Boost 1.70 COMPONENTS system program_options filesystem iostreams REQUIRED )
 
 include_directories(${GTEST_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} ${COMMON_INCLUDES} )
 

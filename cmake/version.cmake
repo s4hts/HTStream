@@ -1,5 +1,3 @@
-cmake_minimum_required (VERSION 3.2)
-
 execute_process(
   COMMAND git describe --tags --dirty
   OUTPUT_VARIABLE HTSTREAM_VERSION
