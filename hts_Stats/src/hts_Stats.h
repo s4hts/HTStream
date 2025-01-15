@@ -70,7 +70,7 @@ public:
         ++Length[r.getLength()];
         // READ Base and Quality stats
         // update size of base and Q score matrix if needed
-        for( size_t gap = 0 ; read_bases.size() < r.getLength(); gap++ ) {
+        while(read_bases.size() < r.getLength()) {
             Vec bases(5,0); // A,C,T,G,N
             Vec qualities(QUAL_MAX,0); // quality score 0 to MAX
             read_bases.push_back(bases);

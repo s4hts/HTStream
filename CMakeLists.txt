@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.2)
+cmake_minimum_required (VERSION 3.10)
 project (HTStream)
 
 option(BUILD_STATIC_BIN "builds static binary (linux only)" OFF)
@@ -8,6 +8,11 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 message( status "cmake module path: " ${CMAKE_MODULE_PATH})
 
 set(CMAKE_CXX_STANDARD 11)
+
+## suppress findboost warnings
+if(POLICY CMP0167)
+  cmake_policy(SET CMP0167 NEW)
+endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(Boost_USE_STATIC_LIBS OFF)
@@ -26,10 +31,10 @@ elseif (UNIX)
 endif()
 
 if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
+  set(CMAKE_CXX_FLAGS "-Wall -Werror ${CMAKE_CXX_FLAGS}")
 endif()
 if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -Wextra")
+  set(CMAKE_CXX_FLAGS "-Wall -Werror -Wextra -Wno-vla-extension ${CMAKE_CXX_FLAGS}")
 ## todo libc++
 # -stdlib=libc++")
 #  set(PROJECT_LINK_LIBS "-lc++ -lc++abi -lm -lc -lgcc_s -lgcc")
