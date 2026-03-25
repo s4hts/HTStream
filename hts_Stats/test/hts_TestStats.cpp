@@ -11,6 +11,7 @@ class StatsTest : public ::testing::Test {
         po::variables_map vm;
         const std::string readData_1 = "@Read1\nACTGAC\n+\nI#I#AH\n";
         const std::string readData_2 = "@Read2\nACTGAC\n+\nI#IIDH\n";
+        const std::string readData_empty = "@Read0\n\n+\n\n";
 };
 
 TEST_F(StatsTest, BasicTrim) {
@@ -40,3 +41,29 @@ TEST_F(StatsTest, BasicTrim) {
     ASSERT_EQ(1u, counters.R1_qualities[4][32]);
     ASSERT_EQ(0u, counters.R1_qualities[4][42]);
 };
+
+TEST_F(StatsTest, ZeroLengthRead) {
+    std::istringstream in1(readData_empty);
+
+    InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(in1);
+    StatsCounters counters("hts_Stats", vm);
+
+    ASSERT_TRUE(ifs.has_next());
+    auto i = ifs.next();
+    SingleEndRead *ser = dynamic_cast<SingleEndRead*>(i.get());
+    ASSERT_NE(nullptr, ser);
+
+    counters.input(*ser);
+    counters.output(*ser);
+
+    ASSERT_EQ(1u, counters.SE_In);
+    ASSERT_EQ(1u, counters.SE_Out);
+    ASSERT_EQ(1u, counters.TotalFragmentsInput);
+    ASSERT_EQ(1u, counters.TotalFragmentsOutput);
+    ASSERT_EQ(0u, counters.SE_BpLen_In);
+    ASSERT_EQ(0u, counters.TotalBasepairsInput);
+    ASSERT_EQ(1u, counters.SE_Length.size());
+    ASSERT_EQ(1u, counters.SE_Length[0]);
+    ASSERT_TRUE(counters.SE_bases.empty());
+    ASSERT_TRUE(counters.SE_qualities.empty());
+}
