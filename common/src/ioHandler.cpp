@@ -4,7 +4,10 @@
 #include <sstream>
 
 void skip_lr(std::istream *input) {
-    while(input and input->good() and (input->peek() == '\n' || input->peek() == '\r')) {
+    if (!input) {
+        return;
+    }
+    while(input->good() and (input->peek() == '\n' || input->peek() == '\r')) {
         input->get();
     }
 }
