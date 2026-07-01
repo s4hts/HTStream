@@ -3,6 +3,9 @@
 
 #include <cstdint>
 #include <map>
+#include <string>
+#include <tuple>
+#include <vector>
 
 template <typename G>
 using Generic = std::tuple <const std::string, G>;
