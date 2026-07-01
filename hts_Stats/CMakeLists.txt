@@ -8,7 +8,7 @@ message( status "sources: " ${sources})
 set(PROJECT_LINK_LIBS hts_common)
 link_directories(${CMAKE_BINARY_DIR}/common)
 
-FIND_PACKAGE( Boost 1.70 COMPONENTS system program_options iostreams filesystem REQUIRED )
+find_package(Boost 1.70 MODULE REQUIRED COMPONENTS program_options iostreams filesystem)
 find_package(Threads REQUIRED)
 include_directories(${COMMON_INCLUDES} ${Boost_INCLUDE_DIR} )
 

@@ -131,21 +131,21 @@ public:
 
     void write_out() {
         std::vector<Vector> iSE_Length;
-        for (size_t i = 1; i < SE_Length.size(); ++i) {
+        for (size_t i = 0; i < SE_Length.size(); ++i) {
             if (SE_Length[i] > 0) {
                 iSE_Length.push_back(std::forward_as_tuple(i, SE_Length[i]));
             }
         }
 
         std::vector<Vector> iR1_Length;
-        for (size_t i = 1; i < R1_Length.size(); ++i) {
+        for (size_t i = 0; i < R1_Length.size(); ++i) {
             if (R1_Length[i] > 0) {
                 iR1_Length.push_back(std::forward_as_tuple(i, R1_Length[i]));
             }
         }
 
         std::vector<Vector> iR2_Length;
-        for (size_t i = 1; i < R2_Length.size(); ++i) {
+        for (size_t i = 0; i < R2_Length.size(); ++i) {
             if (R2_Length[i] > 0) {
                 iR2_Length.push_back(std::forward_as_tuple(i, R2_Length[i]));
             }

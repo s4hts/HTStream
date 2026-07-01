@@ -5,6 +5,8 @@ execute_process(
   RESULT_VARIABLE result
 )
 
+file(MAKE_DIRECTORY "${BIN_DIR}/common")
+
 if(result EQUAL "0")
   message("execute git version " ${HTSTREAM_VERSION})
   configure_file(${SRC_DIR}/common/src/version.h.in

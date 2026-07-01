@@ -92,9 +92,6 @@ ReadPtr InputFastq::load_read(std::istream *input) {
         throw HtsIOException("id line did not begin with @");
     }
     std::getline(*input, seq);
-    if (seq.size() < 1) {
-        throw HtsIOException("invalid seq line empty");
-    }
     std::getline(*input, id2);
     if (id2.size() < 1) {
         throw HtsIOException("invalid id2 line empty");

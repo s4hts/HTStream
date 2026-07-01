@@ -88,7 +88,7 @@ public:
 class dbhash {
 public:
     std::size_t operator() (const boost::dynamic_bitset<>& bs) const {
-        return boost::hash_value(bs.m_bits);
+        return boost::hash_value(bs);
     }
 };
 
