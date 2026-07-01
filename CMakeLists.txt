@@ -4,15 +4,23 @@ project (HTStream)
 option(BUILD_STATIC_BIN "builds static binary (linux only)" OFF)
 option(BUILD_GPERFTOOLS "links to google perftools" OFF)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
+# Ensure built-in find modules are always searched alongside project modules.
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_ROOT}/Modules" "${CMAKE_SOURCE_DIR}/cmake")
 message( status "cmake module path: " ${CMAKE_MODULE_PATH})
 
 set(CMAKE_CXX_STANDARD 11)
 
-## suppress findboost warnings
+## keep FindBoost available on newer CMake
 if(POLICY CMP0167)
-  cmake_policy(SET CMP0167 NEW)
+  cmake_policy(SET CMP0167 OLD)
 endif()
+if(POLICY CMP0074)
+  cmake_policy(SET CMP0074 NEW)
+endif()
+
+# Prefer Find modules over config packages when both are present.
+set(CMAKE_FIND_PACKAGE_PREFER_CONFIG OFF)
+set(Boost_NO_BOOST_CMAKE ON CACHE BOOL "Use legacy FindBoost module instead of BoostConfig")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(Boost_USE_STATIC_LIBS OFF)

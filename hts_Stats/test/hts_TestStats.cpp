@@ -1,6 +1,9 @@
 #include "gtest/gtest.h"
+#include <cstdio>
+#include <fstream>
 #include <sstream>
 #include <iostream>
+#include <unistd.h>
 #include <boost/program_options.hpp>
 #include "hts_Stats.h"
 
@@ -66,4 +69,37 @@ TEST_F(StatsTest, ZeroLengthRead) {
     ASSERT_EQ(1u, counters.SE_Length[0]);
     ASSERT_TRUE(counters.SE_bases.empty());
     ASSERT_TRUE(counters.SE_qualities.empty());
+}
+
+TEST_F(StatsTest, ZeroLengthReadWrittenToHistogram) {
+    std::istringstream in1(readData_empty);
+
+    InputReader<SingleEndRead, SingleEndReadFastqImpl> ifs(in1);
+    StatsCounters counters("hts_Stats", vm);
+
+    ASSERT_TRUE(ifs.has_next());
+    auto i = ifs.next();
+    SingleEndRead *ser = dynamic_cast<SingleEndRead*>(i.get());
+    ASSERT_NE(nullptr, ser);
+
+    counters.input(*ser);
+    counters.output(*ser);
+
+    char stats_template[] = "/tmp/hts_stats_zero_length_XXXXXX";
+    int fd = mkstemp(stats_template);
+    ASSERT_NE(-1, fd);
+    close(fd);
+    counters.fStats = stats_template;
+
+    counters.write_out();
+
+    std::ifstream stats_file(stats_template);
+    ASSERT_TRUE(stats_file.is_open());
+    std::stringstream buffer;
+    buffer << stats_file.rdbuf();
+    stats_file.close();
+
+    ASSERT_NE(std::string::npos, buffer.str().find("\"readlength_histogram\": [ [0,1] ]"));
+
+    std::remove(stats_template);
 }
