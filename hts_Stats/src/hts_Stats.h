@@ -50,6 +50,7 @@ public:
     uint64_t R2_bQ30 = 0;
 
     size_t qual_offset;
+    size_t max_quality_seen = 0;
     std::array<unsigned char, 256> base_lookup;
 
     StatsCounters(const std::string &program_name, const po::variables_map &vm) :
@@ -122,6 +123,9 @@ public:
             if (qscore >= qual_offset) {
                 const size_t qscore_int = qscore - qual_offset;
                 if (qscore_int < QUAL_MAX) {
+                    if (qscore_int > max_quality_seen) {
+                        max_quality_seen = qscore_int;
+                    }
                     q30bases += qscore_int >= 30;
                     ++read_qualities[index][qscore_int];
                 }
@@ -178,7 +182,7 @@ public:
         }
         std::vector<std::string> b{ "A", "C", "G", "T", "N"};
         std::vector<std::string> q;
-        for (size_t j = 0; j < QUAL_MAX; j++){
+        for (size_t j = 0; j <= max_quality_seen && j < QUAL_MAX; j++){
           q.push_back(std::to_string((int)j));
         }
 
