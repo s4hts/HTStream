@@ -312,7 +312,13 @@ public:
     }
 
     template <class T>
-    std::shared_ptr<StatsCounters> process_no_output_batch(std::shared_ptr<std::vector<std::unique_ptr<T> > > batch, size_t qual_offset) {
+    struct BatchStatsResult {
+        std::shared_ptr<StatsCounters> counters;
+        std::shared_ptr<std::vector<std::unique_ptr<T> > > batch;
+    };
+
+    template <class T>
+    std::shared_ptr<BatchStatsResult<T> > process_batch(std::shared_ptr<std::vector<std::unique_ptr<T> > > batch, size_t qual_offset) {
         po::variables_map empty_vm;
         std::shared_ptr<StatsCounters> local(new StatsCounters(program_name, empty_vm));
         local->qual_offset = qual_offset;
@@ -320,25 +326,38 @@ public:
             local->input(*read);
             local->output(*read);
         }
-        return local;
+        std::shared_ptr<BatchStatsResult<T> > result(new BatchStatsResult<T>());
+        result->counters = local;
+        result->batch = batch;
+        return result;
     }
 
     template <class T, class Impl>
-    void do_no_output_parallel(InputReader<T, Impl> &reader, StatsCounters& counters, const po::variables_map &vm) {
+    void do_parallel_stats(InputReader<T, Impl> &reader, WriterHelper *writer, StatsCounters& counters, const po::variables_map &vm) {
         const size_t num_threads = vm["number-of-threads"].as<size_t>();
         const size_t batch_size = 4096;
         const size_t max_pending = std::max<size_t>(num_threads * 4, 1);
         const size_t qual_offset = counters.qual_offset;
         thread_pool threads(max_pending, num_threads);
-        std::deque<std::future<std::shared_ptr<StatsCounters> > > futures;
+        std::deque<std::future<std::shared_ptr<BatchStatsResult<T> > > > futures;
 
-        auto submit_batch = [this, &futures, &threads, &counters, max_pending, qual_offset](std::shared_ptr<std::vector<std::unique_ptr<T> > > batch) {
+        auto finish_front = [&futures, &counters, writer]() {
+            std::shared_ptr<BatchStatsResult<T> > result = futures.front().get();
+            futures.pop_front();
+            counters.merge_from(*result->counters);
+            if (writer) {
+                for (auto &read : *result->batch) {
+                    (*writer)(*read);
+                }
+            }
+        };
+
+        auto submit_batch = [this, &futures, &threads, &finish_front, max_pending, qual_offset](std::shared_ptr<std::vector<std::unique_ptr<T> > > batch) {
             futures.push_back(threads.submit([this, batch, qual_offset]() {
-                return process_no_output_batch<T>(batch, qual_offset);
+                return process_batch<T>(batch, qual_offset);
             }));
             while (futures.size() >= max_pending) {
-                counters.merge_from(*futures.front().get());
-                futures.pop_front();
+                finish_front();
             }
         };
 
@@ -356,8 +375,7 @@ public:
             submit_batch(batch);
         }
         while (!futures.empty()) {
-            counters.merge_from(*futures.front().get());
-            futures.pop_front();
+            finish_front();
         }
     }
 
@@ -365,12 +383,12 @@ public:
     void do_app(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, StatsCounters& counters, const po::variables_map &vm) {
 
         const bool no_output = vm["no-output"].as<bool>();
-        if (no_output && vm["number-of-threads"].as<size_t>() > 1) {
-            do_no_output_parallel(reader, counters, vm);
+        WriterHelper writer(pe, se, false);
+        if (vm["number-of-threads"].as<size_t>() > 1) {
+            do_parallel_stats(reader, no_output ? nullptr : &writer, counters, vm);
             return;
         }
 
-        WriterHelper writer(pe, se, false);
         while(reader.has_next()) {
             auto i = reader.next();
             counters.input(*i);
