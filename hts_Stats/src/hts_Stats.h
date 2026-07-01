@@ -240,19 +240,24 @@ public:
         app_description += "  Including the basepair composition and number of bases Q30.";
     }
 
-    void add_extra_options(po::options_description &) {
+    void add_extra_options(po::options_description &desc) {
+        desc.add_options()
+            ("no-output", po::bool_switch()->default_value(false), "Only write stats JSON; do not pass reads through to stdout or output files");
     }
 
     template <class T, class Impl>
-    void do_app(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, StatsCounters& counters, const po::variables_map &) {
+    void do_app(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, StatsCounters& counters, const po::variables_map &vm) {
 
         WriterHelper writer(pe, se, false);
+        const bool no_output = vm["no-output"].as<bool>();
 
         while(reader.has_next()) {
             auto i = reader.next();
             counters.input(*i);
             counters.output(*i);
-            writer(*i);
+            if (!no_output) {
+                writer(*i);
+            }
         }
     }
 };

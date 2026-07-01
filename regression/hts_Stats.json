@@ -5,6 +5,7 @@
         "options": {
             "compression-level": 0,
             "force": true,
+            "no-output": false,
             "notes": "",
             "qual-offset": 33,
             "read1-input": [ "./test_r1.fastq.gz"],
