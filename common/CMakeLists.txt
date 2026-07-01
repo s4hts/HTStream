@@ -42,4 +42,4 @@ add_dependencies(${PROJECT_TEST_NAME} generateVersion)
 
 #add_dependencies(${PROJECT_TEST_NAME} googletest)
 target_link_libraries(${PROJECT_TEST_NAME} gtest gtest_main ${CMAKE_THREAD_LIBS_INIT} ${Boost_LIBRARIES} ${PROJECT_LINK_LIBS})
-add_test(test_common ${PROJECT_TEST_NAME})
+add_test(NAME test_common COMMAND ${PROJECT_TEST_NAME})
