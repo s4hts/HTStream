@@ -40,6 +40,12 @@ public:
     std::string program_name;
     std::string app_description;
 
+    bool do_read1_read2_files(const std::vector<std::string>&, const std::vector<std::string>&,
+                              std::shared_ptr<OutputWriter>, std::shared_ptr<OutputWriter>,
+                              CounterType&, const po::variables_map&) {
+        return false;
+    }
+
     int main_func(int argc, char** argv) {
         try
         {
@@ -86,11 +92,13 @@ public:
                     if (read1_files.size() != read2_files.size()) {
                         throw HtsRuntimeException("must have same number of input files for read1 and read2");
                     }
-                    for(size_t i = 0; i < read1_files.size(); ++i) {
-                        bi::stream<bi::file_descriptor_source> is1{check_open_r(read1_files[i]), bi::close_handle};
-                        bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
-                        InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
-                        static_cast<DerivedType*>(this)->do_app(ifp, pe, se, counters, vm);
+                    if (!static_cast<DerivedType*>(this)->do_read1_read2_files(read1_files, read2_files, pe, se, counters, vm)) {
+                        for(size_t i = 0; i < read1_files.size(); ++i) {
+                            bi::stream<bi::file_descriptor_source> is1{check_open_r(read1_files[i]), bi::close_handle};
+                            bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
+                            InputReader<PairedEndRead, PairedEndReadFastqImpl> ifp(is1, is2);
+                            static_cast<DerivedType*>(this)->do_app(ifp, pe, se, counters, vm);
+                        }
                     }
                 }
                 if (vm.count("interleaved-input")) {
