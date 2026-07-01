@@ -7,10 +7,9 @@
 #include "utils.h"
 #include "main_template.h"
 
+#include <array>
 #include <map>
 #include <unordered_map>
-#include <boost/dynamic_bitset.hpp>
-#include <boost/functional/hash.hpp>
 #include <algorithm>
 
 extern template class InputReader<SingleEndRead, SingleEndReadFastqImpl>;
@@ -21,35 +20,55 @@ extern template class InputReader<ReadBase, TabReadImpl>;
 class StatsCounters : public Counters {
 
 public:
+    typedef std::array<uint_fast64_t, 5> BaseCycle;
+    typedef std::array<uint_fast64_t, QUAL_MAX> QualityCycle;
+
     Vec R1_Length;
     Vec R2_Length;
     Vec SE_Length;
 
-    Mat R1_bases;
-    Mat R2_bases;
-    Mat SE_bases;
+    std::vector<BaseCycle> R1_bases;
+    std::vector<BaseCycle> R2_bases;
+    std::vector<BaseCycle> SE_bases;
 
-    Mat R1_qualities;
-    Mat R2_qualities;
-    Mat SE_qualities;
+    std::vector<QualityCycle> R1_qualities;
+    std::vector<QualityCycle> R2_qualities;
+    std::vector<QualityCycle> SE_qualities;
 
     std::vector<Label> bases;
 
-    uint64_t A = 0;
-    uint64_t C = 0;
-    uint64_t G = 0;
-    uint64_t T = 0;
-    uint64_t N = 0;
+    std::array<uint64_t, 5> base_counts{{0, 0, 0, 0, 0}};
+    uint64_t &A;
+    uint64_t &C;
+    uint64_t &G;
+    uint64_t &T;
+    uint64_t &N;
 
     uint64_t SE_bQ30 = 0;
 
     uint64_t R1_bQ30 = 0;
     uint64_t R2_bQ30 = 0;
 
-    StatsCounters(const std::string &program_name, const po::variables_map &vm) : Counters::Counters(program_name, vm) {
+    size_t qual_offset;
+    std::array<unsigned char, 256> base_lookup;
+
+    StatsCounters(const std::string &program_name, const po::variables_map &vm) :
+        Counters::Counters(program_name, vm),
+        A(base_counts[0]),
+        C(base_counts[1]),
+        G(base_counts[2]),
+        T(base_counts[3]),
+        N(base_counts[4]) {
         R1_Length.resize(1);
         R2_Length.resize(1);
         SE_Length.resize(1);
+        qual_offset = vm.count("qual-offset") ? vm["qual-offset"].as<size_t>() : DEFAULT_QUAL_OFFSET;
+        base_lookup.fill(255);
+        base_lookup[static_cast<unsigned char>('A')] = 0;
+        base_lookup[static_cast<unsigned char>('C')] = 1;
+        base_lookup[static_cast<unsigned char>('G')] = 2;
+        base_lookup[static_cast<unsigned char>('T')] = 3;
+        base_lookup[static_cast<unsigned char>('N')] = 4;
         se.push_back(std::forward_as_tuple("total_Q30_basepairs", SE_bQ30));
         r1.push_back(std::forward_as_tuple("total_Q30_basepairs", R1_bQ30));
         r2.push_back(std::forward_as_tuple("total_Q30_basepairs", R2_bQ30));
@@ -62,56 +81,50 @@ public:
     }
     virtual ~StatsCounters() {}
 
-    void read_stats(Read &r, Vec &Length, Mat &read_bases, Mat &read_qualities, uint64_t &read_bQ30) {
-        // Size histogram per read
-        if ( r.getLength() + 1 > Length.size() ) {
-            Length.resize(r.getLength() + 1);
+    template <size_t N>
+    static Mat cycles_to_mat(const std::vector<std::array<uint_fast64_t, N> >& cycles) {
+        Mat out;
+        out.reserve(cycles.size());
+        for (const auto& cycle : cycles) {
+            out.push_back(Vec(cycle.begin(), cycle.end()));
         }
-        ++Length[r.getLength()];
+        return out;
+    }
+
+    void read_stats(Read &r, Vec &Length, std::vector<BaseCycle> &read_bases, std::vector<QualityCycle> &read_qualities, uint64_t &read_bQ30) {
+        const size_t length = r.getLength();
+        // Size histogram per read
+        if ( length + 1 > Length.size() ) {
+            Length.resize(length + 1);
+        }
+        ++Length[length];
         // READ Base and Quality stats
         // update size of base and Q score matrix if needed
-        while(read_bases.size() < r.getLength()) {
-            Vec bases(5,0); // A,C,T,G,N
-            Vec qualities(QUAL_MAX,0); // quality score 0 to MAX
-            read_bases.push_back(bases);
-            read_qualities.push_back(qualities);
+        while(read_bases.size() < length) {
+            read_bases.emplace_back();
+            read_bases.back().fill(0);
+            read_qualities.emplace_back();
+            read_qualities.back().fill(0);
         }
         const std::string& seq = r.get_seq();
         const std::string& qual = r.get_qual();
         uint64_t q30bases=0;
-        for (size_t index = 0; index < r.getLength(); ++index) {
+        for (size_t index = 0; index < length; ++index) {
             // bases
-            char bp = seq[index];
-            switch (bp) {
-              case 'A':
-                  ++A;
-                  ++read_bases[index][0];
-                  break;
-              case 'C':
-                  ++C;
-                  ++read_bases[index][1];
-                  break;
-              case 'G':
-                  ++G;
-                  ++read_bases[index][2];
-                  break;
-              case 'T':
-                  ++T;
-                  ++read_bases[index][3];
-                  break;
-              case 'N':
-                  ++N;
-                  ++read_bases[index][4];
-                  break;
-              default:
-                  throw HtsRuntimeException(std::string("Unknown bp in stats counter: ") + bp);
+            const unsigned char base_index = base_lookup[static_cast<unsigned char>(seq[index])];
+            if (base_index == 255) {
+                throw HtsRuntimeException(std::string("Unknown bp in stats counter: ") + seq[index]);
             }
+            ++base_counts[base_index];
+            ++read_bases[index][base_index];
             // qualities
-            size_t qscore = qual[index];
-            uint_fast64_t qscore_int = qscore - (vm.count("qual-offset") ? vm["qual-offset"].as<size_t>() : DEFAULT_QUAL_OFFSET);
-            if (qscore_int < QUAL_MAX) {
-                q30bases += (qscore_int) >= 30;
-                ++read_qualities[index][qscore_int];
+            const unsigned char qscore = static_cast<unsigned char>(qual[index]);
+            if (qscore >= qual_offset) {
+                const size_t qscore_int = qscore - qual_offset;
+                if (qscore_int < QUAL_MAX) {
+                    q30bases += qscore_int >= 30;
+                    ++read_qualities[index][qscore_int];
+                }
             }
         }
         read_bQ30 += q30bases;
@@ -188,8 +201,8 @@ public:
         start_sublabel("Single_end");
         write_values(se, 2);
         write_vector("readlength_histogram",iSE_Length, 2);
-        write_matrix("base_by_cycle",SE_bases, b, ind_se, 0, 2);
-        write_matrix("qualities_by_cycle",SE_qualities, q, ind_se, 0, 2);
+        write_matrix("base_by_cycle", cycles_to_mat(SE_bases), b, ind_se, 0, 2);
+        write_matrix("qualities_by_cycle", cycles_to_mat(SE_qualities), q, ind_se, 0, 2);
         end_sublabel();
 
         start_sublabel("Paired_end");
@@ -197,14 +210,14 @@ public:
         start_sublabel("Read1",2);
         write_values(r1, 3);
         write_vector("readlength_histogram",iR1_Length, 3);
-        write_matrix("base_by_cycle",R1_bases, b, ind_pe1, 0, 3);
-        write_matrix("qualities_by_cycle",R1_qualities, q, ind_pe1, 0, 3);
+        write_matrix("base_by_cycle", cycles_to_mat(R1_bases), b, ind_pe1, 0, 3);
+        write_matrix("qualities_by_cycle", cycles_to_mat(R1_qualities), q, ind_pe1, 0, 3);
         end_sublabel(2);
         start_sublabel("Read2",2);
         write_values(r2, 3);
         write_vector("readlength_histogram",iR2_Length, 3);
-        write_matrix("base_by_cycle",R2_bases, b, ind_pe2, 0, 3);
-        write_matrix("qualities_by_cycle",R2_qualities, q, ind_pe2, 0, 3);
+        write_matrix("base_by_cycle", cycles_to_mat(R2_bases), b, ind_pe2, 0, 3);
+        write_matrix("qualities_by_cycle", cycles_to_mat(R2_qualities), q, ind_pe2, 0, 3);
         end_sublabel(2);
         end_sublabel();
 
