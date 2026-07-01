@@ -58,6 +58,7 @@
             "force": false,
             "no-output": false,
             "notes": "",
+            "number-of-threads": 1,
             "qual-offset": 33,
             "uncompressed": false
         }

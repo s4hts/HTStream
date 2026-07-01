@@ -6,8 +6,10 @@
 #include "ioHandler.h"
 #include "utils.h"
 #include "main_template.h"
+#include "threadutils.h"
 
 #include <array>
+#include <deque>
 #include <map>
 #include <unordered_map>
 #include <algorithm>
@@ -81,6 +83,69 @@ public:
         bases.push_back(std::forward_as_tuple("N", N));
     }
     virtual ~StatsCounters() {}
+
+    static void merge_lengths(Vec &target, const Vec &source) {
+        if (target.size() < source.size()) {
+            target.resize(source.size());
+        }
+        for (size_t i = 0; i < source.size(); ++i) {
+            target[i] += source[i];
+        }
+    }
+
+    template <size_t N>
+    static void merge_cycles(std::vector<std::array<uint_fast64_t, N> > &target, const std::vector<std::array<uint_fast64_t, N> > &source) {
+        if (target.size() < source.size()) {
+            const size_t old_size = target.size();
+            target.resize(source.size());
+            for (size_t i = old_size; i < target.size(); ++i) {
+                target[i].fill(0);
+            }
+        }
+        for (size_t cycle = 0; cycle < source.size(); ++cycle) {
+            for (size_t row = 0; row < N; ++row) {
+                target[cycle][row] += source[cycle][row];
+            }
+        }
+    }
+
+    void merge_from(const StatsCounters &other) {
+        TotalFragmentsInput += other.TotalFragmentsInput;
+        TotalFragmentsOutput += other.TotalFragmentsOutput;
+        TotalBasepairsInput += other.TotalBasepairsInput;
+        TotalBasepairsOutput += other.TotalBasepairsOutput;
+
+        SE_In += other.SE_In;
+        SE_Out += other.SE_Out;
+        SE_BpLen_In += other.SE_BpLen_In;
+        SE_BpLen_Out += other.SE_BpLen_Out;
+
+        PE_In += other.PE_In;
+        PE_Out += other.PE_Out;
+        R1_BpLen_In += other.R1_BpLen_In;
+        R1_BpLen_Out += other.R1_BpLen_Out;
+        R2_BpLen_In += other.R2_BpLen_In;
+        R2_BpLen_Out += other.R2_BpLen_Out;
+
+        merge_lengths(R1_Length, other.R1_Length);
+        merge_lengths(R2_Length, other.R2_Length);
+        merge_lengths(SE_Length, other.SE_Length);
+
+        merge_cycles(R1_bases, other.R1_bases);
+        merge_cycles(R2_bases, other.R2_bases);
+        merge_cycles(SE_bases, other.SE_bases);
+        merge_cycles(R1_qualities, other.R1_qualities);
+        merge_cycles(R2_qualities, other.R2_qualities);
+        merge_cycles(SE_qualities, other.SE_qualities);
+
+        for (size_t i = 0; i < base_counts.size(); ++i) {
+            base_counts[i] += other.base_counts[i];
+        }
+        SE_bQ30 += other.SE_bQ30;
+        R1_bQ30 += other.R1_bQ30;
+        R2_bQ30 += other.R2_bQ30;
+        max_quality_seen = std::max(max_quality_seen, other.max_quality_seen);
+    }
 
     template <size_t N>
     static Mat cycles_to_mat(const std::vector<std::array<uint_fast64_t, N> >& cycles) {
@@ -241,16 +306,71 @@ public:
     }
 
     void add_extra_options(po::options_description &desc) {
+        setThreadPoolParams(desc);
         desc.add_options()
             ("no-output", po::bool_switch()->default_value(false), "Only write stats JSON; do not pass reads through to stdout or output files");
+    }
+
+    template <class T>
+    std::shared_ptr<StatsCounters> process_no_output_batch(std::shared_ptr<std::vector<std::unique_ptr<T> > > batch, size_t qual_offset) {
+        po::variables_map empty_vm;
+        std::shared_ptr<StatsCounters> local(new StatsCounters(program_name, empty_vm));
+        local->qual_offset = qual_offset;
+        for (auto &read : *batch) {
+            local->input(*read);
+            local->output(*read);
+        }
+        return local;
+    }
+
+    template <class T, class Impl>
+    void do_no_output_parallel(InputReader<T, Impl> &reader, StatsCounters& counters, const po::variables_map &vm) {
+        const size_t num_threads = vm["number-of-threads"].as<size_t>();
+        const size_t batch_size = 4096;
+        const size_t max_pending = std::max<size_t>(num_threads * 4, 1);
+        const size_t qual_offset = counters.qual_offset;
+        thread_pool threads(max_pending, num_threads);
+        std::deque<std::future<std::shared_ptr<StatsCounters> > > futures;
+
+        auto submit_batch = [this, &futures, &threads, &counters, max_pending, qual_offset](std::shared_ptr<std::vector<std::unique_ptr<T> > > batch) {
+            futures.push_back(threads.submit([this, batch, qual_offset]() {
+                return process_no_output_batch<T>(batch, qual_offset);
+            }));
+            while (futures.size() >= max_pending) {
+                counters.merge_from(*futures.front().get());
+                futures.pop_front();
+            }
+        };
+
+        std::shared_ptr<std::vector<std::unique_ptr<T> > > batch(new std::vector<std::unique_ptr<T> >());
+        batch->reserve(batch_size);
+        while(reader.has_next()) {
+            batch->push_back(reader.next());
+            if (batch->size() == batch_size) {
+                submit_batch(batch);
+                batch.reset(new std::vector<std::unique_ptr<T> >());
+                batch->reserve(batch_size);
+            }
+        }
+        if (!batch->empty()) {
+            submit_batch(batch);
+        }
+        while (!futures.empty()) {
+            counters.merge_from(*futures.front().get());
+            futures.pop_front();
+        }
     }
 
     template <class T, class Impl>
     void do_app(InputReader<T, Impl> &reader, std::shared_ptr<OutputWriter> pe, std::shared_ptr<OutputWriter> se, StatsCounters& counters, const po::variables_map &vm) {
 
-        WriterHelper writer(pe, se, false);
         const bool no_output = vm["no-output"].as<bool>();
+        if (no_output && vm["number-of-threads"].as<size_t>() > 1) {
+            do_no_output_parallel(reader, counters, vm);
+            return;
+        }
 
+        WriterHelper writer(pe, se, false);
         while(reader.has_next()) {
             auto i = reader.next();
             counters.input(*i);
