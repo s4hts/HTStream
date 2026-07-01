@@ -8,6 +8,8 @@
             "avg-qual-score": 0,
 	    "delimiter": "_",
             "discard-n": false,
+	    "compression-level": 0,
+
 	    "force": true,
             "homopolymer": false,
             "notes": "",

@@ -29,6 +29,7 @@ E
 F
   fastq-output                f   Output          All
   force                       F   Output          All
+  compression-level               Output          All
 G
 H
   help                        h   Standard        All

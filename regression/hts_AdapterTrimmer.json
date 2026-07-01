@@ -5,6 +5,8 @@
         "options": {
             "adapter-sequence": "AGATCGGAAGAGCACACGTCTGAACTCCAGTCA",
             "check-lengths": 20,
+            "compression-level": 0,
+
             "force": true,
             "kmer": 8,
             "kmer-offset": 1,

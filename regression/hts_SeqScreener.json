@@ -4,6 +4,8 @@
         "version": "v1.3.3-24-g735cdf1-dirty",
         "options": {
             "check-read-2": false,
+            "compression-level": 0,
+
             "force": true,
             "inverse": false,
             "kmer": 12,

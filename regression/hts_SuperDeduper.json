@@ -4,6 +4,8 @@
         "version": "v1.3.3-24-g735cdf1-dirty",
         "options": {
             "avg-qual-score": 30,
+            "compression-level": 0,
+
             "force": true,
             "inform-avg-qual-score": 5,
             "length": 10,

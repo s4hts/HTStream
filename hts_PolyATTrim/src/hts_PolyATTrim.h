@@ -53,8 +53,8 @@ public:
         size_t mismatch = 0, pwindows = 0;
         double max_mismatch = static_cast<double> (window_size) * max_mismatch_errorDensity;
 
-        std::string seq = rb.get_seq();
-        std::string::iterator current_loc, tmp_loc, trim_loc = seq.begin();
+        const std::string& seq = rb.get_seq();
+        std::string::const_iterator current_loc, tmp_loc, trim_loc = seq.begin();
 
         for ( current_loc = seq.begin() + (window_size-1); current_loc < seq.end() ; ++current_loc ) {
             mismatch=0;
@@ -86,8 +86,8 @@ public:
         double mismatch = 0;
         double max_mismatch = static_cast<double> (window_size) * max_mismatch_errorDensity;
 
-        std::string seq = rb.get_seq();
-        std::string::reverse_iterator current_loc, tmp_loc, trim_loc = seq.rbegin();
+        const std::string& seq = rb.get_seq();
+        std::string::const_reverse_iterator current_loc, tmp_loc, trim_loc = seq.rbegin();
 
         for ( current_loc = seq.rbegin() + (window_size-1); current_loc < seq.rend() ; ++current_loc ) {
             mismatch=0;

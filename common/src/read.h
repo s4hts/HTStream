@@ -1,7 +1,6 @@
 #ifndef READ_H
 #define READ_H
 
-#include <boost/dynamic_bitset.hpp>
 #include <boost/optional.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/join.hpp>
@@ -11,8 +10,9 @@
 #include <unordered_map>
 #include "typedefs.h"
 #include "hts_exception.h"
+#include "bitkey.h"
 
-typedef boost::dynamic_bitset<> BitSet;
+typedef BitKey BitSet;
 std::string strjoin(const std::vector <std::string>& v, const std::string& delim);
 
 class Read {
@@ -76,11 +76,25 @@ public:
     const std::string get_id_first() const { return id; }
     const std::string get_id_second() const { return id2; }
 
-    std::vector<std::string> get_comment() const { return comments;}
+    const std::vector<std::string>& get_comment() const { return comments;}
     static char complement(char bp);
 
     const std::string get_sub_seq() const { return cut_R <= cut_L ? "N" : seq.substr(cut_L, cut_R - cut_L); }
     const std::string get_sub_qual() const { return cut_R <= cut_L ? "#" : qual.substr(cut_L, cut_R - cut_L); }
+    void append_sub_seq(std::string& out) const {
+        if (cut_R <= cut_L) {
+            out += 'N';
+        } else {
+            out.append(seq, cut_L, cut_R - cut_L);
+        }
+    }
+    void append_sub_qual(std::string& out) const {
+        if (cut_R <= cut_L) {
+            out += '#';
+        } else {
+            out.append(qual, cut_L, cut_R - cut_L);
+        }
+    }
 
 
     const std::string get_seq_rc() const { if (cut_R <= cut_L) { return "N"; }
@@ -199,33 +213,9 @@ public:
     Reads& get_reads_non_const() { return reads; }
     const Reads& get_reads() const { return reads; }
 
-    virtual boost::optional<boost::dynamic_bitset<>> get_key(size_t start, size_t length) = 0;
+    virtual boost::optional<BitSet> get_key(size_t start, size_t length) = 0;
     static boost::optional<BitSet> str_to_bit(const std::string& StrKey) {
-          // converts a string to a 2bit representation: A:00, T:11, C:01, G:10
-        // ~ will then convert to the complimentary bp
-        BitSet bit(2 * StrKey.length());
-        size_t i = (2 * StrKey.length()) -1;
-        for (const char &c : StrKey) {
-            switch(c) {
-            case 'A':
-                break;
-            case 'C':
-                bit[i-1] = 1;
-                break;
-            case 'G':
-                bit[i] = 1;
-                break;
-            case 'T':
-                bit[i] = 1;
-                bit[i-1] = 1;
-                break;
-            case 'N':
-                return boost::none;
-                break;
-            }
-            i -= 2;
-        }
-        return bit;
+        return BitSet::from_sequence(StrKey);
     }
     static std::string bit_to_str(const BitSet &bits);
     static boost::optional<BitSet> bitjoin(const boost::optional<BitSet> &bit1, const boost::optional<BitSet> &bit2);

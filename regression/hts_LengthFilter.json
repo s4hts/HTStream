@@ -3,6 +3,8 @@
         "program": "hts_LengthFilter",
         "version": "v1.3.3-24-g735cdf1-dirty",
         "options": {
+            "compression-level": 0,
+
             "force": true,
             "max-length": 0,
             "min-length": 0,

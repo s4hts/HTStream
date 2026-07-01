@@ -1,5 +1,4 @@
 #include <gtest/gtest.h>
-#include <boost/dynamic_bitset.hpp>
 #include <boost/optional/optional_io.hpp>
 #include "read.h"
 
@@ -25,12 +24,9 @@ TEST(CreatePERead, createPEReadWorks){
 }
 
 TEST(ConvertToTwobit, ConvertToTwobitWorks){
-  boost::dynamic_bitset<> x(8);
-  boost::dynamic_bitset<> bs1;
-  //ACTG = 00 01 11 10
-  x[7] = 0; x[6] = 0; x[5] = 0; x[4] = 1; x[3] = 1; x[2] = 1; x[1] = 1; x[0] = 0;
-  bs1 = *ReadBase::str_to_bit("ACTG");
-  ASSERT_EQ(x, bs1);
+  auto bs1 = *ReadBase::str_to_bit("ACTG");
+  ASSERT_EQ(8u, bs1.size());
+  ASSERT_EQ("ACTG", ReadBase::bit_to_str(bs1));
 }
 
 TEST(qual, avgQualScore) {
