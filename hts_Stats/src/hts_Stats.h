@@ -158,7 +158,11 @@ public:
     }
 
     void read_stats(Read &r, Vec &Length, std::vector<BaseCycle> &read_bases, std::vector<QualityCycle> &read_qualities, uint64_t &read_bQ30) {
-        const size_t length = r.getLength();
+        read_stats_strings(r.get_seq(), r.get_qual(), Length, read_bases, read_qualities, read_bQ30);
+    }
+
+    void read_stats_strings(const std::string &seq, const std::string &qual, Vec &Length, std::vector<BaseCycle> &read_bases, std::vector<QualityCycle> &read_qualities, uint64_t &read_bQ30) {
+        const size_t length = seq.size();
         // Size histogram per read
         if ( length + 1 > Length.size() ) {
             Length.resize(length + 1);
@@ -172,8 +176,6 @@ public:
             read_qualities.emplace_back();
             read_qualities.back().fill(0);
         }
-        const std::string& seq = r.get_seq();
-        const std::string& qual = r.get_qual();
         uint64_t q30bases=0;
         for (size_t index = 0; index < length; ++index) {
             // bases
@@ -197,6 +199,23 @@ public:
             }
         }
         read_bQ30 += q30bases;
+    }
+
+    void count_paired_fastq_record(const std::string &seq1, const std::string &qual1, const std::string &seq2, const std::string &qual2) {
+        ++PE_In;
+        ++PE_Out;
+        ++TotalFragmentsInput;
+        ++TotalFragmentsOutput;
+
+        R1_BpLen_In += seq1.size();
+        R1_BpLen_Out += seq1.size();
+        R2_BpLen_In += seq2.size();
+        R2_BpLen_Out += seq2.size();
+        TotalBasepairsInput += seq1.size() + seq2.size();
+        TotalBasepairsOutput += seq1.size() + seq2.size();
+
+        read_stats_strings(seq1, qual1, R1_Length, R1_bases, R1_qualities, R1_bQ30);
+        read_stats_strings(seq2, qual2, R2_Length, R2_bases, R2_qualities, R2_bQ30);
     }
 
     using Counters::output;
@@ -298,6 +317,13 @@ public:
 class Stats: public MainTemplate<StatsCounters, Stats> {
 public:
 
+    struct FastqPairRecord {
+        std::string seq1;
+        std::string qual1;
+        std::string seq2;
+        std::string qual2;
+    };
+
     Stats() {
         program_name = "hts_Stats";
         app_description =
@@ -330,6 +356,124 @@ public:
         result->counters = local;
         result->batch = batch;
         return result;
+    }
+
+    static bool load_fastq_record(std::istream &input, std::string &seq, std::string &qual) {
+        std::string id;
+        while(std::getline(input, id) && id.size() < 1) {
+        }
+        if (!input && id.size() < 1) {
+            return false;
+        }
+        if (id.size() < 1 || id[0] != '@') {
+            throw HtsIOException("id line did not begin with @");
+        }
+        std::string id2;
+        if (!std::getline(input, seq) || !std::getline(input, id2) || !std::getline(input, qual)) {
+            throw HtsIOException("incomplete FASTQ record");
+        }
+        if (id2.size() < 1 || id2[0] != '+') {
+            throw HtsIOException("invalid id2 line did not begin with +");
+        }
+        if (qual.size() != seq.size()) {
+            throw HtsIOException("qual string not the same length as sequence");
+        }
+        return true;
+    }
+
+    std::shared_ptr<StatsCounters> process_fastq_pair_batch(std::shared_ptr<std::vector<FastqPairRecord> > batch, size_t qual_offset) {
+        po::variables_map empty_vm;
+        std::shared_ptr<StatsCounters> local(new StatsCounters(program_name, empty_vm));
+        local->qual_offset = qual_offset;
+        for (const auto &record : *batch) {
+            local->count_paired_fastq_record(record.seq1, record.qual1, record.seq2, record.qual2);
+        }
+        return local;
+    }
+
+    void submit_fastq_pair_batch(std::deque<std::future<std::shared_ptr<StatsCounters> > > &futures,
+                                 thread_pool &threads,
+                                 StatsCounters& counters,
+                                 std::shared_ptr<std::vector<FastqPairRecord> > batch,
+                                 size_t max_pending,
+                                 size_t qual_offset) {
+        futures.push_back(threads.submit([this, batch, qual_offset]() {
+            return process_fastq_pair_batch(batch, qual_offset);
+        }));
+        while (futures.size() >= max_pending) {
+            counters.merge_from(*futures.front().get());
+            futures.pop_front();
+        }
+    }
+
+    bool do_read1_read2_files(const std::vector<std::string> &read1_files, const std::vector<std::string> &read2_files,
+                              std::shared_ptr<OutputWriter>, std::shared_ptr<OutputWriter>,
+                              StatsCounters& counters, const po::variables_map &vm) {
+        if (!vm["no-output"].as<bool>()) {
+            return false;
+        }
+
+        const size_t num_threads = vm["number-of-threads"].as<size_t>();
+        const size_t batch_size = 8192;
+        const size_t qual_offset = counters.qual_offset;
+
+        if (num_threads <= 1) {
+            for (size_t i = 0; i < read1_files.size(); ++i) {
+                bi::stream<bi::file_descriptor_source> is1{check_open_r(read1_files[i]), bi::close_handle};
+                bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
+                std::string seq1, qual1, seq2, qual2;
+                while (load_fastq_record(is1, seq1, qual1)) {
+                    if (!load_fastq_record(is2, seq2, qual2)) {
+                        throw HtsIOException("read2 input ended before read1 input");
+                    }
+                    counters.count_paired_fastq_record(seq1, qual1, seq2, qual2);
+                }
+                if (load_fastq_record(is2, seq2, qual2)) {
+                    throw HtsIOException("read1 input ended before read2 input");
+                }
+            }
+            return true;
+        }
+
+        const size_t max_pending = std::max<size_t>(num_threads * 4, 1);
+        thread_pool threads(max_pending, num_threads);
+        std::deque<std::future<std::shared_ptr<StatsCounters> > > futures;
+
+        for (size_t i = 0; i < read1_files.size(); ++i) {
+            bi::stream<bi::file_descriptor_source> is1{check_open_r(read1_files[i]), bi::close_handle};
+            bi::stream<bi::file_descriptor_source> is2{check_open_r(read2_files[i]), bi::close_handle};
+            std::shared_ptr<std::vector<FastqPairRecord> > batch(new std::vector<FastqPairRecord>());
+            batch->reserve(batch_size);
+            std::string seq1, qual1, seq2, qual2;
+            while (load_fastq_record(is1, seq1, qual1)) {
+                if (!load_fastq_record(is2, seq2, qual2)) {
+                    throw HtsIOException("read2 input ended before read1 input");
+                }
+                FastqPairRecord record;
+                record.seq1.swap(seq1);
+                record.qual1.swap(qual1);
+                record.seq2.swap(seq2);
+                record.qual2.swap(qual2);
+                batch->push_back(std::move(record));
+                if (batch->size() == batch_size) {
+                    submit_fastq_pair_batch(futures, threads, counters, batch, max_pending, qual_offset);
+                    batch.reset(new std::vector<FastqPairRecord>());
+                    batch->reserve(batch_size);
+                }
+            }
+            if (load_fastq_record(is2, seq2, qual2)) {
+                throw HtsIOException("read1 input ended before read2 input");
+            }
+            if (!batch->empty()) {
+                submit_fastq_pair_batch(futures, threads, counters, batch, max_pending, qual_offset);
+            }
+        }
+
+        while (!futures.empty()) {
+            counters.merge_from(*futures.front().get());
+            futures.pop_front();
+        }
+        return true;
     }
 
     template <class T, class Impl>
