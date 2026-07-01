@@ -34,19 +34,21 @@ seqLookup readOneMap(std::string seq1, const size_t kmer, const size_t kmerOffse
 void outputWriters(std::shared_ptr<OutputWriter> &pe, std::shared_ptr<OutputWriter> &se, po::variables_map vm) {
 
     std::vector<std::string> default_outfiles = {"", "_R1", "_R2", "_SE", "_INTERLEAVED"};
+    set_gzip_compression_level(vm["compression-level"].as<size_t>());
 
     std::shared_ptr<HtsOfstream> out_1 = nullptr;
     std::shared_ptr<HtsOfstream> out_2 = nullptr;
     std::shared_ptr<HtsOfstream> out_3 = nullptr;
+    const bool gzip_output = !vm["uncompressed"].as<bool>();
 
     if (vm.count("fastq-output")) {
       std::string prefix = vm["fastq-output"].as<std::string>();
       for (auto& outfile: default_outfiles) {
           outfile = prefix + outfile + ".fastq";
       }
-      out_1= std::make_shared<HtsOfstream>(default_outfiles[1], vm["force"].as<bool>(), !vm["uncompressed"].as<bool>(), false);
-      out_2= std::make_shared<HtsOfstream>(default_outfiles[2], vm["force"].as<bool>(), !vm["uncompressed"].as<bool>(), false);
-      out_3= std::make_shared<HtsOfstream>(default_outfiles[3], vm["force"].as<bool>(), !vm["uncompressed"].as<bool>(), false);
+      out_1= std::make_shared<HtsOfstream>(default_outfiles[1], vm["force"].as<bool>(), gzip_output, false);
+      out_2= std::make_shared<HtsOfstream>(default_outfiles[2], vm["force"].as<bool>(), gzip_output, false);
+      out_3= std::make_shared<HtsOfstream>(default_outfiles[3], vm["force"].as<bool>(), gzip_output, false);
 
       pe= std::make_shared<PairedEndReadOutFastq>(out_1, out_2);
       se= std::make_shared<SingleEndReadOutFastq>(out_3);
@@ -56,8 +58,8 @@ void outputWriters(std::shared_ptr<OutputWriter> &pe, std::shared_ptr<OutputWrit
             outfile = prefix + outfile + ".fastq";
         }
 
-        out_1= std::make_shared<HtsOfstream>(default_outfiles[4], vm["force"].as<bool>(), !vm["uncompressed"].as<bool>(), false);
-        out_3= std::make_shared<HtsOfstream>(default_outfiles[3], vm["force"].as<bool>(), !vm["uncompressed"].as<bool>(), false);
+        out_1= std::make_shared<HtsOfstream>(default_outfiles[4], vm["force"].as<bool>(), gzip_output, false);
+        out_3= std::make_shared<HtsOfstream>(default_outfiles[3], vm["force"].as<bool>(), gzip_output, false);
 
         pe= std::make_shared<PairedEndReadOutInter>(out_1);
         se= std::make_shared<SingleEndReadOutFastq>(out_3);
@@ -66,7 +68,11 @@ void outputWriters(std::shared_ptr<OutputWriter> &pe, std::shared_ptr<OutputWrit
         for (auto& outfile: default_outfiles) {
             outfile = prefix + ".tab6";
         }
-        out_1= std::make_shared<HtsOfstream>(default_outfiles[0], vm["force"].as<bool>(), !vm["uncompressed"].as<bool>(), false);
+        if (prefix == "stdout") {
+            out_1= std::make_shared<HtsOfstream>(default_outfiles[0], vm["force"].as<bool>(), false, true);
+        } else {
+            out_1= std::make_shared<HtsOfstream>(default_outfiles[0], vm["force"].as<bool>(), gzip_output, false);
+        }
 
         pe= std::make_shared<ReadBaseOutTab>(out_1);
         se= pe;
@@ -76,15 +82,15 @@ void outputWriters(std::shared_ptr<OutputWriter> &pe, std::shared_ptr<OutputWrit
             outfile = prefix + ".sam";
         }
         if (prefix == "stdout"){
-          out_1= std::make_shared<HtsOfstream>(default_outfiles[0], vm["force"].as<bool>(), !vm["uncompressed"].as<bool>(), true);
+          out_1= std::make_shared<HtsOfstream>(default_outfiles[0], vm["force"].as<bool>(), false, true);
         } else {
-          out_1= std::make_shared<HtsOfstream>(default_outfiles[0], vm["force"].as<bool>(), !vm["uncompressed"].as<bool>(), false);
+          out_1= std::make_shared<HtsOfstream>(default_outfiles[0], vm["force"].as<bool>(), gzip_output, false);
         }
 
         pe= std::make_shared<ReadBaseOutUnmapped>(out_1);
         se= pe;
     } else { // output to stdout
-        out_1= std::make_shared<HtsOfstream>(default_outfiles[0], vm["force"].as<bool>(), !vm["uncompressed"].as<bool>(), true);
+        out_1= std::make_shared<HtsOfstream>(default_outfiles[0], vm["force"].as<bool>(), false, true);
 
         pe= std::make_shared<ReadBaseOutTab>(out_1);
         se= pe;
@@ -117,6 +123,7 @@ po::options_description setOutputOptions(const std::string& program_name){
             //output options
             ("force,F", po::bool_switch()->default_value(false),         "Forces overwrite of files")
             ("uncompressed,u", po::bool_switch()->default_value(false),  "Output uncompressed (not gzipped) files")
+            ("compression-level", po::value<size_t>()->default_value(0)->notifier(boost::bind(&check_range<size_t>, "compression-level", _1, 0, 9)), "Gzip compression level for compressed file output (1 fastest, 9 smallest, 0 uses gzip default or HTSTREAM_GZIP_LEVEL)")
             ("fastq-output,f", po::value<std::string>(), "Output to Fastq files <PE AND/OR SE files>")
             ("interleaved-output,i", po::value<std::string>(),     "Output to interleaved fastq files <INTERLEAVED PE AND/OR SE files>")
             ("tab-output,t", po::value<std::string>(),   "Output to tab-delimited (tab6) file")

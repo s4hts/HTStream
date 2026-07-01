@@ -4,6 +4,8 @@
         "version": "v1.3.3-24-g735cdf1-dirty",
         "options": {
             "exclude": false,
+            "compression-level": 0,
+
             "force": true,
             "notes": "",
             "qual-offset": 33,

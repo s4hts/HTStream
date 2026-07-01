@@ -76,8 +76,8 @@ public:
             read_bases.push_back(bases);
             read_qualities.push_back(qualities);
         }
-        std::string seq = r.get_seq();
-        std::string qual = r.get_qual();
+        const std::string& seq = r.get_seq();
+        const std::string& qual = r.get_qual();
         uint64_t q30bases=0;
         for (size_t index = 0; index < r.getLength(); ++index) {
             // bases

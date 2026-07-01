@@ -64,11 +64,11 @@ public:
  * no N's within it*/
     bool trim_n(Read &rb, bool exclude) {
 
-        std::string seq = rb.get_seq();
+        const std::string& seq = rb.get_seq();
         size_t bestLeft = 0, currentLeft = 0, bestRight = 0;
         size_t i = 0;
 
-        for (std::string::iterator it = seq.begin(); it != seq.end(); ++it) {
+        for (std::string::const_iterator it = seq.begin(); it != seq.end(); ++it) {
             i = it - seq.begin();
 
             if (*it == 'N') {

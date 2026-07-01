@@ -3,6 +3,8 @@
         "program": "hts_Stats",
         "version": "v1.3.3-24-g735cdf1-dirty",
         "options": {
+            "compression-level": 0,
+
             "force": true,
             "notes": "",
             "qual-offset": 33,

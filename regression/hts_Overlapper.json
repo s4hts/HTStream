@@ -4,6 +4,8 @@
         "version": "v1.3.3-85-g0f46b5f-dirty",
         "options": {
             "check-lengths": 20,
+            "compression-level": 0,
+
             "force": true,
             "force-pairs": false,
             "kmer": 8,

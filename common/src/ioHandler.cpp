@@ -2,6 +2,7 @@
 #include <exception>
 #include <cerrno>
 #include <sstream>
+#include <cstdlib>
 
 void skip_lr(std::istream *input) {
     while(input and input->good() and (input->peek() == '\n' || input->peek() == '\r')) {
@@ -11,6 +12,93 @@ void skip_lr(std::istream *input) {
 
 void  __attribute__ ((noreturn)) throw_error(const std::string& filename) {
     throw HtsIOException(filename + ": " +  std::strerror( errno ));
+}
+
+namespace {
+
+size_t gzip_compression_level = 0;
+
+bool command_available(const std::string& command) {
+    std::string check = "command -v " + command + " >/dev/null 2>&1";
+    return std::system(check.c_str()) == 0;
+}
+
+bool use_pigz() {
+    static const bool available = command_available("pigz");
+    return available;
+}
+
+std::string shell_quote(const std::string& value) {
+    std::string quoted = "'";
+    for (const char c : value) {
+        if (c == '\'') {
+            quoted += "'\\''";
+        } else {
+            quoted += c;
+        }
+    }
+    quoted += "'";
+    return quoted;
+}
+
+bool is_positive_integer(const char* value) {
+    if (!value || value[0] == '\0') {
+        return false;
+    }
+    for (const char* current = value; *current; ++current) {
+        if (*current < '0' || *current > '9') {
+            return false;
+        }
+    }
+    return true;
+}
+
+std::string pigz_threads_arg() {
+    const char* threads = std::getenv("HTSTREAM_PIGZ_THREADS");
+    if (!threads || threads[0] == '\0') {
+        return " -p 2";
+    }
+    if (!is_positive_integer(threads) || std::strtoul(threads, nullptr, 10) == 0) {
+        throw HtsIOException("HTSTREAM_PIGZ_THREADS must be a positive integer");
+    }
+    return std::string(" -p ") + shell_quote(threads);
+}
+
+std::string gzip_level_arg() {
+    if (gzip_compression_level > 0) {
+        return std::string(" -") + std::to_string(gzip_compression_level);
+    }
+    const char* level = std::getenv("HTSTREAM_GZIP_LEVEL");
+    if (!level || level[0] == '\0') {
+        return "";
+    }
+    if (level[1] != '\0' || level[0] < '1' || level[0] > '9') {
+        throw HtsIOException("HTSTREAM_GZIP_LEVEL must be a single digit from 1 to 9");
+    }
+    return std::string(" -") + level[0];
+}
+
+std::string gzip_read_command(const std::string& filename) {
+    if (use_pigz()) {
+        return "pigz -dc" + pigz_threads_arg() + " " + shell_quote(filename);
+    }
+    return "gunzip -c " + shell_quote(filename);
+}
+
+std::string gzip_write_command(const std::string& filename) {
+    if (use_pigz()) {
+        return "pigz" + gzip_level_arg() + pigz_threads_arg() + " > " + shell_quote(filename);
+    }
+    return "gzip" + gzip_level_arg() + " > " + shell_quote(filename);
+}
+
+}
+
+void set_gzip_compression_level(size_t level) {
+    if (level > 9) {
+        throw HtsIOException("compression-level must be between 0 and 9");
+    }
+    gzip_compression_level = level;
 }
 
 /*
@@ -45,7 +133,7 @@ int check_open_r(const std::string& filename) {
     }
 
     if (p.extension() == ".gz") {
-        f = popen(("gunzip -c '" + filename + "'").c_str(), "r");
+        f = popen(gzip_read_command(filename).c_str(), "r");
     } else {
         f = fopen(filename.c_str(), "r");
     }
@@ -68,7 +156,7 @@ int HtsOfstream::check_exists(const std::string& filename, bool force, bool gzip
 
     if (force || !bf::exists(p)) {
         if (gzip) {
-            f = popen(("gzip > '" + fname + "'").c_str(), "w");
+            f = popen(gzip_write_command(fname).c_str(), "w");
             gzfile = f;
         } else {
             f = fopen(fname.c_str(), "w");

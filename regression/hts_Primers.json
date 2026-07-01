@@ -5,6 +5,8 @@
         "options": {
             "flip": false,
             "float": 0,
+            "compression-level": 0,
+
             "force": true,
             "keep": false,
             "min_primer_matches": 0,

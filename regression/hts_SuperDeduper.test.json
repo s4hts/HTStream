@@ -4,6 +4,8 @@
         "version": "v1.3.1-3-g6a07c7f",
         "options": {
             "avg-qual-score": 30,
+            "compression-level": 0,
+
             "force": true,
             "inform-avg-qual-score": 5,
             "length": 10,

@@ -1,16 +1,11 @@
 #ifndef SUPERD_H
 #define SUPERD_H
-//  this is so we can implment hash function for dynamic_bitset
-#define BOOST_DYNAMIC_BITSET_DONT_USE_FRIENDS
-
 #include "utils.h"
 #include "ioHandler.h"
 #include "main_template.h"
 
 #include <map>
 #include <unordered_map>
-#include <boost/dynamic_bitset.hpp>
-#include <boost/functional/hash.hpp>
 #include <boost/optional/optional_io.hpp>
 
 extern template class InputReader<SingleEndRead, SingleEndReadFastqImpl>;
@@ -85,14 +80,7 @@ public:
     }
 };
 
-class dbhash {
-public:
-    std::size_t operator() (const boost::dynamic_bitset<>& bs) const {
-        return boost::hash_value(bs);
-    }
-};
-
-typedef std::unordered_map <boost::dynamic_bitset<>, std::unique_ptr<ReadBase>, dbhash> BitMap;
+typedef std::unordered_map <BitKey, std::unique_ptr<ReadBase>, BitKeyHash> BitMap;
 
 class SuperDeduper: public MainTemplate<SuperDeduperCounters, SuperDeduper> {
 public:
@@ -126,7 +114,7 @@ public:
         double tmpAvg;
         bool both_reads = false;
         std::string umi_seq;
-        boost::optional<boost::dynamic_bitset<>> bit;
+        boost::optional<BitKey> bit;
         WriterHelper writer(pe, se, false);
 
         while(reader.has_next()) {

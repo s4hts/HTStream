@@ -4,6 +4,8 @@
         "version": "v1.3.3-24-g735cdf1-dirty",
         "options": {
             "avg-qual-score": 30,
+            "compression-level": 0,
+
             "force": false,
             "inform-avg-qual-score": 5,
             "length": 10,
@@ -53,6 +55,8 @@
         "version": "v1.3.3-24-g735cdf1-dirty",
         "options": {
             "append-stats-file": "chain.json",
+            "compression-level": 0,
+
             "force": false,
             "notes": "",
             "qual-offset": 33,

@@ -113,6 +113,7 @@ public:
 };
 
 typedef std::unordered_set < boost::dynamic_bitset<>, dbhash> kmerSet;
+typedef std::unordered_set<uint64_t> FastKmerSet;
 
 class SeqScreener: public MainTemplate<SeqScreenerCounters, SeqScreener> {
 public:
@@ -159,6 +160,62 @@ public:
         }
     }
 
+    bool base_code(char c, uint64_t &code) {
+        switch (std::toupper(c)) {
+        case 'A':
+            code = 0;
+            return true;
+        case 'C':
+            code = 1;
+            return true;
+        case 'G':
+            code = 2;
+            return true;
+        case 'T':
+            code = 3;
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    uint64_t kmer_mask(size_t kmerSize) {
+        return kmerSize == 32 ? ~uint64_t(0) : ((uint64_t(1) << (kmerSize * 2)) - 1);
+    }
+
+    unsigned int check_read_fast(FastKmerSet &lookup, const Read &rb, const size_t kmerSize) {
+        const std::string& seq = rb.get_seq();
+        const uint64_t mask = kmer_mask(kmerSize);
+        const size_t reverse_shift = (kmerSize - 1) * 2;
+        uint64_t forward = 0;
+        uint64_t reverse = 0;
+        size_t current_added = 0;
+        unsigned int hits = 0;
+
+        for (const char bp : seq) {
+            uint64_t code = 0;
+            if (!base_code(bp, code)) {
+                current_added = 0;
+                forward = 0;
+                reverse = 0;
+                continue;
+            }
+
+            forward = ((forward << 2) | code) & mask;
+            reverse = (reverse >> 2) | ((code ^ 0x3) << reverse_shift);
+            ++current_added;
+
+            if (current_added >= kmerSize) {
+                const uint64_t canonical = std::max(forward, reverse);
+                if (lookup.find(canonical) != lookup.end()) {
+                    ++hits;
+                }
+            }
+        }
+
+        return hits;
+    }
+
 
 /*The intent of this is to check  reads against the lookup table and return the number of hits
  * The function arguments are long because I did not want to recalculate those values each time
@@ -179,7 +236,7 @@ public:
 
     unsigned int check_read( kmerSet &lookup, const Read &rb, const size_t bitKmer, const size_t lookup_loc, const size_t lookup_loc_rc, boost::dynamic_bitset<> &forwardLookup, boost::dynamic_bitset<> &reverseLookup) {
 
-        std::string seq = rb.get_seq();
+        const std::string& seq = rb.get_seq();
 
         unsigned int hits = 0;
         unsigned int current_added = 0;
@@ -200,7 +257,7 @@ public:
         /*These the lookups are compared, the larger Lookup is taken and searched for,
          * if there is a "soft hit", initiate a search of the vector with the cooresponding Rest*/
         std::pair <bool, bool> bits;
-        for (std::string::iterator bp = seq.begin(); bp < seq.end(); ++bp) { //goes through each bp of the read
+        for (std::string::const_iterator bp = seq.begin(); bp < seq.end(); ++bp) { //goes through each bp of the read
 
             if (std::toupper(*bp) == 'N') { // N resets everythign
                 current_added = 0;
@@ -234,8 +291,83 @@ public:
         double hits = vm["percentage-hits"].as<double>();
         bool checkR2 = vm["check-read-2"].as<bool>();
         size_t kmerSize = vm["kmer"].as<size_t>();
-        bool inverse = vm["inverse"].as<bool>();
-        bool record = vm["record"].as<bool>();
+    bool inverse = vm["inverse"].as<bool>();
+    bool record = vm["record"].as<bool>();
+
+    if (kmerSize <= 32) {
+        FastKmerSet lookup;
+        uint64_t screen_len;
+        std::string lookup_file;
+        if (vm.count("seq")) {
+            lookup_file = vm["seq"].as<std::string>();
+            bi::stream <bi::file_descriptor_source> fa{check_open_r(lookup_file), bi::close_handle};
+            InputReader<SingleEndRead, FastaReadImpl> faReader(fa);
+            screen_len = setLookup_fasta_fast(lookup, faReader, kmerSize);
+        } else {
+            Read readSeq;
+            lookup_file = "PhiX";
+            readSeq = Read(phixSeq_True, "", "");
+            screen_len = readSeq.getLength();
+            setLookup_read_fast(lookup, readSeq, kmerSize);
+        }
+        if (lookup.size() == 0){
+            throw HtsRuntimeException("Exception lookup table contains no kmers");
+        }
+
+        counter.set_screeninfo(lookup_file, screen_len, lookup.size());
+        WriterHelper writer(pe, se, false);
+
+        auto read_visit = make_read_visitor_func(
+            [&](SingleEndRead *ser) {
+                double val = check_read_fast(lookup, ser->get_read(), kmerSize);
+                val = val / ( ser->get_read().getLength() - kmerSize);
+
+                if (val > hits) {
+                    counter.inc_SE_hits();
+                }
+                if (val <= hits && !inverse && !record) {
+                    counter.output(*ser);
+                    writer(*ser);
+                } else if (val > hits && inverse && !record) {
+                    counter.output(*ser);
+                    writer(*ser);
+                } else if (record) {
+                    counter.output(*ser);
+                    writer(*ser);
+                }
+            },
+            [&](PairedEndRead *per) {
+                double val = check_read_fast(lookup, per->get_read_one(), kmerSize);
+                val = val / ( per->get_read_one().getLength() - kmerSize);
+
+                if (checkR2) {
+                    double val2 = check_read_fast(lookup, per->get_read_two(), kmerSize);
+                    val2 = val2 / (per->get_read_one().getLength() - kmerSize);
+                    val = std::max(val, val2);
+                }
+
+                if (val > hits) {
+                    counter.inc_PE_hits();
+                }
+                if (val <= hits && !inverse && !record) {
+                    counter.output(*per);
+                    writer(*per);
+                } else if (val > hits && inverse && !record) {
+                    counter.output(*per);
+                    writer(*per);
+                } else if (record) {
+                    counter.output(*per);
+                    writer(*per);
+                }
+            });
+
+        while(reader.has_next()) {
+            auto i = reader.next();
+            counter.input(*i);
+            i->accept(read_visit);
+        }
+        return;
+    }
 
     //sets read information
     //Phix isn't set to default since it makes help a PITA to read
@@ -354,9 +486,9 @@ public:
         boost::dynamic_bitset <> forwardLookup(bitKmer);
         boost::dynamic_bitset <> reverseLookup(bitKmer);
 
-        std::string seq = rb.get_seq();
+        const std::string& seq = rb.get_seq();
         std::pair<bool, bool> bits;
-        for (std::string::iterator bp = seq.begin(); bp != seq.end(); ++bp) {
+        for (std::string::const_iterator bp = seq.begin(); bp != seq.end(); ++bp) {
             if (std::toupper(*bp) == 'A' || std::toupper(*bp) == 'C' || std::toupper(*bp) == 'G' || std::toupper(*bp) == 'T' ) {
                 reverseLookup >>= 2;
                 forwardLookup <<=2;
@@ -378,6 +510,32 @@ public:
 
     }
 
+    void setLookup_read_fast(FastKmerSet &lookup, Read &rb, size_t kmerSize) {
+        const uint64_t mask = kmer_mask(kmerSize);
+        const size_t reverse_shift = (kmerSize - 1) * 2;
+        uint64_t forward = 0;
+        uint64_t reverse = 0;
+        size_t current_added = 0;
+
+        const std::string& seq = rb.get_seq();
+        for (const char bp : seq) {
+            uint64_t code = 0;
+            if (!base_code(bp, code)) {
+                current_added = 0;
+                forward = 0;
+                reverse = 0;
+                continue;
+            }
+
+            forward = ((forward << 2) | code) & mask;
+            reverse = (reverse >> 2) | ((code ^ 0x3) << reverse_shift);
+            ++current_added;
+            if (current_added >= kmerSize) {
+                lookup.insert(std::max(forward, reverse));
+            }
+        }
+    }
+
 uint64_t setLookup_fasta( kmerSet &lookup, InputReader<SingleEndRead, FastaReadImpl> &faReader, size_t kmerSize ) {
     uint64_t slen = 0;
     while(faReader.has_next()) {
@@ -385,6 +543,17 @@ uint64_t setLookup_fasta( kmerSet &lookup, InputReader<SingleEndRead, FastaReadI
         Read readSeq = Read(r->get_read().get_seq(), "", "");
         slen += readSeq.getLength();
         setLookup_read(lookup, readSeq, kmerSize);
+    }
+    return slen;
+}
+
+uint64_t setLookup_fasta_fast( FastKmerSet &lookup, InputReader<SingleEndRead, FastaReadImpl> &faReader, size_t kmerSize ) {
+    uint64_t slen = 0;
+    while(faReader.has_next()) {
+        auto r = faReader.next();
+        Read readSeq = Read(r->get_read().get_seq(), "", "");
+        slen += readSeq.getLength();
+        setLookup_read_fast(lookup, readSeq, kmerSize);
     }
     return slen;
 }
