@@ -19,7 +19,6 @@ add_custom_command(
     )  
 
 file(GLOB sources "src/*.cpp")
-list(APPEND sources  ${CMAKE_BINARY_DIR}/common/version.h)
 message( "common sources: " ${sources})
 
 find_package(Boost 1.70 MODULE REQUIRED COMPONENTS program_options filesystem iostreams)
@@ -27,6 +26,7 @@ find_package(Boost 1.70 MODULE REQUIRED COMPONENTS program_options filesystem io
 include_directories(${GTEST_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} ${COMMON_INCLUDES} )
 
 add_library(${PROJECT_NAME} STATIC ${sources})
+add_dependencies(${PROJECT_NAME} generateVersion)
 target_link_libraries(${PROJECT_NAME}  ${Boost_LIBRARIES})
 
 ## test
@@ -38,6 +38,7 @@ file(GLOB TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/test/*.cpp)
 link_directories(${GTEST_LIBS_DIR})
 
 add_executable(${PROJECT_TEST_NAME} ${TEST_SRC_FILES} ${sources})
+add_dependencies(${PROJECT_TEST_NAME} generateVersion)
 
 #add_dependencies(${PROJECT_TEST_NAME} googletest)
 target_link_libraries(${PROJECT_TEST_NAME} gtest gtest_main ${CMAKE_THREAD_LIBS_INIT} ${Boost_LIBRARIES} ${PROJECT_LINK_LIBS})
