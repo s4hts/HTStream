@@ -5,8 +5,6 @@
 #ifndef SEQSCREENER_H
 #define SEQSCREENER_H
 
-#define BOOST_DYNAMIC_BITSET_DONT_USE_FRIENDS
-
 #include "utils.h"
 #include "ioHandler.h"
 #include "counters.h"
@@ -108,7 +106,7 @@ public:
 class dbhash {
 public:
     std::size_t operator() ( const boost::dynamic_bitset<>& bs) const {
-        return boost::hash_value(bs.m_bits);
+        return boost::hash_value(bs);
     }
 };
 

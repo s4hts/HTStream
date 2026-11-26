@@ -1,7 +1,5 @@
 #ifndef OVERLAPPER_H
 #define OVERLAPPER_H
-//  this is so we can implment hash function for dynamic_bitset
-#define BOOST_DYNAMIC_BITSET_DONT_USE_FRIENDS
 #define STARTS 4098
 
 #include "ioHandler.h"

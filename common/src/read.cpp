@@ -46,6 +46,20 @@ boost::optional<BitSet> ReadBase::bitjoin(const boost::optional<BitSet> &bit1, c
     return bittag;
 }
 
+boost::optional<boost::dynamic_bitset<>> ReadBase::get_umikey(const size_t start, const size_t length, const char &del, const size_t &col) {
+    std::string umi_seq;
+    bool both_reads = false;
+    for (const auto &r : reads) {
+        if (del != ' ') {
+            umi_seq += r -> get_umi(del, col, both_reads); 
+        } else {
+            umi_seq += r -> get_umi_tag(both_reads); 
+        }
+        if (both_reads) { break; }
+    }
+    return bitjoin(str_to_bit(umi_seq), get_key(start, length));
+}
+
 // Read
 Read Read::subread(size_t _start, size_t _length){
     return Read(seq.substr(_start, _length), qual.substr(_start,_length), id);

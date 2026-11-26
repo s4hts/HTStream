@@ -1,7 +1,5 @@
 #ifndef MAIN_TEMPLATE
 #define MAIN_TEMPLATE
-//  this is so we can implment hash function for dynamic_bitset
-#define BOOST_DYNAMIC_BITSET_DONT_USE_FRIENDS
 
 #include <iostream>
 #include <string>
