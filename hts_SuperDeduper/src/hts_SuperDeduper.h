@@ -1,8 +1,5 @@
 #ifndef SUPERD_H
 #define SUPERD_H
-//  this is so we can implment hash function for dynamic_bitset
-#define BOOST_DYNAMIC_BITSET_DONT_USE_FRIENDS
-#include <boost/version.hpp>
 
 #include "utils.h"
 #include "ioHandler.h"
@@ -89,12 +86,7 @@ public:
 class dbhash {
 public:
     std::size_t operator() (const boost::dynamic_bitset<>& bs) const {
-#if BOOST_VERSION >= 107100
-        // Boost >= 1.71 provides hash_value for dynamic_bitset (m_bits is no longer accessible as of 1.90)
         return boost::hash_value(bs);
-#else
-        return boost::hash_value(bs.m_bits);
-#endif
     }
 };
 

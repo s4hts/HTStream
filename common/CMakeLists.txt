@@ -22,7 +22,7 @@ file(GLOB sources "src/*.cpp")
 list(APPEND sources  ${CMAKE_BINARY_DIR}/common/version.h)
 message( "common sources: " ${sources})
 
-FIND_PACKAGE( Boost 1.70 COMPONENTS program_options filesystem iostreams REQUIRED )
+FIND_PACKAGE( Boost 1.71 COMPONENTS program_options filesystem iostreams REQUIRED )
 
 include_directories(${GTEST_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} ${COMMON_INCLUDES} )
 
