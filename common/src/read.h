@@ -200,6 +200,7 @@ public:
     const Reads& get_reads() const { return reads; }
 
     virtual boost::optional<boost::dynamic_bitset<>> get_key(size_t start, size_t length) = 0;
+    boost::optional<boost::dynamic_bitset<>> get_umikey(const size_t start, const size_t length, const char &del, const size_t &col);
     static boost::optional<BitSet> str_to_bit(const std::string& StrKey) {
           // converts a string to a 2bit representation: A:00, T:11, C:01, G:10
         // ~ will then convert to the complimentary bp

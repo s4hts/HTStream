@@ -12,6 +12,7 @@
             "qual-offset": 33,
             "read1-input": [ "./test_r1.fastq.gz"],
             "read2-input": [ "./test_r2.fastq.gz"],
+            "record": false,
             "start": 10,
             "stats-file": "hts_SuperDeduper.json",
             "tab-output": "hts_SuperDeduper",
